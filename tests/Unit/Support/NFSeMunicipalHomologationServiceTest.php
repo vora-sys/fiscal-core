@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 require_once dirname(__DIR__, 2) . '/Fixtures/NFSeBelemMunicipalFixtures.php';
 require_once dirname(__DIR__, 2) . '/Fixtures/NFSeJoinvilleMunicipalFixtures.php';
+require_once dirname(__DIR__, 2) . '/Support/TestCertificateFile.php';
 
 use freeline\FiscalCore\Support\CertificateManager;
 use freeline\FiscalCore\Support\ConfigManager;
@@ -15,6 +16,10 @@ use PHPUnit\Framework\TestCase;
 final class NFSeMunicipalHomologationServiceTest extends TestCase
 {
     private string $projectRoot;
+    /** @var array{path:string,password:string} */
+    private array $belemCertificateFile;
+    /** @var array{path:string,password:string} */
+    private array $joinvilleCertificateFile;
     /** @var string[] */
     private array $envKeys = [
         'FISCAL_ENVIRONMENT',
@@ -30,12 +35,26 @@ final class NFSeMunicipalHomologationServiceTest extends TestCase
     protected function setUp(): void
     {
         $this->projectRoot = dirname(__DIR__, 3);
+        $this->belemCertificateFile = TestCertificateFile::create(
+            'Faives Teste',
+            'belem-secret',
+            '41954766000192',
+            'Faives Solucoes em Tecnologia Ltda'
+        );
+        $this->joinvilleCertificateFile = TestCertificateFile::create(
+            'Freeline Joinville Teste',
+            'joinville-secret',
+            '83188342000104',
+            'FREELINE INFORMATICA LTDA'
+        );
         $this->clearEnvironment();
     }
 
     protected function tearDown(): void
     {
         $this->clearEnvironment();
+        TestCertificateFile::cleanup($this->belemCertificateFile['path'] ?? null);
+        TestCertificateFile::cleanup($this->joinvilleCertificateFile['path'] ?? null);
         ProviderRegistry::getInstance()->reload();
         ConfigManager::getInstance()->reload();
         CertificateManager::reload();
@@ -70,8 +89,8 @@ ENV);
         $result = $service->preview('joinville', '11222333000181', [
             'env_path' => $envPath,
             'env_overrides' => [
-                'FISCAL_CERT_PATH' => $this->projectRoot . '/certs/cert2026-senha-free2026.pfx',
-                'FISCAL_CERT_PASSWORD' => 'free2026',
+                'FISCAL_CERT_PATH' => $this->joinvilleCertificateFile['path'],
+                'FISCAL_CERT_PASSWORD' => $this->joinvilleCertificateFile['password'],
             ],
         ]);
 
@@ -113,8 +132,8 @@ ENV);
         $service->preview('joinville', '000000000000000', [
             'env_path' => $envPath,
             'env_overrides' => [
-                'FISCAL_CERT_PATH' => $this->projectRoot . '/certs/cert2026-senha-free2026.pfx',
-                'FISCAL_CERT_PASSWORD' => 'free2026',
+                'FISCAL_CERT_PATH' => $this->joinvilleCertificateFile['path'],
+                'FISCAL_CERT_PASSWORD' => $this->joinvilleCertificateFile['password'],
             ],
         ]);
     }
@@ -148,8 +167,8 @@ ENV);
         $result = $service->preview('belem', '18171321000114', [
             'env_path' => $envPath,
             'env_overrides' => [
-                'FISCAL_CERT_PATH' => $this->projectRoot . '/certs/cert_faives.p12',
-                'FISCAL_CERT_PASSWORD' => '',
+                'FISCAL_CERT_PATH' => $this->belemCertificateFile['path'],
+                'FISCAL_CERT_PASSWORD' => $this->belemCertificateFile['password'],
                 'OPENSSL_CONF' => $this->projectRoot . '/openssl.cnf',
             ],
         ]);
@@ -175,7 +194,7 @@ ENV);
             $this->projectRoot,
             fn (string $documento): array => [
                 'documento' => $documento,
-                'razao_social' => 'JOHNNATHAN VICTOR GONCALVES SABBA',
+                'razao_social' => 'TOMADOR DE EXEMPLO',
                 'endereco' => [
                     'logradouro' => 'Rua Homologacao',
                     'numero' => 'S/N',
@@ -188,16 +207,16 @@ ENV);
             ]
         );
 
-        $result = $service->preview('joinville', '00980556236', [
+        $result = $service->preview('joinville', '12345678909', [
             'env_path' => $envPath,
             'env_overrides' => [
-                'FISCAL_CERT_PATH' => $this->projectRoot . '/certs/cert2026-senha-free2026.pfx',
-                'FISCAL_CERT_PASSWORD' => 'free2026',
+                'FISCAL_CERT_PATH' => $this->joinvilleCertificateFile['path'],
+                'FISCAL_CERT_PASSWORD' => $this->joinvilleCertificateFile['password'],
             ],
         ]);
 
-        $this->assertSame('00980556236', $result['tomador']['documento']);
-        $this->assertSame('JOHNNATHAN VICTOR GONCALVES SABBA', $result['tomador']['razao_social']);
+        $this->assertSame('12345678909', $result['tomador']['documento']);
+        $this->assertSame('TOMADOR DE EXEMPLO', $result['tomador']['razao_social']);
         $this->assertSame('success', $result['parsed_response']['status']);
     }
 
@@ -229,7 +248,7 @@ ENV);
             $this->projectRoot,
             fn (string $documento): array => [
                 'documento' => $documento,
-                'razao_social' => 'JOHNNATHAN VICTOR GONCALVES SABBA',
+                'razao_social' => 'TOMADOR DE EXEMPLO',
                 'endereco' => [
                     'numero' => 'S/N',
                     'cep' => '66065112',
@@ -237,11 +256,11 @@ ENV);
             ]
         );
 
-        $result = $service->send('belem', '00980556236', [
+        $result = $service->send('belem', '12345678909', [
             'env_path' => $envPath,
             'env_overrides' => [
-                'FISCAL_CERT_PATH' => $this->projectRoot . '/certs/cert_faives.p12',
-                'FISCAL_CERT_PASSWORD' => '',
+                'FISCAL_CERT_PATH' => $this->belemCertificateFile['path'],
+                'FISCAL_CERT_PASSWORD' => $this->belemCertificateFile['password'],
                 'OPENSSL_CONF' => $this->projectRoot . '/openssl.cnf',
             ],
             'provider_config_overrides' => [
@@ -327,7 +346,7 @@ ENV);
             $this->projectRoot,
             fn (string $documento): array => [
                 'documento' => $documento,
-                'razao_social' => 'JOHNNATHAN VICTOR GONCALVES SABBA',
+                'razao_social' => 'TOMADOR DE EXEMPLO',
                 'endereco' => [
                     'numero' => 'S/N',
                     'cep' => '89220650',
@@ -335,11 +354,11 @@ ENV);
             ]
         );
 
-        $result = $service->send('joinville', '00980556236', [
+        $result = $service->send('joinville', '12345678909', [
             'env_path' => $envPath,
             'env_overrides' => [
-                'FISCAL_CERT_PATH' => $this->projectRoot . '/certs/cert2026-senha-free2026.pfx',
-                'FISCAL_CERT_PASSWORD' => 'free2026',
+                'FISCAL_CERT_PATH' => $this->joinvilleCertificateFile['path'],
+                'FISCAL_CERT_PASSWORD' => $this->joinvilleCertificateFile['password'],
                 'FISCAL_CNPJ' => '83188342000104',
                 'FISCAL_RAZAO_SOCIAL' => 'FREELINE INFORMATICA LTDA',
                 'FISCAL_UF' => 'SC',
@@ -399,7 +418,7 @@ ENV);
             $this->projectRoot,
             fn (string $documento): array => [
                 'documento' => $documento,
-                'razao_social' => 'JOHNNATHAN VICTOR GONCALVES SABBA',
+                'razao_social' => 'TOMADOR DE EXEMPLO',
                 'endereco' => [
                     'numero' => 'S/N',
                     'cep' => '66065112',
@@ -407,12 +426,12 @@ ENV);
             ]
         );
 
-        $result = $service->preview('belem', '00980556236', [
+        $result = $service->preview('belem', '12345678909', [
             'allow_production' => true,
             'env_path' => $envPath,
             'env_overrides' => [
-                'FISCAL_CERT_PATH' => $this->projectRoot . '/certs/cert_faives.p12',
-                'FISCAL_CERT_PASSWORD' => '',
+                'FISCAL_CERT_PATH' => $this->belemCertificateFile['path'],
+                'FISCAL_CERT_PASSWORD' => $this->belemCertificateFile['password'],
                 'OPENSSL_CONF' => $this->projectRoot . '/openssl.cnf',
             ],
             'provider_config_overrides' => [

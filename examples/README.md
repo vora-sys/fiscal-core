@@ -60,11 +60,11 @@ php examples/homologacao/consulta.php
 
 # Script de produção municipal
 php examples/producao/01-emitir-belem-real.php
-php examples/producao/02-consultar-e-imprimir-belem.php --protocolo=059138577 --rps-numero=164344
+php examples/producao/02-consultar-e-imprimir-belem.php --protocolo=SEU_PROTOCOLO --rps-numero=SEU_RPS
 
 # Ou sobrescrevendo o documento/CEP do tomador
-php examples/homologacao/01-emitir-belem-real.php --tomador-doc=00980556236 --tomador-cep=66065112
-php examples/homologacao/02-emitir-joinville-real.php --tomador-doc=00980556236 --tomador-cep=89220650
+php examples/homologacao/01-emitir-belem-real.php --tomador-doc=12345678909 --tomador-cep=66065112
+php examples/homologacao/02-emitir-joinville-real.php --tomador-doc=12345678909 --tomador-cep=89220650
 ```
 
 ## 📋 Funcionalidades por Exemplo
@@ -108,6 +108,7 @@ Para exemplos mais avançados, você pode configurar:
 # Configure no ambiente:
 export FISCAL_CERT_PATH="/caminho/para/certificado.pfx"
 export FISCAL_CERT_PASSWORD="senha_do_certificado"
+export FISCAL_CNPJ="cnpj_do_prestador"
 export FISCAL_IM="inscricao_municipal_do_prestador"
 export OPENSSL_CONF="/caminho/para/openssl.cnf" # para PKCS#12 legado
 ```

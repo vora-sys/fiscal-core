@@ -7,11 +7,8 @@ require_once __DIR__ . '/common.php';
 
 $projectRoot = dirname(__DIR__, 2);
 
-exit(nfseMunicipalRunScript('joinville', $argv, [
-    'FISCAL_ENVIRONMENT' => 'homologacao',
-    'FISCAL_CERT_PATH' => $projectRoot . '/certs/...',
-    'FISCAL_CERT_PASSWORD' => '...',
-    'FISCAL_CNPJ' => '',
-    'FISCAL_RAZAO_SOCIAL' => 'FREELINE INFORMATICA LTDA',
-    'FISCAL_UF' => 'SC',
-]));
+exit(nfseMunicipalRunScript(
+    'joinville',
+    $argv,
+    nfseMunicipalBuildEnvOverrides('joinville', 'homologacao', $projectRoot)
+));

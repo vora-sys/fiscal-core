@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/../../vendor/autoload.php';
+require_once __DIR__ . '/../homologacao/common.php';
 
 use freeline\FiscalCore\Facade\FiscalFacade;
 use freeline\FiscalCore\Support\BelemMunicipalDocumentUrlBuilder;
@@ -93,17 +94,8 @@ if ($sourceFile === '' || !is_file($sourceFile)) {
 }
 
 $projectRoot = dirname(__DIR__, 2);
-foreach ([
-    'FISCAL_ENVIRONMENT' => 'producao',
-    'FISCAL_IM' => '4007197',
-    'FISCAL_CERT_PATH' => $projectRoot . '/certs/cert_faives.p12',
-    'FISCAL_CERT_PASSWORD' => '',
-    'OPENSSL_CONF' => $projectRoot . '/openssl.cnf',
-] as $key => $value) {
-    putenv($key . '=' . $value);
-    $_ENV[$key] = $value;
-    $_SERVER[$key] = $value;
-}
+$envOverrides = nfseMunicipalBuildEnvOverrides('belem', 'producao', $projectRoot);
+nfseMunicipalApplyEnvOverrides($envOverrides);
 
 $xml = extractNfseXml((string) file_get_contents($sourceFile));
 if ($xml === null) {
@@ -134,6 +126,11 @@ if (!$providerInfo->isSuccess()) {
     exit(1);
 }
 
-$url = BelemMunicipalDocumentUrlBuilder::build('41954766000192', '4007197', $numero, $codigo);
+$url = BelemMunicipalDocumentUrlBuilder::build(
+    nfseMunicipalRequiredEnvValue('FISCAL_CNPJ'),
+    nfseMunicipalRequiredEnvValue('FISCAL_IM'),
+    $numero,
+    $codigo
+);
 
 echo 'URL oficial do DANFSe: ' . $url . PHP_EOL;

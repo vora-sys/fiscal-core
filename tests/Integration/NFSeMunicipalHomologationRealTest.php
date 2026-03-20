@@ -12,8 +12,7 @@ use PHPUnit\Framework\TestCase;
 final class NFSeMunicipalHomologationRealTest extends TestCase
 {
     private string $projectRoot;
-    private const DEFAULT_TOMADOR_CPF = '00980556236';
-    private const DEFAULT_BELEM_PROTOCOLO = '056412880';
+    private const DEFAULT_TOMADOR_CPF = '12345678909';
 
     protected function setUp(): void
     {
@@ -30,15 +29,9 @@ final class NFSeMunicipalHomologationRealTest extends TestCase
     {
         $service = new NFSeMunicipalHomologationService($this->projectRoot);
         $result = $service->send('belem', $this->resolveTomadorDocumento('TEST_NFSE_BELEM_TOMADOR_DOC'), [
-            'env_overrides' => [
-                'FISCAL_ENVIRONMENT' => 'homologacao',
-                'FISCAL_IM' => '4007197',
-                'FISCAL_CERT_PATH' => $this->projectRoot . '/certs/cert_faives.p12',
-                'FISCAL_CERT_PASSWORD' => '',
-                'OPENSSL_CONF' => $this->projectRoot . '/openssl.cnf',
-            ],
+            'env_overrides' => $this->resolveBelemEnvOverrides('homologacao'),
             'tomador_defaults' => [
-                'razao_social' => 'JOHNNATHAN VICTOR GONCALVES SABBA',
+                'razao_social' => 'TOMADOR DE HOMOLOGACAO',
                 'cep' => '66065112',
                 'endereco' => [
                     'numero' => 'S/N',
@@ -55,13 +48,7 @@ final class NFSeMunicipalHomologationRealTest extends TestCase
 
     public function testBelemRealHomologationConsultarLote(): void
     {
-        $this->applyEnvOverrides([
-            'FISCAL_ENVIRONMENT' => 'homologacao',
-            'FISCAL_IM' => '4007197',
-            'FISCAL_CERT_PATH' => $this->projectRoot . '/certs/cert_faives.p12',
-            'FISCAL_CERT_PASSWORD' => '',
-            'OPENSSL_CONF' => $this->projectRoot . '/openssl.cnf',
-        ]);
+        $this->applyEnvOverrides($this->resolveBelemEnvOverrides('homologacao'));
 
         $fiscalFacade = new FiscalFacade();
         $nfse = $fiscalFacade->nfse('belem');
@@ -81,17 +68,9 @@ final class NFSeMunicipalHomologationRealTest extends TestCase
     {
         $service = new NFSeMunicipalHomologationService($this->projectRoot);
         $result = $service->send('joinville', $this->resolveTomadorDocumento('TEST_NFSE_JOINVILLE_TOMADOR_DOC'), [
-            'env_overrides' => [
-                'FISCAL_ENVIRONMENT' => 'homologacao',
-                'FISCAL_IM' => (string) (getenv('TEST_NFSE_JOINVILLE_IM') ?: '987654321'),
-                'FISCAL_CERT_PATH' => $this->projectRoot . '/certs/cert2026-senha-free2026.pfx',
-                'FISCAL_CERT_PASSWORD' => 'free2026',
-                'FISCAL_CNPJ' => '83188342000104',
-                'FISCAL_RAZAO_SOCIAL' => 'FREELINE INFORMATICA LTDA',
-                'FISCAL_UF' => 'SC',
-            ],
+            'env_overrides' => $this->resolveJoinvilleEnvOverrides(),
             'tomador_defaults' => [
-                'razao_social' => 'JOHNNATHAN VICTOR GONCALVES SABBA',
+                'razao_social' => 'TOMADOR DE HOMOLOGACAO',
                 'cep' => '89220650',
                 'endereco' => [
                     'numero' => 'S/N',
@@ -120,12 +99,12 @@ final class NFSeMunicipalHomologationRealTest extends TestCase
 
     private function resolveTomadorDocumento(string $preferredEnvKey): string
     {
-        $preferred = getenv($preferredEnvKey);
+        $preferred = $this->envValue($preferredEnvKey);
         if (is_string($preferred) && trim($preferred) !== '') {
             return trim($preferred);
         }
 
-        $legacyCnpj = getenv(str_replace('_DOC', '_CNPJ', $preferredEnvKey));
+        $legacyCnpj = $this->envValue(str_replace('_DOC', '_CNPJ', $preferredEnvKey));
         if (is_string($legacyCnpj) && trim($legacyCnpj) !== '') {
             return trim($legacyCnpj);
         }
@@ -135,12 +114,12 @@ final class NFSeMunicipalHomologationRealTest extends TestCase
 
     private function resolveBelemProtocolo(): string
     {
-        $preferred = getenv('TEST_NFSE_BELEM_PROTOCOLO');
+        $preferred = $this->envValue('TEST_NFSE_BELEM_PROTOCOLO');
         if (is_string($preferred) && trim($preferred) !== '') {
             return trim($preferred);
         }
 
-        return self::DEFAULT_BELEM_PROTOCOLO;
+        $this->markTestSkipped('Defina TEST_NFSE_BELEM_PROTOCOLO para consultar lote real de Belém.');
     }
 
     private function applyEnvOverrides(array $overrides): void
@@ -150,6 +129,76 @@ final class NFSeMunicipalHomologationRealTest extends TestCase
             $_ENV[$key] = $value;
             $_SERVER[$key] = $value;
         }
+    }
+
+    private function resolveBelemEnvOverrides(string $ambiente): array
+    {
+        $overrides = [
+            'FISCAL_ENVIRONMENT' => $ambiente,
+            'FISCAL_IM' => $this->requiredEnvValue('TEST_NFSE_BELEM_IM', 'FISCAL_IM'),
+            'FISCAL_CERT_PATH' => $this->resolvePath(
+                $this->requiredEnvValue('TEST_NFSE_BELEM_CERT_PATH', 'FISCAL_CERT_PATH')
+            ),
+            'FISCAL_CERT_PASSWORD' => (string) ($this->envValue('TEST_NFSE_BELEM_CERT_PASSWORD') ?? $this->envValue('FISCAL_CERT_PASSWORD') ?? ''),
+        ];
+
+        $opensslConf = $this->envValue('TEST_NFSE_BELEM_OPENSSL_CONF') ?? $this->envValue('OPENSSL_CONF');
+        if (is_string($opensslConf) && trim($opensslConf) !== '') {
+            $overrides['OPENSSL_CONF'] = $this->resolvePath($opensslConf);
+        }
+
+        return $overrides;
+    }
+
+    private function resolveJoinvilleEnvOverrides(): array
+    {
+        return [
+            'FISCAL_ENVIRONMENT' => 'homologacao',
+            'FISCAL_IM' => $this->requiredEnvValue('TEST_NFSE_JOINVILLE_IM', 'FISCAL_IM'),
+            'FISCAL_CERT_PATH' => $this->resolvePath(
+                $this->requiredEnvValue('TEST_NFSE_JOINVILLE_CERT_PATH', 'FISCAL_CERT_PATH')
+            ),
+            'FISCAL_CERT_PASSWORD' => $this->requiredEnvValue('TEST_NFSE_JOINVILLE_CERT_PASSWORD', 'FISCAL_CERT_PASSWORD'),
+            'FISCAL_CNPJ' => $this->requiredEnvValue('TEST_NFSE_JOINVILLE_CNPJ', 'FISCAL_CNPJ'),
+            'FISCAL_RAZAO_SOCIAL' => $this->requiredEnvValue('TEST_NFSE_JOINVILLE_RAZAO_SOCIAL', 'FISCAL_RAZAO_SOCIAL'),
+            'FISCAL_UF' => $this->requiredEnvValue('TEST_NFSE_JOINVILLE_UF', 'FISCAL_UF'),
+        ];
+    }
+
+    private function envValue(string $key): ?string
+    {
+        $value = $_ENV[$key] ?? getenv($key);
+        if (!is_string($value)) {
+            return null;
+        }
+
+        $trimmed = trim($value);
+
+        return $trimmed === '' ? null : $trimmed;
+    }
+
+    private function requiredEnvValue(string $preferredKey, ?string $fallbackKey = null): string
+    {
+        $keys = array_filter([$preferredKey, $fallbackKey], static fn (?string $key): bool => is_string($key) && $key !== '');
+
+        foreach ($keys as $key) {
+            $value = $this->envValue($key);
+            if ($value !== null) {
+                return $value;
+            }
+        }
+
+        $details = implode(' ou ', $keys);
+        $this->markTestSkipped("Defina {$details} para executar esta integração real.");
+    }
+
+    private function resolvePath(string $path): string
+    {
+        if (str_starts_with($path, '/')) {
+            return $path;
+        }
+
+        return $this->projectRoot . '/' . ltrim($path, './');
     }
 
     private function assertSuccessfulRealResponse(string $municipio, array $parsedResponse): void

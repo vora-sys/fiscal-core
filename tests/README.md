@@ -110,9 +110,19 @@ export ENABLE_EXTERNAL_TESTS=true
 export ENABLE_NFSE_MUNICIPAL_REAL_TESTS=true
 
 # NFSe municipal real de homologação
-# Se não informar, os testes usam o CPF padrão 00980556236
-export TEST_NFSE_BELEM_TOMADOR_DOC="00980556236"
-export TEST_NFSE_JOINVILLE_TOMADOR_DOC="00980556236"
+export TEST_NFSE_BELEM_TOMADOR_DOC="12345678909"
+export TEST_NFSE_BELEM_IM="sua_inscricao_municipal"
+export TEST_NFSE_BELEM_CERT_PATH="/path/to/belem-cert.pfx"
+export TEST_NFSE_BELEM_CERT_PASSWORD=""
+export TEST_NFSE_BELEM_PROTOCOLO="seu_protocolo_real"
+
+export TEST_NFSE_JOINVILLE_TOMADOR_DOC="12345678909"
+export TEST_NFSE_JOINVILLE_IM="sua_inscricao_municipal"
+export TEST_NFSE_JOINVILLE_CERT_PATH="/path/to/joinville-cert.pfx"
+export TEST_NFSE_JOINVILLE_CERT_PASSWORD="senha_do_certificado"
+export TEST_NFSE_JOINVILLE_CNPJ="cnpj_do_prestador"
+export TEST_NFSE_JOINVILLE_RAZAO_SOCIAL="razao_social_do_prestador"
+export TEST_NFSE_JOINVILLE_UF="SC"
 
 # IBPT para testes tributários (opcional)
 export IBPT_TEST_CNPJ="11222333000181"

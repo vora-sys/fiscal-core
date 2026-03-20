@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/../../vendor/autoload.php';
+require_once __DIR__ . '/../homologacao/common.php';
 
 use freeline\FiscalCore\Facade\FiscalFacade;
 use freeline\FiscalCore\Support\BelemMunicipalDocumentUrlBuilder;
@@ -11,8 +12,8 @@ function belemConsultaUsage(string $scriptName): string
 {
     return <<<TXT
 Uso:
-  php {$scriptName} --protocolo=059138577
-  php {$scriptName} --rps-numero=164344 [--rps-serie=RPS] [--rps-tipo=1]
+  php {$scriptName} --protocolo=SEU_PROTOCOLO
+  php {$scriptName} --rps-numero=SEU_RPS [--rps-serie=RPS] [--rps-tipo=1]
   php {$scriptName} --source-file=/caminho/emissao.json
 
 Comportamento:
@@ -143,19 +144,8 @@ if (
 }
 
 $projectRoot = dirname(__DIR__, 2);
-$envOverrides = [
-    'FISCAL_ENVIRONMENT' => 'producao',
-    'FISCAL_IM' => '4007197',
-    'FISCAL_CERT_PATH' => $projectRoot . '/certs/cert_faives.p12',
-    'FISCAL_CERT_PASSWORD' => '',
-    'OPENSSL_CONF' => $projectRoot . '/openssl.cnf',
-];
-
-foreach ($envOverrides as $key => $value) {
-    putenv($key . '=' . $value);
-    $_ENV[$key] = $value;
-    $_SERVER[$key] = $value;
-}
+$envOverrides = nfseMunicipalBuildEnvOverrides('belem', 'producao', $projectRoot);
+nfseMunicipalApplyEnvOverrides($envOverrides);
 
 $fiscal = new FiscalFacade();
 $nfse = $fiscal->nfse('belem');
@@ -171,8 +161,8 @@ $consulta = null;
 $fonteConsulta = null;
 $protocolo = trim((string) ($options['protocolo'] ?? ''));
 $availability = null;
-$prestadorCnpj = '41954766000192';
-$prestadorIm = '4007197';
+$prestadorCnpj = nfseMunicipalRequiredEnvValue('FISCAL_CNPJ');
+$prestadorIm = nfseMunicipalRequiredEnvValue('FISCAL_IM');
 
 if (trim((string) ($options['source_file'] ?? '')) !== '') {
     $sourceFile = trim((string) $options['source_file']);

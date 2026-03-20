@@ -4,13 +4,77 @@ declare(strict_types=1);
 
 use freeline\FiscalCore\Support\NFSeMunicipalHomologationService;
 
+function nfseMunicipalEnvValue(string $key): ?string
+{
+    $value = $_ENV[$key] ?? getenv($key);
+    if (!is_string($value)) {
+        return null;
+    }
+
+    $value = trim($value);
+
+    return $value === '' ? null : $value;
+}
+
+function nfseMunicipalRequiredEnvValue(string $key): string
+{
+    $value = nfseMunicipalEnvValue($key);
+    if ($value === null) {
+        throw new InvalidArgumentException("Defina {$key} no ambiente ou no arquivo .env antes de executar este script.");
+    }
+
+    return $value;
+}
+
+function nfseMunicipalBuildEnvOverrides(
+    string $municipio,
+    string $ambiente,
+    string $projectRoot,
+    array $extraOverrides = []
+): array {
+    $overrides = [
+        'FISCAL_ENVIRONMENT' => $ambiente,
+        'FISCAL_IM' => nfseMunicipalRequiredEnvValue('FISCAL_IM'),
+        'FISCAL_CERT_PATH' => nfseMunicipalRequiredEnvValue('FISCAL_CERT_PATH'),
+        'FISCAL_CERT_PASSWORD' => (string) (nfseMunicipalEnvValue('FISCAL_CERT_PASSWORD') ?? ''),
+    ];
+
+    $opensslConf = nfseMunicipalEnvValue('OPENSSL_CONF');
+    if ($opensslConf !== null) {
+        $overrides['OPENSSL_CONF'] = $opensslConf;
+    } elseif (strtolower($municipio) === 'belem' && is_file($projectRoot . '/openssl.cnf')) {
+        $overrides['OPENSSL_CONF'] = $projectRoot . '/openssl.cnf';
+    }
+
+    if (strtolower($municipio) === 'joinville') {
+        $overrides['FISCAL_CNPJ'] = nfseMunicipalRequiredEnvValue('FISCAL_CNPJ');
+        $overrides['FISCAL_RAZAO_SOCIAL'] = nfseMunicipalRequiredEnvValue('FISCAL_RAZAO_SOCIAL');
+        $overrides['FISCAL_UF'] = nfseMunicipalRequiredEnvValue('FISCAL_UF');
+    }
+
+    return array_merge($overrides, $extraOverrides);
+}
+
+function nfseMunicipalApplyEnvOverrides(array $envOverrides): void
+{
+    foreach ($envOverrides as $key => $value) {
+        if ($value === null || $value === '') {
+            continue;
+        }
+
+        putenv($key . '=' . $value);
+        $_ENV[$key] = $value;
+        $_SERVER[$key] = $value;
+    }
+}
+
 function nfseMunicipalUsage(string $scriptName, string $municipio, string $ambiente = 'homologacao'): string
 {
     $defaults = nfseMunicipalDefaultTomador($municipio);
 
     return <<<TXT
 Uso:
-  php {$scriptName} [--tomador-doc=00980556236] [--tomador-cep={$defaults['cep']}] [--send] [--debug-http]
+  php {$scriptName} [--tomador-doc=12345678909] [--tomador-cep={$defaults['cep']}] [--send] [--debug-http]
 
 Comportamento:
   --tomador-doc   CPF ou CNPJ do tomador
@@ -30,8 +94,8 @@ TXT;
 
 function nfseMunicipalDefaultTomador(string $municipio): array
 {
-    $documento = '00980556236';
-    $nome = 'JOHNNATHAN VICTOR GONCALVES SABBA';
+    $documento = '12345678909';
+    $nome = 'TOMADOR DE EXEMPLO';
 
     return match (strtolower(trim($municipio))) {
         'belem' => [
