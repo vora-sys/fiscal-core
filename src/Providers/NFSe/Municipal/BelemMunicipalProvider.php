@@ -58,12 +58,17 @@ class BelemMunicipalProvider extends AbstractNFSeProvider implements NFSeOperati
     public function consultarPorRps(array $identificacaoRps): string
     {
         $this->validarIdentificacaoRps($identificacaoRps);
+        $baseRequestXml = $this->montarXmlConsultarNfsePorRps($identificacaoRps);
+        $requestXml = $this->shouldSignOperation('consultar_nfse_rps')
+            ? $this->assinarXml($baseRequestXml, 'consultar_nfse_rps')
+            : $baseRequestXml;
 
         return $this->dispatchSoapOperation(
             'consultar_nfse_rps',
             'ConsultarNfsePorRps',
-            $this->montarXmlConsultarNfsePorRps($identificacaoRps),
-            'consultar_nfse_rps'
+            $requestXml,
+            'consultar_nfse_rps',
+            $baseRequestXml
         );
     }
 
@@ -73,11 +78,17 @@ class BelemMunicipalProvider extends AbstractNFSeProvider implements NFSeOperati
             throw new \InvalidArgumentException('Protocolo do lote é obrigatório para consulta em Belém.');
         }
 
+        $baseRequestXml = $this->montarXmlConsultarLote($protocolo);
+        $requestXml = $this->shouldSignOperation('consultar_lote')
+            ? $this->assinarXml($baseRequestXml, 'consultar_lote')
+            : $baseRequestXml;
+
         return $this->dispatchSoapOperation(
             'consultar_lote',
             'ConsultarLoteRps',
-            $this->montarXmlConsultarLote($protocolo),
-            'consultar_lote'
+            $requestXml,
+            'consultar_lote',
+            $baseRequestXml
         );
     }
 
@@ -494,8 +505,9 @@ class BelemMunicipalProvider extends AbstractNFSeProvider implements NFSeOperati
     private function montarXmlConsultarLote(string $protocolo): string
     {
         $prestador = $this->resolvePrestadorContext();
-
         $dom = new \DOMDocument('1.0', 'UTF-8');
+        $dom->preserveWhiteSpace = false;
+        $dom->formatOutput = false;
         $root = $dom->createElement('ConsultarLoteRpsEnvio');
         $dom->appendChild($root);
 
@@ -513,6 +525,8 @@ class BelemMunicipalProvider extends AbstractNFSeProvider implements NFSeOperati
         $prestador = $this->resolvePrestadorContext($identificacaoRps['prestador'] ?? []);
 
         $dom = new \DOMDocument('1.0', 'UTF-8');
+        $dom->preserveWhiteSpace = false;
+        $dom->formatOutput = false;
         $root = $dom->createElement('ConsultarNfseRpsEnvio');
         $dom->appendChild($root);
 
@@ -564,9 +578,10 @@ class BelemMunicipalProvider extends AbstractNFSeProvider implements NFSeOperati
         string $operationKey,
         string $soapOperation,
         string $requestXml,
-        string $schemaOperation
+        string $schemaOperation,
+        ?string $schemaXml = null
     ): string {
-        $this->assertRequestSchema($requestXml, $schemaOperation);
+        $this->assertRequestSchema($schemaXml ?? $requestXml, $schemaOperation);
 
         $soapEnvelope = $this->montarSoapEnvelope($requestXml, $soapOperation);
         $transportData = $this->transport->send(
@@ -583,6 +598,61 @@ class BelemMunicipalProvider extends AbstractNFSeProvider implements NFSeOperati
         $responseXml = (string) ($transportData['response_xml'] ?? '');
         $parsedResponse = $this->processarResposta($responseXml);
 
+        if ($this->shouldRetryConsultaWithAlternativeSignature($operationKey, $parsedResponse, $schemaXml)) {
+            $certificate = $this->resolveCertificateForConsultaRetry();
+            $attempts = [[
+                'signature_variant' => 'prestador_reference',
+                'request_xml' => $requestXml,
+                'soap_envelope' => $soapEnvelope,
+                'response_xml' => $responseXml,
+                'parsed_response' => $parsedResponse,
+            ]];
+
+            foreach ($this->buildConsultaRetryVariants($operationKey, $certificate, $schemaXml) as $signatureVariant => $alternativeRequestXml) {
+                $alternativeSoapEnvelope = $this->montarSoapEnvelope($alternativeRequestXml, $soapOperation);
+                $alternativeTransportData = $this->transport->send(
+                    $this->resolveSoapEndpoint(),
+                    $alternativeSoapEnvelope,
+                    [
+                        'soap_action' => '',
+                        'timeout' => $this->getTimeout(),
+                        'soap_operation' => $soapOperation,
+                        'operation' => $operationKey,
+                        'retry_signature_variant' => $signatureVariant,
+                    ]
+                );
+
+                $alternativeResponseXml = (string) ($alternativeTransportData['response_xml'] ?? '');
+                $alternativeParsedResponse = $this->processarResposta($alternativeResponseXml);
+
+                $attempts[] = [
+                    'signature_variant' => $signatureVariant,
+                    'request_xml' => $alternativeRequestXml,
+                    'soap_envelope' => $alternativeSoapEnvelope,
+                    'response_xml' => $alternativeResponseXml,
+                    'parsed_response' => $alternativeParsedResponse,
+                ];
+
+                $requestXml = $alternativeRequestXml;
+                $soapEnvelope = $alternativeSoapEnvelope;
+                $transportData = $alternativeTransportData + [
+                    'signature_variant' => $signatureVariant,
+                    'retry_attempts' => $attempts,
+                ];
+                $responseXml = $alternativeResponseXml;
+                $parsedResponse = $alternativeParsedResponse;
+
+                if (!$this->shouldRetryConsultaWithAlternativeSignature($operationKey, $parsedResponse, $schemaXml)) {
+                    break;
+                }
+            }
+
+            $transportData += [
+                'signature_variant' => 'prestador_reference',
+                'retry_attempts' => $attempts,
+            ];
+        }
+
         $this->persistArtifacts(
             $operationKey,
             $requestXml,
@@ -593,6 +663,60 @@ class BelemMunicipalProvider extends AbstractNFSeProvider implements NFSeOperati
         );
 
         return $responseXml;
+    }
+
+    private function shouldRetryConsultaWithAlternativeSignature(
+        string $operationKey,
+        array $parsedResponse,
+        ?string $unsignedRequestXml
+    ): bool {
+        if (!in_array($operationKey, ['consultar_lote', 'consultar_nfse_rps'], true)) {
+            return false;
+        }
+
+        if (!is_string($unsignedRequestXml) || trim($unsignedRequestXml) === '') {
+            return false;
+        }
+
+        $faultMessage = strtolower(trim((string)($parsedResponse['fault']['message'] ?? '')));
+        if ($faultMessage === '') {
+            return false;
+        }
+
+        return str_contains($faultMessage, 'assinatura');
+    }
+
+    private function resolveCertificateForConsultaRetry(): Certificate
+    {
+        $certificate = $this->resolveCertificate();
+        if (!$certificate instanceof Certificate) {
+            throw new \RuntimeException('Certificado digital obrigatório para o provider municipal de Belém.');
+        }
+
+        return $certificate;
+    }
+
+    private function buildConsultaRetryVariants(
+        string $operationKey,
+        Certificate $certificate,
+        string $xml
+    ): array
+    {
+        $variants = [
+            'prestador_embedded' => $this->assinarXmlConsultaMovendoParaPrestador($certificate, $xml),
+        ];
+
+        if ($operationKey === 'consultar_nfse_rps') {
+            $variants['rps_reference'] = $this->assinarXmlConsultaRpsReference($certificate, $xml);
+        }
+
+        $variants += [
+            'root_reference' => $this->assinarXmlConsultaRootReference($certificate, $xml),
+            'whole_document' => $this->assinarXmlConsultaWholeDocument($certificate, $xml),
+            'unsigned' => $xml,
+        ];
+
+        return $variants;
     }
 
     private function persistArtifacts(
@@ -653,14 +777,19 @@ class BelemMunicipalProvider extends AbstractNFSeProvider implements NFSeOperati
         }
     }
 
-    private function appendDocumentoNode(\DOMDocument $dom, \DOMElement $parent, string $documento): void
+    private function appendDocumentoNode(
+        \DOMDocument $dom,
+        \DOMElement $parent,
+        string $documento,
+        ?string $namespace = null
+    ): void
     {
         if (strlen($documento) === 11) {
-            $this->appendXmlNode($dom, $parent, 'Cpf', $documento);
+            $this->appendXmlNode($dom, $parent, 'Cpf', $documento, $namespace);
             return;
         }
 
-        $this->appendXmlNode($dom, $parent, 'Cnpj', $documento);
+        $this->appendXmlNode($dom, $parent, 'Cnpj', $documento, $namespace);
     }
 
     private function appendOptionalDecimal(
@@ -686,6 +815,7 @@ class BelemMunicipalProvider extends AbstractNFSeProvider implements NFSeOperati
 
         return match ($operationKey) {
             'emitir' => $this->assinarXmlEmissao($certificate, $xml),
+            'consultar_lote', 'consultar_nfse_rps' => $this->assinarXmlConsulta($certificate, $xml),
             'cancelar_nfse' => Signer::sign(
                 $certificate,
                 $xml,
@@ -697,6 +827,189 @@ class BelemMunicipalProvider extends AbstractNFSeProvider implements NFSeOperati
             ),
             default => $xml,
         };
+    }
+
+    private function assinarXmlConsulta(Certificate $certificate, string $xml): string
+    {
+        return $this->assinarXmlConsultaNodeReference(
+            $certificate,
+            $xml,
+            'Prestador',
+            'PrestadorConsulta'
+        );
+    }
+
+    private function assinarXmlConsultaRpsReference(Certificate $certificate, string $xml): string
+    {
+        return $this->assinarXmlConsultaNodeReference(
+            $certificate,
+            $xml,
+            'IdentificacaoRps',
+            'IdentificacaoRpsConsulta'
+        );
+    }
+
+    private function assinarXmlConsultaNodeReference(
+        Certificate $certificate,
+        string $xml,
+        string $signedNodeLocalName,
+        string $signedNodeId
+    ): string {
+        $dom = new \DOMDocument('1.0', 'UTF-8');
+        $dom->preserveWhiteSpace = false;
+        $dom->formatOutput = false;
+        if (!@$dom->loadXML($xml)) {
+            throw new \RuntimeException('XML invalido para assinatura da consulta de Belem.');
+        }
+
+        $xpath = new \DOMXPath($dom);
+        $root = $dom->documentElement;
+        $signedNode = $xpath->query("//*[local-name()='{$signedNodeLocalName}']")->item(0);
+
+        if (!$root instanceof \DOMElement || !$signedNode instanceof \DOMElement) {
+            throw new \RuntimeException('Nos obrigatorios para assinatura da consulta de Belem nao encontrados.');
+        }
+
+        if (!$signedNode->hasAttribute('Id')) {
+            $signedNode->setAttribute('Id', $signedNodeId);
+        }
+
+        $this->appendSignatureNode(
+            $dom,
+            $certificate,
+            $root,
+            $signedNode,
+            'Id',
+            OPENSSL_ALGO_SHA1
+        );
+
+        return $dom->saveXML($dom->documentElement) ?: $xml;
+    }
+
+    private function assinarXmlConsultaMovendoParaPrestador(Certificate $certificate, string $xml): string
+    {
+        $signedXml = $this->assinarXmlConsulta($certificate, $xml);
+
+        return $this->relocateSignature($signedXml, 'Prestador', 'InscricaoMunicipal');
+    }
+
+    private function assinarXmlConsultaRootReference(Certificate $certificate, string $xml): string
+    {
+        $dom = new \DOMDocument('1.0', 'UTF-8');
+        $dom->preserveWhiteSpace = false;
+        $dom->formatOutput = false;
+        if (!@$dom->loadXML($xml)) {
+            throw new \RuntimeException('XML invalido para assinatura por raiz da consulta de Belem.');
+        }
+
+        $root = $dom->documentElement;
+        if (!$root instanceof \DOMElement) {
+            throw new \RuntimeException('Raiz do XML nao encontrada para assinatura por raiz da consulta de Belem.');
+        }
+
+        if (!$root->hasAttribute('Id')) {
+            $root->setAttribute('Id', 'ConsultaBelem');
+        }
+
+        $this->appendSignatureNode(
+            $dom,
+            $certificate,
+            $root,
+            $root,
+            'Id',
+            OPENSSL_ALGO_SHA1
+        );
+
+        return $dom->saveXML($dom->documentElement) ?: $xml;
+    }
+
+    private function assinarXmlConsultaWholeDocument(Certificate $certificate, string $xml): string
+    {
+        $dom = new \DOMDocument('1.0', 'UTF-8');
+        $dom->preserveWhiteSpace = false;
+        $dom->formatOutput = false;
+        if (!@$dom->loadXML($xml)) {
+            throw new \RuntimeException('XML invalido para assinatura alternativa da consulta de Belem.');
+        }
+
+        $root = $dom->documentElement;
+        if (!$root instanceof \DOMElement) {
+            throw new \RuntimeException('Raiz do XML nao encontrada para assinatura alternativa da consulta de Belem.');
+        }
+
+        $signatureNode = $dom->createElementNS(self::DSIG_NS, 'Signature');
+        $root->appendChild($signatureNode);
+
+        $signedInfoNode = $dom->createElement('SignedInfo');
+        $signatureNode->appendChild($signedInfoNode);
+
+        $canonicalizationMethodNode = $dom->createElement('CanonicalizationMethod');
+        $canonicalizationMethodNode->setAttribute(
+            'Algorithm',
+            'http://www.w3.org/TR/2001/REC-xml-c14n-20010315'
+        );
+        $signedInfoNode->appendChild($canonicalizationMethodNode);
+
+        $signatureMethodNode = $dom->createElement('SignatureMethod');
+        $signatureMethodNode->setAttribute('Algorithm', 'http://www.w3.org/2000/09/xmldsig#rsa-sha1');
+        $signedInfoNode->appendChild($signatureMethodNode);
+
+        $referenceNode = $dom->createElement('Reference');
+        $referenceNode->setAttribute('URI', '');
+        $signedInfoNode->appendChild($referenceNode);
+
+        $transformsNode = $dom->createElement('Transforms');
+        $referenceNode->appendChild($transformsNode);
+
+        $transform1 = $dom->createElement('Transform');
+        $transform1->setAttribute('Algorithm', 'http://www.w3.org/2000/09/xmldsig#enveloped-signature');
+        $transformsNode->appendChild($transform1);
+
+        $transform2 = $dom->createElement('Transform');
+        $transform2->setAttribute('Algorithm', 'http://www.w3.org/TR/2001/REC-xml-c14n-20010315');
+        $transformsNode->appendChild($transform2);
+
+        $digestMethodNode = $dom->createElement('DigestMethod');
+        $digestMethodNode->setAttribute('Algorithm', 'http://www.w3.org/2000/09/xmldsig#sha1');
+        $referenceNode->appendChild($digestMethodNode);
+
+        $referenceDom = new \DOMDocument('1.0', 'UTF-8');
+        $referenceDom->preserveWhiteSpace = false;
+        $referenceDom->formatOutput = false;
+        $referenceRoot = $referenceDom->importNode($root, true);
+        if (!$referenceRoot instanceof \DOMElement) {
+            throw new \RuntimeException('Falha ao clonar documento da consulta de Belem para assinatura alternativa.');
+        }
+
+        $referenceDom->appendChild($referenceRoot);
+        $referenceXPath = new \DOMXPath($referenceDom);
+        foreach ($referenceXPath->query("//*[local-name()='Signature' and namespace-uri()='" . self::DSIG_NS . "']") as $embeddedSignature) {
+            $embeddedSignature->parentNode?->removeChild($embeddedSignature);
+        }
+
+        $canonical = $referenceRoot->C14N(true, false, null, null);
+        if ($canonical === false) {
+            throw new \RuntimeException('Falha ao canonicalizar documento inteiro na consulta de Belem.');
+        }
+
+        $referenceNode->appendChild($dom->createElement('DigestValue', base64_encode(hash('sha1', $canonical, true))));
+
+        $signedInfoCanonical = $signedInfoNode->C14N(true, false, null, null);
+        if ($signedInfoCanonical === false) {
+            throw new \RuntimeException('Falha ao canonicalizar SignedInfo da assinatura alternativa de Belem.');
+        }
+
+        $signatureValue = base64_encode($certificate->sign($signedInfoCanonical, OPENSSL_ALGO_SHA1));
+        $signatureNode->appendChild($dom->createElement('SignatureValue', $signatureValue));
+
+        $keyInfoNode = $dom->createElement('KeyInfo');
+        $signatureNode->appendChild($keyInfoNode);
+        $x509DataNode = $dom->createElement('X509Data');
+        $keyInfoNode->appendChild($x509DataNode);
+        $x509CertificateNode = $dom->createElement('X509Certificate', $certificate->publicKey->unFormated());
+        $x509DataNode->appendChild($x509CertificateNode);
+
+        return $dom->saveXML($dom->documentElement) ?: $xml;
     }
 
     private function assinarXmlEmissao(Certificate $certificate, string $xml): string
@@ -835,11 +1148,56 @@ class BelemMunicipalProvider extends AbstractNFSeProvider implements NFSeOperati
         return base64_encode(hash($algorithm, $canonical, true));
     }
 
+    private function relocateSignature(string $xml, string $parentLocalName, string $afterLocalName): string
+    {
+        $dom = new \DOMDocument();
+        $dom->preserveWhiteSpace = false;
+        $dom->formatOutput = false;
+        if (!@$dom->loadXML($xml)) {
+            return $xml;
+        }
+
+        $xpath = new \DOMXPath($dom);
+        $signature = $xpath->query("//*[local-name()='Signature' and namespace-uri()='" . self::DSIG_NS . "']")->item(0);
+        $targetParent = $xpath->query("//*[local-name()='{$parentLocalName}']")->item(0);
+
+        if (!$signature instanceof \DOMElement || !$targetParent instanceof \DOMElement) {
+            return $xml;
+        }
+
+        $signature->parentNode?->removeChild($signature);
+
+        $afterNode = null;
+        foreach ($targetParent->childNodes as $child) {
+            if ($child instanceof \DOMElement && $child->localName === $afterLocalName) {
+                $afterNode = $child;
+            }
+        }
+
+        if ($afterNode instanceof \DOMNode && $afterNode->nextSibling instanceof \DOMNode) {
+            $targetParent->insertBefore($signature, $afterNode->nextSibling);
+        } else {
+            $targetParent->appendChild($signature);
+        }
+
+        return $dom->saveXML($dom->documentElement) ?: $xml;
+    }
+
     private function shouldSignOperation(string $operationKey): bool
     {
-        $configured = $this->config['sign_operations'] ?? ['emitir'];
+        $configured = $this->config['sign_operations'] ?? [
+            'emitir',
+            'consultar_lote',
+            'consultar_nfse_rps',
+            'cancelar_nfse',
+        ];
         if (!is_array($configured)) {
-            $configured = ['emitir'];
+            $configured = [
+                'emitir',
+                'consultar_lote',
+                'consultar_nfse_rps',
+                'cancelar_nfse',
+            ];
         }
 
         return in_array($operationKey, $configured, true);
@@ -882,8 +1240,36 @@ class BelemMunicipalProvider extends AbstractNFSeProvider implements NFSeOperati
 
     private function normalizeRequestXmlForSchema(string $requestXml): string
     {
-        if (str_contains($requestXml, 'xmlns="' . self::NFSE_NS . '"')) {
-            return $requestXml;
+        $dom = new \DOMDocument('1.0', 'UTF-8');
+        $dom->preserveWhiteSpace = false;
+        $dom->formatOutput = false;
+
+        if (@$dom->loadXML($requestXml)) {
+            $xpath = new \DOMXPath($dom);
+            foreach ($xpath->query("//*[local-name()='Signature' and namespace-uri()='" . self::DSIG_NS . "']") as $signatureNode) {
+                if ($signatureNode->parentNode instanceof \DOMNode) {
+                    $signatureNode->parentNode->removeChild($signatureNode);
+                }
+            }
+
+            foreach ($xpath->query("//*[local-name()='Prestador']/@Id") as $attributeNode) {
+                if ($attributeNode instanceof \DOMAttr) {
+                    $attributeNode->ownerElement?->removeAttributeNode($attributeNode);
+                }
+            }
+
+            $root = $dom->documentElement;
+            if ($root instanceof \DOMElement && !$root->hasAttribute('xmlns')) {
+                $normalized = $dom->saveXML($root) ?: $requestXml;
+                return preg_replace(
+                    '/^<([A-Za-z0-9_:-]+)/',
+                    '<$1 xmlns="' . self::NFSE_NS . '"',
+                    $normalized,
+                    1
+                ) ?: $normalized;
+            }
+
+            return $dom->saveXML($root) ?: $requestXml;
         }
 
         return preg_replace(

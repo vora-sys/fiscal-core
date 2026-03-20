@@ -75,7 +75,7 @@ class NacionalProvider extends AbstractNFSeProvider implements NFSeNacionalCapab
         }
 
         $xml = $this->buildConsultaXml($chave);
-        return $this->enviarOperacao('consultar', $xml);
+        return $this->enviarOperacao('consultar', $xml, ['id' => $chave]);
     }
 
     public function cancelar(string $chave, string $motivo, ?string $protocolo = null): bool
@@ -85,7 +85,7 @@ class NacionalProvider extends AbstractNFSeProvider implements NFSeNacionalCapab
         }
 
         $xml = $this->buildCancelamentoXml($chave, $motivo, $protocolo);
-        $response = $this->enviarOperacao('cancelar', $xml);
+        $response = $this->enviarOperacao('cancelar', $xml, ['id' => $chave]);
         $parsed = $this->processarResposta($response);
 
         return (bool) ($parsed['sucesso'] ?? false);
@@ -147,6 +147,14 @@ class NacionalProvider extends AbstractNFSeProvider implements NFSeNacionalCapab
 
     public function listarMunicipiosNacionais(bool $forceRefresh = false): array
     {
+        if (isset($this->config['catalog_endpoints']['municipios'])) {
+            return $this->requestCatalogEndpoint(
+                'municipios',
+                [],
+                $forceRefresh
+            );
+        }
+
         return $this->catalogService->listarMunicipios($forceRefresh);
     }
 
@@ -157,6 +165,24 @@ class NacionalProvider extends AbstractNFSeProvider implements NFSeNacionalCapab
         bool $forceRefresh = false
     ): array
     {
+        if (is_bool($codigoServico)) {
+            $forceRefresh = $codigoServico;
+            $codigoServico = null;
+        }
+
+        if (isset($this->config['catalog_endpoints']['aliquotas_municipio'])) {
+            return $this->requestCatalogEndpoint(
+                'aliquotas_municipio',
+                [
+                    'codigo_municipio' => $codigoMunicipio,
+                    'codigoServico' => $codigoServico,
+                    'codigo_servico' => $codigoServico,
+                    'competencia' => $competencia,
+                ],
+                $forceRefresh
+            );
+        }
+
         return $this->catalogService->consultarAliquotasMunicipio(
             $codigoMunicipio,
             $codigoServico,
@@ -167,6 +193,14 @@ class NacionalProvider extends AbstractNFSeProvider implements NFSeNacionalCapab
 
     public function consultarConvenioMunicipio(string $codigoMunicipio, bool $forceRefresh = false): array
     {
+        if (isset($this->config['catalog_endpoints']['convenio_municipio'])) {
+            return $this->requestCatalogEndpoint(
+                'convenio_municipio',
+                ['codigo_municipio' => $codigoMunicipio],
+                $forceRefresh
+            );
+        }
+
         return $this->catalogService->consultarConvenioMunicipio($codigoMunicipio, $forceRefresh);
     }
 
@@ -835,23 +869,25 @@ class NacionalProvider extends AbstractNFSeProvider implements NFSeNacionalCapab
         }
     }
 
-    private function enviarOperacao(string $operacao, string $xml): string
+    private function enviarOperacao(string $operacao, string $xml, array $params = []): string
     {
-        $path = $this->resolveOperationPath($operacao);
-        $gzipBase64 = base64_encode(gzencode($xml));
+        $rawEndpoint = (string)($this->config['endpoints'][$operacao] ?? '');
+        $path = $this->resolveOperationPath($operacao, $params);
+        $method = $this->resolveOperationMethod($operacao);
         $response = '';
 
-        if ($operacao === 'emitir') {
+        if ($operacao === 'emitir' && $this->shouldSendJsonGzipPayload($operacao, $rawEndpoint, $path)) {
+            $gzipBase64 = base64_encode(gzencode($xml));
             $payload = json_encode(['dpsXmlGZipB64' => $gzipBase64], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
             if ($payload === false) {
                 throw new \RuntimeException('Falha ao serializar payload JSON da NFS-e.');
             }
-            $response = $this->requestHttp('POST', $path, $payload, [
+            $response = $this->requestHttp($method, $path, $payload, [
                 'Content-Type: application/json',
                 'Accept: application/json',
             ]);
         } else {
-            $response = $this->requestHttp('POST', $path, $gzipBase64, [
+            $response = $this->requestHttp($method, $path, $method === 'GET' ? null : $xml, [
                 'Content-Type: application/xml',
                 'Accept: application/xml',
             ]);
@@ -864,7 +900,7 @@ class NacionalProvider extends AbstractNFSeProvider implements NFSeNacionalCapab
         return $response;
     }
 
-    private function resolveOperationPath(string $operacao): string
+    private function resolveOperationPath(string $operacao, array $params = []): string
     {
         $defaultMap = [
             'emitir' => '/nfse/emitir',
@@ -883,7 +919,70 @@ class NacionalProvider extends AbstractNFSeProvider implements NFSeNacionalCapab
             throw new \RuntimeException("Endpoint da operação {$operacao} não configurado");
         }
 
-        return str_starts_with($path, '/') ? $path : '/' . $path;
+        return $this->resolveConfiguredEndpoint($path, $params);
+    }
+
+    private function resolveOperationMethod(string $operacao): string
+    {
+        $configured = strtoupper((string)($this->config['operation_methods'][$operacao] ?? ''));
+        if ($configured !== '') {
+            return $configured;
+        }
+
+        return match ($operacao) {
+            'consultar' => 'GET',
+            default => 'POST',
+        };
+    }
+
+    private function resolveConfiguredEndpoint(string $endpoint, array $params = []): string
+    {
+        $resolved = $this->replaceEndpointPlaceholders($endpoint, $params);
+        if (preg_match('/^([a-z0-9_]+):(\/.*)$/i', $resolved, $matches) === 1) {
+            $serviceName = strtolower((string)$matches[1]);
+            $servicePath = (string)$matches[2];
+            $serviceBase = trim((string)($this->config['services'][$serviceName][$this->ambiente] ?? ''));
+            if ($serviceBase === '') {
+                throw new \RuntimeException("Serviço '{$serviceName}' não configurado para o ambiente {$this->ambiente}.");
+            }
+
+            return rtrim($this->normalizeBaseUrl($serviceBase), '/') . $servicePath;
+        }
+
+        return str_starts_with($resolved, '/') || preg_match('#^https?://#i', $resolved) === 1
+            ? $resolved
+            : '/' . $resolved;
+    }
+
+    private function replaceEndpointPlaceholders(string $endpoint, array $params = []): string
+    {
+        foreach ($params as $key => $value) {
+            if ($value === null || $value === '') {
+                continue;
+            }
+
+            $endpoint = str_replace(
+                '{' . $key . '}',
+                rawurlencode((string)$value),
+                $endpoint
+            );
+        }
+
+        return $endpoint;
+    }
+
+    private function shouldSendJsonGzipPayload(string $operacao, string $rawEndpoint, string $resolvedPath): bool
+    {
+        if ($operacao !== 'emitir') {
+            return false;
+        }
+
+        if (isset($this->config['emit_payload_format'])) {
+            return strtolower((string)$this->config['emit_payload_format']) === 'json_gzip';
+        }
+
+        return preg_match('/^[a-z0-9_]+:\//i', $rawEndpoint) === 1
+            || str_contains($resolvedPath, '/api/v1/');
     }
 
     private function requestHttp(string $method, string $path, ?string $body = null, array $headers = []): string
@@ -897,8 +996,11 @@ class NacionalProvider extends AbstractNFSeProvider implements NFSeNacionalCapab
             return $result;
         }
 
-        $baseUrl = $this->normalizeBaseUrl((string)$this->getNationalApiBaseUrl());
-        $url = rtrim($baseUrl, '/') . $path;
+        $isAbsoluteUrl = preg_match('#^https?://#i', $path) === 1;
+        $baseUrl = $isAbsoluteUrl ? null : $this->normalizeBaseUrl((string)$this->getNationalApiBaseUrl());
+        $url = $isAbsoluteUrl
+            ? $path
+            : rtrim((string)$baseUrl, '/') . $path;
         $authHeaders = $this->buildAuthHeaders();
         $allHeaders = array_merge($headers, $authHeaders);
         $requestId = 'nfse_' . bin2hex(random_bytes(6));
@@ -1701,16 +1803,99 @@ class NacionalProvider extends AbstractNFSeProvider implements NFSeNacionalCapab
 
     public function consultarContribuinteCnc(string $cnc): array
     {
-        return [
-            'suportado' => false,
-            'mensagem' => 'Operação consultarContribuinteCnc não suportada por este provider.',
-            'cnc' => $cnc,
-        ];
+        $documento = $this->onlyDigits($cnc);
+        if ($documento === '') {
+            throw new \InvalidArgumentException('Documento é obrigatório para consultar contribuinte CNC.');
+        }
+
+        $endpoint = (string)($this->config['cnc_endpoints']['contribuinte'] ?? '/contribuintes/{cpfCnpj}');
+        $path = $this->resolveConfiguredEndpoint($endpoint, ['cpfCnpj' => $documento]);
+        $response = $this->requestHttp('GET', $path, null, [
+            'Accept: application/json',
+        ]);
+
+        $decoded = json_decode($response, true);
+        if (!is_array($decoded)) {
+            throw new \RuntimeException('Resposta inválida na consulta CNC do contribuinte.');
+        }
+
+        return $decoded;
     }
 
-    public function verificarHabilitacaoCnc(string $cnc): bool
+    public function verificarHabilitacaoCnc(string $cnc, ?string $codigoMunicipio = null): bool
     {
-        return false;
+        $documento = $this->onlyDigits($cnc);
+        if ($documento === '') {
+            throw new \InvalidArgumentException('Documento é obrigatório para verificar habilitação CNC.');
+        }
+
+        $endpoint = (string)($this->config['cnc_endpoints']['habilitacao'] ?? '/contribuintes/{cpfCnpj}/habilitacao');
+        $path = $this->resolveConfiguredEndpoint($endpoint, ['cpfCnpj' => $documento]);
+        if ($codigoMunicipio !== null && trim($codigoMunicipio) !== '') {
+            $separator = str_contains($path, '?') ? '&' : '?';
+            $path .= $separator . 'codigoMunicipio=' . rawurlencode($codigoMunicipio);
+        }
+
+        $response = $this->requestHttp('GET', $path, null, [
+            'Accept: application/json',
+        ]);
+        $decoded = json_decode($response, true);
+        if (!is_array($decoded)) {
+            throw new \RuntimeException('Resposta inválida na verificação de habilitação CNC.');
+        }
+
+        if (isset($decoded['habilitado'])) {
+            return (bool)$decoded['habilitado'];
+        }
+
+        $situacao = strtoupper((string)($decoded['situacao'] ?? ''));
+        return $situacao === 'HABILITADO';
+    }
+
+    /**
+     * @return array{data: array, metadata: array}
+     */
+    private function requestCatalogEndpoint(string $key, array $params, bool $forceRefresh): array
+    {
+        $cacheKey = 'catalog:' . $key . ':' . md5(json_encode($params, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?: '');
+        $cache = new FileCacheStore($this->config['cache_dir'] ?? null);
+        $ttl = (int)($this->config['cache_ttl'] ?? 86400);
+        $cached = $cache->get($cacheKey, $ttl);
+        if (!$forceRefresh && $cached !== null && ($cached['stale'] ?? false) === false) {
+            return [
+                'data' => is_array($cached['value'] ?? null) ? $cached['value'] : [],
+                'metadata' => [
+                    'source' => 'cache',
+                    'stale' => false,
+                    'cache_key' => $cacheKey,
+                ],
+            ];
+        }
+
+        $endpoint = (string)$this->config['catalog_endpoints'][$key];
+        $path = $this->resolveConfiguredEndpoint($endpoint, $params);
+        $response = $this->requestHttp('GET', $path, null, [
+            'Accept: application/json',
+        ]);
+        $decoded = json_decode($response, true);
+        if (!is_array($decoded)) {
+            throw new \RuntimeException("Resposta inválida do catálogo nacional para '{$key}'.");
+        }
+
+        $data = $decoded['data'] ?? $decoded;
+        if (!is_array($data)) {
+            $data = [];
+        }
+        $cache->put($cacheKey, $data);
+
+        return [
+            'data' => $data,
+            'metadata' => [
+                'source' => 'remote',
+                'stale' => false,
+                'cache_key' => $cacheKey,
+            ],
+        ];
     }
 
     public function getConfig(): array

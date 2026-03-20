@@ -3,7 +3,11 @@
 namespace freeline\FiscalCore\Support;
 
 use NFePHP\Common\Certificate;
+use NFePHP\Common\Certificate\CertificationChain;
+use NFePHP\Common\Certificate\PrivateKey;
+use NFePHP\Common\Certificate\PublicKey;
 use NFePHP\Common\Exception\InvalidArgumentException;
+use RuntimeException;
 
 /**
  * Singleton para gerenciamento de certificados digitais
@@ -35,16 +39,26 @@ class CertificateManager
      */
     public function loadFromFile(string $pfxPath, string $password): self
     {
-        if (!file_exists($pfxPath)) {
+        $resolvedPath = $this->resolvePath($pfxPath);
+        if ($resolvedPath === null || !file_exists($resolvedPath)) {
             throw new InvalidArgumentException("Certificado não encontrado: {$pfxPath}");
         }
 
-        $content = file_get_contents($pfxPath);
+        $this->resolveOpenSslConf();
+
+        $content = file_get_contents($resolvedPath);
         if ($content === false) {
-            throw new InvalidArgumentException("Não foi possível ler o certificado: {$pfxPath}");
+            throw new InvalidArgumentException("Não foi possível ler o certificado: {$resolvedPath}");
         }
 
-        return $this->loadFromContent($content, $password);
+        try {
+            $instance = $this->loadFromContent($content, $password);
+            $this->config['cert_path'] = $resolvedPath;
+
+            return $instance;
+        } catch (\Throwable $e) {
+            return $this->loadLegacyFromFile($resolvedPath, $password, $e);
+        }
     }
 
     /**
@@ -83,52 +97,13 @@ class CertificateManager
     {
         $certPath = $_ENV['FISCAL_CERT_PATH'] ?? getenv('FISCAL_CERT_PATH');
         $certPassword = $_ENV['FISCAL_CERT_PASSWORD'] ?? getenv('FISCAL_CERT_PASSWORD');
-        
-        // Sempre armazenar o caminho e senha se disponíveis
-        // if ($certPath) {
-        //     $this->set('certificado.cert_path', $certPath);
-        // }
-        // if ($certPassword) {
-        //     $this->set('certificado.cert_password', $certPassword);
-        // }
-        
-        if ($certPath && $certPassword && file_exists($certPath)) {
+
+        if ($certPath && $certPassword) {
             try {
-                // Usar CertificateManager para carregar o certificado
-                $certManager = CertificateManager::getInstance();
-                $certManager->loadFromFile($certPath, $certPassword);
-                
-                // Certificado carregado com sucesso
-                // $this->set('certificado.carregado', true);
-                // $this->set('certificado.erro', null);
-                
-                // Armazenar informações do certificado
-                // $this->set('certificado.cnpj', $certManager->getCnpj());
-                // $this->set('certificado.razao_social', $certManager->getRazaoSocial());
-                
-                $expirationDate = $certManager->getExpirationDate();
-                if ($expirationDate) {
-                    // $this->set('certificado.valido_ate', $expirationDate->format('Y-m-d'));
-                    // $this->set('certificado.dias_restantes', $certManager->getDaysUntilExpiration());
-                }
-                
-                // $this->set('certificado.valido', $certManager->isValid());
-                
+                $this->loadFromFile((string) $certPath, (string) $certPassword);
             } catch (\Exception $e) {
-                // Log silencioso do erro - não quebra a aplicação
-                // $this->set('certificado.erro', $e->getMessage());
-                // $this->set('certificado.carregado', false);
+                $this->config['load_error'] = $e->getMessage();
             }
-        } else {
-            // Certificado não configurado ou arquivo não existe
-            // if ($certPath && !file_exists($certPath)) {
-            //     // $this->set('certificado.erro', "Arquivo de certificado não encontrado: {$certPath}");
-            // } elseif (!$certPath) {
-            //     $this->set('certificado.erro', 'FISCAL_CERT_PATH não configurado');
-            // } elseif (!$certPassword) {
-            //     $this->set('certificado.erro', 'FISCAL_CERT_PASSWORD não configurado');
-            // }
-            // $this->set('certificado.carregado', false);
         }
     }
 
@@ -253,6 +228,166 @@ class CertificateManager
             return null;
         }
         return $this->certificate->getValidTo();
+    }
+
+    private function loadLegacyFromFile(string $resolvedPath, string $password, \Throwable $previous): self
+    {
+        try {
+            $publicCert = $this->runOpenSslPkcs12Command([
+                'openssl', 'pkcs12', '-legacy', '-clcerts', '-nokeys',
+                '-passin', 'pass:' . $password, '-in', $resolvedPath,
+            ]);
+            $privateKey = $this->runOpenSslPkcs12Command([
+                'openssl', 'pkcs12', '-legacy', '-nocerts', '-nodes',
+                '-passin', 'pass:' . $password, '-in', $resolvedPath,
+            ]);
+            $chain = $this->runOpenSslPkcs12Command([
+                'openssl', 'pkcs12', '-legacy', '-cacerts', '-nokeys',
+                '-passin', 'pass:' . $password, '-in', $resolvedPath,
+            ], true);
+
+            $this->certificate = new Certificate(
+                new PrivateKey($this->extractPrivateKeyPem($privateKey)),
+                new PublicKey($this->extractFirstPemBlock($publicCert, 'CERTIFICATE')),
+                new CertificationChain($this->extractAllPemBlocks($chain, 'CERTIFICATE'))
+            );
+            $this->certificateContent = (string) file_get_contents($resolvedPath);
+            $this->certificatePassword = $password;
+            $this->loadCertificateInfo();
+            $this->config['cert_path'] = $resolvedPath;
+
+            return $this;
+        } catch (\Throwable $legacyException) {
+            throw new InvalidArgumentException(
+                'Erro ao carregar certificado: ' . $previous->getMessage(),
+                0,
+                $legacyException
+            );
+        }
+    }
+
+    private function resolveOpenSslConf(): void
+    {
+        $opensslConf = $_ENV['OPENSSL_CONF'] ?? getenv('OPENSSL_CONF');
+        if (!is_string($opensslConf) || trim($opensslConf) === '') {
+            return;
+        }
+
+        $resolved = $this->resolvePath($opensslConf);
+        if ($resolved === null) {
+            return;
+        }
+
+        $_ENV['OPENSSL_CONF'] = $resolved;
+        putenv('OPENSSL_CONF=' . $resolved);
+    }
+
+    private function resolvePath(string $path): ?string
+    {
+        $normalized = str_replace('\\', '/', trim($path));
+        if ($normalized === '') {
+            return null;
+        }
+
+        $projectRoot = dirname(__DIR__, 2);
+        $candidates = [];
+
+        if (str_starts_with($normalized, '/')) {
+            $candidates[] = $normalized;
+        } else {
+            $candidates[] = getcwd() . '/' . $normalized;
+            $candidates[] = $projectRoot . '/' . ltrim($normalized, './');
+            if (str_contains($normalized, 'certs/')) {
+                $candidates[] = $projectRoot . '/certs/' . basename($normalized);
+            }
+            if (basename($normalized) === 'openssl.cnf') {
+                $candidates[] = $projectRoot . '/openssl.cnf';
+            }
+        }
+
+        foreach ($candidates as $candidate) {
+            $realPath = realpath($candidate);
+            if (is_string($realPath) && $realPath !== '') {
+                return $realPath;
+            }
+        }
+
+        return null;
+    }
+
+    private function runOpenSslPkcs12Command(array $command, bool $allowEmptyOutput = false): string
+    {
+        $descriptorSpec = [
+            1 => ['pipe', 'w'],
+            2 => ['pipe', 'w'],
+        ];
+
+        $process = proc_open($command, $descriptorSpec, $pipes);
+        if (!is_resource($process)) {
+            throw new RuntimeException('Nao foi possivel iniciar o comando openssl para ler o certificado legado.');
+        }
+
+        $stdout = stream_get_contents($pipes[1]);
+        $stderr = stream_get_contents($pipes[2]);
+        fclose($pipes[1]);
+        fclose($pipes[2]);
+
+        $exitCode = proc_close($process);
+        if ($exitCode !== 0) {
+            throw new RuntimeException('Falha ao ler certificado legado com openssl: ' . trim((string) $stderr));
+        }
+
+        $output = trim((string) $stdout);
+        if ($output === '' && !$allowEmptyOutput) {
+            throw new RuntimeException('Saida vazia ao ler certificado legado com openssl.');
+        }
+
+        return $output;
+    }
+
+    private function extractPrivateKeyPem(string $content): string
+    {
+        foreach (['PRIVATE KEY', 'ENCRYPTED PRIVATE KEY', 'RSA PRIVATE KEY'] as $type) {
+            $blocks = $this->extractPemBlocks($content, $type);
+            if ($blocks !== []) {
+                return $blocks[0];
+            }
+        }
+
+        throw new RuntimeException('Bloco PEM de chave privada nao encontrado na saida do openssl.');
+    }
+
+    private function extractFirstPemBlock(string $content, string $type): string
+    {
+        $blocks = $this->extractPemBlocks($content, $type);
+        if ($blocks === []) {
+            throw new RuntimeException("Bloco PEM {$type} nao encontrado na saida do openssl.");
+        }
+
+        return $blocks[0];
+    }
+
+    private function extractAllPemBlocks(string $content, string $type): string
+    {
+        return implode('', $this->extractPemBlocks($content, $type));
+    }
+
+    /**
+     * @return string[]
+     */
+    private function extractPemBlocks(string $content, string $type): array
+    {
+        $pattern = sprintf('/-----BEGIN %1$s-----(.*?)-----END %1$s-----/s', preg_quote($type, '/'));
+        preg_match_all($pattern, $content, $matches);
+
+        if (!isset($matches[0]) || !is_array($matches[0])) {
+            return [];
+        }
+
+        return array_map(
+            static fn (string $block): string => trim($block) . PHP_EOL,
+            array_values(array_filter($matches[0], static fn (string $block): bool => trim($block) !== ''))
+        );
     }
 
     // Previne clonagem e serialização

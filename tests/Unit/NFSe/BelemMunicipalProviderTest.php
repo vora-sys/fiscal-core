@@ -151,6 +151,19 @@ final class BelemMunicipalProviderTest extends TestCase
         $this->assertSame('success', $parsed['status']);
         $this->assertSame('PROTOCOLO-BELEM-2026', $parsed['protocolo']);
         $this->assertSame('1105', $parsed['nfse']['numero']);
+
+        $dom = new DOMDocument();
+        $dom->loadXML((string) $provider->getLastRequestXml());
+        $xpath = new DOMXPath($dom);
+        $xpath->registerNamespace('ds', 'http://www.w3.org/2000/09/xmldsig#');
+        $this->assertSame(
+            '#PrestadorConsulta',
+            $xpath->evaluate('string(//ds:Signature/ds:SignedInfo/ds:Reference/@URI)')
+        );
+        $this->assertSame(
+            'ConsultarLoteRpsEnvio',
+            $xpath->evaluate('local-name(//ds:Signature/parent::*)')
+        );
     }
 
     public function testConsultarNfsePorRpsBuildsSchemaValidRequestAndParsesResponse(): void
@@ -185,6 +198,157 @@ final class BelemMunicipalProviderTest extends TestCase
         $parsed = $provider->getLastResponseData();
         $this->assertSame('success', $parsed['status']);
         $this->assertSame('1105', $parsed['nfse']['numero']);
+
+        $dom = new DOMDocument();
+        $dom->loadXML((string) $provider->getLastRequestXml());
+        $xpath = new DOMXPath($dom);
+        $xpath->registerNamespace('ds', 'http://www.w3.org/2000/09/xmldsig#');
+        $this->assertSame(
+            '#PrestadorConsulta',
+            $xpath->evaluate('string(//ds:Signature/ds:SignedInfo/ds:Reference/@URI)')
+        );
+        $this->assertSame(
+            'ConsultarNfseRpsEnvio',
+            $xpath->evaluate('local-name(//ds:Signature/parent::*)')
+        );
+    }
+
+    public function testConsultarLoteRetriesWithAlternativeSignatureVariantWhenFaultMentionsAssinatura(): void
+    {
+        $faultResponse = <<<'XML'
+<?xml version="1.0" encoding="UTF-8"?>
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+  <soap:Body>
+    <soap:Fault>
+      <faultcode>soap:Server</faultcode>
+      <faultstring>Arquivo enviado com erro na assinatura. / Acerte a assinatura do arquivo.</faultstring>
+    </soap:Fault>
+  </soap:Body>
+</soap:Envelope>
+XML;
+
+        $transport = new class($faultResponse, NFSeBelemMunicipalFixtures::consultarLoteSoapResponse()) implements NFSeSoapTransportInterface {
+            public array $calls = [];
+
+            public function __construct(
+                private readonly string $firstResponse,
+                private readonly string $secondResponse
+            ) {
+            }
+
+            public function send(string $endpoint, string $envelope, array $options = []): array
+            {
+                $this->calls[] = compact('endpoint', 'envelope', 'options');
+
+                return [
+                    'request_xml' => $envelope,
+                    'response_xml' => count($this->calls) === 1 ? $this->firstResponse : $this->secondResponse,
+                    'status_code' => 200,
+                    'headers' => ['Content-Type: text/xml'],
+                ];
+            }
+        };
+
+        $provider = $this->makeProvider($transport);
+        $provider->consultarLote(NFSeBelemMunicipalFixtures::loteProtocolo());
+
+        $this->assertCount(2, $transport->calls);
+        $artifacts = $provider->getLastOperationArtifacts();
+        $this->assertSame('success', $artifacts['parsed_response']['status']);
+        $this->assertSame('prestador_embedded', $artifacts['transport']['signature_variant']);
+        $this->assertCount(2, $artifacts['transport']['retry_attempts']);
+        $this->assertSame(
+            'prestador_reference',
+            $artifacts['transport']['retry_attempts'][0]['signature_variant']
+        );
+        $this->assertSame(
+            'prestador_embedded',
+            $artifacts['transport']['retry_attempts'][1]['signature_variant']
+        );
+        $this->assertStringContainsString(
+            '<Signature xmlns="http://www.w3.org/2000/09/xmldsig#">',
+            $artifacts['request_xml']
+        );
+    }
+
+    public function testConsultarNfsePorRpsRetriesAllSignatureVariantsAndKeepsFailureArtifacts(): void
+    {
+        $faultResponse = <<<'XML'
+<?xml version="1.0" encoding="UTF-8"?>
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+  <soap:Body>
+    <soap:Fault>
+      <faultcode>soap:Server</faultcode>
+      <faultstring>Arquivo enviado com erro na assinatura. / Acerte a assinatura do arquivo.</faultstring>
+    </soap:Fault>
+  </soap:Body>
+</soap:Envelope>
+XML;
+
+        $transport = new class($faultResponse) implements NFSeSoapTransportInterface {
+            public array $calls = [];
+
+            public function __construct(private readonly string $response)
+            {
+            }
+
+            public function send(string $endpoint, string $envelope, array $options = []): array
+            {
+                $this->calls[] = compact('endpoint', 'envelope', 'options');
+
+                return [
+                    'request_xml' => $envelope,
+                    'response_xml' => $this->response,
+                    'status_code' => 500,
+                    'headers' => ['Content-Type: text/xml'],
+                ];
+            }
+        };
+
+        $provider = $this->makeProvider($transport);
+        $responseXml = $provider->consultarPorRps(NFSeBelemMunicipalFixtures::consultaRps());
+
+        $this->assertStringContainsString('faultstring', $responseXml);
+        $this->assertCount(6, $transport->calls);
+
+        $artifacts = $provider->getLastOperationArtifacts();
+        $this->assertSame('error', $artifacts['parsed_response']['status']);
+        $this->assertSame(
+            'Arquivo enviado com erro na assinatura. / Acerte a assinatura do arquivo.',
+            $artifacts['parsed_response']['fault']['message']
+        );
+        $this->assertSame('unsigned', $artifacts['transport']['signature_variant']);
+        $this->assertCount(6, $artifacts['transport']['retry_attempts']);
+        $this->assertSame(
+            [
+                'prestador_reference',
+                'prestador_embedded',
+                'rps_reference',
+                'root_reference',
+                'whole_document',
+                'unsigned',
+            ],
+            array_map(
+                static fn (array $attempt): string => (string) ($attempt['signature_variant'] ?? ''),
+                $artifacts['transport']['retry_attempts']
+            )
+        );
+        $this->assertStringNotContainsString('<Signature', (string) $artifacts['request_xml']);
+        $this->assertStringContainsString('<ConsultarNfseRpsEnvio>', (string) $artifacts['request_xml']);
+
+        $wholeDocumentAttempt = null;
+        foreach ($artifacts['transport']['retry_attempts'] as $attempt) {
+            if (($attempt['signature_variant'] ?? null) === 'whole_document') {
+                $wholeDocumentAttempt = $attempt;
+                break;
+            }
+        }
+
+        $this->assertIsArray($wholeDocumentAttempt);
+        $this->assertStringNotContainsString(
+            '<DigestValue>2jmj7l5rSw0yVb/vlWAYkK/YBwk=</DigestValue>',
+            (string) ($wholeDocumentAttempt['request_xml'] ?? '')
+        );
     }
 
     public function testCancelarNfseBuildsSchemaValidRequestAndParsesResponse(): void
@@ -449,8 +613,38 @@ final class BelemMunicipalProviderTest extends TestCase
 
     private function schemaCompatibleXml(string $xml): string
     {
-        if (str_contains($xml, 'xmlns="http://www.abrasf.org.br/nfse.xsd"')) {
-            return $xml;
+        $dom = new DOMDocument('1.0', 'UTF-8');
+        $dom->preserveWhiteSpace = false;
+        $dom->formatOutput = false;
+
+        if (@$dom->loadXML($xml)) {
+            $xpath = new DOMXPath($dom);
+            foreach ($xpath->query("//*[local-name()='Signature' and namespace-uri()='http://www.w3.org/2000/09/xmldsig#']") as $signatureNode) {
+                if ($signatureNode->parentNode instanceof DOMNode) {
+                    $signatureNode->parentNode->removeChild($signatureNode);
+                }
+            }
+
+            foreach ($xpath->query("//*[local-name()='Prestador']/@Id") as $attributeNode) {
+                if ($attributeNode instanceof DOMAttr) {
+                    $attributeNode->ownerElement?->removeAttributeNode($attributeNode);
+                }
+            }
+
+            $root = $dom->documentElement;
+            if ($root instanceof DOMElement) {
+                $normalized = $dom->saveXML($root) ?: $xml;
+                if (str_contains($normalized, 'xmlns="http://www.abrasf.org.br/nfse.xsd"')) {
+                    return $normalized;
+                }
+
+                return preg_replace(
+                    '/^<([A-Za-z0-9_:-]+)/',
+                    '<$1 xmlns="http://www.abrasf.org.br/nfse.xsd"',
+                    $normalized,
+                    1
+                ) ?: $normalized;
+            }
         }
 
         return preg_replace(

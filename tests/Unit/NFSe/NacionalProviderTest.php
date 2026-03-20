@@ -20,8 +20,8 @@ class NacionalProviderTest extends TestCase
         $this->assertStringContainsString('<Sucesso>true</Sucesso>', $response);
         $this->assertSame('POST', $calls[0]['method']);
         $this->assertSame('/nfse', $calls[0]['path']);
-        $this->assertStringContainsString('<GerarNfseEnvio', $calls[0]['body']);
-        $this->assertStringContainsString('InfDeclaracaoPrestacaoServico', $calls[0]['body']);
+        $this->assertStringContainsString('<NFSe', (string) $calls[0]['body']);
+        $this->assertStringContainsString('infDPS', (string) $calls[0]['body']);
     }
 
     public function test_cancelar_retorna_true_quando_resposta_indica_sucesso(): void
@@ -42,7 +42,7 @@ class NacionalProviderTest extends TestCase
 
     public function test_consultar_retorno_compnfse_com_xml_real(): void
     {
-        $xmlReferencia = file_get_contents(__DIR__ . '/../../../ConsultaNfseExterno.xml');
+        $xmlReferencia = file_get_contents(__DIR__ . '/../../Fixtures/belem/retorno_lista_nfse_sanitizado.xml');
         $this->assertNotFalse($xmlReferencia);
 
         $provider = new NacionalProvider($this->buildConfig(
@@ -65,7 +65,7 @@ class NacionalProviderTest extends TestCase
     {
         $calls = [];
         $config = $this->buildConfig(function ($method, $path, $body, $headers = []) use (&$calls) {
-            $calls[] = compact('method', 'path');
+            $calls[] = compact('method', 'path', 'body');
             return '<Resposta><Sucesso>true</Sucesso></Resposta>';
         });
         $config['services'] = [
@@ -80,6 +80,9 @@ class NacionalProviderTest extends TestCase
         $provider->emitir($this->dadosValidos());
 
         $this->assertSame('https://adn.producaorestrita.nfse.gov.br/api/v1/nfse', $calls[0]['path']);
+        $payload = json_decode((string) $calls[0]['body'], true);
+        $this->assertIsArray($payload);
+        $this->assertArrayHasKey('dpsXmlGZipB64', $payload);
     }
 
     public function test_catalogo_resolve_rota_por_servico_configurado(): void
@@ -88,7 +91,7 @@ class NacionalProviderTest extends TestCase
         $config = $this->buildConfig(function ($method, $path, $body = null, $headers = []) use (&$calls) {
             $calls[] = compact('method', 'path');
             if ($method === 'GET') {
-                return ['data' => [['codigo_municipio' => '3550308']]];
+                return json_encode(['data' => [['codigo_municipio' => '3550308']]], JSON_UNESCAPED_UNICODE);
             }
 
             return '<Resposta><Sucesso>true</Sucesso></Resposta>';
@@ -110,7 +113,7 @@ class NacionalProviderTest extends TestCase
 
         $provider = new NacionalProvider($config);
         $provider->listarMunicipiosNacionais(true);
-        $provider->consultarAliquotasMunicipio('3550308', true);
+        $provider->consultarAliquotasMunicipio('3550308', null, null, true);
 
         $this->assertSame('https://adn.producaorestrita.nfse.gov.br/cnc/municipio/municipios', $calls[0]['path']);
         $this->assertSame('https://adn.producaorestrita.nfse.gov.br/cnc/consulta/municipios/3550308/aliquotas', $calls[1]['path']);
@@ -173,7 +176,7 @@ class NacionalProviderTest extends TestCase
         $habilitacao = $provider->verificarHabilitacaoCnc('11.222.333/0001-81', '4106902');
 
         $this->assertTrue($contribuinte['habilitado']);
-        $this->assertTrue($habilitacao['habilitado']);
+        $this->assertTrue($habilitacao);
         $this->assertSame('/contribuintes/11222333000181', $calls[0]['path']);
         $this->assertSame('/contribuintes/11222333000181/habilitacao?codigoMunicipio=4106902', $calls[1]['path']);
     }

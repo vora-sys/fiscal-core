@@ -8,6 +8,7 @@ use freeline\FiscalCore\Contracts\NFSeOperationalIntrospectionInterface;
 use freeline\FiscalCore\Contracts\NFSeProviderConfigInterface;
 use freeline\FiscalCore\Support\NFSeProviderResolver;
 use freeline\FiscalCore\Support\ProviderRegistry;
+use NFePHP\Common\Certificate;
 
 class NFSeAdapter implements NotaServicoInterface
 {
@@ -50,6 +51,9 @@ class NFSeAdapter implements NotaServicoInterface
             'routing_mode' => $routingMode,
             'parsed_response' => $provider instanceof NFSeOperationalIntrospectionInterface
                 ? $provider->getLastResponseData()
+                : null,
+            'artifacts' => $provider instanceof NFSeOperationalIntrospectionInterface
+                ? $provider->getLastOperationArtifacts()
                 : null,
         ];
         $this->lastEmissionInfo = $info;
@@ -221,6 +225,10 @@ class NFSeAdapter implements NotaServicoInterface
             'aliquota_format' => $this->provider->getAliquotaFormat(),
             'routing_rules' => $routingRules,
             'supported_operations' => $supportedOperations,
+            'certificate_loaded' => (($this->provider->getConfig()['certificate'] ?? null) instanceof Certificate),
+            'prestador_runtime' => is_array($this->provider->getConfig()['prestador'] ?? null)
+                ? $this->provider->getConfig()['prestador']
+                : null,
         ];
     }
 

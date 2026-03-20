@@ -1,12 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <testsuites>
-  <testsuite name="NFSeMunicipalHomologationRealTest" file="/Users/johnsabba/Projects/Freeline/fiscal-core/tests/Integration/NFSeMunicipalHomologationRealTest.php" tests="1" assertions="5" errors="0" failures="1" skipped="0" time="1.221422">
-    <testcase name="testJoinvilleRealHomologationSend" file="/Users/johnsabba/Projects/Freeline/fiscal-core/tests/Integration/NFSeMunicipalHomologationRealTest.php" line="54" class="NFSeMunicipalHomologationRealTest" classname="NFSeMunicipalHomologationRealTest" assertions="5" time="1.221422">
-      <failure type="PHPUnit\Framework\AssertionFailedError">NFSeMunicipalHomologationRealTest::testJoinvilleRealHomologationSend
-joinville: retorno não autorizado. status=invalid_xml. detalhes=Resposta XML inválida do webservice de Joinville. | Endpoint de Joinville retornou HTTP 502 com HTML de gateway/proxy, antes de devolver XML NFSe.
-
-/Users/johnsabba/Projects/Freeline/fiscal-core/tests/Integration/NFSeMunicipalHomologationRealTest.php:125
-/Users/johnsabba/Projects/Freeline/fiscal-core/tests/Integration/NFSeMunicipalHomologationRealTest.php:80</failure>
-    </testcase>
+  <testsuite name="NFSeBelemRoutingTest" file="/Users/johnsabba/Projects/Freeline/fiscal-core/tests/Integration/Adapter/NFSeBelemRoutingTest.php" tests="11" assertions="53" errors="0" failures="0" skipped="0" time="0.085982">
+    <testcase name="testBelemMeiRoutesAutomaticallyToNationalProvider" file="/Users/johnsabba/Projects/Freeline/fiscal-core/tests/Integration/Adapter/NFSeBelemRoutingTest.php" line="24" class="NFSeBelemRoutingTest" classname="NFSeBelemRoutingTest" assertions="4" time="0.028209"/>
+    <testcase name="testBelemRejectsEmissionWhenMeiClassificationIsMissing" file="/Users/johnsabba/Projects/Freeline/fiscal-core/tests/Integration/Adapter/NFSeBelemRoutingTest.php" line="51" class="NFSeBelemRoutingTest" classname="NFSeBelemRoutingTest" assertions="2" time="0.001909"/>
+    <testcase name="testBelemMunicipalConsultAndCancelUseMunicipalProviderCapabilities" file="/Users/johnsabba/Projects/Freeline/fiscal-core/tests/Integration/Adapter/NFSeBelemRoutingTest.php" line="61" class="NFSeBelemRoutingTest" classname="NFSeBelemRoutingTest" assertions="7" time="0.029519"/>
+    <testcase name="testBelemFacadeIncludesMunicipalOperationMetadata" file="/Users/johnsabba/Projects/Freeline/fiscal-core/tests/Integration/Adapter/NFSeBelemRoutingTest.php" line="106" class="NFSeBelemRoutingTest" classname="NFSeBelemRoutingTest" assertions="4" time="0.004555"/>
+    <testcase name="testBelemFacadeEmitirCompletoFallsBackToConsultarLoteAndReturnsOfficialUrl" file="/Users/johnsabba/Projects/Freeline/fiscal-core/tests/Integration/Adapter/NFSeBelemRoutingTest.php" line="145" class="NFSeBelemRoutingTest" classname="NFSeBelemRoutingTest" assertions="7" time="0.003683"/>
+    <testcase name="testBelemFacadeEmitirCompletoFallsBackToConsultarPorRpsWhenLoteHasNoNfseAndReturnsOfficialUrl" file="/Users/johnsabba/Projects/Freeline/fiscal-core/tests/Integration/Adapter/NFSeBelemRoutingTest.php" line="187" class="NFSeBelemRoutingTest" classname="NFSeBelemRoutingTest" assertions="6" time="0.003810"/>
+    <testcase name="testBelemFacadeEmitirCompletoReturnsPartialWhenConsultationDoesNotResolveNfse" file="/Users/johnsabba/Projects/Freeline/fiscal-core/tests/Integration/Adapter/NFSeBelemRoutingTest.php" line="226" class="NFSeBelemRoutingTest" classname="NFSeBelemRoutingTest" assertions="6" time="0.003862"/>
+    <testcase name="testBelemFacadeConsultarDisponibilidadeByProtocoloReturnsOfficialUrl" file="/Users/johnsabba/Projects/Freeline/fiscal-core/tests/Integration/Adapter/NFSeBelemRoutingTest.php" line="264" class="NFSeBelemRoutingTest" classname="NFSeBelemRoutingTest" assertions="6" time="0.001502"/>
+    <testcase name="testBelemFacadeConsultarDisponibilidadeFallsBackToRpsWhenLoteHasNoNfse" file="/Users/johnsabba/Projects/Freeline/fiscal-core/tests/Integration/Adapter/NFSeBelemRoutingTest.php" line="302" class="NFSeBelemRoutingTest" classname="NFSeBelemRoutingTest" assertions="5" time="0.005690"/>
+    <testcase name="testBelemFacadeConsultarDisponibilidadeReturnsPendenteWhenNoNfseIsAvailable" file="/Users/johnsabba/Projects/Freeline/fiscal-core/tests/Integration/Adapter/NFSeBelemRoutingTest.php" line="343" class="NFSeBelemRoutingTest" classname="NFSeBelemRoutingTest" assertions="4" time="0.001882"/>
+    <testcase name="testBelemFacadeGerarDanfseReturnsExplicitUnsupportedError" file="/Users/johnsabba/Projects/Freeline/fiscal-core/tests/Integration/Adapter/NFSeBelemRoutingTest.php" line="376" class="NFSeBelemRoutingTest" classname="NFSeBelemRoutingTest" assertions="2" time="0.001361"/>
   </testsuite>
 </testsuites>

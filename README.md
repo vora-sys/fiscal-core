@@ -132,6 +132,12 @@ php examples/avancado/02-error-handling.php
 # Homologação municipal segura
 php examples/homologacao/01-emitir-belem-real.php
 php examples/homologacao/02-emitir-joinville-real.php
+php examples/homologacao/03-emitir-belem-completo.php
+php examples/homologacao/consulta.php
+
+# Produção Belém: emissão, disponibilidade e URL oficial
+php examples/producao/01-emitir-belem-real.php
+php examples/producao/02-consultar-e-imprimir-belem.php --protocolo=059138577 --rps-numero=164344
 
 # Ou sobrescrevendo documento/CEP do tomador
 php examples/homologacao/01-emitir-belem-real.php --tomador-doc=00980556236 --tomador-cep=66065112
@@ -174,6 +180,7 @@ export IBPT_UF="SP"
 - O catálogo municipal atual está em `config/nfse/`
 - `FISCAL_IM` continua obrigatório para emissões municipais reais
 - A consulta pública de CNPJ ajuda com razão social/contato/endereço, mas não fornece inscrição municipal
+- Para Belém, o DANFSe é disponibilizado pela prefeitura em URL oficial; a biblioteca retorna status/disponibilidade e a `danfse_url`
 
 ## Uso Detalhado
 
@@ -229,7 +236,36 @@ $consulta = $nfse->consultarPorRps([
 ]);
 ```
 
-### 4) **Consultas Públicas**
+### 4) **NFSe municipal pronta para uso**
+
+```php
+use freeline\FiscalCore\Facade\FiscalFacade;
+
+$fiscal = new FiscalFacade();
+$nfse = $fiscal->nfse('belem');
+
+$resultado = $nfse->emitirCompleto($dadosServico);
+if ($resultado->isSuccess()) {
+    echo $resultado->getData('flow_status');
+    echo $resultado->getData('nfse')['numero'] ?? '';
+    echo $resultado->getData('danfse')['filename'] ?? '';
+}
+```
+
+### 5) **DANFSe municipal**
+
+```php
+use freeline\FiscalCore\Facade\NFSeFacade;
+
+$nfse = new NFSeFacade('belem');
+$danfse = $nfse->gerarDanfse($xmlNfse);
+
+if ($danfse->isSuccess()) {
+    $pdfBase64 = $danfse->getData('pdf_base64');
+}
+```
+
+### 6) **Consultas Públicas**
 
 ```php
 use Fiscal\Facade\FiscalFacade;

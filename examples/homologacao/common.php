@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 use freeline\FiscalCore\Support\NFSeMunicipalHomologationService;
 
-function nfseMunicipalUsage(string $scriptName, string $municipio): string
+function nfseMunicipalUsage(string $scriptName, string $municipio, string $ambiente = 'homologacao'): string
 {
     $defaults = nfseMunicipalDefaultTomador($municipio);
 
@@ -15,7 +15,7 @@ Uso:
 Comportamento:
   --tomador-doc   CPF ou CNPJ do tomador
   --tomador-cep   CEP do tomador para preencher logradouro, bairro e municipio via consulta de CEP
-  --send          Envia de verdade para homologacao
+  --send          Envia de verdade para {$ambiente}
   --debug-http    Liga log HTTP mascarado do provider
 
 Defaults deste script:
@@ -24,7 +24,7 @@ Defaults deste script:
   cep: {$defaults['cep']}
 
 Sem --send, o script executa somente preview seguro.
-Script preparado para {$municipio}.
+Script preparado para {$municipio} em {$ambiente}.
 TXT;
 }
 
@@ -135,12 +135,13 @@ function nfseMunicipalPrintResult(array $result): void
     echo json_encode($result['parsed_response'], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) . PHP_EOL;
 }
 
-function nfseMunicipalRunScript(string $municipio, array $argv, array $envOverrides): int
+function nfseMunicipalRunScript(string $municipio, array $argv, array $envOverrides, array $scriptOptions = []): int
 {
     $options = nfseMunicipalParseOptions($argv);
     $defaults = nfseMunicipalDefaultTomador($municipio);
+    $ambiente = (string) ($scriptOptions['ambiente'] ?? ($envOverrides['FISCAL_ENVIRONMENT'] ?? 'homologacao'));
     if (($options['help'] ?? false) === true) {
-        echo nfseMunicipalUsage(basename((string) $argv[0]), $municipio) . PHP_EOL;
+        echo nfseMunicipalUsage(basename((string) $argv[0]), $municipio, $ambiente) . PHP_EOL;
         return 0;
     }
 
@@ -152,7 +153,16 @@ function nfseMunicipalRunScript(string $municipio, array $argv, array $envOverri
         'debug_http' => $options['debug_http'],
         'env_overrides' => $envOverrides,
         'tomador_defaults' => $defaults,
+        'allow_production' => in_array(strtolower($ambiente), ['producao', 'production', 'prod'], true),
     ];
+
+    if (is_array($scriptOptions['payload_overrides'] ?? null)) {
+        $serviceOptions['payload_overrides'] = $scriptOptions['payload_overrides'];
+    }
+
+    if (is_array($scriptOptions['prestador_options'] ?? null)) {
+        $serviceOptions['prestador_options'] = $scriptOptions['prestador_options'];
+    }
     if (isset($options['tomador_cep']) && $options['tomador_cep'] !== '') {
         $serviceOptions['tomador_defaults']['cep'] = $options['tomador_cep'];
     }
@@ -180,4 +190,9 @@ function nfseMunicipalRunScript(string $municipio, array $argv, array $envOverri
         fwrite(STDERR, 'Erro: ' . $e->getMessage() . PHP_EOL);
         return 1;
     }
+}
+
+function nfseConsultaRunScript(string $municipio, array $argv, array $envOverrides, array $rps)
+{
+    // Implementation for consulta script
 }

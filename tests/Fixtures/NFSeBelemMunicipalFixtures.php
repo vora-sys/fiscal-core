@@ -60,7 +60,7 @@ final class NFSeBelemMunicipalFixtures
                 'iss_retido' => false,
                 'exigibilidade_iss' => '1',
             ],
-            'valor_servicos' => 3000.00,
+            'valor_servicos' => 10.00,
         ];
 
         return self::arrayMergeRecursiveDistinct($base, $overrides);
@@ -149,7 +149,12 @@ final class NFSeBelemMunicipalFixtures
             'codigo_municipio' => '1501402',
         ];
         $config['certificate'] = self::makeCertificate();
-        $config['sign_operations'] = ['emitir'];
+        $config['sign_operations'] = [
+            'emitir',
+            'consultar_lote',
+            'consultar_nfse_rps',
+            'cancelar_nfse',
+        ];
 
         return self::arrayMergeRecursiveDistinct($config, $overrides);
     }

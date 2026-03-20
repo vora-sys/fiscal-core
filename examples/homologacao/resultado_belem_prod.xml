@@ -1,23 +1,23 @@
-<soap:Envelope xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\">
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
     <soap:Body>
-        <ns4:RecepcionarLoteRpsSincronoResponse xmlns:ns2=\"http://www.w3.org/2000/09/xmldsig#\"
-            xmlns:ns3=\"http://www.abrasf.org.br/nfse.xsd\"
-            xmlns:ns4=\"http://nfse.abrasf.org.br\">
+        <ns4:RecepcionarLoteRpsSincronoResponse xmlns:ns2="http://www.w3.org/2000/09/xmldsig#"
+            xmlns:ns3="http://www.abrasf.org.br/nfse.xsd"
+            xmlns:ns4="http://nfse.abrasf.org.br">
             <EnviarLoteRpsSincronoResposta>
-                <NumeroLote>122607</NumeroLote>
-                <DataRecebimento>2026-03-19T09:26:08</DataRecebimento>
-                <Protocolo>056412878</Protocolo>
+                <NumeroLote>3</NumeroLote>
+                <DataRecebimento>2026-03-19T10:09:18</DataRecebimento>
+                <Protocolo>056412880</Protocolo>
                 <ListaNfse>
                     <CompNfse>
                         <Nfse>
-                            <InfNfse Id=\"385180577\">
-                                <Numero>903</Numero>
-                                <CodigoVerificacao>3CcCSsQTs</CodigoVerificacao>
-                                <DataEmissao>2026-03-19T09:26:10</DataEmissao>
+                            <InfNfse Id="385180579">
+                                <Numero>905</Numero>
+                                <CodigoVerificacao>OclSuSuTq</CodigoVerificacao>
+                                <DataEmissao>2026-03-19T10:09:20</DataEmissao>
                                 <ValoresNfse>
-                                    <BaseCalculo>3000.00</BaseCalculo>
-                                    <ValorIss>150.00</ValorIss>
-                                    <ValorLiquidoNfse>3000.00</ValorLiquidoNfse>
+                                    <BaseCalculo>10.00</BaseCalculo>
+                                    <ValorIss>0.50</ValorIss>
+                                    <ValorLiquidoNfse>10.00</ValorLiquidoNfse>
                                 </ValoresNfse>
                                 <PrestadorServico>
                                     <IdentificacaoPrestador>
@@ -49,8 +49,8 @@
                                     <InfDeclaracaoPrestacaoServico>
                                         <Rps>
                                             <IdentificacaoRps>
-                                                <Numero>122607</Numero>
-                                                <Serie>RPS</Serie>
+                                                <Numero>3</Numero>
+                                                <Serie>1</Serie>
                                                 <Tipo>1</Tipo>
                                             </IdentificacaoRps>
                                             <Status>1</Status>
@@ -58,7 +58,7 @@
                                         <Competencia>2026-03-01</Competencia>
                                         <Servico>
                                             <Valores>
-                                                <ValorServicos>3000.00</ValorServicos>
+                                                <ValorServicos>10.00</ValorServicos>
                                                 <ValorDeducoes>0.0</ValorDeducoes>
                                                 <ValorPis>0.00</ValorPis>
                                                 <ValorCofins>0.00</ValorCofins>
@@ -74,7 +74,7 @@
                                             <IssRetido>2</IssRetido>
                                             <ItemListaServico>0107</ItemListaServico>
                                             <CodigoCnae>620910000</CodigoCnae>
-                                            <Discriminacao>Servicos de tecnologia da informacao em homologacao.</Discriminacao>
+                                            <Discriminacao>2 (DOIS) USUARIOS DEMANDER.</Discriminacao>
                                             <CodigoMunicipio>1501402</CodigoMunicipio>
                                             <ExigibilidadeISS>1</ExigibilidadeISS>
                                         </Servico>
@@ -83,14 +83,13 @@
                                                 <CpfCnpj>
                                                     <Cpf>00980556236</Cpf>
                                                 </CpfCnpj>
-                                                <InscricaoMunicipal></InscricaoMunicipal>
                                             </IdentificacaoTomador>
-                                            <RazaoSocial>JOHNNATHAN VICTOR GONCALVES SABBA</RazaoSocial>
+                                            <RazaoSocial>Johnnathan Victor g Sabba</RazaoSocial>
                                             <Endereco>
-                                                <Endereco>Avenida Jose Bonifacio</Endereco>
+                                                <Endereco>Avenida José Bonifácio</Endereco>
                                                 <Numero>0</Numero>
                                                 <Complemento>S/N null</Complemento>
-                                                <Bairro>Guama</Bairro>
+                                                <Bairro>Guamá</Bairro>
                                                 <CodigoMunicipio>1501402</CodigoMunicipio>
                                                 <Uf>PA</Uf>
                                                 <CodigoPais>105</CodigoPais>

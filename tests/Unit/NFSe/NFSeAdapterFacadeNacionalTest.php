@@ -275,11 +275,11 @@ class NFSeAdapterFacadeNacionalTest extends TestCase
         $this->assertTrue($aliquotas->isSuccess());
         $this->assertSame(2.0, $aliquotas->getData()[0]['aliquota']);
 
-        $contribuinte = $facade->consultarContribuinteCnc('nfse_nacional', '11222333000181');
-        $this->assertTrue($contribuinte->isSuccess());
+        $contribuinte = $adapter->consultarContribuinteCnc('11222333000181');
+        $this->assertFalse($contribuinte['suportado']);
+        $this->assertSame('11222333000181', $contribuinte['cnc']);
 
-        $habilitacao = $facade->verificarHabilitacaoCnc('4106902', '11222333000181');
-        $this->assertTrue($habilitacao->isSuccess());
-        $this->assertSame('4106902', $habilitacao->getData('codigoMunicipio'));
+        $habilitacao = $adapter->verificarHabilitacaoCnc('11222333000181');
+        $this->assertFalse($habilitacao);
     }
 }

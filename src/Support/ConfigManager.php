@@ -317,6 +317,16 @@ class ConfigManager
         $this->config = $this->defaults;
         $this->autoLoadConfiguration();
     }
+
+    public function reloadFromCurrentEnvironment(): void
+    {
+        $this->autoLoaded = false;
+        $this->config = $this->defaults;
+        $this->loadFromEnvironment();
+        $this->loadFromLaravelConfig();
+        $this->autoLoadCertificate();
+        $this->autoLoaded = true;
+    }
     
     /**
      * Obtém a instância do CertificateManager pronta para uso

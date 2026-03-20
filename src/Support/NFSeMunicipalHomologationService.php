@@ -74,7 +74,7 @@ final class NFSeMunicipalHomologationService
             $resolved[$pathKey] = $resolvedPath;
         }
 
-        $configManager->reload();
+        $configManager->reloadFromCurrentEnvironment();
         CertificateManager::reload();
         ProviderRegistry::getInstance()->reload();
 
@@ -116,13 +116,31 @@ final class NFSeMunicipalHomologationService
         );
 
         $configManager = ConfigManager::getInstance();
-        if (!$configManager->isHomologation()) {
-            throw new RuntimeException('Os scripts reais foram preparados apenas para homologacao.');
+        if (
+            !$configManager->isHomologation()
+            && !($options['allow_production'] ?? false)
+        ) {
+            throw new RuntimeException('Execucao em producao exige allow_production=true no script real.');
         }
 
-        $certificate = $this->resolveCertificate();
-
         $empresaConfig = $configManager->getEmpresaConfig();
+        if (
+            $meta['provider_key'] !== ProviderRegistry::NFSE_NATIONAL_KEY
+            && trim((string) ($empresaConfig['inscricao_municipal'] ?? '')) === ''
+        ) {
+            throw new InvalidArgumentException('FISCAL_IM é obrigatório para emissão NFSe municipal.');
+        }
+
+        $certificate = $this->resolveCertificate(
+            $bootstrap['resolved_paths']['FISCAL_CERT_PATH'] ?? null,
+            (string) (
+                $options['env_overrides']['FISCAL_CERT_PASSWORD']
+                ?? $_ENV['FISCAL_CERT_PASSWORD']
+                ?? getenv('FISCAL_CERT_PASSWORD')
+                ?? ''
+            )
+        );
+
         $prestador = $factory->buildPrestador(
             $municipio,
             $certificate,
@@ -197,6 +215,7 @@ final class NFSeMunicipalHomologationService
         $config = $registry->getConfig($context['meta']['provider_key']);
         $config['certificate'] = $context['certificate'];
         $config['prestador'] = $context['prestador'];
+        $config['ambiente'] = $context['bootstrap']['ambiente'];
 
         if ($context['debug_http']) {
             $config['debug_http'] = true;
@@ -212,7 +231,7 @@ final class NFSeMunicipalHomologationService
 
         $providerClass = $config['provider_class'] ?? null;
         if (!is_string($providerClass) || $providerClass === '' || !class_exists($providerClass)) {
-            throw new RuntimeException('Provider class municipal nao encontrada para homologacao.');
+            throw new RuntimeException('Provider class municipal nao encontrada para execucao real.');
         }
 
         return new $providerClass($config);
@@ -326,7 +345,7 @@ final class NFSeMunicipalHomologationService
         return $warnings;
     }
 
-    private function resolveCertificate(): Certificate
+    private function resolveCertificate(?string $preferredPath = null, ?string $preferredPassword = null): Certificate
     {
         $certificateManager = CertificateManager::getInstance();
         $certificate = $certificateManager->getCertificate();
@@ -334,8 +353,8 @@ final class NFSeMunicipalHomologationService
             return $certificate;
         }
 
-        $path = $_ENV['FISCAL_CERT_PATH'] ?? getenv('FISCAL_CERT_PATH');
-        $password = $_ENV['FISCAL_CERT_PASSWORD'] ?? getenv('FISCAL_CERT_PASSWORD');
+        $path = $preferredPath ?: ($_ENV['FISCAL_CERT_PATH'] ?? getenv('FISCAL_CERT_PATH'));
+        $password = $preferredPassword ?: ($_ENV['FISCAL_CERT_PASSWORD'] ?? getenv('FISCAL_CERT_PASSWORD'));
         if (!is_string($path) || trim($path) === '' || !is_string($password) || $password === '') {
             throw new RuntimeException('Certificado digital obrigatorio para emissao NFSe municipal.');
         }

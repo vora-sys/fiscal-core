@@ -21,7 +21,8 @@
     "nfephp-org/sped-gtin" : "^1.0",
     "nfephp-org/sped-da": "^1.1",
     "brazanation/documents": "^2.1",
-    "andreoneres/brasilapi-php": "^1.2"
+    "andreoneres/brasilapi-php": "^1.2",
+    "dompdf/dompdf": "^3.1"
 
   },
   "require-dev": {

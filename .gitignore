@@ -28,3 +28,4 @@ tests/logs/testdox.html
 Uninfe
 .phpunit.cache/*
 coverage-html/*
+examples/producao/saida/*

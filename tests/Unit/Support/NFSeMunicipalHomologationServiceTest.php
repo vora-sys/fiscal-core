@@ -113,8 +113,8 @@ ENV);
         $service->preview('joinville', '000000000000000', [
             'env_path' => $envPath,
             'env_overrides' => [
-                'FISCAL_CERT_PATH' => $this->projectRoot . '/certs/cert2026.pfx',
-                'FISCAL_CERT_PASSWORD' => '2026',
+                'FISCAL_CERT_PATH' => $this->projectRoot . '/certs/cert2026-senha-free2026.pfx',
+                'FISCAL_CERT_PASSWORD' => 'free2026',
             ],
         ]);
     }
@@ -145,10 +145,10 @@ ENV);
             ]
         );
 
-        $result = $service->preview('belem', '000000000000000', [
+        $result = $service->preview('belem', '18171321000114', [
             'env_path' => $envPath,
             'env_overrides' => [
-                'FISCAL_CERT_PATH' => $this->projectRoot . '/certs/cert.p12',
+                'FISCAL_CERT_PATH' => $this->projectRoot . '/certs/cert_faives.p12',
                 'FISCAL_CERT_PASSWORD' => '',
                 'OPENSSL_CONF' => $this->projectRoot . '/openssl.cnf',
             ],
@@ -240,8 +240,8 @@ ENV);
         $result = $service->send('belem', '00980556236', [
             'env_path' => $envPath,
             'env_overrides' => [
-                'FISCAL_CERT_PATH' => $this->projectRoot . '/certs/cert_faives_41954766000192_SENHA_12345678.p12',
-                'FISCAL_CERT_PASSWORD' => '12345678',
+                'FISCAL_CERT_PATH' => $this->projectRoot . '/certs/cert_faives.p12',
+                'FISCAL_CERT_PASSWORD' => '',
                 'OPENSSL_CONF' => $this->projectRoot . '/openssl.cnf',
             ],
             'provider_config_overrides' => [
@@ -369,6 +369,79 @@ ENV);
         $this->assertStringContainsString('<GerarNfseEnvio', (string) $result['request_xml']);
         $this->assertStringContainsString('<Cnpj>83188342000104</Cnpj>', (string) $result['request_xml']);
         $this->assertStringContainsString('<InscricaoMunicipal>987654321</InscricaoMunicipal>', (string) $result['request_xml']);
+    }
+
+    public function testPreviewAllowsBelemProductionWhenExplicitlyEnabledAndUsesFivePercentAliquota(): void
+    {
+        $envPath = $this->makeEnvFile(<<<ENV
+FISCAL_ENVIRONMENT=producao
+FISCAL_IM=4007197
+FISCAL_RAZAO_SOCIAL="Faives Solucoes em Tecnologia Ltda"
+ENV);
+
+        $transport = new class implements NFSeSoapTransportInterface {
+            public array $calls = [];
+
+            public function send(string $endpoint, string $envelope, array $options = []): array
+            {
+                $this->calls[] = compact('endpoint', 'envelope', 'options');
+
+                return [
+                    'request_xml' => $envelope,
+                    'response_xml' => NFSeBelemMunicipalFixtures::successSoapResponse(),
+                    'status_code' => 200,
+                    'headers' => ['Content-Type: text/xml'],
+                ];
+            }
+        };
+
+        $service = new NFSeMunicipalHomologationService(
+            $this->projectRoot,
+            fn (string $documento): array => [
+                'documento' => $documento,
+                'razao_social' => 'JOHNNATHAN VICTOR GONCALVES SABBA',
+                'endereco' => [
+                    'numero' => 'S/N',
+                    'cep' => '66065112',
+                ],
+            ]
+        );
+
+        $result = $service->preview('belem', '00980556236', [
+            'allow_production' => true,
+            'env_path' => $envPath,
+            'env_overrides' => [
+                'FISCAL_CERT_PATH' => $this->projectRoot . '/certs/cert_faives.p12',
+                'FISCAL_CERT_PASSWORD' => '',
+                'OPENSSL_CONF' => $this->projectRoot . '/openssl.cnf',
+            ],
+            'provider_config_overrides' => [
+                'soap_transport' => $transport,
+            ],
+            'payload_overrides' => [
+                'valor_servicos' => 10.00,
+                'servico' => [
+                    'aliquota' => 0.05,
+                    'descricao' => 'Servicos de tecnologia da informacao em producao.',
+                    'discriminacao' => 'Servicos de tecnologia da informacao em producao.',
+                ],
+            ],
+            'tomador_defaults' => [
+                'cep' => '66065112',
+                'endereco' => [
+                    'numero' => 'S/N',
+                ],
+            ],
+        ]);
+
+        $this->assertSame('preview', $result['mode']);
+        $this->assertSame('producao', $result['provider']['ambiente']);
+        $this->assertSame(10.0, $result['payload']['valor_servicos']);
+        $this->assertSame(0.05, $result['payload']['servico']['aliquota']);
+        $this->assertSame('Servicos de tecnologia da informacao em producao.', $result['payload']['servico']['descricao']);
+        $this->assertStringContainsString('<ValorServicos>10.00</ValorServicos>', (string) $result['request_xml']);
+        $this->assertStringContainsString('<Aliquota>0.0500</Aliquota>', (string) $result['request_xml']);
+        $this->assertCount(1, $transport->calls);
     }
 
     private function makeEnvFile(string $contents): string

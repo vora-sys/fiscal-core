@@ -14,6 +14,8 @@ class FiscalFacade
     private NFeFacade $nfe;
     private NFCeFacade $nfce;
     private NFSeFacade $nfse;
+    /** @var array<string,NFSeFacade> */
+    private array $nfseByMunicipio = [];
     private ImpressaoFacade $impressao;
     private TributacaoFacade $tributacao;
     private ResponseHandler $responseHandler;
@@ -31,6 +33,7 @@ class FiscalFacade
         $this->nfe = $nfe ?? new NFeFacade();
         $this->nfce = $nfce ?? new NFCeFacade();
         $this->nfse = $nfse ?? new NFSeFacade();
+        $this->nfseByMunicipio['__default__'] = $this->nfse;
         $this->impressao = $impressao ?? new ImpressaoFacade();
         $this->tributacao = $tributacao ?? new TributacaoFacade();
     }
@@ -94,8 +97,17 @@ class FiscalFacade
      */
     public function emitirNFSe(array $dados, string $municipio = 'curitiba'): FiscalResponse
     {
-        $nfseLocal = new NFSeFacade($municipio);
-        return $nfseLocal->emitir($dados);
+        return $this->nfse($municipio)->emitir($dados);
+    }
+
+    public function emitirNFSeCompleto(array $dados, string $municipio = 'curitiba', array $options = []): FiscalResponse
+    {
+        return $this->nfse($municipio)->emitirCompleto($dados, $options);
+    }
+
+    public function consultarDisponibilidadeNFSe(array $criterios, string $municipio = 'curitiba', array $options = []): FiscalResponse
+    {
+        return $this->nfse($municipio)->consultarDisponibilidade($criterios, $options);
     }
 
     /**
@@ -103,8 +115,7 @@ class FiscalFacade
      */
     public function consultarNFSe(string $chave, string $municipio = 'curitiba'): FiscalResponse
     {
-        $nfseLocal = new NFSeFacade($municipio);
-        return $nfseLocal->consultar($chave);
+        return $this->nfse($municipio)->consultar($chave);
     }
 
     // ===== OPERAÇÕES DE IMPRESSÃO =====
@@ -220,8 +231,13 @@ class FiscalFacade
 
     public function nfse(?string $municipio = null): NFSeFacade
     {
-        if ($municipio) {
-            return new NFSeFacade($municipio);
+        if ($municipio !== null) {
+            $key = strtolower(trim($municipio));
+            if (!isset($this->nfseByMunicipio[$key])) {
+                $this->nfseByMunicipio[$key] = new NFSeFacade($municipio);
+            }
+
+            return $this->nfseByMunicipio[$key];
         }
         return $this->nfse;
     }

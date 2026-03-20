@@ -18,9 +18,14 @@ examples/
 │   ├── 01-multiplos-municipios.php   # Gerenciar múltiplos municípios NFSe
 │   ├── 02-error-handling.php         # Tratamento robusto de erros
 │   └── 03-emissao-municipal-funcional.php # Preview funcional de emissão municipal
-└── 📁 homologacao/                   # Scripts seguros para prefeitura
-    ├── 01-emitir-belem-real.php      # Belém com certificado Faives
-    └── 02-emitir-joinville-real.php  # Joinville com certificado Freeline
+├── 📁 homologacao/                   # Scripts seguros para prefeitura
+│   ├── 01-emitir-belem-real.php      # Belém com certificado Faives
+│   ├── 02-emitir-joinville-real.php  # Joinville com certificado Freeline
+│   └── 03-emitir-belem-completo.php  # Fluxo facade: emissão + disponibilidade + URL oficial
+└── 📁 producao/                      # Scripts seguros para ambiente produtivo
+    ├── 01-emitir-belem-real.php      # Belém produção com alíquota de 5%
+    ├── 02-consultar-e-imprimir-belem.php # Disponibilidade + URL oficial do DANFSe
+    └── 03-imprimir-belem-de-arquivo.php  # Recupera a URL oficial a partir de arquivo
 ```
 
 ## 🚀 Como Começar
@@ -50,6 +55,12 @@ php examples/avancado/03-emissao-municipal-funcional.php
 # Scripts de homologação municipal
 php examples/homologacao/01-emitir-belem-real.php
 php examples/homologacao/02-emitir-joinville-real.php
+php examples/homologacao/03-emitir-belem-completo.php
+php examples/homologacao/consulta.php
+
+# Script de produção municipal
+php examples/producao/01-emitir-belem-real.php
+php examples/producao/02-consultar-e-imprimir-belem.php --protocolo=059138577 --rps-numero=164344
 
 # Ou sobrescrevendo o documento/CEP do tomador
 php examples/homologacao/01-emitir-belem-real.php --tomador-doc=00980556236 --tomador-cep=66065112
@@ -69,6 +80,7 @@ php examples/homologacao/02-emitir-joinville-real.php --tomador-doc=00980556236 
 | **02-error-handling** | Tratamento robusto de erros | Ambos |
 | **03-emissao-municipal-funcional** | Preview local de emissão municipal | Providers municipais |
 | **homologacao/** | Scripts reais com preview seguro e `--send` explícito | NFSeMunicipalHomologationService |
+| **03-emitir-belem-completo** | Facade pronta com emissão, disponibilidade e URL oficial | FiscalFacade + NFSeFacade |
 
 ## 🎭 Separação de Responsabilidades
 
@@ -113,6 +125,8 @@ export IBPT_UF="SP"
 - O catálogo municipal atual fica em `config/nfse/`
 - O enrich por CNPJ não substitui `FISCAL_IM`
 - Os scripts de homologação usam preview por padrão e só enviam com `--send`
+- O script de produção de Belém também usa preview por padrão e só envia com `--send`
+- Em Belém, o acesso ao DANFSe segue a URL oficial da prefeitura; a biblioteca expõe disponibilidade e metadados para polling externo
 
 ## 🎯 Casos de Uso por Público
 
