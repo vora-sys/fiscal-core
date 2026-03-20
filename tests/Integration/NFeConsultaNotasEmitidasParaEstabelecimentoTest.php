@@ -131,27 +131,15 @@ class NFeConsultaNotasEmitidasParaEstabelecimentoTest extends TestCase
         $envPath = getenv('TEST_CERT_PATH') ?: getenv('FISCAL_CERT_PATH');
         $envPassword = getenv('TEST_CERT_PASSWORD') ?: getenv('FISCAL_CERT_PASSWORD');
 
-        if (is_string($envPath) && $envPath !== '' && is_string($envPassword) && $envPassword !== '') {
+        if (is_string($envPath) && $envPath !== '' && is_string($envPassword)) {
             $candidate = $this->resolvePath($envPath);
             if (is_file($candidate)) {
                 return [$candidate, $envPassword];
             }
         }
 
-        $repoRoot = dirname(__DIR__, 2);
-        $candidates = [
-            [$repoRoot . '/certs/cert2026-senha-free2026.pfx', 'free2026'],
-            [$repoRoot . '/certs/JOHNNATHAN VICTOR GONCALVES SABBA00980556236.pfx', '1234'],
-        ];
-
-        foreach ($candidates as [$path, $password]) {
-            if (is_file($path)) {
-                return [$path, $password];
-            }
-        }
-
         $this->markTestSkipped(
-            'Certificado não encontrado. Defina TEST_CERT_PATH/TEST_CERT_PASSWORD ou adicione um .pfx válido em certs/.'
+            'Certificado não encontrado. Defina TEST_CERT_PATH/TEST_CERT_PASSWORD ou FISCAL_CERT_PATH/FISCAL_CERT_PASSWORD.'
         );
     }
 

@@ -2,6 +2,8 @@
 
 declare(strict_types=1);
 
+require_once dirname(__DIR__, 2) . '/Support/TestCertificateFile.php';
+
 use freeline\FiscalCore\Facade\NFSeFacade;
 use freeline\FiscalCore\Support\CertificateManager;
 use freeline\FiscalCore\Support\ConfigManager;
@@ -12,6 +14,8 @@ final class NFSeFacadeBootstrapTest extends TestCase
 {
     private string $projectRoot;
     private string $originalCwd;
+    /** @var array{path:string,password:string} */
+    private array $certificateFile;
     /** @var string[] */
     private array $managedEnvKeys = [
         'FISCAL_ENVIRONMENT',
@@ -30,12 +34,18 @@ final class NFSeFacadeBootstrapTest extends TestCase
     {
         $this->projectRoot = dirname(__DIR__, 3);
         $this->originalCwd = getcwd();
+        $this->certificateFile = TestCertificateFile::create(
+            'NFSe Facade Bootstrap Test',
+            'bootstrap-secret',
+            '83188342000104'
+        );
     }
 
     protected function tearDown(): void
     {
         chdir($this->originalCwd);
         $this->clearEnvironment();
+        TestCertificateFile::cleanup($this->certificateFile['path'] ?? null);
         ConfigManager::getInstance()->reload();
         CertificateManager::reload();
         ProviderRegistry::getInstance()->reload();
@@ -49,8 +59,8 @@ final class NFSeFacadeBootstrapTest extends TestCase
             'FISCAL_CNPJ=83188342000104',
             'FISCAL_RAZAO_SOCIAL="FREELINE INFORMATICA LTDA"',
             'FISCAL_UF=SC',
-            'FISCAL_CERT_PATH="' . $this->projectRoot . '/certs/cert2026-senha-free2026.pfx"',
-            'FISCAL_CERT_PASSWORD="free2026"',
+            'FISCAL_CERT_PATH="' . $this->certificateFile['path'] . '"',
+            'FISCAL_CERT_PASSWORD="' . $this->certificateFile['password'] . '"',
         ]);
 
         $facade = new NFSeFacade('joinville');
@@ -70,8 +80,8 @@ final class NFSeFacadeBootstrapTest extends TestCase
             'FISCAL_CNPJ=83188342000104',
             'FISCAL_RAZAO_SOCIAL="FREELINE INFORMATICA LTDA"',
             'FISCAL_UF=SC',
-            'FISCAL_CERT_PATH="' . $this->projectRoot . '/certs/cert2026-senha-free2026.pfx"',
-            'FISCAL_CERT_PASSWORD="free2026"',
+            'FISCAL_CERT_PATH="' . $this->certificateFile['path'] . '"',
+            'FISCAL_CERT_PASSWORD="' . $this->certificateFile['password'] . '"',
         ]);
 
         $facade = new NFSeFacade('joinville');
@@ -89,8 +99,8 @@ final class NFSeFacadeBootstrapTest extends TestCase
             'FISCAL_CNPJ=11111111111111',
             'FISCAL_RAZAO_SOCIAL="FREELINE INFORMATICA LTDA"',
             'FISCAL_UF=SC',
-            'FISCAL_CERT_PATH="' . $this->projectRoot . '/certs/cert2026-senha-free2026.pfx"',
-            'FISCAL_CERT_PASSWORD="free2026"',
+            'FISCAL_CERT_PATH="' . $this->certificateFile['path'] . '"',
+            'FISCAL_CERT_PASSWORD="' . $this->certificateFile['password'] . '"',
         ]);
 
         $facade = new NFSeFacade('joinville');

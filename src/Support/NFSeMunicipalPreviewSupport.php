@@ -17,11 +17,12 @@ final class NFSeMunicipalPreviewSupport
             return self::$certificate;
         }
 
-        $repoCertificate = dirname(__DIR__, 2) . '/certs/cert2026-senha-free2026.pfx';
-        if (is_file($repoCertificate)) {
-            $content = file_get_contents($repoCertificate);
+        $configuredPath = $_ENV['FISCAL_PREVIEW_CERT_PATH'] ?? getenv('FISCAL_PREVIEW_CERT_PATH');
+        $configuredPassword = $_ENV['FISCAL_PREVIEW_CERT_PASSWORD'] ?? getenv('FISCAL_PREVIEW_CERT_PASSWORD') ?: '';
+        if (is_string($configuredPath) && trim($configuredPath) !== '' && is_file($configuredPath)) {
+            $content = file_get_contents($configuredPath);
             if (is_string($content) && $content !== '') {
-                self::$certificate = Certificate::readPfx($content, 'free2026');
+                self::$certificate = Certificate::readPfx($content, (string) $configuredPassword);
 
                 return self::$certificate;
             }

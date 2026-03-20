@@ -3,26 +3,16 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/../../vendor/autoload.php';
+require_once __DIR__ . '/common.php';
 
 use freeline\FiscalCore\Facade\FiscalFacade;
 
 $projectRoot = dirname(__DIR__, 2);
 
-$envOverrides = [
-    'FISCAL_ENVIRONMENT' => 'homologacao',
-    'FISCAL_IM' => '4007197',
-    'FISCAL_CERT_PATH' => $projectRoot . '/certs/cert_faives_.p12',
-    'FISCAL_CERT_PASSWORD' => '',
-    'OPENSSL_CONF' => $projectRoot . '/openssl.cnf',
-];
+$envOverrides = nfseMunicipalBuildEnvOverrides('belem', 'homologacao', $projectRoot);
+nfseMunicipalApplyEnvOverrides($envOverrides);
 
-foreach ($envOverrides as $key => $value) {
-    putenv($key . '=' . $value);
-    $_ENV[$key] = $value;
-    $_SERVER[$key] = $value;
-}
-
-$loteId = $argv[1] ?? '056412883';
+$loteId = $argv[1] ?? nfseMunicipalRequiredEnvValue('TEST_NFSE_BELEM_PROTOCOLO');
 
 $fiscalFacade = new FiscalFacade();
 $nfse = $fiscalFacade->nfse('belem');

@@ -2,6 +2,8 @@
 
 declare(strict_types=1);
 
+require_once dirname(__DIR__, 2) . '/Support/TestCertificateFile.php';
+
 use freeline\FiscalCore\Facade\FiscalFacade;
 use freeline\FiscalCore\Support\CertificateManager;
 use freeline\FiscalCore\Support\ConfigManager;
@@ -12,11 +14,18 @@ final class FiscalFacadeCachingTest extends TestCase
 {
     private string $projectRoot;
     private string $originalCwd;
+    /** @var array{path:string,password:string} */
+    private array $certificateFile;
 
     protected function setUp(): void
     {
         $this->projectRoot = dirname(__DIR__, 3);
         $this->originalCwd = getcwd();
+        $this->certificateFile = TestCertificateFile::create(
+            'Fiscal Facade Cache Test',
+            'cache-secret',
+            '83188342000104'
+        );
 
         $tempDir = sys_get_temp_dir() . '/fiscal-facade-cache-' . uniqid('', true);
         mkdir($tempDir, 0777, true);
@@ -26,8 +35,8 @@ final class FiscalFacadeCachingTest extends TestCase
             'FISCAL_CNPJ=83188342000104',
             'FISCAL_RAZAO_SOCIAL="FREELINE INFORMATICA LTDA"',
             'FISCAL_UF=SC',
-            'FISCAL_CERT_PATH="' . $this->projectRoot . '/certs/cert2026-senha-free2026.pfx"',
-            'FISCAL_CERT_PASSWORD="free2026"',
+            'FISCAL_CERT_PATH="' . $this->certificateFile['path'] . '"',
+            'FISCAL_CERT_PASSWORD="' . $this->certificateFile['password'] . '"',
         ]) . PHP_EOL);
 
         chdir($tempDir);
@@ -39,6 +48,7 @@ final class FiscalFacadeCachingTest extends TestCase
     protected function tearDown(): void
     {
         chdir($this->originalCwd);
+        TestCertificateFile::cleanup($this->certificateFile['path'] ?? null);
         ConfigManager::getInstance()->reload();
         CertificateManager::reload();
         ProviderRegistry::getInstance()->reload();
