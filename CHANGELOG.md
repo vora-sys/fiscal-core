@@ -1,6 +1,6 @@
 # Changelog
 
-## v1.2.0 - 2026-03-30
+## v1.2.1 - 2026-03-30
 
 ### Changed
 - `UtilsFacade::consultarCNPJ()` passou a mapear o payload atual da BrasilAPI com cobertura expandida dos dados cadastrais.
