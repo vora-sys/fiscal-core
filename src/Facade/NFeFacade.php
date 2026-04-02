@@ -6,6 +6,7 @@ use freeline\FiscalCore\Adapters\NF\NFeAdapter;
 use freeline\FiscalCore\Adapters\ImpressaoAdapter;
 use freeline\FiscalCore\Support\ResponseHandler;
 use freeline\FiscalCore\Support\FiscalResponse;
+use freeline\FiscalCore\Support\ManifestationType;
 use freeline\FiscalCore\Adapters\NF\Builder\NotaFiscalBuilder;
 use freeline\FiscalCore\Adapters\NF\Core\NotaFiscal;
 use freeline\FiscalCore\Support\ToolsFactory;
@@ -232,6 +233,83 @@ class NFeFacade
         }, 'status_sefaz');
     }
 
+    public function consultarDistribuicaoDFe(
+        int $ultNsu = 0,
+        int $numNsu = 0,
+        ?string $chave = null,
+        string $fonte = 'AN'
+    ): FiscalResponse {
+        $initError = $this->checkNFeInitialization();
+        if ($initError !== null) {
+            return $initError;
+        }
+
+        return $this->responseHandler->handle(function () use ($ultNsu, $numNsu, $chave, $fonte) {
+            $xmlResponse = $this->nfe->consultaNotasEmitidasParaEstabelecimento($ultNsu, $numNsu, $chave, $fonte);
+
+            return array_merge(
+                ['xml_response' => $xmlResponse],
+                $this->parseDistDFeResponse($xmlResponse)
+            );
+        }, 'distdfe_nfe');
+    }
+
+    public function manifestarDestinatario(
+        string $chave,
+        ManifestationType|string $tipo,
+        string $justificativa = '',
+        int $sequencia = 1
+    ): FiscalResponse {
+        $initError = $this->checkNFeInitialization();
+        if ($initError !== null) {
+            return $initError;
+        }
+
+        return $this->responseHandler->handle(function () use ($chave, $tipo, $justificativa, $sequencia) {
+            if (strlen($chave) !== 44) {
+                throw new \InvalidArgumentException('Chave de acesso deve ter 44 dígitos');
+            }
+
+            $manifestationType = is_string($tipo) ? ManifestationType::fromValue($tipo) : $tipo;
+            $xmlResponse = $this->nfe->manifestarDestinatario($chave, $manifestationType, $justificativa, $sequencia);
+
+            return array_merge(
+                [
+                    'chave_acesso' => $chave,
+                    'manifestation_type' => $manifestationType->value,
+                    'justificativa' => $justificativa,
+                    'sequencia' => $sequencia,
+                    'xml_response' => $xmlResponse,
+                ],
+                $this->parseEventResponse($xmlResponse)
+            );
+        }, 'manifestacao_destinatario_nfe');
+    }
+
+    public function downloadNFe(string $chave): FiscalResponse
+    {
+        $initError = $this->checkNFeInitialization();
+        if ($initError !== null) {
+            return $initError;
+        }
+
+        return $this->responseHandler->handle(function () use ($chave) {
+            if (strlen($chave) !== 44) {
+                throw new \InvalidArgumentException('Chave de acesso deve ter 44 dígitos');
+            }
+
+            $xmlResponse = $this->nfe->downloadNFe($chave);
+
+            return array_merge(
+                [
+                    'chave_acesso' => $chave,
+                    'xml_response' => $xmlResponse,
+                ],
+                $this->parseDistDFeResponse($xmlResponse)
+            );
+        }, 'download_nfe_destinataria');
+    }
+
     /**
      * Gera DANFE da NFe
      * 
@@ -344,6 +422,113 @@ class NFeFacade
             return 'Status não identificado';
         } catch (\Exception $e) {
             return 'Erro ao extrair status';
+        }
+    }
+
+    private function parseDistDFeResponse(string $xml): array
+    {
+        $dom = new \DOMDocument();
+        $dom->loadXML($xml);
+        $xpath = new \DOMXPath($dom);
+
+        $documentos = [];
+        $docNodes = $xpath->query("//*[local-name()='docZip']");
+        if ($docNodes !== false) {
+            foreach ($docNodes as $docNode) {
+                if (!$docNode instanceof \DOMElement) {
+                    continue;
+                }
+
+                $decodedXml = $this->decodeDocZip((string) $docNode->textContent);
+                $documentos[] = [
+                    'nsu' => (string) $docNode->getAttribute('NSU'),
+                    'schema' => (string) $docNode->getAttribute('schema'),
+                    'xml' => $decodedXml,
+                    'chave' => $this->extractTagValue($decodedXml, ['chNFe']) ?? $this->extractChaveByInfNFe($decodedXml),
+                ];
+            }
+        }
+
+        return [
+            'cstat' => $this->extractTagValue($xml, ['cStat']),
+            'xmotivo' => $this->extractTagValue($xml, ['xMotivo']),
+            'ult_nsu' => $this->extractTagValue($xml, ['ultNSU']) ?? '0',
+            'max_nsu' => $this->extractTagValue($xml, ['maxNSU']) ?? '0',
+            'documents' => $documentos,
+        ];
+    }
+
+    private function parseEventResponse(string $xml): array
+    {
+        return [
+            'cstat' => $this->extractTagValue($xml, ['cStat']),
+            'xmotivo' => $this->extractTagValue($xml, ['xMotivo']),
+            'protocolo' => $this->extractTagValue($xml, ['nProt']),
+            'chave' => $this->extractTagValue($xml, ['chNFe']),
+        ];
+    }
+
+    private function decodeDocZip(string $encoded): ?string
+    {
+        $decoded = base64_decode(trim($encoded), true);
+        if ($decoded === false || $decoded === '') {
+            return null;
+        }
+
+        $xml = @gzdecode($decoded);
+        if ($xml === false) {
+            $xml = @gzinflate(substr($decoded, 10));
+        }
+
+        if (!is_string($xml) || trim($xml) === '') {
+            return null;
+        }
+
+        return trim($xml);
+    }
+
+    private function extractTagValue(string $xml, array $tagNames): ?string
+    {
+        try {
+            $dom = new \DOMDocument();
+            $dom->loadXML($xml);
+            $xpath = new \DOMXPath($dom);
+            foreach ($tagNames as $tagName) {
+                $node = $xpath->query("//*[local-name()='{$tagName}']")->item(0);
+                if ($node instanceof \DOMNode) {
+                    $value = trim((string) $node->textContent);
+                    if ($value !== '') {
+                        return $value;
+                    }
+                }
+            }
+        } catch (\Throwable) {
+            return null;
+        }
+
+        return null;
+    }
+
+    private function extractChaveByInfNFe(?string $xml): ?string
+    {
+        if ($xml === null) {
+            return null;
+        }
+
+        try {
+            $dom = new \DOMDocument();
+            $dom->loadXML($xml);
+            $xpath = new \DOMXPath($dom);
+            $node = $xpath->query("//*[local-name()='infNFe']")->item(0);
+            if (!$node instanceof \DOMElement) {
+                return null;
+            }
+
+            $id = (string) $node->getAttribute('Id');
+
+            return str_starts_with($id, 'NFe') ? substr($id, 3) : null;
+        } catch (\Throwable) {
+            return null;
         }
     }
 

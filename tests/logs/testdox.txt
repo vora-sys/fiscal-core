@@ -1,0 +1,4 @@
+Cnpj Response Mapping (Tests\Unit\Utils\CnpjResponseMapping)
+ [x] Brasil api adapter unwraps nested data payload
+ [x] Utils facade maps new cnpj payload format
+

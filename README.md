@@ -181,6 +181,7 @@ export IBPT_UF="SP"
 - `FISCAL_IM` continua obrigatório para emissões municipais reais
 - A consulta pública de CNPJ ajuda com razão social/contato/endereço, mas não fornece inscrição municipal
 - Para Belém, o DANFSe é disponibilizado pela prefeitura em URL oficial; a biblioteca retorna status/disponibilidade e a `danfse_url`
+- O playbook canônico para implementação municipal está em [docs/NFSE-MUNICIPAL-PROVIDER-PLAYBOOK.md](docs/NFSE-MUNICIPAL-PROVIDER-PLAYBOOK.md)
 
 ## Uso Detalhado
 
@@ -468,7 +469,9 @@ php examples/GuiaCompletoDeUso.php
 Para informações detalhadas sobre configuração de certificados e providers, consulte:
 
 - 📄 [docs/providers-and-config.md](docs/providers-and-config.md)
-- 📄 [config/nfse-municipios.json](config/nfse-municipios.json)
+- 📄 [docs/NFSE-MUNICIPAL-PROVIDER-PLAYBOOK.md](docs/NFSE-MUNICIPAL-PROVIDER-PLAYBOOK.md)
+- 📄 [config/nfse/providers-catalog.json](config/nfse/providers-catalog.json)
+- 📄 [config/nfse/nfse-provider-families.json](config/nfse/nfse-provider-families.json)
 
 ## 🧪 Estrutura de Testes
 
@@ -560,13 +563,14 @@ Roadmap
 
 🚀 **Sistema de Providers NFSe:**
 
-- ✅ Estrutura base implementada (AbstractProvider, Registry, Config)
-- ⏳ Implementação ABRASF v2 pendente
-- 📚 Guia de retomada: [docs/PROVIDERS-RETOMADA.md](docs/PROVIDERS-RETOMADA.md)
+- ✅ Catálogo municipal, families config, registry e runtime bootstrap implementados
+- ✅ Providers municipais reais para fluxos específicos já integrados
+- 📚 Playbook mestre: [docs/NFSE-MUNICIPAL-PROVIDER-PLAYBOOK.md](docs/NFSE-MUNICIPAL-PROVIDER-PLAYBOOK.md)
+- 📚 Ponte legada: [docs/PROVIDERS-RETOMADA.md](docs/PROVIDERS-RETOMADA.md)
 
 **Próximas features:**
 
-- [ ] Implementar montagem XML ABRASF v2 ([ver guia](docs/PROVIDERS-RETOMADA.md))
+- [ ] Expandir cobertura municipal seguindo o playbook ([ver guia](docs/NFSE-MUNICIPAL-PROVIDER-PLAYBOOK.md))
 - [ ] Facades com APIs coesas (NFe/NFCe/NFSe/Impressão/Tributação)
 - [ ] Service Provider para Laravel
 - [ ] Middleware para validação automática
@@ -583,8 +587,8 @@ tree src/Providers config/
 # Rodar exemplo funcional
 php scripts/exemplo-providers-nfse.php
 
-# Ler guia completo
-cat docs/PROVIDERS-RETOMADA.md
+# Ler playbook municipal
+cat docs/NFSE-MUNICIPAL-PROVIDER-PLAYBOOK.md
 ```
 
 Contribuição

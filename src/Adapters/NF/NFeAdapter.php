@@ -5,6 +5,7 @@ namespace freeline\FiscalCore\Adapters\NF;
 use freeline\FiscalCore\Contracts\NotaFiscalInterface;
 use freeline\FiscalCore\Adapters\NF\Builder\NotaFiscalBuilder;
 use freeline\FiscalCore\Adapters\NF\Core\NotaFiscal;
+use freeline\FiscalCore\Support\ManifestationType;
 use NFePHP\NFe\Tools;
 
 /**
@@ -32,16 +33,9 @@ class NFeAdapter implements NotaFiscalInterface
     {
         // Constrói a nota usando o Builder
         $nota = NotaFiscalBuilder::fromArray($dados)->build();
-        
-        // Valida a estrutura
-        $nota->validate();
-        
-        // Obtém o objeto Make populado
-        $make = $nota->getMake();
-        
-        // Monta o XML da NFe
-        $xml = $make->getXML();
-        $xml = $make->montaNFe();
+
+        // Gera o XML uma única vez; toXml() já valida a nota e o Make internamente.
+        $xml = $nota->toXml();
         
         // Assina o XML
         $xmlAssinado = $this->tools->signNFe($xml);
@@ -96,6 +90,31 @@ class NFeAdapter implements NotaFiscalInterface
     public function consultaNotasEmitidasParaEstabelecimento(int $ultimoNsu=0, int $numNSU=0, ?string $chave=null, string $fonte='AN'): string
     {
         return $this->tools->sefazDistDFe($ultimoNsu, $numNSU, $chave, $fonte);
+    }
+
+    public function manifestarDestinatario(
+        string $chave,
+        ManifestationType|string $tipo,
+        string $justificativa = '',
+        int $sequencia = 1
+    ): string {
+        $manifestationType = is_string($tipo) ? ManifestationType::fromValue($tipo) : $tipo;
+
+        if ($manifestationType->requiresJustification() && mb_strlen(trim($justificativa)) < 15) {
+            throw new \InvalidArgumentException('Justificativa deve ter pelo menos 15 caracteres para operação não realizada');
+        }
+
+        return $this->tools->sefazManifesta(
+            $chave,
+            $manifestationType->eventCode(),
+            $justificativa,
+            $sequencia
+        );
+    }
+
+    public function downloadNFe(string $chave): string
+    {
+        return $this->tools->sefazDownload($chave);
     }
 
     public function sefazStatus(string $uf = '', ?int $ambiente = null, bool $ignorarContigencia = true): string

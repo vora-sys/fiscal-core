@@ -121,10 +121,17 @@ class BrasilAPIAdapter implements ConsultaPublicaInterface
     private function normalizeResponse($response): array
     {
         if (is_array($response)) {
+            if (isset($response['data']) && is_array($response['data'])) {
+                return $response['data'];
+            }
             return $response;
         }
         if (is_object($response)) {
-            return json_decode(json_encode($response), true) ?? [];
+            $normalized = json_decode(json_encode($response), true) ?? [];
+            if (isset($normalized['data']) && is_array($normalized['data'])) {
+                return $normalized['data'];
+            }
+            return $normalized;
         }
         return [];
     }

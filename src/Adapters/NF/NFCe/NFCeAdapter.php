@@ -38,16 +38,9 @@ class NFCeAdapter implements NotaFiscalInterface
 
 		// Constrói a nota usando o Builder
 		$nota = NotaFiscalBuilder::fromArray($dados)->build();
-		
-		// Valida a estrutura
-		$nota->validate();
-		
-		// Obtém o objeto Make populado
-		$make = $nota->getMake();
-		
-		// Monta o XML da NFCe
-		$xml = $make->getXML();
-		$xml = $make->montaNFe();
+
+		// Gera o XML uma única vez; toXml() já valida a nota e o Make internamente.
+		$xml = $nota->toXml();
 		
 		// Assina o XML
 		$xmlAssinado = $this->tools->signNFe($xml);
