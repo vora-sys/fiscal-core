@@ -1,113 +1,81 @@
-# 📄 Documentação: Providers e Configuração Externa na NFSe
+# Providers e Configuracao NFSe
 
-## Objetivo
-Descrever como utilizar **Providers** para lidar com as particularidades municipais da NFSe e como aplicar **configuração externa** para evitar duplicação de código quando diferentes municípios compartilham o mesmo padrão.
+## Fonte de verdade
 
----
+O runtime de NFSe usa apenas os arquivos abaixo:
 
-## Providers
+- `config/nfse/providers-catalog.json`
+- `config/nfse/nfse-provider-families.json`
 
-### O que são
-- **Providers** são implementações específicas para cada município ou sistema de NFSe.
-- Encapsulam diferenças como:
-  - Estrutura XML
-  - URLs de webservice
-  - Formato de alíquota (ex.: `2` vs `0.02`)
-  - Versão do layout ABRASF
+Fluxo canonico:
 
-### Como funcionam
-- A biblioteca define uma interface genérica (`NotaServicoInterface`).
-- Cada Provider implementa essa interface conforme as regras do município.
-- O Adapter NFSe delega ao Provider correto.
+`providers-catalog.json` -> `NFSeProviderResolver` -> `ProviderRegistry` -> `NFSeRuntimeBootstrap` -> provider concreto
 
-Exemplo:
-```php
-$provider = new JoinvilleProvider($config);
-$nfseService = new NFSeService($provider);
+## Responsabilidade de cada arquivo
 
-$nfseService->emitirNota($dados);
-```
+### `config/nfse/providers-catalog.json`
 
----
+Define o roteamento por municipio.
 
-## Configuração Externa
+Cada entrada informa:
 
-### Problema
-Alguns municípios são **idênticos** em implementação (ex.: Curitiba e Campo Largo).
-Duplicar código seria inviável e aumentaria a manutenção.
+- `slug`
+- `nome`
+- `uf`
+- `provider_family`
+- `schema_package`
+- `ibge`
+- `active`
 
-### Solução
-Utilizar **configuração externa** para parametrizar os Providers.
-Assim, municípios que compartilham lógica usam o mesmo Provider genérico, apenas com configurações diferentes.
+Regras praticas:
 
----
+- `provider_family` precisa apontar para uma chave existente em `nfse-provider-families.json`
+- `schema_package` pode permanecer diferente da chave do provider quando o layout tecnico for compartilhado
+- overrides locais devem aparecer tambem em `config/nfse/nfse-catalog-manifest.json`
 
-### Estrutura de Configuração (JSON)
-```json
-{
-  "curitiba": {
-    "provider": "AbrasfV2Provider",
-    "wsdl": "https://nfse.curitiba.pr.gov.br/ws/nfse.asmx?wsdl",
-    "aliquota_format": "decimal",
-    "versao": "2.02"
-  },
-  "campo_largo": {
-    "provider": "AbrasfV2Provider",
-    "wsdl": "https://nfse.campolargo.pr.gov.br/ws/nfse.asmx?wsdl",
-    "aliquota_format": "decimal",
-    "versao": "2.02"
-  },
-  "joinville": {
-    "provider": "JoinvilleProvider",
-    "wsdl": "https://nfse.joinville.sc.gov.br/ws/nfse.asmx?wsdl",
-    "aliquota_format": "percentual",
-    "versao": "2.01"
-  }
-}
-```
+### `config/nfse/nfse-provider-families.json`
 
----
+Define a familia tecnica e os parametros operacionais de cada provider.
 
-### Registry de Providers
-Um **Registry** centraliza o carregamento das configurações e instancia o Provider correto.
+Campos comuns:
 
-```php
-class ProviderRegistry {
-    private array $config;
+- `provider_class`
+- `layout_family`
+- `schema_root`
+- `xsd_entrypoints`
+- `transport`
+- `versao`
+- `timeout`
+- `auth`
 
-    public function __construct(array $config) {
-        $this->config = $config;
-    }
+No caso de `nfse_nacional`, este arquivo tambem concentra:
 
-    public function get(string $municipio): ProviderInterface {
-        $conf = $this->config[$municipio];
-        $providerClass = $conf['provider'];
-        return new $providerClass($conf);
-    }
-}
-```
+- `services`
+- `endpoints`
+- `operation_methods`
+- `catalog_endpoints`
+- `cnc_endpoints`
+- URLs de homologacao e producao
 
-Uso:
-```php
-$registry = new ProviderRegistry($configJson);
-$provider = $registry->get('curitiba');
-```
+## Exemplos importantes
 
----
+- `nfse_nacional`: provider REST canonico do ambiente nacional
+- `BELEM_MUNICIPAL_2025`: override municipal especifico
+- `ISSWEB_AM`: familia compartilhada usada por Presidente Figueiredo e Rio Preto da Eva
 
-## Benefícios
-- **Zero duplicação**: municípios idênticos compartilham o mesmo Provider.
-- **Flexibilidade**: mudanças de URL ou versão são feitas apenas em configuração.
-- **Escalabilidade**: adicionar novos municípios exige apenas incluir no arquivo de configuração.
-- **Separação de responsabilidades**: lógica no código, particularidades nos arquivos de configuração.
+## Manaus
 
----
+- `manaus` nao usa mais a familia historica `MANAUS_AM` no roteamento ativo
+- o catalogo resolve Manaus para `nfse_nacional`
+- o provider municipal antigo permanece apenas como referencia historica de implementacao
 
-## Conclusão
-- Use **herança** quando houver diferenças reais de lógica.
-- Use **registry + configuração externa** quando a diferença for apenas de parâmetros.
-- Essa abordagem garante uma biblioteca **limpa, flexível e fácil de manter**, preparada para lidar com dezenas de municípios sem duplicação de código.
+## Como adicionar ou ajustar um municipio
 
----
+1. Atualize o municipio em `config/nfse/providers-catalog.json`.
+2. Garanta que a `provider_family` exista em `config/nfse/nfse-provider-families.json`.
+3. Se houver override manual, sincronize `config/nfse/nfse-catalog-manifest.json`.
+4. Rode os testes de resolver, registry, adapter e facade NFSe.
 
-👉 Dica: se quiser, posso consolidar este conteúdo com as seções de DTOs e XmlBuilder em um README arquitetural completo.
+## Observacao sobre legado
+
+`config/nfse-municipios.json` nao faz mais parte do runtime e nao deve ser usado como referencia para novas manutencoes.

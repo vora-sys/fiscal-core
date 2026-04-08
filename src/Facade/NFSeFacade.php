@@ -29,7 +29,7 @@ class NFSeFacade
     private ?array $municipioResolved = null;
     private array $runtimeContext = [];
 
-    public function __construct(string $municipio = 'curitiba', ?NFSeAdapter $nfse = null)
+    public function __construct(string $municipio = 'nacional', ?NFSeAdapter $nfse = null)
     {
         $this->municipio = $municipio;
         $this->responseHandler = new ResponseHandler();
@@ -49,7 +49,7 @@ class NFSeFacade
                 $registry = ProviderRegistry::getInstance();
                 if (!$registry->has($this->providerKey)) {
                     $this->initializationError = FiscalResponse::error(
-                        "Provider NFSe nacional '{$this->providerKey}' não encontrado",
+                        "Provider NFSe '{$this->providerKey}' não encontrado",
                         'PROVIDER_NOT_FOUND',
                         'nfse_initialization',
                         [
@@ -59,8 +59,8 @@ class NFSeFacade
                             'municipio_ignored' => $this->municipioIgnored,
                             'warnings' => $this->deprecationWarnings,
                             'suggestions' => [
-                                "Configure '{$this->providerKey}' em config/nfse-municipios.json",
-                                "O parâmetro 'municipio' foi deprecado para NFSe e não define roteamento",
+                                "Configure '{$this->providerKey}' em config/nfse/nfse-provider-families.json",
+                                "Revise o roteamento em config/nfse/providers-catalog.json",
                             ]
                         ]
                     );
@@ -747,7 +747,7 @@ class NFSeFacade
 
             if (!$registry->has($this->providerKey)) {
                 return FiscalResponse::error(
-                    "Provider NFSe nacional '{$this->providerKey}' não está configurado",
+                    "Provider NFSe '{$this->providerKey}' não está configurado",
                     'MUNICIPALITY_NOT_CONFIGURED',
                     'nfse_municipality_validation',
                     [
@@ -757,8 +757,8 @@ class NFSeFacade
                         'municipio_ignored' => true,
                         'warnings' => $this->deprecationWarnings,
                         'suggestions' => [
-                            "Configure '{$this->providerKey}' em config/nfse-municipios.json",
-                            "Não é mais necessário configurar provider por município",
+                            "Configure '{$this->providerKey}' em config/nfse/nfse-provider-families.json",
+                            "Revise o mapeamento do município em config/nfse/providers-catalog.json",
                         ]
                     ]
                 );
@@ -1257,10 +1257,37 @@ class NFSeFacade
             $registry = ProviderRegistry::getInstance();
             $config = $registry->getConfig($this->providerKey);
 
-            $required = ['provider', 'api_base_url', 'timeout', 'endpoints'];
             $missing = [];
-            foreach ($required as $key) {
-                if (!array_key_exists($key, $config) || $config[$key] === '' || $config[$key] === []) {
+            foreach (['provider_class', 'api_base_url', 'param_api_base_url', 'timeout'] as $key) {
+                if (!array_key_exists($key, $config) || trim((string) $config[$key]) === '') {
+                    $missing[] = $key;
+                }
+            }
+
+            foreach (['services', 'endpoints', 'operation_methods', 'catalog_endpoints', 'cnc_endpoints'] as $key) {
+                if (!is_array($config[$key] ?? null) || $config[$key] === []) {
+                    $missing[] = $key;
+                }
+            }
+
+            foreach ([
+                'services.adn.homologacao' => $config['services']['adn']['homologacao'] ?? null,
+                'services.parametrizacao.homologacao' => $config['services']['parametrizacao']['homologacao'] ?? null,
+                'services.danfse.homologacao' => $config['services']['danfse']['homologacao'] ?? null,
+                'endpoints.emitir' => $config['endpoints']['emitir'] ?? null,
+                'endpoints.consultar' => $config['endpoints']['consultar'] ?? null,
+                'endpoints.cancelar' => $config['endpoints']['cancelar'] ?? null,
+                'endpoints.consultar_rps' => $config['endpoints']['consultar_rps'] ?? null,
+                'endpoints.consultar_lote' => $config['endpoints']['consultar_lote'] ?? null,
+                'endpoints.baixar_xml' => $config['endpoints']['baixar_xml'] ?? null,
+                'endpoints.baixar_danfse' => $config['endpoints']['baixar_danfse'] ?? null,
+                'catalog_endpoints.municipios' => $config['catalog_endpoints']['municipios'] ?? null,
+                'catalog_endpoints.aliquotas_municipio' => $config['catalog_endpoints']['aliquotas_municipio'] ?? null,
+                'catalog_endpoints.convenio_municipio' => $config['catalog_endpoints']['convenio_municipio'] ?? null,
+                'cnc_endpoints.contribuinte' => $config['cnc_endpoints']['contribuinte'] ?? null,
+                'cnc_endpoints.habilitacao' => $config['cnc_endpoints']['habilitacao'] ?? null,
+            ] as $key => $value) {
+                if (!is_string($value) || trim($value) === '') {
                     $missing[] = $key;
                 }
             }

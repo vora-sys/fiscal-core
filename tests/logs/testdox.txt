@@ -1,4 +1,7 @@
-Cnpj Response Mapping (Tests\Unit\Utils\CnpjResponseMapping)
- [x] Brasil api adapter unwraps nested data payload
- [x] Utils facade maps new cnpj payload format
+Manaus Nacional Common
+ [x] Parse options defaults to preview mode
+ [x] Parse options detects operational flags
+ [x] Listar codigos usa tabela nacional local
+ [x] Build payload uses manaus homologation defaults
+ [x] Build payload adds obra for codes that require it
 

@@ -95,17 +95,17 @@ class FiscalFacade
     /**
      * Emite uma NFSe
      */
-    public function emitirNFSe(array $dados, string $municipio = 'curitiba'): FiscalResponse
+    public function emitirNFSe(array $dados, string $municipio = 'nacional'): FiscalResponse
     {
         return $this->nfse($municipio)->emitir($dados);
     }
 
-    public function emitirNFSeCompleto(array $dados, string $municipio = 'curitiba', array $options = []): FiscalResponse
+    public function emitirNFSeCompleto(array $dados, string $municipio = 'nacional', array $options = []): FiscalResponse
     {
         return $this->nfse($municipio)->emitirCompleto($dados, $options);
     }
 
-    public function consultarDisponibilidadeNFSe(array $criterios, string $municipio = 'curitiba', array $options = []): FiscalResponse
+    public function consultarDisponibilidadeNFSe(array $criterios, string $municipio = 'nacional', array $options = []): FiscalResponse
     {
         return $this->nfse($municipio)->consultarDisponibilidade($criterios, $options);
     }
@@ -113,7 +113,7 @@ class FiscalFacade
     /**
      * Consulta uma NFSe
      */
-    public function consultarNFSe(string $chave, string $municipio = 'curitiba'): FiscalResponse
+    public function consultarNFSe(string $chave, string $municipio = 'nacional'): FiscalResponse
     {
         return $this->nfse($municipio)->consultar($chave);
     }

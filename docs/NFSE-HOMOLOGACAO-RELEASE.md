@@ -13,7 +13,7 @@ Este guia cobre a validacao da versao `v1.1.1` em ambiente completo e os comando
 - variaveis:
   - `FISCAL_CERT_PATH`
   - `FISCAL_CERT_PASSWORD`
-- endpoint nacional homologacao configurado em `config/nfse-municipios.json`
+- endpoint nacional homologacao configurado em `config/nfse/nfse-provider-families.json`
 
 ## 2) Validacao de prontidao (obrigatorio)
 
@@ -70,7 +70,7 @@ Usar `ConsultaNfseExterno.xml` como fixture de referencia para validar extracao:
 Depois que homologacao passar:
 
 ```bash
-git add CHANGELOG.md config/nfse-municipios.json src tests docs
+git add CHANGELOG.md config/nfse src tests docs
 git commit -m "release(nfse): v1.1.1 rotas oficiais adn/cnc"
 git tag v1.1.1
 git push origin main

@@ -243,7 +243,7 @@ echo "\n🔧 CONFIGURAÇÃO ADICIONAL\n";
 echo "=========================\n";
 echo "• Certificados A1/A3: Configure para NFe/NFCe\n";
 echo "• IBPT: Configure IBPT_CNPJ e IBPT_TOKEN para tributação\n";
-echo "• NFSe: Revise config/nfse-municipios.json para seus municípios\n";
+echo "• NFSe: Revise config/nfse/providers-catalog.json e config/nfse/nfse-provider-families.json\n";
 
 echo "\n📚 DOCUMENTAÇÃO\n";
 echo "===============\n";

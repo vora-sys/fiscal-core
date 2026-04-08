@@ -20,8 +20,13 @@ class NacionalProviderTest extends TestCase
         $this->assertStringContainsString('<Sucesso>true</Sucesso>', $response);
         $this->assertSame('POST', $calls[0]['method']);
         $this->assertSame('/nfse', $calls[0]['path']);
-        $this->assertStringContainsString('<NFSe', (string) $calls[0]['body']);
-        $this->assertStringContainsString('infDPS', (string) $calls[0]['body']);
+        $payload = json_decode((string) $calls[0]['body'], true);
+        $this->assertIsArray($payload);
+        $this->assertArrayHasKey('dpsXmlGZipB64', $payload);
+        $xml = gzdecode((string) base64_decode((string) $payload['dpsXmlGZipB64']));
+        $this->assertIsString($xml);
+        $this->assertStringContainsString('<DPS', $xml);
+        $this->assertStringContainsString('infDPS', $xml);
     }
 
     public function test_cancelar_retorna_true_quando_resposta_indica_sucesso(): void
@@ -70,8 +75,8 @@ class NacionalProviderTest extends TestCase
         });
         $config['services'] = [
             'adn' => [
-                'homologacao' => 'https://adn.producaorestrita.nfse.gov.br/api/v1',
-                'producao' => 'https://adn.nfse.gov.br/api/v1',
+                'homologacao' => 'https://adn.producaorestrita.nfse.gov.br',
+                'producao' => 'https://adn.nfse.gov.br',
             ],
         ];
         $config['endpoints']['emitir'] = 'adn:/nfse';
@@ -79,7 +84,7 @@ class NacionalProviderTest extends TestCase
         $provider = new NacionalProvider($config);
         $provider->emitir($this->dadosValidos());
 
-        $this->assertSame('https://adn.producaorestrita.nfse.gov.br/api/v1/nfse', $calls[0]['path']);
+        $this->assertSame('https://adn.producaorestrita.nfse.gov.br/nfse', $calls[0]['path']);
         $payload = json_decode((string) $calls[0]['body'], true);
         $this->assertIsArray($payload);
         $this->assertArrayHasKey('dpsXmlGZipB64', $payload);
@@ -97,26 +102,25 @@ class NacionalProviderTest extends TestCase
             return '<Resposta><Sucesso>true</Sucesso></Resposta>';
         });
         $config['services'] = [
-            'cnc_municipio' => [
-                'homologacao' => 'https://adn.producaorestrita.nfse.gov.br/cnc/municipio',
-                'producao' => 'https://adn.nfse.gov.br/cnc/municipio',
-            ],
-            'cnc_consulta' => [
-                'homologacao' => 'https://adn.producaorestrita.nfse.gov.br/cnc/consulta',
-                'producao' => 'https://adn.nfse.gov.br/cnc/consulta',
+            'parametrizacao' => [
+                'homologacao' => 'https://adn.producaorestrita.nfse.gov.br/parametrizacao',
+                'producao' => 'https://adn.nfse.gov.br/parametrizacao',
             ],
         ];
         $config['catalog_endpoints'] = [
-            'municipios' => 'cnc_municipio:/municipios',
-            'aliquotas_municipio' => 'cnc_consulta:/municipios/{codigo_municipio}/aliquotas',
+            'municipios' => 'parametrizacao:/catalogos/municipios',
+            'aliquotas_municipio' => 'parametrizacao:/{codigo_municipio}/{codigoServico}/{competencia}/aliquota',
+            'convenio_municipio' => 'parametrizacao:/{codigo_municipio}/convenio',
         ];
 
         $provider = new NacionalProvider($config);
         $provider->listarMunicipiosNacionais(true);
-        $provider->consultarAliquotasMunicipio('3550308', null, null, true);
+        $provider->consultarAliquotasMunicipio('3550308', '0107', '2026-04-08', true);
+        $provider->consultarConvenioMunicipio('3550308', true);
 
-        $this->assertSame('https://adn.producaorestrita.nfse.gov.br/cnc/municipio/municipios', $calls[0]['path']);
-        $this->assertSame('https://adn.producaorestrita.nfse.gov.br/cnc/consulta/municipios/3550308/aliquotas', $calls[1]['path']);
+        $this->assertSame('https://adn.producaorestrita.nfse.gov.br/parametrizacao/catalogos/municipios', $calls[0]['path']);
+        $this->assertSame('https://adn.producaorestrita.nfse.gov.br/parametrizacao/3550308/0107/2026-04-08/aliquota', $calls[1]['path']);
+        $this->assertSame('https://adn.producaorestrita.nfse.gov.br/parametrizacao/3550308/convenio', $calls[2]['path']);
     }
 
     public function test_consulta_cnc_resolve_rota_por_servico(): void

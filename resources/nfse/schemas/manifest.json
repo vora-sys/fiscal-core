@@ -1,19 +1,432 @@
 {
-    "generated_at": "2026-03-19T11:14:17+00:00",
+    "generated_at": "2026-04-07T17:08:13+00:00",
     "source_base": "Uninfe/source/NFe.Components.Wsdl/NFse/schemas/NFSe",
     "target_base": "resources/nfse/schemas",
-    "mode": "selected",
+    "mode": "all",
     "custom_schema_families": {
         "BELEM_MUNICIPAL_2025": "scripts/nfse/schema-overrides/BELEM_MUNICIPAL_2025",
         "PUBLICA": "scripts/nfse/schema-overrides/PUBLICA"
     },
     "families": {
+        "ABACO": {
+            "status": "imported",
+            "files": 2,
+            "source_kind": "uninfe",
+            "source": "Uninfe/source/NFe.Components.Wsdl/NFse/schemas/NFSe/ABACO",
+            "target": "resources/nfse/schemas/ABACO"
+        },
+        "ABRASF": {
+            "status": "imported",
+            "files": 5,
+            "source_kind": "uninfe",
+            "source": "Uninfe/source/NFe.Components.Wsdl/NFse/schemas/NFSe/ABRASF",
+            "target": "resources/nfse/schemas/ABRASF"
+        },
+        "ACTCON": {
+            "status": "imported",
+            "files": 4,
+            "source_kind": "uninfe",
+            "source": "Uninfe/source/NFe.Components.Wsdl/NFse/schemas/NFSe/ACTCON",
+            "target": "resources/nfse/schemas/ACTCON"
+        },
+        "ADM_SISTEMAS": {
+            "status": "imported",
+            "files": 2,
+            "source_kind": "uninfe",
+            "source": "Uninfe/source/NFe.Components.Wsdl/NFse/schemas/NFSe/ADM_SISTEMAS",
+            "target": "resources/nfse/schemas/ADM_SISTEMAS"
+        },
+        "AGILI": {
+            "status": "imported",
+            "files": 2,
+            "source_kind": "uninfe",
+            "source": "Uninfe/source/NFe.Components.Wsdl/NFse/schemas/NFSe/AGILI",
+            "target": "resources/nfse/schemas/AGILI"
+        },
+        "AVMB_ASTEN": {
+            "status": "imported",
+            "files": 2,
+            "source_kind": "uninfe",
+            "source": "Uninfe/source/NFe.Components.Wsdl/NFse/schemas/NFSe/AVMB_ASTEN",
+            "target": "resources/nfse/schemas/AVMB_ASTEN"
+        },
+        "BETHA": {
+            "status": "imported",
+            "files": 18,
+            "source_kind": "uninfe",
+            "source": "Uninfe/source/NFe.Components.Wsdl/NFse/schemas/NFSe/BETHA",
+            "target": "resources/nfse/schemas/BETHA"
+        },
+        "BHISS": {
+            "status": "imported",
+            "files": 2,
+            "source_kind": "uninfe",
+            "source": "Uninfe/source/NFe.Components.Wsdl/NFse/schemas/NFSe/BHISS",
+            "target": "resources/nfse/schemas/BHISS"
+        },
+        "BSITBR": {
+            "status": "imported",
+            "files": 2,
+            "source_kind": "uninfe",
+            "source": "Uninfe/source/NFe.Components.Wsdl/NFse/schemas/NFSe/BSITBR",
+            "target": "resources/nfse/schemas/BSITBR"
+        },
+        "CARIOCA": {
+            "status": "imported",
+            "files": 3,
+            "source_kind": "uninfe",
+            "source": "Uninfe/source/NFe.Components.Wsdl/NFse/schemas/NFSe/CARIOCA",
+            "target": "resources/nfse/schemas/CARIOCA"
+        },
+        "CECAM": {
+            "status": "imported",
+            "files": 19,
+            "source_kind": "uninfe",
+            "source": "Uninfe/source/NFe.Components.Wsdl/NFse/schemas/NFSe/CECAM",
+            "target": "resources/nfse/schemas/CECAM"
+        },
+        "CENTI": {
+            "status": "imported",
+            "files": 2,
+            "source_kind": "uninfe",
+            "source": "Uninfe/source/NFe.Components.Wsdl/NFse/schemas/NFSe/CENTI",
+            "target": "resources/nfse/schemas/CENTI"
+        },
+        "COPLAN": {
+            "status": "imported",
+            "files": 3,
+            "source_kind": "uninfe",
+            "source": "Uninfe/source/NFe.Components.Wsdl/NFse/schemas/NFSe/COPLAN",
+            "target": "resources/nfse/schemas/COPLAN"
+        },
+        "D2TI": {
+            "status": "imported",
+            "files": 5,
+            "source_kind": "uninfe",
+            "source": "Uninfe/source/NFe.Components.Wsdl/NFse/schemas/NFSe/D2TI",
+            "target": "resources/nfse/schemas/D2TI"
+        },
+        "DESENVOLVECIDADE": {
+            "status": "imported",
+            "files": 2,
+            "source_kind": "uninfe",
+            "source": "Uninfe/source/NFe.Components.Wsdl/NFse/schemas/NFSe/DESENVOLVECIDADE",
+            "target": "resources/nfse/schemas/DESENVOLVECIDADE"
+        },
+        "DSF": {
+            "status": "imported",
+            "files": 22,
+            "source_kind": "uninfe",
+            "source": "Uninfe/source/NFe.Components.Wsdl/NFse/schemas/NFSe/DSF",
+            "target": "resources/nfse/schemas/DSF"
+        },
+        "DUETO": {
+            "status": "imported",
+            "files": 17,
+            "source_kind": "uninfe",
+            "source": "Uninfe/source/NFe.Components.Wsdl/NFse/schemas/NFSe/DUETO",
+            "target": "resources/nfse/schemas/DUETO"
+        },
+        "EGOVERNE": {
+            "status": "imported",
+            "files": 2,
+            "source_kind": "uninfe",
+            "source": "Uninfe/source/NFe.Components.Wsdl/NFse/schemas/NFSe/EGOVERNE",
+            "target": "resources/nfse/schemas/EGOVERNE"
+        },
+        "EL": {
+            "status": "imported",
+            "files": 3,
+            "source_kind": "uninfe",
+            "source": "Uninfe/source/NFe.Components.Wsdl/NFse/schemas/NFSe/EL",
+            "target": "resources/nfse/schemas/EL"
+        },
+        "ELOTECH": {
+            "status": "imported",
+            "files": 1,
+            "source_kind": "uninfe",
+            "source": "Uninfe/source/NFe.Components.Wsdl/NFse/schemas/NFSe/ELOTECH",
+            "target": "resources/nfse/schemas/ELOTECH"
+        },
+        "EMBRAS": {
+            "status": "imported",
+            "files": 2,
+            "source_kind": "uninfe",
+            "source": "Uninfe/source/NFe.Components.Wsdl/NFse/schemas/NFSe/EMBRAS",
+            "target": "resources/nfse/schemas/EMBRAS"
+        },
+        "E_RECEITA": {
+            "status": "imported",
+            "files": 2,
+            "source_kind": "uninfe",
+            "source": "Uninfe/source/NFe.Components.Wsdl/NFse/schemas/NFSe/E_RECEITA",
+            "target": "resources/nfse/schemas/E_RECEITA"
+        },
+        "FINTEL": {
+            "status": "imported",
+            "files": 4,
+            "source_kind": "uninfe",
+            "source": "Uninfe/source/NFe.Components.Wsdl/NFse/schemas/NFSe/FINTEL",
+            "target": "resources/nfse/schemas/FINTEL"
+        },
+        "FIORILLI": {
+            "status": "imported",
+            "files": 2,
+            "source_kind": "uninfe",
+            "source": "Uninfe/source/NFe.Components.Wsdl/NFse/schemas/NFSe/FIORILLI",
+            "target": "resources/nfse/schemas/FIORILLI"
+        },
+        "FISSLEX": {
+            "status": "imported",
+            "files": 2,
+            "source_kind": "uninfe",
+            "source": "Uninfe/source/NFe.Components.Wsdl/NFse/schemas/NFSe/FISSLEX",
+            "target": "resources/nfse/schemas/FISSLEX"
+        },
+        "GEISWEB": {
+            "status": "imported",
+            "files": 6,
+            "source_kind": "uninfe",
+            "source": "Uninfe/source/NFe.Components.Wsdl/NFse/schemas/NFSe/GEISWEB",
+            "target": "resources/nfse/schemas/GEISWEB"
+        },
+        "GIF": {
+            "status": "imported",
+            "files": 3,
+            "source_kind": "uninfe",
+            "source": "Uninfe/source/NFe.Components.Wsdl/NFse/schemas/NFSe/GIF",
+            "target": "resources/nfse/schemas/GIF"
+        },
+        "GINFES": {
+            "status": "imported",
+            "files": 18,
+            "source_kind": "uninfe",
+            "source": "Uninfe/source/NFe.Components.Wsdl/NFse/schemas/NFSe/GINFES",
+            "target": "resources/nfse/schemas/GINFES"
+        },
+        "GINFES_SJP": {
+            "status": "imported",
+            "files": 15,
+            "source_kind": "uninfe",
+            "source": "Uninfe/source/NFe.Components.Wsdl/NFse/schemas/NFSe/GINFES_SJP",
+            "target": "resources/nfse/schemas/GINFES_SJP"
+        },
+        "GINFES_V03": {
+            "status": "imported",
+            "files": 15,
+            "source_kind": "uninfe",
+            "source": "Uninfe/source/NFe.Components.Wsdl/NFse/schemas/NFSe/GINFES_V03",
+            "target": "resources/nfse/schemas/GINFES_V03"
+        },
+        "GISSONLINE": {
+            "status": "imported",
+            "files": 24,
+            "source_kind": "uninfe",
+            "source": "Uninfe/source/NFe.Components.Wsdl/NFse/schemas/NFSe/GISSONLINE",
+            "target": "resources/nfse/schemas/GISSONLINE"
+        },
+        "IIBRASIL": {
+            "status": "imported",
+            "files": 2,
+            "source_kind": "uninfe",
+            "source": "Uninfe/source/NFe.Components.Wsdl/NFse/schemas/NFSe/IIBRASIL",
+            "target": "resources/nfse/schemas/IIBRASIL"
+        },
+        "INDAIATUBA_SP": {
+            "status": "imported",
+            "files": 2,
+            "source_kind": "uninfe",
+            "source": "Uninfe/source/NFe.Components.Wsdl/NFse/schemas/NFSe/INDAIATUBA_SP",
+            "target": "resources/nfse/schemas/INDAIATUBA_SP"
+        },
+        "INTERSOL": {
+            "status": "imported",
+            "files": 15,
+            "source_kind": "uninfe",
+            "source": "Uninfe/source/NFe.Components.Wsdl/NFse/schemas/NFSe/INTERSOL",
+            "target": "resources/nfse/schemas/INTERSOL"
+        },
+        "ISSNET": {
+            "status": "imported",
+            "files": 19,
+            "source_kind": "uninfe",
+            "source": "Uninfe/source/NFe.Components.Wsdl/NFse/schemas/NFSe/ISSNET",
+            "target": "resources/nfse/schemas/ISSNET"
+        },
+        "ISSWEB": {
+            "status": "imported",
+            "files": 4,
+            "source_kind": "uninfe",
+            "source": "Uninfe/source/NFe.Components.Wsdl/NFse/schemas/NFSe/ISSWEB",
+            "target": "resources/nfse/schemas/ISSWEB"
+        },
+        "JLSOFT": {
+            "status": "imported",
+            "files": 2,
+            "source_kind": "uninfe",
+            "source": "Uninfe/source/NFe.Components.Wsdl/NFse/schemas/NFSe/JLSOFT",
+            "target": "resources/nfse/schemas/JLSOFT"
+        },
+        "LEXSOM": {
+            "status": "imported",
+            "files": 2,
+            "source_kind": "uninfe",
+            "source": "Uninfe/source/NFe.Components.Wsdl/NFse/schemas/NFSe/LEXSOM",
+            "target": "resources/nfse/schemas/LEXSOM"
+        },
+        "MANAUS_AM": {
+            "status": "imported",
+            "files": 2,
+            "source_kind": "uninfe",
+            "source": "Uninfe/source/NFe.Components.Wsdl/NFse/schemas/NFSe/MANAUS_AM",
+            "target": "resources/nfse/schemas/MANAUS_AM"
+        },
+        "MEGASOFT": {
+            "status": "imported",
+            "files": 2,
+            "source_kind": "uninfe",
+            "source": "Uninfe/source/NFe.Components.Wsdl/NFse/schemas/NFSe/MEGASOFT",
+            "target": "resources/nfse/schemas/MEGASOFT"
+        },
+        "METROPOLIS": {
+            "status": "imported",
+            "files": 2,
+            "source_kind": "uninfe",
+            "source": "Uninfe/source/NFe.Components.Wsdl/NFse/schemas/NFSe/METROPOLIS",
+            "target": "resources/nfse/schemas/METROPOLIS"
+        },
+        "MODERNIZACAO_PUBLICA": {
+            "status": "imported",
+            "files": 3,
+            "source_kind": "uninfe",
+            "source": "Uninfe/source/NFe.Components.Wsdl/NFse/schemas/NFSe/MODERNIZACAO_PUBLICA",
+            "target": "resources/nfse/schemas/MODERNIZACAO_PUBLICA"
+        },
+        "NATALENSE": {
+            "status": "imported",
+            "files": 2,
+            "source_kind": "uninfe",
+            "source": "Uninfe/source/NFe.Components.Wsdl/NFse/schemas/NFSe/NATALENSE",
+            "target": "resources/nfse/schemas/NATALENSE"
+        },
+        "PAULISTANA": {
+            "status": "imported",
+            "files": 17,
+            "source_kind": "uninfe",
+            "source": "Uninfe/source/NFe.Components.Wsdl/NFse/schemas/NFSe/PAULISTANA",
+            "target": "resources/nfse/schemas/PAULISTANA"
+        },
+        "PRONIN": {
+            "status": "imported",
+            "files": 3,
+            "source_kind": "uninfe",
+            "source": "Uninfe/source/NFe.Components.Wsdl/NFse/schemas/NFSe/PRONIN",
+            "target": "resources/nfse/schemas/PRONIN"
+        },
+        "PROPRIOJOINVILLESC": {
+            "status": "imported",
+            "files": 2,
+            "source_kind": "uninfe",
+            "source": "Uninfe/source/NFe.Components.Wsdl/NFse/schemas/NFSe/PROPRIOJOINVILLESC",
+            "target": "resources/nfse/schemas/PROPRIOJOINVILLESC"
+        },
         "PUBLICA": {
             "status": "imported",
             "files": 3,
             "source_kind": "custom_override",
             "source": "scripts/nfse/schema-overrides/PUBLICA",
             "target": "resources/nfse/schemas/PUBLICA"
+        },
+        "PUBLIC_SOFT": {
+            "status": "imported",
+            "files": 2,
+            "source_kind": "uninfe",
+            "source": "Uninfe/source/NFe.Components.Wsdl/NFse/schemas/NFSe/PUBLIC_SOFT",
+            "target": "resources/nfse/schemas/PUBLIC_SOFT"
+        },
+        "RLZ_INFORMATICA": {
+            "status": "imported",
+            "files": 2,
+            "source_kind": "uninfe",
+            "source": "Uninfe/source/NFe.Components.Wsdl/NFse/schemas/NFSe/RLZ_INFORMATICA",
+            "target": "resources/nfse/schemas/RLZ_INFORMATICA"
+        },
+        "SH3": {
+            "status": "imported",
+            "files": 2,
+            "source_kind": "uninfe",
+            "source": "Uninfe/source/NFe.Components.Wsdl/NFse/schemas/NFSe/SH3",
+            "target": "resources/nfse/schemas/SH3"
+        },
+        "SIMPLISS": {
+            "status": "imported",
+            "files": 1,
+            "source_kind": "uninfe",
+            "source": "Uninfe/source/NFe.Components.Wsdl/NFse/schemas/NFSe/SIMPLISS",
+            "target": "resources/nfse/schemas/SIMPLISS"
+        },
+        "SMARAPD": {
+            "status": "imported",
+            "files": 4,
+            "source_kind": "uninfe",
+            "source": "Uninfe/source/NFe.Components.Wsdl/NFse/schemas/NFSe/SMARAPD",
+            "target": "resources/nfse/schemas/SMARAPD"
+        },
+        "SONNER": {
+            "status": "imported",
+            "files": 2,
+            "source_kind": "uninfe",
+            "source": "Uninfe/source/NFe.Components.Wsdl/NFse/schemas/NFSe/SONNER",
+            "target": "resources/nfse/schemas/SONNER"
+        },
+        "SUPERNOVA": {
+            "status": "imported",
+            "files": 2,
+            "source_kind": "uninfe",
+            "source": "Uninfe/source/NFe.Components.Wsdl/NFse/schemas/NFSe/SUPERNOVA",
+            "target": "resources/nfse/schemas/SUPERNOVA"
+        },
+        "SYSTEMPRO": {
+            "status": "imported",
+            "files": 2,
+            "source_kind": "uninfe",
+            "source": "Uninfe/source/NFe.Components.Wsdl/NFse/schemas/NFSe/SYSTEMPRO",
+            "target": "resources/nfse/schemas/SYSTEMPRO"
+        },
+        "THEMA": {
+            "status": "imported",
+            "files": 2,
+            "source_kind": "uninfe",
+            "source": "Uninfe/source/NFe.Components.Wsdl/NFse/schemas/NFSe/THEMA",
+            "target": "resources/nfse/schemas/THEMA"
+        },
+        "TINUS": {
+            "status": "imported",
+            "files": 2,
+            "source_kind": "uninfe",
+            "source": "Uninfe/source/NFe.Components.Wsdl/NFse/schemas/NFSe/TINUS",
+            "target": "resources/nfse/schemas/TINUS"
+        },
+        "TIPLAN": {
+            "status": "imported",
+            "files": 5,
+            "source_kind": "uninfe",
+            "source": "Uninfe/source/NFe.Components.Wsdl/NFse/schemas/NFSe/TIPLAN",
+            "target": "resources/nfse/schemas/TIPLAN"
+        },
+        "VITORIA_ES": {
+            "status": "imported",
+            "files": 2,
+            "source_kind": "uninfe",
+            "source": "Uninfe/source/NFe.Components.Wsdl/NFse/schemas/NFSe/VITORIA_ES",
+            "target": "resources/nfse/schemas/VITORIA_ES"
+        },
+        "WEBISS": {
+            "status": "imported",
+            "files": 2,
+            "source_kind": "uninfe",
+            "source": "Uninfe/source/NFe.Components.Wsdl/NFse/schemas/NFSe/WEBISS",
+            "target": "resources/nfse/schemas/WEBISS"
         }
     },
     "warnings": []

@@ -9,7 +9,15 @@ require_once __DIR__ . '/manaus_nacional_common.php';
 $projectRoot = dirname(__DIR__, 2);
 $options = manausNacionalParseOptions($argv);
 if (($options['help'] ?? false) === true) {
-    echo manausNacionalOperationsUsage(basename((string) $argv[0])) . PHP_EOL;
+    echo manausNacionalUsage(basename((string) $argv[0])) . PHP_EOL;
+    exit(0);
+}
+
+if (($options['listar_codigos'] ?? false) === true) {
+    echo json_encode(
+        manausNacionalListarCodigos($options, $projectRoot),
+        JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES
+    ) . PHP_EOL;
     exit(0);
 }
 
@@ -49,12 +57,29 @@ if (isset($options['consultar_chave'])) {
     $response = $nfse->consultarConvenioMunicipio('1302603');
 }
 
-if ($response === null) {
-    fwrite(STDERR, manausNacionalOperationsUsage(basename((string) $argv[0])) . PHP_EOL);
-    exit(1);
+if ($response !== null) {
+    echo json_encode([
+        'provider' => $providerInfo->toArray(),
+        'response' => $response->toArray(),
+    ], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) . PHP_EOL;
+    exit(0);
 }
 
-echo json_encode([
-    'provider' => $providerInfo->toArray(),
-    'response' => $response->toArray(),
-], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) . PHP_EOL;
+$payload = manausNacionalBuildPayload($options);
+
+if (($options['send'] ?? false) !== true) {
+    $layout = $nfse->validarLayoutDps($payload, false);
+    $xml = $nfse->gerarXmlDpsPreview($payload);
+
+    echo json_encode([
+        'mode' => 'preview',
+        'provider' => $providerInfo->toArray(),
+        'layout' => $layout->toArray(),
+        'payload' => $payload,
+        'xml_preview' => $xml->getData('xml'),
+    ], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) . PHP_EOL;
+    exit(0);
+}
+
+$resultado = $nfse->emitirCompleto($payload);
+echo $resultado->toJson(JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) . PHP_EOL;

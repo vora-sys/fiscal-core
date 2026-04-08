@@ -20,6 +20,8 @@ Fonte:
 
 ## Roteamento esperado
 
+- catalogo canonico em `config/nfse/providers-catalog.json`
+- familia tecnica e endpoints em `config/nfse/nfse-provider-families.json`
 - `NFSeAdapter('manaus')` resolve para `NacionalProvider`
 - `NFSeFacade('manaus')` expoe o ciclo nacional completo:
   - `emitir`
@@ -52,16 +54,16 @@ Fonte:
 
 ## Exemplos
 
-Preview seguro do XML DPS:
+CLI principal de Manaus em homologacao:
 
 ```bash
-php examples/homologacao/04-manaus-emitir-nacional.php
+php examples/homologacao/05-manaus-operacoes-nacionais.php
 ```
 
 Emissao real em homologacao:
 
 ```bash
-php examples/homologacao/04-manaus-emitir-nacional.php --send
+php examples/homologacao/05-manaus-operacoes-nacionais.php --send
 ```
 
 Operacoes nacionais:
@@ -72,4 +74,10 @@ php examples/homologacao/05-manaus-operacoes-nacionais.php --consultar-lote=SEU_
 php examples/homologacao/05-manaus-operacoes-nacionais.php --baixar-xml=SUA_CHAVE
 php examples/homologacao/05-manaus-operacoes-nacionais.php --baixar-danfse=SUA_CHAVE
 php examples/homologacao/05-manaus-operacoes-nacionais.php --cancelar-chave=SUA_CHAVE --motivo="Cancelamento de teste"
+```
+
+Compatibilidade:
+
+```bash
+php examples/homologacao/04-manaus-emitir-nacional.php --send
 ```

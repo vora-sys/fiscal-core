@@ -1,18 +1,28 @@
 {
-    "generated_at": "2026-03-19T11:14:17+00:00",
+    "generated_at": "2026-04-08T17:10:41+00:00",
     "source_xml": "Uninfe/source/NFe.Components.Wsdl/NFse/WSDL/Webservice.xml",
-    "mode": "selected",
-    "processed_municipios": 5,
+    "mode": "all",
+    "processed_municipios": 624,
     "skipped_entries": 0,
-    "families_count": 6,
-    "selected_ibges": [
-        "1501402",
-        "1302603",
-        "1303536",
-        "1303569",
-        "4209102"
-    ],
+    "families_count": 86,
+    "selected_ibges": "[todos]",
     "municipio_overrides": {
+        "1001058": {
+            "provider_family": "nfse_nacional",
+            "schema_package": "NACIONAL",
+            "slug": "nacional",
+            "nome": "NACIONAL",
+            "uf": "AN",
+            "provider_note": "Entrada canônica do fluxo NFSe nacional no runtime."
+        },
+        "1302603": {
+            "provider_family": "nfse_nacional",
+            "schema_package": "NACIONAL",
+            "slug": "manaus",
+            "nome": "Manaus",
+            "uf": "AM",
+            "provider_note": "Manaus usa o fluxo NFSe nacional para fatos geradores a partir de 2026-01-01; provider municipal historico mantido apenas como referencia."
+        },
         "1303536": {
             "provider_family": "ISSWEB_AM",
             "schema_package": "ISSWEB",
@@ -39,6 +49,8 @@
         }
     },
     "extra_provider_families": [
-        "DSF"
+        "DSF",
+        "ISSWEB_AM",
+        "nfse_nacional"
     ]
 }

@@ -64,16 +64,22 @@ final class ProviderConfigTest extends TestCase
         $this->assertContains('consultar_nfse_rps', $data['supported_operations']);
     }
 
-    public function testFacadeListsOnlyPilotMunicipios(): void
+    public function testFacadeListsActiveMunicipiosFromCurrentCatalog(): void
     {
         $facade = new NFSeFacade('belem');
         $response = $facade->listarMunicipios();
 
         $this->assertTrue($response->isSuccess());
-        $this->assertSame(
-            ['belem', 'joinville', 'manaus', 'nacional', 'presidente-figueiredo', 'rio-preto-da-eva'],
-            $response->getData('municipios')
-        );
+        $municipios = $response->getData('municipios');
+
+        $this->assertIsArray($municipios);
+        $this->assertContains('belem', $municipios);
+        $this->assertContains('joinville', $municipios);
+        $this->assertContains('manaus', $municipios);
+        $this->assertContains('nacional', $municipios);
+        $this->assertContains('presidente-figueiredo', $municipios);
+        $this->assertContains('rio-preto-da-eva', $municipios);
+        $this->assertGreaterThan(100, count($municipios));
     }
 
     public function testFacadeMapsJoinvilleToPublica(): void
@@ -129,6 +135,33 @@ final class ProviderConfigTest extends TestCase
         $this->assertSame('1303569', $data['codigo_municipio']);
         $this->assertStringContainsString('IsswebProvider', $data['provider_class']);
         $this->assertContains('consultar', $data['supported_operations']);
+    }
+
+    public function testFacadeMapsManausToNationalProvider(): void
+    {
+        $facade = new NFSeFacade('manaus');
+        $response = $facade->getProviderInfo();
+
+        $this->assertTrue($response->isSuccess());
+
+        $data = $response->getData();
+        $this->assertSame('nfse_nacional', $data['provider_key']);
+        $this->assertSame('1302603', $data['codigo_municipio']);
+        $this->assertStringContainsString('NacionalProvider', $data['provider_class']);
+        $this->assertContains('consultar_por_rps', $data['supported_operations']);
+    }
+
+    public function testFacadeHomologationReadinessUsesNationalProviderConfigForManaus(): void
+    {
+        $facade = new NFSeFacade('manaus');
+        $response = $facade->verificarProntidaoHomologacao();
+
+        $this->assertTrue($response->isSuccess());
+        $this->assertTrue($response->getData('ready'));
+        $this->assertSame('nfse_nacional', $response->getData('provider_key'));
+        $this->assertSame([], $response->getData('missing_requirements'));
+        $this->assertTrue($response->getData('certificado_carregado'));
+        $this->assertTrue($response->getData('certificado_valido'));
     }
 
     private function bootstrapEnvironment(): void

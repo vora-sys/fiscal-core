@@ -1,4 +1,46 @@
 {
+    "ABACO": {
+        "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\AbacoProvider",
+        "layout_family": "ABACO",
+        "schema_root": "resources/nfse/schemas/ABACO",
+        "xsd_entrypoints": {},
+        "transport": "soap"
+    },
+    "ABASE": {
+        "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\AbaseProvider",
+        "layout_family": "ABASE",
+        "schema_root": "resources/nfse/schemas/ABASE",
+        "xsd_entrypoints": {},
+        "transport": "soap"
+    },
+    "ADM_SISTEMAS": {
+        "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\AdmSistemasProvider",
+        "layout_family": "ADM_SISTEMAS",
+        "schema_root": "resources/nfse/schemas/ADM_SISTEMAS",
+        "xsd_entrypoints": {},
+        "transport": "soap"
+    },
+    "AGILI": {
+        "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\AgiliProvider",
+        "layout_family": "AGILI",
+        "schema_root": "resources/nfse/schemas/AGILI",
+        "xsd_entrypoints": {},
+        "transport": "soap"
+    },
+    "AVMB_ASTEN": {
+        "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\AvmbAstenProvider",
+        "layout_family": "AVMB_ASTEN",
+        "schema_root": "resources/nfse/schemas/AVMB_ASTEN",
+        "xsd_entrypoints": {},
+        "transport": "soap"
+    },
+    "BAUHAUS": {
+        "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\BauhausProvider",
+        "layout_family": "BAUHAUS",
+        "schema_root": "resources/nfse/schemas/BAUHAUS",
+        "xsd_entrypoints": {},
+        "transport": "soap"
+    },
     "BELEM_MUNICIPAL_2025": {
         "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\BelemMunicipalProvider",
         "layout_family": "ABRASF_203",
@@ -17,12 +59,6 @@
         "wsdl_homologacao": "https://sefin-hml.belem.pa.gov.br/notafiscal-abrasfv203-ws/NotaFiscalSoap?wsdl",
         "wsdl_producao": "https://notafiscal.belem.pa.gov.br/notafiscal-abrasfv203-ws/NotaFiscalSoap?wsdl",
         "signature_mode": "required",
-        "sign_operations": [
-            "emitir",
-            "consultar_lote",
-            "consultar_nfse_rps",
-            "cancelar_nfse"
-        ],
         "soap_operation": "RecepcionarLoteRpsSincrono",
         "supported_operations": [
             "emitir_sincrono",
@@ -32,6 +68,90 @@
         ],
         "municipio_nome": "Belem",
         "source": "custom_override"
+    },
+    "BETHA": {
+        "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\BethaProvider",
+        "layout_family": "BETHA",
+        "schema_root": "resources/nfse/schemas/BETHA",
+        "xsd_entrypoints": {},
+        "transport": "soap"
+    },
+    "BETHA_CLOUD": {
+        "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\BethaCloudProvider",
+        "layout_family": "BETHA_CLOUD",
+        "schema_root": "resources/nfse/schemas/BETHA_CLOUD",
+        "xsd_entrypoints": {},
+        "transport": "soap"
+    },
+    "BHISS": {
+        "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\BhissProvider",
+        "layout_family": "BHISS",
+        "schema_root": "resources/nfse/schemas/BHISS",
+        "xsd_entrypoints": {},
+        "transport": "soap"
+    },
+    "BSITBR": {
+        "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\BsitbrProvider",
+        "layout_family": "BSITBR",
+        "schema_root": "resources/nfse/schemas/BSITBR",
+        "xsd_entrypoints": {},
+        "transport": "soap"
+    },
+    "CARIOCA": {
+        "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\CariocaProvider",
+        "layout_family": "CARIOCA",
+        "schema_root": "resources/nfse/schemas/CARIOCA",
+        "xsd_entrypoints": {},
+        "transport": "soap"
+    },
+    "CECAM": {
+        "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\CecamProvider",
+        "layout_family": "CECAM",
+        "schema_root": "resources/nfse/schemas/CECAM",
+        "xsd_entrypoints": {},
+        "transport": "soap"
+    },
+    "CENTI": {
+        "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\CentiProvider",
+        "layout_family": "CENTI",
+        "schema_root": "resources/nfse/schemas/CENTI",
+        "xsd_entrypoints": {},
+        "transport": "soap"
+    },
+    "CONAM": {
+        "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\ConamProvider",
+        "layout_family": "CONAM",
+        "schema_root": "resources/nfse/schemas/CONAM",
+        "xsd_entrypoints": {},
+        "transport": "soap"
+    },
+    "COPLAN": {
+        "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\CoplanProvider",
+        "layout_family": "COPLAN",
+        "schema_root": "resources/nfse/schemas/COPLAN",
+        "xsd_entrypoints": {},
+        "transport": "soap"
+    },
+    "DBSELLER": {
+        "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\DbsellerProvider",
+        "layout_family": "DBSELLER",
+        "schema_root": "resources/nfse/schemas/DBSELLER",
+        "xsd_entrypoints": {},
+        "transport": "soap"
+    },
+    "DESENVOLVECIDADE": {
+        "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\DesenvolvecidadeProvider",
+        "layout_family": "DESENVOLVECIDADE",
+        "schema_root": "resources/nfse/schemas/DESENVOLVECIDADE",
+        "xsd_entrypoints": {},
+        "transport": "soap"
+    },
+    "DIGIFRED": {
+        "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\DigifredProvider",
+        "layout_family": "DIGIFRED",
+        "schema_root": "resources/nfse/schemas/DIGIFRED",
+        "xsd_entrypoints": {},
+        "transport": "soap"
     },
     "DSF": {
         "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\DsfProvider",
@@ -50,12 +170,6 @@
         "wsdl_homologacao": "https://sefin-hml.belem.pa.gov.br/notafiscal-abrasfv203-ws/NotaFiscalSoap?wsdl",
         "wsdl_producao": "https://notafiscal.belem.pa.gov.br/notafiscal-abrasfv203-ws/NotaFiscalSoap?wsdl",
         "signature_mode": "required",
-        "sign_operations": [
-            "emitir",
-            "consultar_lote",
-            "consultar_nfse_rps",
-            "cancelar_nfse"
-        ],
         "soap_operation": "RecepcionarLoteRpsSincrono",
         "supported_operations": [
             "emitir_sincrono",
@@ -66,53 +180,294 @@
         "municipio_nome": "Belem",
         "source": "legacy_alias"
     },
-    "MANAUS_AM": {
-        "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\ManausAmProvider",
-        "layout_family": "MANAUS_AM",
-        "schema_root": "resources/nfse/schemas/MANAUS_AM",
-        "xsd_entrypoints": {
-            "emitir": "nfse_v2010.xsd",
-            "enviar_lote_rps": "nfse_v2010.xsd",
-            "consultar_lote": "nfse_v2010.xsd",
-            "consultar_nfse_rps": "nfse_v2010.xsd"
-        },
-        "aliquota_format": "decimal",
-        "transport": "soap",
-        "versao": "2010",
-        "codigo_municipio": "1302603",
-        "municipio_nome": "Manaus",
-        "wsdl": ""
+    "EGOVERNE": {
+        "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\EgoverneProvider",
+        "layout_family": "EGOVERNE",
+        "schema_root": "resources/nfse/schemas/EGOVERNE",
+        "xsd_entrypoints": {},
+        "transport": "soap"
+    },
+    "EGOVERNEISS": {
+        "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\EgoverneissProvider",
+        "layout_family": "EGOVERNEISS",
+        "schema_root": "resources/nfse/schemas/EGOVERNEISS",
+        "xsd_entrypoints": {},
+        "transport": "soap"
+    },
+    "EL": {
+        "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\ElProvider",
+        "layout_family": "EL",
+        "schema_root": "resources/nfse/schemas/EL",
+        "xsd_entrypoints": {},
+        "transport": "soap"
+    },
+    "ELOTECH": {
+        "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\ElotechProvider",
+        "layout_family": "ELOTECH",
+        "schema_root": "resources/nfse/schemas/ELOTECH",
+        "xsd_entrypoints": {},
+        "transport": "soap"
+    },
+    "EMBRAS": {
+        "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\EmbrasProvider",
+        "layout_family": "EMBRAS",
+        "schema_root": "resources/nfse/schemas/EMBRAS",
+        "xsd_entrypoints": {},
+        "transport": "soap"
+    },
+    "EQUIPLANO": {
+        "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\EquiplanoProvider",
+        "layout_family": "EQUIPLANO",
+        "schema_root": "resources/nfse/schemas/EQUIPLANO",
+        "xsd_entrypoints": {},
+        "transport": "soap"
+    },
+    "E_RECEITA": {
+        "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\EReceitaProvider",
+        "layout_family": "E_RECEITA",
+        "schema_root": "resources/nfse/schemas/E_RECEITA",
+        "xsd_entrypoints": {},
+        "transport": "soap"
+    },
+    "FINTEL": {
+        "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\FintelProvider",
+        "layout_family": "FINTEL",
+        "schema_root": "resources/nfse/schemas/FINTEL",
+        "xsd_entrypoints": {},
+        "transport": "soap"
+    },
+    "FIORILLI": {
+        "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\FiorilliProvider",
+        "layout_family": "FIORILLI",
+        "schema_root": "resources/nfse/schemas/FIORILLI",
+        "xsd_entrypoints": {},
+        "transport": "soap"
+    },
+    "FISCO": {
+        "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\FiscoProvider",
+        "layout_family": "FISCO",
+        "schema_root": "resources/nfse/schemas/FISCO",
+        "xsd_entrypoints": {},
+        "transport": "soap"
+    },
+    "GIAP": {
+        "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\GiapProvider",
+        "layout_family": "GIAP",
+        "schema_root": "resources/nfse/schemas/GIAP",
+        "xsd_entrypoints": {},
+        "transport": "soap"
+    },
+    "GIF": {
+        "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\GifProvider",
+        "layout_family": "GIF",
+        "schema_root": "resources/nfse/schemas/GIF",
+        "xsd_entrypoints": {},
+        "transport": "soap"
+    },
+    "GINFES": {
+        "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\GinfesProvider",
+        "layout_family": "GINFES",
+        "schema_root": "resources/nfse/schemas/GINFES",
+        "xsd_entrypoints": {},
+        "transport": "soap"
+    },
+    "GISSONLINE": {
+        "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\GissonlineProvider",
+        "layout_family": "GISSONLINE",
+        "schema_root": "resources/nfse/schemas/GISSONLINE",
+        "xsd_entrypoints": {},
+        "transport": "soap"
+    },
+    "HM2SOLUCOES": {
+        "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\Hm2solucoesProvider",
+        "layout_family": "HM2SOLUCOES",
+        "schema_root": "resources/nfse/schemas/HM2SOLUCOES",
+        "xsd_entrypoints": {},
+        "transport": "soap"
+    },
+    "IIBRASIL": {
+        "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\IibrasilProvider",
+        "layout_family": "IIBRASIL",
+        "schema_root": "resources/nfse/schemas/IIBRASIL",
+        "xsd_entrypoints": {},
+        "transport": "soap"
+    },
+    "INDAIATUBA_SP": {
+        "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\IndaiatubaSpProvider",
+        "layout_family": "INDAIATUBA_SP",
+        "schema_root": "resources/nfse/schemas/INDAIATUBA_SP",
+        "xsd_entrypoints": {},
+        "transport": "soap"
+    },
+    "INTERSOL": {
+        "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\IntersolProvider",
+        "layout_family": "INTERSOL",
+        "schema_root": "resources/nfse/schemas/INTERSOL",
+        "xsd_entrypoints": {},
+        "transport": "soap"
+    },
+    "IPM": {
+        "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\IpmProvider",
+        "layout_family": "IPM",
+        "schema_root": "resources/nfse/schemas/IPM",
+        "xsd_entrypoints": {},
+        "transport": "soap"
+    },
+    "ISSNET": {
+        "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\IssnetProvider",
+        "layout_family": "ISSNET",
+        "schema_root": "resources/nfse/schemas/ISSNET",
+        "xsd_entrypoints": {},
+        "transport": "soap"
     },
     "ISSWEB_AM": {
         "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\IsswebProvider",
-        "layout_family": "ISSWEB",
+        "layout_family": "ISSWEB_AM",
         "schema_root": "resources/nfse/schemas/ISSWEB",
         "xsd_entrypoints": {
             "emitir": "XSDNFEletronica.xsd",
             "consultar": "XSDISSEConsultaNota.xsd",
-            "cancelar_nfse": "XSDISSECancelaNFe.xsd",
-            "retorno": "XSDRetorno.xsd"
+            "cancelar_nfse": "XSDISSECancelaNFe.xsd"
         },
         "aliquota_format": "decimal",
         "transport": "soap",
-        "versao": "ISSWEB",
+        "versao": "1.00",
+        "codigo_municipio": "1303536",
+        "municipio_nome": "Presidente Figueiredo",
         "municipio_uf": "AM",
-        "wsdl_homologacao": "",
-        "wsdl_producao": "",
-        "service_base_homologacao": "",
-        "service_base_producao": "",
-        "signature_mode": "optional",
-        "supported_operations": [
-            "emitir",
-            "consultar",
-            "cancelar"
-        ],
-        "printing_mode": "official_url",
-        "official_validation_url_template": "",
+        "wsdl_homologacao": "https://issweb-homologacao.example.test/servicos",
+        "wsdl_producao": "https://issweb-producao.example.test/servicos",
+        "timeout": 30,
+        "signature_mode": "none",
         "auth": {
             "chave": ""
-        },
-        "source": "custom_override"
+        }
+    },
+    "ISSONLINE_ASSESSORPUBLICO": {
+        "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\IssonlineAssessorpublicoProvider",
+        "layout_family": "ISSONLINE_ASSESSORPUBLICO",
+        "schema_root": "resources/nfse/schemas/ISSONLINE_ASSESSORPUBLICO",
+        "xsd_entrypoints": {},
+        "transport": "soap"
+    },
+    "JLSOFT": {
+        "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\JlsoftProvider",
+        "layout_family": "JLSOFT",
+        "schema_root": "resources/nfse/schemas/JLSOFT",
+        "xsd_entrypoints": {},
+        "transport": "soap"
+    },
+    "LIBRE": {
+        "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\LibreProvider",
+        "layout_family": "LIBRE",
+        "schema_root": "resources/nfse/schemas/LIBRE",
+        "xsd_entrypoints": {},
+        "transport": "soap"
+    },
+    "MEGASOFT": {
+        "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\MegasoftProvider",
+        "layout_family": "MEGASOFT",
+        "schema_root": "resources/nfse/schemas/MEGASOFT",
+        "xsd_entrypoints": {},
+        "transport": "soap"
+    },
+    "MEMORY": {
+        "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\MemoryProvider",
+        "layout_family": "MEMORY",
+        "schema_root": "resources/nfse/schemas/MEMORY",
+        "xsd_entrypoints": {},
+        "transport": "soap"
+    },
+    "METROPOLIS": {
+        "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\MetropolisProvider",
+        "layout_family": "METROPOLIS",
+        "schema_root": "resources/nfse/schemas/METROPOLIS",
+        "xsd_entrypoints": {},
+        "transport": "soap"
+    },
+    "MODERNIZACAO_PUBLICA": {
+        "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\ModernizacaoPublicaProvider",
+        "layout_family": "MODERNIZACAO_PUBLICA",
+        "schema_root": "resources/nfse/schemas/MODERNIZACAO_PUBLICA",
+        "xsd_entrypoints": {},
+        "transport": "soap"
+    },
+    "NACIONAL": {
+        "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\NacionalProvider",
+        "layout_family": "NACIONAL",
+        "schema_root": "resources/nfse/schemas/NACIONAL",
+        "xsd_entrypoints": {},
+        "transport": "soap"
+    },
+    "NATALENSE": {
+        "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\NatalenseProvider",
+        "layout_family": "NATALENSE",
+        "schema_root": "resources/nfse/schemas/NATALENSE",
+        "xsd_entrypoints": {},
+        "transport": "soap"
+    },
+    "NOBESISTEMAS": {
+        "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\NobesistemasProvider",
+        "layout_family": "NOBESISTEMAS",
+        "schema_root": "resources/nfse/schemas/NOBESISTEMAS",
+        "xsd_entrypoints": {},
+        "transport": "soap"
+    },
+    "NOTAINTELIGENTE": {
+        "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\NotainteligenteProvider",
+        "layout_family": "NOTAINTELIGENTE",
+        "schema_root": "resources/nfse/schemas/NOTAINTELIGENTE",
+        "xsd_entrypoints": {},
+        "transport": "soap"
+    },
+    "PAULISTANA": {
+        "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\PaulistanaProvider",
+        "layout_family": "PAULISTANA",
+        "schema_root": "resources/nfse/schemas/PAULISTANA",
+        "xsd_entrypoints": {},
+        "transport": "soap"
+    },
+    "PORTAL_FACIL": {
+        "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\PortalFacilProvider",
+        "layout_family": "PORTAL_FACIL",
+        "schema_root": "resources/nfse/schemas/PORTAL_FACIL",
+        "xsd_entrypoints": {},
+        "transport": "soap"
+    },
+    "PRIMAX": {
+        "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\PrimaxProvider",
+        "layout_family": "PRIMAX",
+        "schema_root": "resources/nfse/schemas/PRIMAX",
+        "xsd_entrypoints": {},
+        "transport": "soap"
+    },
+    "PRODATA": {
+        "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\ProdataProvider",
+        "layout_family": "PRODATA",
+        "schema_root": "resources/nfse/schemas/PRODATA",
+        "xsd_entrypoints": {},
+        "transport": "soap"
+    },
+    "PRODEB": {
+        "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\ProdebProvider",
+        "layout_family": "PRODEB",
+        "schema_root": "resources/nfse/schemas/PRODEB",
+        "xsd_entrypoints": {},
+        "transport": "soap"
+    },
+    "PRONIN": {
+        "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\ProninProvider",
+        "layout_family": "PRONIN",
+        "schema_root": "resources/nfse/schemas/PRONIN",
+        "xsd_entrypoints": {},
+        "transport": "soap"
+    },
+    "PROPRIOBARUERISP": {
+        "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\PropriobaruerispProvider",
+        "layout_family": "PROPRIOBARUERISP",
+        "schema_root": "resources/nfse/schemas/PROPRIOBARUERISP",
+        "xsd_entrypoints": {},
+        "transport": "soap"
     },
     "PUBLICA": {
         "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\PublicaProvider",
@@ -146,12 +501,290 @@
         ],
         "source": "custom_override"
     },
+    "PUBLICENTER": {
+        "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\PublicenterProvider",
+        "layout_family": "PUBLICENTER",
+        "schema_root": "resources/nfse/schemas/PUBLICENTER",
+        "xsd_entrypoints": {},
+        "transport": "soap"
+    },
+    "PUBLIC_SOFT": {
+        "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\PublicSoftProvider",
+        "layout_family": "PUBLIC_SOFT",
+        "schema_root": "resources/nfse/schemas/PUBLIC_SOFT",
+        "xsd_entrypoints": {},
+        "transport": "soap"
+    },
+    "QUASAR": {
+        "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\QuasarProvider",
+        "layout_family": "QUASAR",
+        "schema_root": "resources/nfse/schemas/QUASAR",
+        "xsd_entrypoints": {},
+        "transport": "soap"
+    },
+    "RLZ_INFORMATICA": {
+        "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\RlzInformaticaProvider",
+        "layout_family": "RLZ_INFORMATICA",
+        "schema_root": "resources/nfse/schemas/RLZ_INFORMATICA",
+        "xsd_entrypoints": {},
+        "transport": "soap"
+    },
+    "SALVADOR_BA": {
+        "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\SalvadorBaProvider",
+        "layout_family": "SALVADOR_BA",
+        "schema_root": "resources/nfse/schemas/SALVADOR_BA",
+        "xsd_entrypoints": {},
+        "transport": "soap"
+    },
+    "SH3": {
+        "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\Sh3Provider",
+        "layout_family": "SH3",
+        "schema_root": "resources/nfse/schemas/SH3",
+        "xsd_entrypoints": {},
+        "transport": "soap"
+    },
+    "SIGCORP_SIGISS": {
+        "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\SigcorpSigissProvider",
+        "layout_family": "SIGCORP_SIGISS",
+        "schema_root": "resources/nfse/schemas/SIGCORP_SIGISS",
+        "xsd_entrypoints": {},
+        "transport": "soap"
+    },
+    "SIGISSWEB": {
+        "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\SigisswebProvider",
+        "layout_family": "SIGISSWEB",
+        "schema_root": "resources/nfse/schemas/SIGISSWEB",
+        "xsd_entrypoints": {},
+        "transport": "soap"
+    },
+    "SIMPLE": {
+        "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\SimpleProvider",
+        "layout_family": "SIMPLE",
+        "schema_root": "resources/nfse/schemas/SIMPLE",
+        "xsd_entrypoints": {},
+        "transport": "soap"
+    },
+    "SIMPLISS": {
+        "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\SimplissProvider",
+        "layout_family": "SIMPLISS",
+        "schema_root": "resources/nfse/schemas/SIMPLISS",
+        "xsd_entrypoints": {},
+        "transport": "soap"
+    },
+    "SINSOFT": {
+        "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\SinsoftProvider",
+        "layout_family": "SINSOFT",
+        "schema_root": "resources/nfse/schemas/SINSOFT",
+        "xsd_entrypoints": {},
+        "transport": "soap"
+    },
+    "SMARAPD": {
+        "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\SmarapdProvider",
+        "layout_family": "SMARAPD",
+        "schema_root": "resources/nfse/schemas/SMARAPD",
+        "xsd_entrypoints": {},
+        "transport": "soap"
+    },
+    "SOFTPLAN": {
+        "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\SoftplanProvider",
+        "layout_family": "SOFTPLAN",
+        "schema_root": "resources/nfse/schemas/SOFTPLAN",
+        "xsd_entrypoints": {},
+        "transport": "soap"
+    },
+    "SONNER": {
+        "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\SonnerProvider",
+        "layout_family": "SONNER",
+        "schema_root": "resources/nfse/schemas/SONNER",
+        "xsd_entrypoints": {},
+        "transport": "soap"
+    },
+    "SUPERNOVA": {
+        "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\SupernovaProvider",
+        "layout_family": "SUPERNOVA",
+        "schema_root": "resources/nfse/schemas/SUPERNOVA",
+        "xsd_entrypoints": {},
+        "transport": "soap"
+    },
+    "SYSTEMPRO": {
+        "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\SystemproProvider",
+        "layout_family": "SYSTEMPRO",
+        "schema_root": "resources/nfse/schemas/SYSTEMPRO",
+        "xsd_entrypoints": {},
+        "transport": "soap"
+    },
+    "TECNOSISTEMAS": {
+        "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\TecnosistemasProvider",
+        "layout_family": "TECNOSISTEMAS",
+        "schema_root": "resources/nfse/schemas/TECNOSISTEMAS",
+        "xsd_entrypoints": {},
+        "transport": "soap"
+    },
+    "THEMA": {
+        "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\ThemaProvider",
+        "layout_family": "THEMA",
+        "schema_root": "resources/nfse/schemas/THEMA",
+        "xsd_entrypoints": {},
+        "transport": "soap"
+    },
+    "TINUS": {
+        "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\TinusProvider",
+        "layout_family": "TINUS",
+        "schema_root": "resources/nfse/schemas/TINUS",
+        "xsd_entrypoints": {},
+        "transport": "soap"
+    },
+    "TIPLAN": {
+        "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\TiplanProvider",
+        "layout_family": "TIPLAN",
+        "schema_root": "resources/nfse/schemas/TIPLAN",
+        "xsd_entrypoints": {},
+        "transport": "soap"
+    },
+    "TRIBUTUS": {
+        "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\TributusProvider",
+        "layout_family": "TRIBUTUS",
+        "schema_root": "resources/nfse/schemas/TRIBUTUS",
+        "xsd_entrypoints": {},
+        "transport": "soap"
+    },
+    "VERSATEC": {
+        "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\VersatecProvider",
+        "layout_family": "VERSATEC",
+        "schema_root": "resources/nfse/schemas/VERSATEC",
+        "xsd_entrypoints": {},
+        "transport": "soap"
+    },
+    "VITORIA_ES": {
+        "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\VitoriaEsProvider",
+        "layout_family": "VITORIA_ES",
+        "schema_root": "resources/nfse/schemas/VITORIA_ES",
+        "xsd_entrypoints": {},
+        "transport": "soap"
+    },
+    "WEBFISCO": {
+        "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\WebfiscoProvider",
+        "layout_family": "WEBFISCO",
+        "schema_root": "resources/nfse/schemas/WEBFISCO",
+        "xsd_entrypoints": {},
+        "transport": "soap"
+    },
+    "WEBFISCO_TECNOLOGIA": {
+        "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\WebfiscoTecnologiaProvider",
+        "layout_family": "WEBFISCO_TECNOLOGIA",
+        "schema_root": "resources/nfse/schemas/WEBFISCO_TECNOLOGIA",
+        "xsd_entrypoints": {},
+        "transport": "soap"
+    },
+    "WEBISS": {
+        "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\WebissProvider",
+        "layout_family": "WEBISS",
+        "schema_root": "resources/nfse/schemas/WEBISS",
+        "xsd_entrypoints": {},
+        "transport": "soap"
+    },
     "nfse_nacional": {
         "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\NacionalProvider",
         "layout_family": "NACIONAL",
         "transport": "rest",
         "codigo_municipio": "1001058",
-        "wsdl": "",
-        "api_base_url": ""
+        "municipio_nome": "NACIONAL",
+        "municipio_uf": "AN",
+        "api_base_url": "https://adn.producaorestrita.nfse.gov.br",
+        "param_api_base_url": "https://adn.producaorestrita.nfse.gov.br/parametrizacao",
+        "wsdl": "https://adn.producaorestrita.nfse.gov.br/docs/index.html",
+        "wsdl_homologacao": "https://adn.producaorestrita.nfse.gov.br/docs/index.html",
+        "wsdl_producao": "https://adn.nfse.gov.br/docs/index.html",
+        "url_homologacao": "https://adn.producaorestrita.nfse.gov.br",
+        "url_producao": "https://adn.nfse.gov.br",
+        "timeout": 30,
+        "cache_ttl": 86400,
+        "signature_mode": "required",
+        "auth": {
+            "token": "",
+            "api_key": ""
+        },
+        "services": {
+            "adn": {
+                "homologacao": "https://adn.producaorestrita.nfse.gov.br",
+                "producao": "https://adn.nfse.gov.br"
+            },
+            "cnc": {
+                "homologacao": "https://adn.producaorestrita.nfse.gov.br/cnc",
+                "producao": "https://adn.nfse.gov.br/cnc"
+            },
+            "cnc_municipio": {
+                "homologacao": "https://adn.producaorestrita.nfse.gov.br/cnc/municipio",
+                "producao": "https://adn.nfse.gov.br/cnc/municipio"
+            },
+            "cnc_consulta": {
+                "homologacao": "https://adn.producaorestrita.nfse.gov.br/cnc/consulta",
+                "producao": "https://adn.nfse.gov.br/cnc/consulta"
+            },
+            "adn_municipios": {
+                "homologacao": "https://adn.producaorestrita.nfse.gov.br/municipios",
+                "producao": "https://adn.nfse.gov.br/municipios"
+            },
+            "adn_contribuintes": {
+                "homologacao": "https://adn.producaorestrita.nfse.gov.br/contribuintes",
+                "producao": "https://adn.nfse.gov.br/contribuintes"
+            },
+            "parametrizacao": {
+                "homologacao": "https://adn.producaorestrita.nfse.gov.br/parametrizacao",
+                "producao": "https://adn.nfse.gov.br/parametrizacao"
+            },
+            "danfse": {
+                "homologacao": "https://adn.producaorestrita.nfse.gov.br/danfse",
+                "producao": "https://adn.nfse.gov.br/danfse"
+            },
+            "sefin": {
+                "homologacao": "https://sefin.producaorestrita.nfse.gov.br/SefinNacional",
+                "producao": "https://sefin.nfse.gov.br/SefinNacional"
+            }
+        },
+        "endpoints": {
+            "emitir": "sefin:/nfse",
+            "consultar": "sefin:/nfse/{id}",
+            "consultar_dps": "sefin:/dps/{id}",
+            "cancelar": "sefin:/nfse/{id}/eventos",
+            "substituir": "sefin:/nfse",
+            "consultar_rps": "sefin:/dps/{id}",
+            "consultar_lote": "adn:/nfse/consultar-lote",
+            "baixar_xml": "sefin:/nfse/{id}",
+            "baixar_danfse": "danfse:/nfse/download/danfse"
+        },
+        "operation_methods": {
+            "emitir": "POST",
+            "consultar": "GET",
+            "cancelar": "POST",
+            "substituir": "POST",
+            "consultar_rps": "GET",
+            "consultar_lote": "POST",
+            "baixar_xml": "GET",
+            "baixar_danfse": "POST"
+        },
+        "operation_transports": {
+            "emitir": "json",
+            "consultar": "json",
+            "consultar_dps": "json",
+            "cancelar": "json",
+            "substituir": "json",
+            "baixar_xml": "json"
+        },
+        "cnc_endpoints": {
+            "contribuinte": "cnc:/contribuintes/{cpfCnpj}",
+            "habilitacao": "cnc:/contribuintes/{cpfCnpj}/habilitacao"
+        },
+        "catalog_endpoints": {
+            "municipios": "parametrizacao:/catalogos/municipios",
+            "aliquotas_municipio": "parametrizacao:/{codigo_municipio}/{codigoServico}/{competencia}/aliquota",
+            "convenio_municipio": "parametrizacao:/{codigo_municipio}/convenio"
+        },
+        "aliquota_format": "decimal",
+        "dps_send_paliq": false,
+        "versao": "1.00",
+        "dps_root": "dps",
+        "backend": "http",
+        "ambiente": "homologacao"
     }
 }

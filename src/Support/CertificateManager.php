@@ -66,6 +66,7 @@ class CertificateManager
      */
     public function loadFromContent(string $pfxContent, string $password): self
     {
+        $this->resolveOpenSslConf();
         try {
             $this->certificate = Certificate::readPfx($pfxContent, $password);
             $this->certificateContent = $pfxContent;
@@ -76,7 +77,27 @@ class CertificateManager
 
             return $this;
         } catch (\Exception $e) {
-            throw new InvalidArgumentException("Erro ao carregar certificado: " . $e->getMessage(), 0, $e);
+            return $this->loadLegacyFromContent($pfxContent, $password, $e);
+            // throw new InvalidArgumentException("Erro ao carregar certificado: " . $e->getMessage(), 0, $e);
+        }
+    }
+
+    private function loadLegacyFromContent(string $pfxContent, string $password, \Throwable $previous): self
+    {
+        $tmpFile = tempnam(sys_get_temp_dir(), 'cert_');
+        if ($tmpFile === false) {
+            throw new InvalidArgumentException(
+                'Erro ao carregar certificado: ' . $previous->getMessage(),
+                0,
+                $previous
+            );
+        }
+
+        try {
+            file_put_contents($tmpFile, $pfxContent);
+            return $this->loadLegacyFromFile($tmpFile, $password, $previous);
+        } finally {
+            @unlink($tmpFile);
         }
     }
 

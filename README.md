@@ -423,7 +423,7 @@ src/
 | ------ | --------- |
 | Certificado inválido | Verificar formato .pfx e senha |
 | API indisponível | Usar fallbacks automáticos |
-| Município não configurado | Adicionar em nfse-municipios.json |
+| Município não configurado | Revisar `config/nfse/providers-catalog.json` e `config/nfse/nfse-provider-families.json` |
 | Quota excedida | Implementar cache local |
 
 ### 🔍 **Debug Mode**
@@ -472,6 +472,10 @@ Para informações detalhadas sobre configuração de certificados e providers, 
 - 📄 [docs/NFSE-MUNICIPAL-PROVIDER-PLAYBOOK.md](docs/NFSE-MUNICIPAL-PROVIDER-PLAYBOOK.md)
 - 📄 [config/nfse/providers-catalog.json](config/nfse/providers-catalog.json)
 - 📄 [config/nfse/nfse-provider-families.json](config/nfse/nfse-provider-families.json)
+
+Fluxo canônico de resolução NFSe:
+
+`config/nfse/providers-catalog.json` -> `config/nfse/nfse-provider-families.json` -> `NFSeProviderResolver` -> `ProviderRegistry` -> `NFSeRuntimeBootstrap` -> provider concreto
 
 ## 🧪 Estrutura de Testes
 

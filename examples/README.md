@@ -22,8 +22,8 @@ examples/
 │   ├── 01-emitir-belem-real.php      # Belém com certificado Faives
 │   ├── 02-emitir-joinville-real.php  # Joinville com certificado Freeline
 │   ├── 03-emitir-belem-completo.php  # Fluxo facade: emissão + disponibilidade + URL oficial
-│   ├── 04-manaus-emitir-nacional.php # Preview e emissão nacional de Manaus
-│   ├── 05-manaus-operacoes-nacionais.php # Consulta, lote, RPS, download e cancelamento de Manaus
+│   ├── 04-manaus-emitir-nacional.php # Wrapper de compatibilidade para o fluxo principal de Manaus
+│   ├── 05-manaus-operacoes-nacionais.php # CLI principal de Manaus: preview, emissão e operações nacionais
 │   ├── 06-presidente-figueiredo-issweb.php # Preview e envio ISSWEB de Presidente Figueiredo
 │   └── 07-rio-preto-da-eva-issweb.php      # Preview e envio ISSWEB de Rio Preto da Eva
 └── 📁 producao/                      # Scripts seguros para ambiente produtivo
@@ -60,13 +60,14 @@ php examples/avancado/03-emissao-municipal-funcional.php
 php examples/homologacao/01-emitir-belem-real.php
 php examples/homologacao/02-emitir-joinville-real.php
 php examples/homologacao/03-emitir-belem-completo.php
-php examples/homologacao/04-manaus-emitir-nacional.php
-php examples/homologacao/04-manaus-emitir-nacional.php --send
+php examples/homologacao/05-manaus-operacoes-nacionais.php
+php examples/homologacao/05-manaus-operacoes-nacionais.php --send
 php examples/homologacao/05-manaus-operacoes-nacionais.php --consultar-rps-numero=123 --consultar-rps-serie=1
 php examples/homologacao/05-manaus-operacoes-nacionais.php --consultar-lote=SEU_PROTOCOLO
 php examples/homologacao/05-manaus-operacoes-nacionais.php --baixar-xml=SUA_CHAVE
 php examples/homologacao/05-manaus-operacoes-nacionais.php --baixar-danfse=SUA_CHAVE
 php examples/homologacao/05-manaus-operacoes-nacionais.php --cancelar-chave=SUA_CHAVE --motivo="Cancelamento de teste"
+php examples/homologacao/04-manaus-emitir-nacional.php --send # compatibilidade
 php examples/homologacao/06-presidente-figueiredo-issweb.php
 php examples/homologacao/06-presidente-figueiredo-issweb.php --send
 php examples/homologacao/07-rio-preto-da-eva-issweb.php
@@ -96,8 +97,8 @@ php examples/homologacao/02-emitir-joinville-real.php --tomador-doc=12345678909 
 | **03-emissao-municipal-funcional** | Preview local de emissão municipal | Providers municipais |
 | **homologacao/** | Scripts reais com preview seguro e `--send` explícito | NFSeMunicipalHomologationService |
 | **03-emitir-belem-completo** | Facade pronta com emissão, disponibilidade e URL oficial | FiscalFacade + NFSeFacade |
-| **04-manaus-emitir-nacional** | Preview DPS e emissão completa para Manaus no fluxo nacional | FiscalFacade + NFSeFacade |
-| **05-manaus-operacoes-nacionais** | Operações nacionais de Manaus: consulta, lote, RPS, download e cancelamento | FiscalFacade + NFSeFacade |
+| **04-manaus-emitir-nacional** | Wrapper compatível para o CLI principal de Manaus | FiscalFacade + NFSeFacade |
+| **05-manaus-operacoes-nacionais** | CLI principal de Manaus: preview DPS, emissão e operações nacionais | FiscalFacade + NFSeFacade |
 | **06-presidente-figueiredo-issweb** | Preview local e envio ISSWEB municipal | FiscalFacade + IsswebProvider |
 | **07-rio-preto-da-eva-issweb** | Preview local e envio ISSWEB municipal compartilhado | FiscalFacade + IsswebProvider |
 

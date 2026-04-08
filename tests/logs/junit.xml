@@ -1,7 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <testsuites>
-  <testsuite name="Tests\Unit\Utils\CnpjResponseMappingTest" file="/app/tests/Unit/Utils/CnpjResponseMappingTest.php" tests="2" assertions="14" errors="0" failures="0" skipped="0" time="0.122261">
-    <testcase name="test_brasil_api_adapter_unwraps_nested_data_payload" file="/app/tests/Unit/Utils/CnpjResponseMappingTest.php" line="11" class="Tests\Unit\Utils\CnpjResponseMappingTest" classname="Tests.Unit.Utils.CnpjResponseMappingTest" assertions="2" time="0.119644"/>
-    <testcase name="test_utils_facade_maps_new_cnpj_payload_format" file="/app/tests/Unit/Utils/CnpjResponseMappingTest.php" line="29" class="Tests\Unit\Utils\CnpjResponseMappingTest" classname="Tests.Unit.Utils.CnpjResponseMappingTest" assertions="12" time="0.002617"/>
+  <testsuite name="ManausNacionalCommonTest" file="/Users/johnsabba/Projects/Freeline/fiscal-core/tests/Unit/Examples/ManausNacionalCommonTest.php" tests="5" assertions="42" errors="0" failures="0" skipped="0" time="0.013092">
+    <testcase name="test_parse_options_defaults_to_preview_mode" file="/Users/johnsabba/Projects/Freeline/fiscal-core/tests/Unit/Examples/ManausNacionalCommonTest.php" line="34" class="ManausNacionalCommonTest" classname="ManausNacionalCommonTest" assertions="6" time="0.006037"/>
+    <testcase name="test_parse_options_detects_operational_flags" file="/Users/johnsabba/Projects/Freeline/fiscal-core/tests/Unit/Examples/ManausNacionalCommonTest.php" line="46" class="ManausNacionalCommonTest" classname="ManausNacionalCommonTest" assertions="11" time="0.001034"/>
+    <testcase name="test_listar_codigos_usa_tabela_nacional_local" file="/Users/johnsabba/Projects/Freeline/fiscal-core/tests/Unit/Examples/ManausNacionalCommonTest.php" line="75" class="ManausNacionalCommonTest" classname="ManausNacionalCommonTest" assertions="7" time="0.004887"/>
+    <testcase name="test_build_payload_uses_manaus_homologation_defaults" file="/Users/johnsabba/Projects/Freeline/fiscal-core/tests/Unit/Examples/ManausNacionalCommonTest.php" line="91" class="ManausNacionalCommonTest" classname="ManausNacionalCommonTest" assertions="16" time="0.000768"/>
+    <testcase name="test_build_payload_adds_obra_for_codes_that_require_it" file="/Users/johnsabba/Projects/Freeline/fiscal-core/tests/Unit/Examples/ManausNacionalCommonTest.php" line="120" class="ManausNacionalCommonTest" classname="ManausNacionalCommonTest" assertions="2" time="0.000366"/>
   </testsuite>
 </testsuites>

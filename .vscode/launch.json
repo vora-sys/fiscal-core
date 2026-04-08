@@ -51,41 +51,114 @@
             }
         },
         {
-            "name": "Emitir NFSe Manaus",
-            "type": "php",
-            "request": "launch",
-            "program": "${workspaceRoot}/examples/homologacao/04-manaus-emitir-nacional.php",
-            "cwd": "${workspaceRoot}/examples",
-            "port": 0,
-            "runtimeArgs": [
-                "-dxdebug.start_with_request=yes"
-            ],
-            "env": {
-                "FISCAL_CERT_PATH": "../certs/Certificado_Agroam_senha_01824852.pfx",
-                "FISCAL_CERT_PASSWORD": "01824852",
-                "XDEBUG_MODE": "debug,develop",
-                "XDEBUG_CONFIG": "client_port=${port}",
-                "FISCAL_IM":"7823201",
-                "FISCAL_IE":"41339339",
-                "FISCAL_UF":"AM",
-                "FISCAL_CNPJ":"01824852000166",
-                "FISCAL_RAZAO_SOCIAL":"AGROAM AGRICOLA AMAZONAS COMERCIAL LTDA",
-                "OPENSSL_CONF":"../openssl.cnf"
-            },
-            "args":["--tomador-doc=00980556236","--tomador-cep=66065112", "--send"]
-        },
-        {
-            "name": "Consulta NFSe Manaus",
+            "name": "NFSe Manaus Nacional Preview (05)",
             "type": "php",
             "request": "launch",
             "program": "${workspaceRoot}/examples/homologacao/05-manaus-operacoes-nacionais.php",
-            "cwd": "${workspaceRoot}/examples",
+            "cwd": "${workspaceRoot}",
             "port": 0,
             "runtimeArgs": [
                 "-dxdebug.start_with_request=yes"
             ],
             "env": {
-                "FISCAL_CERT_PATH": "../certs/Certificado_Agroam_senha_01824852.pfx",
+                "FISCAL_CERT_PATH": "${workspaceFolder}/certs/Certificado_Agroam_senha_01824852.pfx",
+                "FISCAL_CERT_PASSWORD": "01824852",
+                "FISCAL_NFSE_DEBUG": "1",
+                "FISCAL_NFSE_DEBUG_LOG": "${workspaceFolder}/tests/logs/nfse-http-debug.log",
+                "XDEBUG_MODE": "debug,develop",
+                "XDEBUG_CONFIG": "client_port=${port}",
+                "FISCAL_IM": "000000007823201",
+                "FISCAL_IE": "41339339",
+                "FISCAL_UF": "AM",
+                "FISCAL_CNPJ": "01824852000166",
+                "FISCAL_RAZAO_SOCIAL": "AGROAM AGRICOLA AMAZONAS COMERCIAL LTDA",
+                "OPENSSL_CONF": "${workspaceFolder}/openssl.cnf"
+            },
+            "args": [
+                "--tomador-doc=00980556236",
+                "--tomador-nome=JOHNNATHAN VICTOR GONCALVES SABBA",
+                "--valor=10.00",
+                "--competencia=2026-04-08",
+                "--c-trib-nac=010101",
+                "--aliquota=0.02"
+            ]
+        },
+        {
+            "name": "NFSe Manaus Nacional Emitir (05)",
+            "type": "php",
+            "request": "launch",
+            "program": "${workspaceRoot}/examples/homologacao/05-manaus-operacoes-nacionais.php",
+            "cwd": "${workspaceRoot}",
+            "port": 0,
+            "runtimeArgs": [
+                "-dxdebug.start_with_request=yes"
+            ],
+            "env": {
+                "FISCAL_CERT_PATH": "${workspaceFolder}/certs/Certificado_Agroam_senha_01824852.pfx",
+                "FISCAL_CERT_PASSWORD": "01824852",
+                "FISCAL_NFSE_DEBUG": "1",
+                "FISCAL_NFSE_DEBUG_LOG": "${workspaceFolder}/tests/logs/nfse-http-debug.log",
+                "XDEBUG_MODE": "debug,develop",
+                "XDEBUG_CONFIG": "client_port=${port}",
+                "FISCAL_IM": "000000007823201",
+                "FISCAL_IE": "41339339",
+                "FISCAL_UF": "AM",
+                "FISCAL_CNPJ": "01824852000166",
+                "FISCAL_RAZAO_SOCIAL": "AGROAM AGRICOLA AMAZONAS COMERCIAL LTDA",
+                "OPENSSL_CONF": "${workspaceFolder}/openssl.cnf"
+            },
+            "args": [
+                "--tomador-doc=00980556236",
+                "--tomador-nome=JOHNNATHAN VICTOR GONCALVES SABBA",
+                "--valor=10.00",
+                "--competencia=2026-04-08",
+                "--c-trib-nac=010101",
+                "--aliquota=0.02",
+                "--send"
+            ]
+        },
+        {
+            "name": "NFSe Manaus Nacional Consultar RPS (05)",
+            "type": "php",
+            "request": "launch",
+            "program": "${workspaceRoot}/examples/homologacao/05-manaus-operacoes-nacionais.php",
+            "cwd": "${workspaceRoot}",
+            "port": 0,
+            "runtimeArgs": [
+                "-dxdebug.start_with_request=yes"
+            ],
+            "env": {
+                "FISCAL_CERT_PATH": "${workspaceFolder}/certs/Certificado_Agroam_senha_01824852.pfx",
+                "FISCAL_CERT_PASSWORD": "01824852",
+                "FISCAL_NFSE_DEBUG": "1",
+                "FISCAL_NFSE_DEBUG_LOG": "${workspaceFolder}/tests/logs/nfse-http-debug.log",
+                "XDEBUG_MODE": "debug,develop",
+                "XDEBUG_CONFIG": "client_port=${port}",
+                "FISCAL_IM": "000000007823201",
+                "FISCAL_IE": "41339339",
+                "FISCAL_UF": "AM",
+                "FISCAL_CNPJ": "01824852000166",
+                "FISCAL_RAZAO_SOCIAL": "AGROAM AGRICOLA AMAZONAS COMERCIAL LTDA",
+                "OPENSSL_CONF": "${workspaceFolder}/openssl.cnf"
+            },
+            "args": [
+                "--consultar-rps-numero=1",
+                "--consultar-rps-serie=1",
+                "--consultar-rps-tipo=1"
+            ]
+        },
+        {
+            "name": "NFSe Manaus Wrapper Compat (04)",
+            "type": "php",
+            "request": "launch",
+            "program": "${workspaceRoot}/examples/homologacao/04-manaus-emitir-nacional.php",
+            "cwd": "${workspaceRoot}",
+            "port": 0,
+            "runtimeArgs": [
+                "-dxdebug.start_with_request=yes"
+            ],
+            "env": {
+                "FISCAL_CERT_PATH": "${workspaceFolder}/certs/Certificado_Agroam_senha_01824852.pfx",
                 "FISCAL_CERT_PASSWORD": "01824852",
                 "XDEBUG_MODE": "debug,develop",
                 "XDEBUG_CONFIG": "client_port=${port}",
@@ -94,10 +167,10 @@
                 "FISCAL_UF": "AM",
                 "FISCAL_CNPJ": "01824852000166",
                 "FISCAL_RAZAO_SOCIAL": "AGROAM AGRICOLA AMAZONAS COMERCIAL LTDA",
-                "OPENSSL_CONF": "../openssl.cnf"
+                "OPENSSL_CONF": "${workspaceFolder}/openssl.cnf"
             },
             "args": [
-                "--consultar-rps-numero=DPS13026030182485200016600001000000000160226"   
+                "--help"
             ]
         },
         {
@@ -105,13 +178,13 @@
             "type": "php",
             "request": "launch",
             "program": "${workspaceRoot}/examples/homologacao/06-presidente-figueiredo-issweb.php",
-            "cwd": "${workspaceRoot}/examples",
+            "cwd": "${workspaceRoot}",
             "port": 0,
             "runtimeArgs": [
                 "-dxdebug.start_with_request=yes"
             ],
             "env": {
-                "FISCAL_CERT_PATH": "../certs/Certificado_Agroam_senha_01824852.pfx",
+                "FISCAL_CERT_PATH": "${workspaceFolder}/certs/Certificado_Agroam_senha_01824852.pfx",
                 "FISCAL_CERT_PASSWORD": "01824852",
                 "XDEBUG_MODE": "debug,develop",
                 "XDEBUG_CONFIG": "client_port=${port}",
@@ -120,7 +193,7 @@
                 "FISCAL_UF": "AM",
                 "FISCAL_CNPJ": "01824852000166",
                 "FISCAL_RAZAO_SOCIAL": "AGROAM AGRICOLA AMAZONAS COMERCIAL LTDA",
-                "OPENSSL_CONF": "../openssl.cnf"
+                "OPENSSL_CONF": "${workspaceFolder}/openssl.cnf"
             },
             "args": [
                 "--tomador-doc=00980556236",
