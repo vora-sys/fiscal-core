@@ -170,6 +170,12 @@ class NFSeFacade
                     $nfseXml = $this->extractNfseXmlFromParsedResponse(
                         $consultaData['consulta']['parsed_response'] ?? []
                     );
+                    /*TODO: Condicionar ao ambiente nacional ou ajustar fluxo  */
+                    $nfseXml = empty($nfseXml) ? 
+                        $this->extractNfseXmlFromParsedResponse(
+                            $emissaoData['emissao']['parsed_response']
+                        )
+                        : $nfseXml;
                 }
             }
 
@@ -245,7 +251,7 @@ class NFSeFacade
         }
 
         try {
-            $resultado = $this->nfse->consultar($chave);
+            $resultado = json_decode($this->nfse->consultar($chave), true);
             return FiscalResponse::success([
                 'resultado' => $resultado,
                 'type' => 'nfse_consulta',
@@ -371,7 +377,7 @@ class NFSeFacade
         }
 
         try {
-            $resultado = $this->nfse->baixarXml($chave);
+            $resultado = json_decode($this->nfse->baixarXml($chave), true);
             return FiscalResponse::success([
                 'resultado' => $resultado,
                 'type' => 'nfse_xml_download',
@@ -396,7 +402,9 @@ class NFSeFacade
                 'type' => 'nfse_danfse_download',
                 'chave' => $chave,
                 'municipio' => $this->municipio,
-            ], 'nfse_download_danfse', $this->buildCompatibilityMetadata());
+                'content_type' => 'application/pdf',
+                'filename' => 'danfse_' . strtolower($this->municipio) . '_' . date('Ymd_His') . '.pdf',
+            ], 'nfse_generate_danfse', $this->buildCompatibilityMetadata());
         } catch (\Exception $e) {
             return $this->responseHandler->handle($e, 'nfse_download_danfse');
         }
@@ -1167,9 +1175,10 @@ class NFSeFacade
             'numero' => $rps['numero'] ?? null,
             'serie' => $rps['serie'] ?? null,
             'tipo' => $rps['tipo'] ?? null,
+            'id' => $dados['id'] ?? null,
         ], static fn (mixed $value): bool => $value !== null && $value !== '');
 
-        if (count($consultaRpsPayload) === 3) {
+        if (count($consultaRpsPayload) === 4) {
             return $this->consultarPorRps($consultaRpsPayload);
         }
 

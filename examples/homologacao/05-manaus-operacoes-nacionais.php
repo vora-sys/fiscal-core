@@ -58,6 +58,11 @@ if (isset($options['consultar_chave'])) {
 }
 
 if ($response !== null) {
+/* TODO: ajustar, funciona bem com os testes */
+    
+    file_put_contents($response->getData('chave').'.xml', $response->getData('resultado')['raw_xml']);
+
+    file_put_contents($response->getData('filename'), $response->getData('resultado'));
     echo json_encode([
         'provider' => $providerInfo->toArray(),
         'response' => $response->toArray(),

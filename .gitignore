@@ -9,6 +9,20 @@ scripts/*.php
 scripts/artisan-examples/*
 scripts/adapters/*
 scripts/
+!scripts/
+scripts/*
+!scripts/nfse/
+scripts/nfse/*
+!scripts/nfse/import-uninfe-catalog.php
+!scripts/nfse/import-uninfe-schemas.php
+!scripts/nfse/schema-overrides/
+!scripts/nfse/schema-overrides/**
+!scripts/nfse/scaffold-family.php
+!scripts/nfse/scaffold-municipio.php
+!scripts/nfse/templates/
+scripts/nfse/templates/*
+!scripts/nfse/templates/*.stub.php
+!scripts/nfse/templates/*.stub.md
 
 # Tinkerwell
 *.phar

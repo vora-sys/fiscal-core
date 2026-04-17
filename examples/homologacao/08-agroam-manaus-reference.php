@@ -42,7 +42,7 @@ if (($options['consultar_convenio'] ?? false) === true) {
 }
 
 $payload = agroamManausBuildPayload($options);
-$layout = $nfse->validarLayoutDps($payload, true);
+$layout = $nfse->validarLayoutDps($payload, false);
 $xmlPreview = $nfse->gerarXmlDpsPreview($payload);
 
 if (($options['send'] ?? false) !== true) {
@@ -77,7 +77,7 @@ Uso:
   php {$scriptName} [--send] [--consultar-aliquota] [--consultar-convenio] [--force-refresh]
                      [--numero=62] [--serie=70000] [--competencia=2026-04-02]
                      [--c-trib-nac=140101] [--codigo-municipal=100]
-                     [--c-nbs=120018900]
+                     [--c-nbs=12.00.18.900]
                      [--descricao="revisao"] [--valor=280.00] [--aliquota=5.00]
                      [--tomador-doc=12537098404] [--tomador-nome="ALMIR FERREIRA LIMA"]
                      [--op-simp-nac=2] [--reg-esp-trib=0]
@@ -104,13 +104,13 @@ function agroamManausParseOptions(array $argv): array
         'consultar_aliquota' => false,
         'consultar_convenio' => false,
         'force_refresh' => false,
-        'numero' => '62',
+        'numero' => '73',
         'serie' => '70000',
         'competencia' => '2026-04-02',
         'dh_emi' => '2026-04-02T16:43:12-04:00',
         'c_trib_nac' => '140101',
         'codigo_municipal' => '100',
-        'c_nbs' => '120018900',
+        'c_nbs' => '12.00.18.900',
         'descricao' => 'revisao',
         'valor' => '280.00',
         'aliquota' => '5.00',

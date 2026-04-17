@@ -202,7 +202,7 @@ class NacionalProviderTest extends TestCase
                 'consultar_rps' => '/nfse/consultar-rps',
                 'consultar_lote' => '/nfse/consultar-lote',
                 'baixar_xml' => '/nfse/download/xml',
-                'baixar_danfse' => '/nfse/download/danfse',
+                'baixar_danfse' => '/danfse/{chave}',
             ],
             'operation_methods' => [
                 'emitir' => 'POST',

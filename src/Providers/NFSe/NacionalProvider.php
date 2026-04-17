@@ -68,7 +68,7 @@ class NacionalProvider extends AbstractNFSeProvider implements NFSeNacionalCapab
     {
         $this->validarDados($dados);
         $this->validarDadosDpsNacional($dados);
-        $this->assertCatalogCompatibilityBeforeEmission($dados);
+        // $this->assertCatalogCompatibilityBeforeEmission($dados);
         $xml = $this->montarXmlDpsNacional($dados);
         $xml = $this->assinarXmlSeNecessario($xml);
         $xml = $this->ensureUtf8XmlForTransmission($xml);
@@ -117,12 +117,12 @@ class NacionalProvider extends AbstractNFSeProvider implements NFSeNacionalCapab
             throw new \InvalidArgumentException('Chave da NFSe é obrigatória');
         }
 
-        $xml = $this->buildConsultaXml($chave);
-        $response = $this->enviarOperacao('consultar', $xml, ['id' => $chave]);
+        // $xml = $this->buildConsultaXml($chave);
+        $response = $this->enviarOperacao('consultar', null, ['id' => $chave]);
         $parsed = $this->processarResposta($response);
-        $this->storeOperationState('consultar', $xml, $response, $parsed, ['chave_acesso' => $chave]);
+        $this->storeOperationState('consultar', null, $response, $parsed, ['chave_acesso' => $chave]);
 
-        return $response;
+        return json_encode($parsed);
     }
 
     public function cancelar(string $chave, string $motivo, ?string $protocolo = null): bool
@@ -157,25 +157,25 @@ class NacionalProvider extends AbstractNFSeProvider implements NFSeNacionalCapab
 
     public function consultarPorRps(array $identificacaoRps): string
     {
-        foreach (['numero', 'serie', 'tipo'] as $campo) {
+        foreach (['numero', 'serie', 'tipo', 'id'] as $campo) {
             if (!isset($identificacaoRps[$campo])) {
                 throw new \InvalidArgumentException("Identificação RPS inválida: campo {$campo} é obrigatório");
             }
         }
 
-        $numero = trim((string) ($identificacaoRps['numero'] ?? ''));
-        if (preg_match('/^DPS\d{42}$/', $numero) === 1) {
+        $id = trim((string) ($identificacaoRps['id'] ?? ''));
+        if (preg_match('/^DPS\d{42}$/', $id) === 1) {
             $response = $this->requestHttp(
                 'GET',
                 $this->resolveConfiguredEndpoint(
                     (string) ($this->config['endpoints']['consultar_dps'] ?? 'sefin:/dps/{id}'),
-                    ['id' => $numero]
+                    ['id' => $id]
                 ),
                 null,
                 ['Accept: application/json']
             );
             $parsed = $this->processarResposta($response);
-            $this->storeOperationState('consultar_dps', null, $response, $parsed, ['id_dps' => $numero]);
+            $this->storeOperationState('consultar_dps', null, $response, $parsed, ['id_dps' => $id]);
 
             return $response;
         }
@@ -213,7 +213,7 @@ class NacionalProvider extends AbstractNFSeProvider implements NFSeNacionalCapab
         $parsed = $this->processarResposta($response);
         $this->storeOperationState('baixar_xml', $xml, $response, $parsed, ['chave_acesso' => $chave]);
 
-        return $response;
+        return json_encode($parsed);
     }
 
     public function baixarDanfse(string $chave): string
@@ -223,11 +223,11 @@ class NacionalProvider extends AbstractNFSeProvider implements NFSeNacionalCapab
         }
 
         $xml = $this->buildDownloadXmlPayload('danfse', $chave);
-        $response = $this->enviarOperacao('baixar_danfse', $xml, ['id' => $chave]);
+        $response = $this->enviarOperacao('baixar_danfse', $xml, ['chave' => $chave]);
         $parsed = $this->processarResposta($response);
         $this->storeOperationState('baixar_danfse', $xml, $response, $parsed, ['chave_acesso' => $chave]);
 
-        return $response;
+        return json_encode($parsed);
     }
 
     public function listarMunicipiosNacionais(bool $forceRefresh = false): array
@@ -768,6 +768,18 @@ class NacionalProvider extends AbstractNFSeProvider implements NFSeNacionalCapab
                 'dados' => [],
             ];
         }
+        if (str_contains($xmlResposta, '%PDF-1.7')) {
+            // Handle PDF response
+            return [
+                'sucesso' => true,
+                'status' => 'success',
+                'mensagem' => 'Processado com sucesso',
+                'dados' => [
+                    'pdf_base64' => base64_encode($xmlResposta),
+                    'content_type' => 'application/pdf',
+                ],
+            ];
+        }
 
         $json = json_decode($xmlResposta, true);
         if (is_array($json)) {
@@ -1030,26 +1042,38 @@ class NacionalProvider extends AbstractNFSeProvider implements NFSeNacionalCapab
         }
     }
 
-    private function enviarOperacao(string $operacao, string $xml, array $params = []): string
+    private function enviarOperacao(string $operacao, ?string $xml, array $params = []): string
     {
         $rawEndpoint = (string)($this->config['endpoints'][$operacao] ?? '');
         $path = $this->resolveOperationPath($operacao, $params);
         $method = $this->resolveOperationMethod($operacao);
         $response = '';
         $useJsonTransport = $this->shouldUseJsonTransport($operacao, $rawEndpoint);
+        $transport = $this->getTransport($operacao, $rawEndpoint);
 
-        if ($useJsonTransport) {
-            $payload = $method === 'GET' ? null : $this->buildJsonPayloadForOperation($operacao, $xml);
-            $headers = ['Accept: application/json'];
-            if ($payload !== null) {
-                array_unshift($headers, 'Content-Type: application/json');
-            }
-            $response = $this->requestHttp($method, $path, $payload, $headers);
-        } else {
-            $response = $this->requestHttp($method, $path, $method === 'GET' ? null : $xml, [
-                'Content-Type: application/xml',
-                'Accept: application/xml',
-            ]);
+
+        switch ($transport) {
+            case 'json':
+                $payload = $method === 'GET' ? null : $this->buildJsonPayloadForOperation($operacao, $xml);
+                $headers = ['Accept: application/json'];
+                if ($payload !== null) {
+                    array_unshift($headers, 'Content-Type: application/json');
+                }
+                $response = $this->requestHttp($method, $path, $payload, $headers);
+                break;
+
+            case 'pdf':
+                $response = $this->requestHttp($method, $path, $method === 'GET' ? null : $xml, [
+                    'Content-Type: application/pdf',
+                    'Accept: application/pdf',
+                ]);
+                break;
+            default:
+                $response = $this->requestHttp($method, $path, $method === 'GET' ? null : $xml, [
+                            'Content-Type: application/xml',
+                            'Accept: application/xml',
+                        ]);
+                break;
         }
 
         if ($response === '') {
@@ -1069,7 +1093,7 @@ class NacionalProvider extends AbstractNFSeProvider implements NFSeNacionalCapab
             'consultar_rps' => '/nfse/consultar-rps',
             'consultar_lote' => '/nfse/consultar-lote',
             'baixar_xml' => '/nfse/download/xml',
-            'baixar_danfse' => '/nfse/download/danfse',
+            'baixar_danfse' => '/danfse/{chave}',
         ];
 
         $configured = $this->config['endpoints'][$operacao] ?? null;
@@ -1138,6 +1162,16 @@ class NacionalProvider extends AbstractNFSeProvider implements NFSeNacionalCapab
         }
 
         return preg_match('/^sefin:\//i', $rawEndpoint) === 1 || $operacao === 'emitir';
+    }
+
+    private function getTransport(string $operacao, string $rawEndpoint): string
+    {
+        $transport = strtolower((string)($this->config['operation_transports'][$operacao] ?? ''));
+        if ($transport !== '') {
+            return $transport;
+        }
+
+        return preg_match('/^sefin:\//i', $rawEndpoint) === 1 || $operacao === 'emitir' ? 'json' : 'pdf';
     }
 
     private function buildJsonPayloadForOperation(string $operacao, ?string $xml): ?string

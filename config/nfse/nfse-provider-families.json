@@ -751,7 +751,7 @@
             "consultar_rps": "sefin:/dps/{id}",
             "consultar_lote": "adn:/nfse/consultar-lote",
             "baixar_xml": "sefin:/nfse/{id}",
-            "baixar_danfse": "danfse:/nfse/download/danfse"
+            "baixar_danfse": "danfse:/{chave}"
         },
         "operation_methods": {
             "emitir": "POST",
@@ -761,7 +761,7 @@
             "consultar_rps": "GET",
             "consultar_lote": "POST",
             "baixar_xml": "GET",
-            "baixar_danfse": "POST"
+            "baixar_danfse": "GET"
         },
         "operation_transports": {
             "emitir": "json",
@@ -769,7 +769,8 @@
             "consultar_dps": "json",
             "cancelar": "json",
             "substituir": "json",
-            "baixar_xml": "json"
+            "baixar_xml": "json",
+            "baixar_danfse": "pdf"
         },
         "cnc_endpoints": {
             "contribuinte": "cnc:/contribuintes/{cpfCnpj}",
