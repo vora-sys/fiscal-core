@@ -133,7 +133,6 @@ php examples/avancado/02-error-handling.php
 php scripts/nfse/scaffold-family.php --family=MINHA_FAMILIA --dry-run
 php scripts/nfse/scaffold-municipio.php --ibge=1303536 --dry-run
 php examples/homologacao/01-emitir-belem-real.php
-# aq ex
 php examples/homologacao/02-emitir-joinville-real.php
 php examples/homologacao/03-emitir-belem-completo.php
 php examples/homologacao/consulta.php
