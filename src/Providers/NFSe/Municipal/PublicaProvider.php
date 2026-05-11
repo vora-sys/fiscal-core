@@ -1263,7 +1263,7 @@ class PublicaProvider extends AbstractNFSeProvider implements NFSeOperationalInt
 
         $operationNode = $soap->createElementNS(self::SERVICE_NS, 'svc:' . $soapOperation);
         $body->appendChild($operationNode);
-        $operationNode->appendChild($soap->createElementNS(self::SERVICE_NS, 'XML', $requestXml));
+        $operationNode->appendChild($soap->createElement('XML', $requestXml));
 
         return $soap->saveXML() ?: '';
     }

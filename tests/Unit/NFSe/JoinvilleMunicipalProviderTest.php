@@ -72,7 +72,7 @@ final class JoinvilleMunicipalProviderTest extends TestCase
 
         $envelope = (string) $provider->getLastSoapEnvelope();
         $this->assertStringContainsString('<svc:RecepcionarLoteRps>', $envelope);
-        $this->assertStringContainsString('<svc:XML>&lt;EnviarLoteRpsEnvio', $envelope);
+        $this->assertStringContainsString('<XML>&lt;EnviarLoteRpsEnvio', $envelope);
 
         $parsed = $provider->getLastResponseData();
         $this->assertSame('success', $parsed['status']);
