@@ -5,6 +5,8 @@ declare(strict_types=1);
 require_once dirname(__DIR__, 2) . '/Fixtures/NFSeJoinvilleMunicipalFixtures.php';
 
 use sabbajohn\FiscalCore\Providers\NFSe\Municipal\PublicaProvider;
+use sabbajohn\FiscalCore\Adapters\NF\NFSeAdapter;
+use sabbajohn\FiscalCore\Facade\NFSeFacade;
 use sabbajohn\FiscalCore\Support\NFSeSchemaResolver;
 use sabbajohn\FiscalCore\Support\NFSeSchemaValidator;
 use sabbajohn\FiscalCore\Support\NFSeSoapTransportInterface;
@@ -367,6 +369,40 @@ final class JoinvilleMunicipalProviderTest extends TestCase
         $this->assertStringNotContainsString('12345678000195', $contents);
         $this->assertStringNotContainsString('financeiro.joinville@example.com', $contents);
         $this->assertStringNotContainsString('47999991234', $contents);
+    }
+
+    public function testFacadeEmitirCompletoReturnsAuthorizedJoinvilleDocumentAndLocalDanfse(): void
+    {
+        $transport = new class(NFSeJoinvilleMunicipalFixtures::successSoapResponse()) implements NFSeSoapTransportInterface {
+            public function __construct(private readonly string $response)
+            {
+            }
+
+            public function send(string $endpoint, string $envelope, array $options = []): array
+            {
+                return [
+                    'request_xml' => $envelope,
+                    'response_xml' => $this->response,
+                    'status_code' => 200,
+                    'headers' => ['Content-Type: text/xml'],
+                ];
+            }
+        };
+
+        $provider = $this->makeProvider($transport);
+        $facade = new NFSeFacade('joinville', new NFSeAdapter('joinville', $provider));
+
+        $response = $facade->emitirCompleto(NFSeJoinvilleMunicipalFixtures::payload());
+
+        $this->assertTrue($response->isSuccess(), (string) $response->getError());
+        $this->assertSame('completo', $response->getData('flow_status'));
+        $this->assertSame('autorizada', $response->getData('authorization_status'));
+        $this->assertSame('202600000000123', $response->getData('documento')['numero'] ?? null);
+        $this->assertSame('AB12-CD34', $response->getData('documento')['codigo_verificacao'] ?? null);
+        $this->assertSame('render_local', $response->getData('impressao')['source'] ?? null);
+        $this->assertSame('application/pdf', $response->getData('impressao')['content_type'] ?? null);
+        $this->assertNotEmpty($response->getData('impressao')['pdf_base64'] ?? null);
+        $this->assertSame([], $response->getData('warnings'));
     }
 
     private function makeProvider(NFSeSoapTransportInterface $transport, array $overrides = []): PublicaProvider
