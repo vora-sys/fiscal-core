@@ -105,20 +105,26 @@ class NFSeFacade
             $lastEmission = method_exists($this->nfse, 'getLastEmissionInfo')
                 ? $this->nfse->getLastEmissionInfo()
                 : [];
-
-            return FiscalResponse::success([
+            $data = [
                 'resultado' => $resultado,
                 'resultado_array' => XmlUtils::xmlToKeyValueArray($resultado),
                 'type' => 'nfse_xml',
                 'municipio' => $this->municipio,
                 'emissao' => $lastEmission,
-            ], 'nfse_emission', [
+            ];
+            $metadata = [
                 'municipio' => $this->municipio,
                 'provider_key' => $this->providerKey,
                 'municipio_ignored' => $this->municipioIgnored,
                 'warnings' => $this->deprecationWarnings,
                 'provider_info' => $this->nfse->getProviderInfo()
-            ]);
+            ];
+
+            if ($failure = $this->normalizeEmissionFailure($lastEmission, 'nfse_emission', $metadata, $data)) {
+                return $failure;
+            }
+
+            return FiscalResponse::success($data, 'nfse_emission', $metadata);
         } catch (\Exception $e) {
             return $this->responseHandler->handle($e, 'nfse_emission');
         }
@@ -851,6 +857,35 @@ class NFSeFacade
             'municipio_ignored' => $this->municipioIgnored,
             'warnings' => $this->deprecationWarnings,
         ];
+    }
+
+    private function normalizeEmissionFailure(array $lastEmission, string $operation, array $metadata, array $data): ?FiscalResponse
+    {
+        $parsedEmission = $lastEmission['parsed_response'] ?? [];
+        if (!is_array($parsedEmission)) {
+            return null;
+        }
+
+        $emissionStatus = (string) ($parsedEmission['status'] ?? 'unknown');
+        if (!in_array($emissionStatus, ['error', 'invalid_xml', 'empty'], true)) {
+            return null;
+        }
+
+        $mensagens = is_array($parsedEmission['mensagens'] ?? null) ? $parsedEmission['mensagens'] : [];
+
+        return FiscalResponse::error(
+            $mensagens !== [] ? implode(' | ', $mensagens) : 'Falha na emissao da NFSe.',
+            'NFSE_EMISSION_FAILED',
+            $operation,
+            $metadata + [
+                'emission_status' => $emissionStatus,
+                'retryable' => (bool) ($parsedEmission['retryable'] ?? false),
+                'transport_error' => $parsedEmission['transport_error'] ?? null,
+                'http_status' => $parsedEmission['http_status'] ?? null,
+                'emissao' => $lastEmission,
+                'response' => $data,
+            ]
+        );
     }
 
     private function isBelemMunicipalFlow(): bool

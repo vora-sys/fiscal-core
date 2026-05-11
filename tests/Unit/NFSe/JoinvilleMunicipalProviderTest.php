@@ -273,7 +273,9 @@ final class JoinvilleMunicipalProviderTest extends TestCase
                     'request_xml' => $envelope,
                     'response_xml' => "<html>\n<head><title>502 Bad Gateway</title></head>\n<body>nginx</body>\n</html>\n",
                     'status_code' => 502,
-                    'headers' => ['Content-Type: text/html'],
+                    'headers' => ['HTTP/1.1 502 Bad Gateway', 'Content-Type: text/html'],
+                    'request_headers' => ['Content-Type: text/xml; charset=utf-8'],
+                    'response_headers' => ['HTTP/1.1 502 Bad Gateway', 'Content-Type: text/html'],
                 ];
             }
         };
@@ -290,6 +292,41 @@ final class JoinvilleMunicipalProviderTest extends TestCase
             'Endpoint de Joinville retornou HTTP 502',
             implode(' | ', $parsed['mensagens'])
         );
+        $this->assertTrue($parsed['retryable']);
+        $this->assertSame('gateway_unavailable', $parsed['transport_error']);
+        $this->assertSame(['HTTP/1.1 502 Bad Gateway', 'Content-Type: text/html'], $parsed['transport_headers']);
+        $this->assertSame(['HTTP/1.1 502 Bad Gateway', 'Content-Type: text/html'], $parsed['response_headers']);
+        $this->assertSame(['Content-Type: text/xml; charset=utf-8'], $parsed['request_headers']);
+    }
+
+    public function testFacadeEmitirReturnsErrorOnJoinvilleGatewayHtml(): void
+    {
+        $transport = new class implements NFSeSoapTransportInterface {
+            public function send(string $endpoint, string $envelope, array $options = []): array
+            {
+                return [
+                    'request_xml' => $envelope,
+                    'response_xml' => "<html>\n<head><title>502 Bad Gateway</title></head>\n<body>nginx</body>\n</html>\n",
+                    'status_code' => 502,
+                    'headers' => ['HTTP/1.1 502 Bad Gateway', 'Content-Type: text/html'],
+                    'request_headers' => ['Content-Type: text/xml; charset=utf-8'],
+                    'response_headers' => ['HTTP/1.1 502 Bad Gateway', 'Content-Type: text/html'],
+                ];
+            }
+        };
+
+        $provider = $this->makeProvider($transport);
+        $facade = new NFSeFacade('joinville', new NFSeAdapter('joinville', $provider));
+
+        $response = $facade->emitir(NFSeJoinvilleMunicipalFixtures::payload());
+
+        $this->assertTrue($response->isError());
+        $this->assertSame('NFSE_EMISSION_FAILED', $response->getErrorCode());
+        $this->assertStringContainsString('Endpoint de Joinville retornou HTTP 502', (string) $response->getError());
+        $this->assertSame('invalid_xml', $response->getMetadata('emission_status'));
+        $this->assertSame(502, $response->getMetadata('http_status'));
+        $this->assertTrue($response->getMetadata('retryable'));
+        $this->assertSame('gateway_unavailable', $response->getMetadata('transport_error'));
     }
 
     public function testRejectsIncompatibleItems(): void

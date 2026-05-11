@@ -25,6 +25,8 @@ final class NFSeSoapCurlTransport implements NFSeSoapTransportInterface
         $headers = array_merge($headers, $options['headers'] ?? []);
 
         $timeout = max(1, (int) ($options['timeout'] ?? 30));
+        $responseHeaders = [];
+        $currentHeaderBlock = [];
 
         $handle = curl_init($endpoint);
         if ($handle === false) {
@@ -41,6 +43,19 @@ final class NFSeSoapCurlTransport implements NFSeSoapTransportInterface
             CURLOPT_SSL_VERIFYPEER => true,
             CURLOPT_SSL_VERIFYHOST => 2,
             CURLOPT_FOLLOWLOCATION => false,
+            CURLOPT_HEADERFUNCTION => static function ($handle, string $headerLine) use (&$responseHeaders, &$currentHeaderBlock): int {
+                $trimmed = trim($headerLine);
+                if ($trimmed !== '') {
+                    if (stripos($trimmed, 'HTTP/') === 0) {
+                        $currentHeaderBlock = [$trimmed];
+                    } else {
+                        $currentHeaderBlock[] = $trimmed;
+                    }
+                    $responseHeaders = $currentHeaderBlock;
+                }
+
+                return strlen($headerLine);
+            },
         ]);
 
         $response = curl_exec($handle);
@@ -58,7 +73,9 @@ final class NFSeSoapCurlTransport implements NFSeSoapTransportInterface
             'request_xml' => $envelope,
             'response_xml' => (string) $response,
             'status_code' => $statusCode,
-            'headers' => $headers,
+            'headers' => $responseHeaders,
+            'request_headers' => $headers,
+            'response_headers' => $responseHeaders,
         ];
     }
 }

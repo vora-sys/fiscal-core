@@ -704,8 +704,20 @@ class PublicaProvider extends AbstractNFSeProvider implements NFSeOperationalInt
             $parsedResponse['http_status'] = $statusCode;
         }
 
-        if (is_array($transportData['headers'] ?? null) && $transportData['headers'] !== []) {
-            $parsedResponse['transport_headers'] = array_values($transportData['headers']);
+        $requestHeaders = is_array($transportData['request_headers'] ?? null)
+            ? array_values($transportData['request_headers'])
+            : [];
+        $responseHeaders = is_array($transportData['response_headers'] ?? null)
+            ? array_values($transportData['response_headers'])
+            : (is_array($transportData['headers'] ?? null) ? array_values($transportData['headers']) : []);
+
+        if ($responseHeaders !== []) {
+            $parsedResponse['transport_headers'] = $responseHeaders;
+            $parsedResponse['response_headers'] = $responseHeaders;
+        }
+
+        if ($requestHeaders !== []) {
+            $parsedResponse['request_headers'] = $requestHeaders;
         }
 
         if (!isset($parsedResponse['raw_transport_xml']) || trim((string) $parsedResponse['raw_transport_xml']) === '') {
@@ -730,6 +742,8 @@ class PublicaProvider extends AbstractNFSeProvider implements NFSeOperationalInt
                 $statusCode
             );
             $parsedResponse['mensagens'] = array_values(array_unique($mensagens));
+            $parsedResponse['retryable'] = true;
+            $parsedResponse['transport_error'] = 'gateway_unavailable';
         }
 
         return $parsedResponse;

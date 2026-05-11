@@ -30,3 +30,4 @@
 
 - novos municípios da família devem preferir override leve no catálogo antes de subclass
 - o DANFSe local é uma representação operacional do XML autorizado; quando a prefeitura disponibilizar URL oficial, prefira a fonte oficial para entrega ao tomador
+- respostas HTML com HTTP 5xx do gateway municipal são normalizadas como `NFSE_EMISSION_FAILED`, `retryable=true` e `transport_error=gateway_unavailable`, sem marcar a nota como autorizada ou pendente fiscal
