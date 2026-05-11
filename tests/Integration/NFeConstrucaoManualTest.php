@@ -178,7 +178,9 @@ class NFeConstrucaoManualTest extends TestCase
             )))
             ->addNode(new DestinatarioNode(new DestinatarioDTO(
                 '66778899000133', 'DESTINO FLUENTE', 'RUA DEST', '40', 'CENTRO',
-                '4106902', 'CURITIBA', 'PR', '80000014', indIEDest: 1
+                '4106902', 'CURITIBA', 'PR', '80000014',
+                inscricaoEstadual: '6677889911',
+                indIEDest: 1
             )))
             ->addNode(new ProdutoNode(
                 ProdutoDTO::simple(1, 'FLU001', 'PRODUTO FLUENTE', '55667788', '5102', 20, 25.00)

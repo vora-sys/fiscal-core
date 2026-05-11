@@ -94,6 +94,10 @@ class TributacaoFacade
     {
         try {
             $resultado = $this->brasilApi->consultaNcm($ncm);
+            if (is_array($resultado) && isset($resultado['codigo'])) {
+                $resultado['codigo'] = preg_replace('/\D/', '', (string) $resultado['codigo']);
+            }
+
             return FiscalResponse::success($resultado, 'tributacao_consulta_ncm', [
                 'ncm' => $ncm
             ]);
@@ -235,8 +239,7 @@ class TributacaoFacade
     public function validarNCM(string $ncm): FiscalResponse
     {
         return $this->responseHandler->execute(function() use ($ncm) {
-            // Remove caracteres não numéricos
-            $ncm = preg_replace('/\D/', '', $ncm);
+            $ncm = trim($ncm);
             
             // Verifica se tem 8 dígitos
             if (strlen($ncm) !== 8) {
@@ -246,6 +249,10 @@ class TributacaoFacade
             // Valida se é numérico
             if (!is_numeric($ncm)) {
                 throw new \InvalidArgumentException("NCM deve conter apenas números");
+            }
+
+            if ($ncm === '00000000') {
+                throw new \InvalidArgumentException("NCM não pode conter apenas zeros");
             }
             
             return [
@@ -428,8 +435,11 @@ class TributacaoFacade
             // Lista simplificada de NCMs sujeitos à ST
             $ncmsComST = [
                 '22030001', // Cerveja de malte
+                '22071000', // Álcool etílico
                 '22021000', // Água mineral
                 '87030100', // Veículos de passeio
+                '27101129', // Combustíveis
+                '27101199', // Derivados de petróleo
                 '27101259', // Gasolina
                 '39241000'  // Pratos, copos descartáveis
             ];
@@ -462,11 +472,11 @@ class TributacaoFacade
             $primeirosDigitos = substr($ncm, 0, 2);
             
             $aliquotasIPI = [
-                '22' => 0,     // Bebidas
+                '22' => 20,    // Bebidas alcoólicas
                 '39' => 5,     // Plásticos
                 '87' => 25,    // Veículos
                 '27' => 0,     // Combustíveis
-                '84' => 15,    // Máquinas
+                '84' => 0,     // Máquinas
                 '85' => 10     // Equipamentos eletrônicos
             ];
             
@@ -475,6 +485,7 @@ class TributacaoFacade
             return [
                 'ncm' => $ncm,
                 'ncm_formatado' => substr($ncm, 0, 4) . '.' . substr($ncm, 4, 2) . '.' . substr($ncm, 6, 2),
+                'aliquota' => $aliquota,
                 'aliquota_ipi' => $aliquota,
                 'tributado_ipi' => $aliquota > 0,
                 'capitulo' => $primeirosDigitos
@@ -512,6 +523,10 @@ class TributacaoFacade
             return [
                 'ncm' => $ncm,
                 'ncm_formatado' => substr($ncm, 0, 4) . '.' . substr($ncm, 4, 2) . '.' . substr($ncm, 6, 2),
+                'capitulo' => $capitulo,
+                'posicao' => $posicao,
+                'subposicao' => $subposicao1,
+                'item' => $subposicao2,
                 'hierarquia' => [
                     'capitulo' => [
                         'codigo' => $capitulo,

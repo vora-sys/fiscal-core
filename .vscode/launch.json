@@ -142,7 +142,7 @@
                 "OPENSSL_CONF": "${workspaceFolder}/openssl.cnf"
             },
             "args": [
-                "--consultar-chave=13026032201824852000166000000000002026040821205516"
+                "--consultar-chave=13026032201824852000166000000000002726042060774116"
                 // "--consultar-rps-numero=1",
                 // "--consultar-rps-serie=1",
                 // "--consultar-rps-tipo=1"
@@ -176,7 +176,7 @@
                 // "--consultar-rps-numero=1",
                 // "--consultar-rps-serie=1",
                 // "--consultar-rps-tipo=1"
-                "--baixar-danfse=13026032201824852000166000000000002526044609862631"
+                "--baixar-danfse=13026032201824852000166000000000002726042060774116"
             ]
         },
         {

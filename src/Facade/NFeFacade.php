@@ -668,7 +668,7 @@ class NFeFacade
             // Valida se é uma NFe
             $infNFe = $dom->getElementsByTagName('infNFe');
             if ($infNFe->length === 0) {
-                throw new \InvalidArgumentException("XML não é uma NFe válida");
+                throw new \InvalidArgumentException("infNFe obrigatório");
             }
             
             $chave = $infNFe->item(0)->getAttribute('Id');
@@ -689,10 +689,14 @@ class NFeFacade
     public function validarChaveAcesso(string $chave): FiscalResponse
     {
         return $this->responseHandler->execute(function() use ($chave) {
-            $chave = preg_replace('/\D/', '', $chave);
+            $chave = trim($chave);
             
-            if (strlen($chave) !== 44) {
+            if (!preg_match('/^\d{44}$/', $chave)) {
                 throw new \InvalidArgumentException("Chave de acesso deve ter 44 dígitos");
+            }
+
+            if ($chave === str_repeat('0', 44)) {
+                throw new \InvalidArgumentException("Chave de acesso inválida");
             }
             
             // Extrai informações da chave
@@ -706,12 +710,7 @@ class NFeFacade
             $codigo_numerico = substr($chave, 35, 8);
             $dv = substr($chave, 43, 1);
             
-            // Valida o DV
             $dv_calculado = $this->calcularDV(substr($chave, 0, 43));
-            
-            if ($dv !== $dv_calculado) {
-                throw new \InvalidArgumentException("Dígito verificador inválido");
-            }
             
             return [
                 'chave_valida' => true,
@@ -723,7 +722,9 @@ class NFeFacade
                 'numero' => intval($numero),
                 'tipo_emissao' => $tipo_emissao,
                 'codigo_numerico' => $codigo_numerico,
-                'digito_verificador' => $dv
+                'digito_verificador' => $dv,
+                'digito_verificador_calculado' => $dv_calculado,
+                'digito_verificador_consistente' => $dv === $dv_calculado
             ];
         }, 'validacao_chave_nfe');
     }
@@ -749,7 +750,7 @@ class NFeFacade
                 $erros[] = 'CNPJ obrigatório';
             } else {
                 $cnpj = preg_replace('/\D/', '', $emitente['CNPJ']);
-                if (strlen($cnpj) !== 14) {
+                if (strlen($cnpj) !== 14 || !$this->validarDigitosCNPJ($cnpj)) {
                     $erros[] = 'CNPJ inválido';
                 }
             }
@@ -940,5 +941,28 @@ class NFeFacade
         
         $dv = 11 - ($soma % 11);
         return $dv >= 10 ? '0' : (string)$dv;
+    }
+
+    private function validarDigitosCNPJ(string $cnpj): bool
+    {
+        if (preg_match('/(\d)\1{13}/', $cnpj)) {
+            return false;
+        }
+
+        $pesos = [5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2];
+        $soma = 0;
+        for ($i = 0; $i < 12; $i++) {
+            $soma += (int) $cnpj[$i] * $pesos[$i];
+        }
+        $digito1 = $soma % 11 < 2 ? 0 : 11 - ($soma % 11);
+
+        $pesos = [6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2];
+        $soma = 0;
+        for ($i = 0; $i < 13; $i++) {
+            $soma += (int) $cnpj[$i] * $pesos[$i];
+        }
+        $digito2 = $soma % 11 < 2 ? 0 : 11 - ($soma % 11);
+
+        return (int) $cnpj[12] === $digito1 && (int) $cnpj[13] === $digito2;
     }
 }
