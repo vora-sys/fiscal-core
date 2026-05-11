@@ -24,7 +24,8 @@
 ## Overrides conhecidos
 
 - Joinville usa `payload_defaults` para descrição/discriminação padrão de homologação
-- O renderer local registrado para `PUBLICA` gera PDF a partir do XML autorizado retornado no `GerarNfseResposta`
+- Joinville deve operar por `RecepcionarLoteRps` com consulta posterior em `ConsultarSituacaoLoteRps`; o provider mantém fallback automático caso o município ainda aceite `GerarNfse`
+- O renderer local registrado para `PUBLICA` gera PDF a partir do XML autorizado retornado em `GerarNfseResposta` ou `ConsultarLoteRpsResposta`
 - Homologação de Joinville deve permanecer configurada com `https://nfsehomologacao.joinville.sc.gov.br/...`; o endpoint `http://` devolve HTTP 301 para HTTPS antes de retornar XML SOAP
 
 ## Limitações

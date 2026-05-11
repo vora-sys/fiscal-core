@@ -4099,6 +4099,9 @@
             "ibge": "4209102",
             "homologado": false,
             "active": true,
+            "provider_config_overrides": {
+                "emission_mode": "async_lote"
+            },
             "payload_defaults": {
                 "servico": {
                     "descricao": "Desenvolvimento e licenciamento de software para homologacao de Joinville.",

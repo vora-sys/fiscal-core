@@ -18,6 +18,7 @@ final class ProviderRegistryTest extends TestCase
         $provider = $registry->getByMunicipio('joinville');
 
         $this->assertInstanceOf(PublicaProvider::class, $provider);
+        $this->assertSame('async_lote', $provider->getConfig()['emission_mode'] ?? null);
     }
 
     public function testGetByMunicipioBelemReturnsCurrentMunicipalProvider(): void

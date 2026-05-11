@@ -43,18 +43,16 @@ class PublicaProvider extends AbstractNFSeProvider implements NFSeOperationalInt
         $this->validarDados($dados);
         $this->lastPrestadorContext = $this->extractPrestadorContext($dados['prestador'] ?? []);
 
-        $requestXml = $this->montarXmlRps($dados);
-        if ($this->shouldSignOperation('emitir')) {
-            $requestXml = $this->assinarXml($requestXml, 'emitir');
+        if ($this->shouldUseAsyncLoteFlow()) {
+            return $this->emitirAssincronoViaLote($dados);
         }
 
-        return $this->dispatchSoapOperation(
-            'emitir',
-            'GerarNfse',
-            $requestXml,
-            'emitir',
-            'services'
-        );
+        $responseXml = $this->emitirSincronoViaGerarNfse($dados);
+        if ($this->shouldRetryEmissionAsAsyncLote($this->lastResponseData)) {
+            return $this->emitirAssincronoViaLote($dados);
+        }
+
+        return $responseXml;
     }
 
     public function consultarPorRps(array $identificacaoRps): NFSeConsultaResultInterface
@@ -84,6 +82,10 @@ class PublicaProvider extends AbstractNFSeProvider implements NFSeOperationalInt
     {
         if (trim($protocolo) === '') {
             throw new \InvalidArgumentException('Protocolo do lote é obrigatório para consulta em Joinville.');
+        }
+
+        if ($this->shouldUseAsyncLoteFlow()) {
+            return $this->consultarLoteAssincrono($protocolo);
         }
 
         $requestXml = $this->montarXmlConsultarLote($protocolo);
@@ -372,6 +374,7 @@ class PublicaProvider extends AbstractNFSeProvider implements NFSeOperationalInt
         $numeroLote = $this->firstNodeValue($xpath, ["//*[local-name()='NumeroLote']"]);
         $dataRecebimento = $this->firstNodeValue($xpath, ["//*[local-name()='DataRecebimento']"]);
         $protocolo = $this->firstNodeValue($xpath, ["//*[local-name()='Protocolo']"]);
+        $situacaoLote = $this->firstNodeValue($xpath, ["//*[local-name()='Situacao']"]);
         $rootName = $dom->documentElement?->localName;
 
         $listaNfse = [];
@@ -406,7 +409,8 @@ class PublicaProvider extends AbstractNFSeProvider implements NFSeOperationalInt
         $hasSuccessPayload = $nfse !== null
             || $cancelamento !== null
             || $numeroLote !== null
-            || $protocolo !== null;
+            || $protocolo !== null
+            || $situacaoLote !== null;
 
         return [
             'status' => $mensagens !== [] ? 'error' : ($hasSuccessPayload ? 'success' : 'unknown'),
@@ -415,6 +419,7 @@ class PublicaProvider extends AbstractNFSeProvider implements NFSeOperationalInt
             'numero_lote' => $numeroLote,
             'data_recebimento' => $dataRecebimento,
             'protocolo' => $protocolo,
+            'situacao_lote' => $situacaoLote,
             'nfse' => $nfse,
             'lista_nfse' => $listaNfse,
             'cancelamento' => $cancelamento,
@@ -469,6 +474,82 @@ class PublicaProvider extends AbstractNFSeProvider implements NFSeOperationalInt
                 'provider_class' => static::class,
             ]
         );
+    }
+
+    private function emitirSincronoViaGerarNfse(array $dados): string
+    {
+        $requestXml = $this->montarXmlRps($dados);
+        if ($this->shouldSignOperation('emitir')) {
+            $requestXml = $this->assinarXml($requestXml, 'emitir');
+        }
+
+        return $this->dispatchSoapOperation(
+            'emitir',
+            'GerarNfse',
+            $requestXml,
+            'emitir',
+            'services'
+        );
+    }
+
+    private function emitirAssincronoViaLote(array $dados): string
+    {
+        $requestXml = $this->montarXmlEnviarLoteRps($dados);
+        if ($this->shouldSignOperation('emitir')) {
+            $requestXml = $this->assinarXml($requestXml, 'emitir_lote');
+        }
+
+        return $this->dispatchSoapOperation(
+            'emitir',
+            'RecepcionarLoteRps',
+            $requestXml,
+            'enviar_lote_rps',
+            'services'
+        );
+    }
+
+    private function consultarLoteAssincrono(string $protocolo): NFSeConsultaResultInterface
+    {
+        $situacaoRequestXml = $this->montarXmlConsultarSituacaoLote($protocolo);
+        if ($this->shouldSignOperation('consultar_situacao_lote')) {
+            $situacaoRequestXml = $this->assinarXml($situacaoRequestXml, 'consultar_situacao_lote');
+        }
+
+        $this->dispatchSoapOperation(
+            'consultar_situacao_lote',
+            'ConsultarSituacaoLoteRps',
+            $situacaoRequestXml,
+            'consultar_situacao_lote',
+            'consultas'
+        );
+
+        $situacaoResponse = $this->lastResponseData;
+        $situacao = (string) ($situacaoResponse['situacao_lote'] ?? '');
+
+        if (in_array($situacao, ['3', '4'], true)) {
+            $requestXml = $this->montarXmlConsultarLote($protocolo);
+            if ($this->shouldSignOperation('consultar_lote')) {
+                $requestXml = $this->assinarXml($requestXml, 'consultar_lote');
+            }
+
+            $this->dispatchSoapOperation(
+                'consultar_lote',
+                'ConsultarLoteRps',
+                $requestXml,
+                'consultar_lote',
+                'consultas'
+            );
+
+            if (($this->lastResponseData['situacao_lote'] ?? null) === null) {
+                $this->lastResponseData['situacao_lote'] = $situacao;
+                $this->lastOperationArtifacts['parsed_response'] = $this->lastResponseData;
+            }
+        }
+
+        return $this->normalizeConsultaResult('consultar_lote', [
+            'chave_consulta' => $protocolo,
+            'source' => 'consultar_lote',
+        ]);
     }
 
     private function resolveServicoData(array $dados): array
@@ -533,6 +614,51 @@ class PublicaProvider extends AbstractNFSeProvider implements NFSeOperationalInt
         return $value;
     }
 
+    private function montarXmlEnviarLoteRps(array $dados): string
+    {
+        $prestador = $dados['prestador'];
+        $rps = $dados['rps'] ?? [];
+        $lote = $dados['lote'] ?? [];
+        $gerarNfseXml = $this->montarXmlRps($dados);
+
+        $source = new \DOMDocument();
+        if (!@$source->loadXML($gerarNfseXml)) {
+            throw new \RuntimeException('Falha ao preparar o XML base do RPS para envio em lote.');
+        }
+
+        $rpsNode = $source->documentElement?->getElementsByTagNameNS(self::NFSE_NS, 'Rps')->item(0);
+        if (!$rpsNode instanceof \DOMElement) {
+            throw new \RuntimeException('Falha ao localizar o nó Rps no XML base de emissão PUBLICA.');
+        }
+
+        $dom = new \DOMDocument('1.0', 'UTF-8');
+        $dom->preserveWhiteSpace = false;
+        $dom->formatOutput = false;
+
+        $root = $dom->createElementNS(self::NFSE_NS, 'EnviarLoteRpsEnvio');
+        $dom->appendChild($root);
+
+        $loteRps = $this->appendXmlNode($dom, $root, 'LoteRps', null, self::NFSE_NS);
+        $loteRps->setAttribute('versao', (string) ($this->config['lote_versao'] ?? '1.00'));
+
+        $numeroLote = trim((string) ($lote['numero'] ?? $rps['numero'] ?? '1'));
+        $this->appendXmlNode($dom, $loteRps, 'NumeroLote', $numeroLote, self::NFSE_NS);
+        $this->appendDocumentoNode($dom, $loteRps, $this->normalizeDigits((string) $prestador['cnpj']));
+        $this->appendXmlNode(
+            $dom,
+            $loteRps,
+            'InscricaoMunicipal',
+            (string) $prestador['inscricaoMunicipal'],
+            self::NFSE_NS
+        );
+        $this->appendXmlNode($dom, $loteRps, 'QuantidadeRps', '1', self::NFSE_NS);
+
+        $listaRps = $this->appendXmlNode($dom, $loteRps, 'ListaRps', null, self::NFSE_NS);
+        $listaRps->appendChild($dom->importNode($rpsNode, true));
+
+        return $dom->saveXML($dom->documentElement) ?: '';
+    }
+
     private function validarIdentificacaoRps(array $identificacaoRps): void
     {
         foreach (['numero', 'serie', 'tipo'] as $campo) {
@@ -559,6 +685,32 @@ class PublicaProvider extends AbstractNFSeProvider implements NFSeOperationalInt
         $prestadorNode->setAttribute('id', 'prestador-consulta-lote');
         $this->appendDocumentoNode($dom, $prestadorNode, $prestador['cnpj']);
         $this->appendXmlNode($dom, $prestadorNode, 'InscricaoMunicipal', $prestador['inscricao_municipal'], self::NFSE_NS);
+        $this->appendXmlNode($dom, $root, 'Protocolo', trim($protocolo), self::NFSE_NS);
+
+        return $dom->saveXML($dom->documentElement) ?: '';
+    }
+
+    private function montarXmlConsultarSituacaoLote(string $protocolo): string
+    {
+        $prestador = $this->resolvePrestadorContext();
+
+        $dom = new \DOMDocument('1.0', 'UTF-8');
+        $dom->preserveWhiteSpace = false;
+        $dom->formatOutput = false;
+
+        $root = $dom->createElementNS(self::NFSE_NS, 'ConsultarSituacaoLoteRpsEnvio');
+        $dom->appendChild($root);
+
+        $prestadorNode = $this->appendXmlNode($dom, $root, 'Prestador', null, self::NFSE_NS);
+        $prestadorNode->setAttribute('id', 'prestador-consulta-situacao-lote');
+        $this->appendDocumentoNode($dom, $prestadorNode, $prestador['cnpj']);
+        $this->appendXmlNode(
+            $dom,
+            $prestadorNode,
+            'InscricaoMunicipal',
+            $prestador['inscricao_municipal'],
+            self::NFSE_NS
+        );
         $this->appendXmlNode($dom, $root, 'Protocolo', trim($protocolo), self::NFSE_NS);
 
         return $dom->saveXML($dom->documentElement) ?: '';
@@ -947,6 +1099,15 @@ class PublicaProvider extends AbstractNFSeProvider implements NFSeOperationalInt
                 Signer::CANONICAL,
                 'GerarNfseEnvio'
             ),
+            'emitir_lote' => Signer::sign(
+                $certificate,
+                $xml,
+                'InfRps',
+                'id',
+                OPENSSL_ALGO_SHA1,
+                Signer::CANONICAL,
+                'EnviarLoteRpsEnvio'
+            ),
             'consultar_lote' => Signer::sign(
                 $certificate,
                 $xml,
@@ -965,6 +1126,15 @@ class PublicaProvider extends AbstractNFSeProvider implements NFSeOperationalInt
                 Signer::CANONICAL,
                 'ConsultarNfseRpsEnvio'
             ),
+            'consultar_situacao_lote' => Signer::sign(
+                $certificate,
+                $xml,
+                'Prestador',
+                'id',
+                OPENSSL_ALGO_SHA1,
+                Signer::CANONICAL,
+                'ConsultarSituacaoLoteRpsEnvio'
+            ),
             'cancelar_nfse' => Signer::sign(
                 $certificate,
                 $xml,
@@ -979,8 +1149,10 @@ class PublicaProvider extends AbstractNFSeProvider implements NFSeOperationalInt
 
         return match ($operationKey) {
             'emitir' => $this->relocateSignature($signed, 'Rps', 'InfRps'),
+            'emitir_lote' => $this->relocateSignature($signed, 'Rps', 'InfRps'),
             'consultar_lote' => $this->relocateSignature($signed, 'ConsultarLoteRpsEnvio', 'Prestador'),
             'consultar_nfse_rps' => $this->relocateSignature($signed, 'ConsultarNfseRpsEnvio', 'Prestador'),
+            'consultar_situacao_lote' => $this->relocateSignature($signed, 'ConsultarSituacaoLoteRpsEnvio', 'Prestador'),
             'cancelar_nfse' => $this->relocateSignature($signed, 'Pedido', 'InfPedidoCancelamento'),
             default => $signed,
         };
@@ -991,11 +1163,51 @@ class PublicaProvider extends AbstractNFSeProvider implements NFSeOperationalInt
         $configured = $this->config['sign_operations'] ?? [
             'emitir',
             'consultar_lote',
+            'consultar_situacao_lote',
             'consultar_nfse_rps',
             'cancelar_nfse',
         ];
 
         return is_array($configured) && in_array($operationKey, $configured, true);
+    }
+
+    private function shouldUseAsyncLoteFlow(): bool
+    {
+        $mode = strtolower(trim((string) ($this->config['emission_mode'] ?? '')));
+
+        return in_array($mode, ['async_lote', 'recepcionar_lote_rps', 'enviar_lote_rps'], true);
+    }
+
+    private function shouldRetryEmissionAsAsyncLote(array $parsedResponse): bool
+    {
+        if (($parsedResponse['status'] ?? null) !== 'error') {
+            return false;
+        }
+
+        foreach ($parsedResponse['mensagens'] ?? [] as $message) {
+            if (!is_scalar($message)) {
+                continue;
+            }
+
+            if ($this->containsDeprecatedGerarNfseMessage((string) $message)) {
+                return true;
+            }
+        }
+
+        $faultMessage = (string) (($parsedResponse['fault']['message'] ?? '') ?: '');
+
+        return $faultMessage !== '' && $this->containsDeprecatedGerarNfseMessage($faultMessage);
+    }
+
+    private function containsDeprecatedGerarNfseMessage(string $message): bool
+    {
+        $ascii = function_exists('iconv')
+            ? (iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $message) ?: $message)
+            : $message;
+        $normalized = strtolower(trim($ascii));
+
+        return str_contains($normalized, 'servico descontinuado')
+            && str_contains($normalized, 'recepcionarloterps');
     }
 
     private function resolveCertificate(): ?Certificate

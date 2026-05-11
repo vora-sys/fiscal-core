@@ -104,7 +104,7 @@ final class NFSeJoinvilleMunicipalFixtures
 
     public static function joinvilleConfig(array $overrides = []): array
     {
-        $config = \sabbajohn\FiscalCore\Support\ProviderRegistry::getInstance()->getConfig('PUBLICA');
+        $config = \sabbajohn\FiscalCore\Support\ProviderRegistry::getInstance()->getConfigForMunicipio('joinville');
         $config['prestador'] = [
             'cnpj' => self::payload()['prestador']['cnpj'],
             'inscricaoMunicipal' => self::payload()['prestador']['inscricaoMunicipal'],
@@ -135,9 +135,47 @@ final class NFSeJoinvilleMunicipalFixtures
 XML);
     }
 
+    public static function deprecatedGerarNfseSoapResponse(): string
+    {
+        return self::wrapServicesResponse('GerarNfseResponse', <<<'XML'
+<?xml version="1.0" encoding="UTF-8"?>
+<GerarNfseResposta xmlns="http://www.publica.inf.br">
+  <ListaMensagemRetorno>
+    <MensagemRetorno>
+      <Codigo>E000</Codigo>
+      <Mensagem>Serviço descontinuado. Utilize o serviço 'RecepcionarLoteRps' para enviar lotes de RPS e posteriormente o serviço de 'ConsultarSituacaoLoteRps' para consultar a situação.</Mensagem>
+    </MensagemRetorno>
+  </ListaMensagemRetorno>
+</GerarNfseResposta>
+XML);
+    }
+
+    public static function asyncEnviarLoteSoapResponse(): string
+    {
+        return self::wrapServicesResponse('RecepcionarLoteRpsResponse', <<<'XML'
+<?xml version="1.0" encoding="UTF-8"?>
+<EnviarLoteRpsResposta xmlns="http://www.publica.inf.br">
+  <NumeroLote>1001</NumeroLote>
+  <DataRecebimento>2026-03-19T09:20:10</DataRecebimento>
+  <Protocolo>PROTOCOLO-JOINVILLE-2026</Protocolo>
+</EnviarLoteRpsResposta>
+XML);
+    }
+
     public static function consultarLoteSoapResponse(): string
     {
         return self::wrapConsultasResponse('ConsultarLoteRpsResponse', self::consultarLotePayloadXml());
+    }
+
+    public static function consultarSituacaoLoteSoapResponse(string $situacao = '4'): string
+    {
+        return self::wrapConsultasResponse('ConsultarSituacaoLoteRpsResponse', <<<XML
+<?xml version="1.0" encoding="UTF-8"?>
+<ConsultarSituacaoLoteRpsResposta xmlns="http://www.publica.inf.br">
+  <NumeroLote>1001</NumeroLote>
+  <Situacao>{$situacao}</Situacao>
+</ConsultarSituacaoLoteRpsResposta>
+XML);
     }
 
     public static function consultarNfseRpsSoapResponse(): string

@@ -117,6 +117,9 @@
             "slug": "joinville",
             "nome": "Joinville",
             "uf": "SC",
+            "provider_config_overrides": {
+                "emission_mode": "async_lote"
+            },
             "payload_defaults": {
                 "servico": {
                     "descricao": "Desenvolvimento e licenciamento de software para homologacao de Joinville.",

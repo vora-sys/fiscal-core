@@ -480,6 +480,7 @@
         "xsd_entrypoints": {
             "emitir": "schema_nfse_v03.xsd",
             "enviar_lote_rps": "schema_nfse_v03.xsd",
+            "consultar_situacao_lote": "schema_nfse_v03.xsd",
             "consultar_lote": "schema_nfse_v03.xsd",
             "consultar_nfse_rps": "schema_nfse_v03.xsd",
             "cancelar_nfse": "schema_nfse_v03.xsd"

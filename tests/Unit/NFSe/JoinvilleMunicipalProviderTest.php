@@ -22,7 +22,7 @@ final class JoinvilleMunicipalProviderTest extends TestCase
 
     public function testEmitirBuildsSignedSchemaValidRequestAndParsesSoapResponse(): void
     {
-        $transport = new class(NFSeJoinvilleMunicipalFixtures::successSoapResponse()) implements NFSeSoapTransportInterface {
+        $transport = new class(NFSeJoinvilleMunicipalFixtures::asyncEnviarLoteSoapResponse()) implements NFSeSoapTransportInterface {
             public array $calls = [];
 
             public function __construct(private readonly string $response)
@@ -45,7 +45,7 @@ final class JoinvilleMunicipalProviderTest extends TestCase
         $provider = $this->makeProvider($transport);
         $responseXml = $provider->emitir(NFSeJoinvilleMunicipalFixtures::payload());
 
-        $this->assertStringContainsString('GerarNfseResponse', $responseXml);
+        $this->assertStringContainsString('RecepcionarLoteRpsResponse', $responseXml);
         $this->assertCount(1, $transport->calls);
         $this->assertSame(
             'https://nfsehomologacao.joinville.sc.gov.br/nfse_integracao/Services',
@@ -54,12 +54,12 @@ final class JoinvilleMunicipalProviderTest extends TestCase
 
         $requestXml = $provider->getLastRequestXml();
         $this->assertIsString($requestXml);
-        $this->assertStringContainsString('GerarNfseEnvio', $requestXml);
+        $this->assertStringContainsString('EnviarLoteRpsEnvio', $requestXml);
         $this->assertStringContainsString('http://www.w3.org/2000/09/xmldsig#', $requestXml);
 
         $validation = (new NFSeSchemaValidator())->validate(
             $requestXml,
-            (new NFSeSchemaResolver())->resolve('PUBLICA', 'emitir')
+            (new NFSeSchemaResolver())->resolve('PUBLICA', 'enviar_lote_rps')
         );
         $this->assertTrue($validation['valid'], implode(PHP_EOL, $validation['errors']));
 
@@ -71,31 +71,64 @@ final class JoinvilleMunicipalProviderTest extends TestCase
         $this->assertSame('#JOINVILLE-RPS-2026-1', $referenceUri);
 
         $envelope = (string) $provider->getLastSoapEnvelope();
-        $this->assertStringContainsString('<svc:GerarNfse>', $envelope);
-        $this->assertStringContainsString('<svc:XML>&lt;GerarNfseEnvio', $envelope);
+        $this->assertStringContainsString('<svc:RecepcionarLoteRps>', $envelope);
+        $this->assertStringContainsString('<svc:XML>&lt;EnviarLoteRpsEnvio', $envelope);
 
         $parsed = $provider->getLastResponseData();
         $this->assertSame('success', $parsed['status']);
-        $this->assertSame('202600000000123', $parsed['nfse']['numero']);
-        $this->assertSame('AB12-CD34', $parsed['nfse']['codigo_verificacao']);
+        $this->assertSame('1001', $parsed['numero_lote']);
+        $this->assertSame('PROTOCOLO-JOINVILLE-2026', $parsed['protocolo']);
+        $this->assertNull($parsed['nfse']);
     }
 
-    public function testConsultarLoteBuildsSignedSchemaValidRequestAndParsesResponse(): void
+    public function testEmitirFallsBackToAsyncLoteWhenGerarNfseIsDiscontinued(): void
     {
-        $transport = new class(NFSeJoinvilleMunicipalFixtures::consultarLoteSoapResponse()) implements NFSeSoapTransportInterface {
+        $transport = new class implements NFSeSoapTransportInterface {
             public array $calls = [];
-
-            public function __construct(private readonly string $response)
-            {
-            }
 
             public function send(string $endpoint, string $envelope, array $options = []): array
             {
                 $this->calls[] = compact('endpoint', 'envelope', 'options');
 
+                $response = count($this->calls) === 1
+                    ? NFSeJoinvilleMunicipalFixtures::deprecatedGerarNfseSoapResponse()
+                    : NFSeJoinvilleMunicipalFixtures::asyncEnviarLoteSoapResponse();
+
                 return [
                     'request_xml' => $envelope,
-                    'response_xml' => $this->response,
+                    'response_xml' => $response,
+                    'status_code' => 200,
+                    'headers' => ['Content-Type: text/xml'],
+                ];
+            }
+        };
+
+        $provider = $this->makeProvider($transport, ['emission_mode' => '']);
+        $responseXml = $provider->emitir(NFSeJoinvilleMunicipalFixtures::payload());
+
+        $this->assertCount(2, $transport->calls);
+        $this->assertStringContainsString('<svc:GerarNfse>', $transport->calls[0]['envelope']);
+        $this->assertStringContainsString('<svc:RecepcionarLoteRps>', $transport->calls[1]['envelope']);
+        $this->assertStringContainsString('RecepcionarLoteRpsResponse', $responseXml);
+        $this->assertSame('PROTOCOLO-JOINVILLE-2026', $provider->getLastResponseData()['protocolo']);
+    }
+
+    public function testConsultarLoteBuildsSignedSchemaValidRequestAndParsesResponse(): void
+    {
+        $transport = new class implements NFSeSoapTransportInterface {
+            public array $calls = [];
+
+            public function send(string $endpoint, string $envelope, array $options = []): array
+            {
+                $this->calls[] = compact('endpoint', 'envelope', 'options');
+
+                $response = count($this->calls) === 1
+                    ? NFSeJoinvilleMunicipalFixtures::consultarSituacaoLoteSoapResponse('4')
+                    : NFSeJoinvilleMunicipalFixtures::consultarLoteSoapResponse();
+
+                return [
+                    'request_xml' => $envelope,
+                    'response_xml' => $response,
                     'status_code' => 200,
                     'headers' => ['Content-Type: text/xml'],
                 ];
@@ -105,11 +138,13 @@ final class JoinvilleMunicipalProviderTest extends TestCase
         $provider = $this->makeProvider($transport);
         $provider->consultarLote(NFSeJoinvilleMunicipalFixtures::loteProtocolo());
 
-        $this->assertCount(1, $transport->calls);
+        $this->assertCount(2, $transport->calls);
         $this->assertSame(
             'https://nfsehomologacao.joinville.sc.gov.br/nfse_integracao/Consultas',
             $transport->calls[0]['endpoint']
         );
+        $this->assertStringContainsString('<svc:ConsultarSituacaoLoteRps>', $transport->calls[0]['envelope']);
+        $this->assertStringContainsString('<svc:ConsultarLoteRps>', $transport->calls[1]['envelope']);
         $this->assertStringContainsString('<svc:ConsultarLoteRps>', (string) $provider->getLastSoapEnvelope());
 
         $validation = (new NFSeSchemaValidator())->validate(
@@ -119,6 +154,7 @@ final class JoinvilleMunicipalProviderTest extends TestCase
         $this->assertTrue($validation['valid'], implode(PHP_EOL, $validation['errors']));
         $this->assertSame('consultar_lote', $provider->getLastOperationArtifacts()['operation']);
         $this->assertSame('success', $provider->getLastResponseData()['status']);
+        $this->assertSame('4', $provider->getLastResponseData()['situacao_lote']);
         $this->assertSame('202600000000123', $provider->getLastResponseData()['nfse']['numero']);
     }
 
