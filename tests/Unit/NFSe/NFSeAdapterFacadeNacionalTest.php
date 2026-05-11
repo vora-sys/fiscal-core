@@ -9,10 +9,26 @@ use sabbajohn\FiscalCore\Contracts\NFSeNacionalCapabilitiesInterface;
 use sabbajohn\FiscalCore\Contracts\NFSeProviderConfigInterface;
 use sabbajohn\FiscalCore\Facade\NFSeFacade;
 use sabbajohn\FiscalCore\Support\NFSeResultNormalizer;
+use Tests\Fakes\FakeNfseProvider;
 use PHPUnit\Framework\TestCase;
+
+require_once dirname(__DIR__, 2) . '/Fakes/FakeNfseProvider.php';
 
 class NFSeAdapterFacadeNacionalTest extends TestCase
 {
+    public function test_policy_nacional_nao_exige_codigo_municipal(): void
+    {
+        $adapter = new NFSeAdapter('nfse_nacional', new FakeNfseProvider());
+
+        $policy = $adapter->getProviderInfo()['form_policy'];
+
+        $this->assertSame('nfse_nacional_policy', $policy['policy_source']);
+        $this->assertNotContains('service.municipal_code', $policy['required_fields']);
+        $this->assertContains('service.municipal_code', $policy['visible_fields']);
+        $this->assertContains('service.national_tax_code', $policy['required_fields']);
+        $this->assertContains('service.nbs', $policy['required_fields']);
+    }
+
     public function test_adapter_lanca_erro_quando_provider_nao_suporta_capability_nacional(): void
     {
         $provider = new class () implements NFSeProviderConfigInterface {

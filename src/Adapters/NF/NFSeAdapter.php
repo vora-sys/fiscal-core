@@ -303,7 +303,6 @@ class NFSeAdapter implements NotaServicoInterface
                 'municipio_nome' => $municipioNome,
                 'policy_source' => 'nfse_nacional_policy',
                 'required_fields' => [
-                    'service.municipal_code',
                     'service.national_tax_code',
                     'service.nbs',
                     'prestador.op_simp_nac',

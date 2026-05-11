@@ -90,6 +90,29 @@ class NacionalProviderTest extends TestCase
         $this->assertArrayHasKey('dpsXmlGZipB64', $payload);
     }
 
+    public function test_dps_nacional_omite_codigo_municipal_fora_do_padrao_do_schema(): void
+    {
+        $calls = [];
+        $provider = new NacionalProvider($this->buildConfig(function ($method, $path, $body, $headers = []) use (&$calls) {
+            $calls[] = compact('method', 'path', 'body');
+            return '<Resposta><Sucesso>true</Sucesso></Resposta>';
+        }));
+
+        $dados = $this->dadosValidos();
+        $dados['servico']['cTribNac'] = '010701';
+        $dados['servico']['cTribMun'] = '010701';
+        $dados['servico']['cNBS'] = '107011000';
+
+        $provider->emitir($dados);
+
+        $payload = json_decode((string) $calls[0]['body'], true);
+        $this->assertIsArray($payload);
+        $xml = gzdecode((string) base64_decode((string) $payload['dpsXmlGZipB64']));
+        $this->assertIsString($xml);
+        $this->assertStringNotContainsString('<cTribMun>010701</cTribMun>', $xml);
+        $this->assertStringContainsString('<cTribNac>010701</cTribNac>', $xml);
+    }
+
     public function test_catalogo_resolve_rota_por_servico_configurado(): void
     {
         $calls = [];

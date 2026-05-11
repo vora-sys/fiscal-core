@@ -687,7 +687,7 @@ class NacionalProvider extends AbstractNFSeProvider implements NFSeNacionalCapab
         if ($cTribNac === '') {
             $cTribNac = '010101';
         }
-        $cTribMun = trim((string)($dados['servico']['cTribMun'] ?? $dados['servico']['codigoMunicipal'] ?? ''));
+        $cTribMun = $this->normalizeCTribMun((string)($dados['servico']['cTribMun'] ?? $dados['servico']['codigoMunicipal'] ?? ''));
         $cNbs = preg_replace('/\D+/', '', (string)($dados['servico']['cNBS'] ?? $dados['servico']['nbs'] ?? '')) ?? '';
         $this->appendNodeDps($dom, $cServ, 'cTribNac', $cTribNac);
         if ($cTribMun !== '') {
@@ -1943,6 +1943,13 @@ class NacionalProvider extends AbstractNFSeProvider implements NFSeNacionalCapab
         }
 
         return str_pad(substr($digits, 0, 6), 6, '0', STR_PAD_LEFT);
+    }
+
+    private function normalizeCTribMun(string $raw): string
+    {
+        $digits = $this->onlyDigits($raw);
+
+        return strlen($digits) === 3 ? $digits : '';
     }
 
     private function normalizeXmlText(string $value): string
