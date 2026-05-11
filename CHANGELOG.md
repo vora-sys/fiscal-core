@@ -1,5 +1,18 @@
 # Changelog
 
+## v1.2.2 - 2026-05-11
+
+### Changed
+- `PublicaProvider` passou a operar Joinville/SC por `RecepcionarLoteRps` com consulta de situacao em `ConsultarSituacaoLoteRps`.
+- Adicionado fallback automatico quando o municipio rejeita `GerarNfse` com `E000 Servico descontinuado`.
+- Corrigido o binding SOAP `rpc/literal` da familia `PUBLICA`: o parametro `XML` agora e enviado sem namespace, eliminando o `E160 XML enviado esta vazio`.
+- Catalogo municipal de Joinville atualizado com `emission_mode=async_lote`.
+- Ajustadas fixtures, testes e documentacao operacional da familia `PUBLICA`.
+
+### Notes
+- A validacao manual do endpoint de producao de Joinville confirmou aceite do lote apos a correcao do parametro SOAP `XML`.
+- A execucao local de testes permanece bloqueada neste ambiente porque o binario `php` nao esta disponivel.
+
 ## v1.2.1 - 2026-03-30
 
 ### Changed
