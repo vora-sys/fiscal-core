@@ -21,7 +21,6 @@ final class NFSeRuntimeBootstrap
     public function makeProvider(string $municipio): array
     {
         $configManager = $this->configManager ?? ConfigManager::getInstance();
-        $configManager->reload();
 
         $certificateManager = $this->certificateManager ?? CertificateManager::getInstance();
         $certificate = $certificateManager->getCertificate();

@@ -1,8 +1,3 @@
-NFe Facade Response Shape (Tests\Unit\NFeFacadeResponseShape)
- [x] Emitir returns authorized nfeproc as document xml
- [x] Emitir builds authorized document when sefaz response is wrapped in soap
- [x] Emitir rejected keeps document xml null and preserves raw response
- [x] Consultar returns canonical document shape
- [x] Gerar danfe returns xml and pdf in canonical shape
- [x] Baixar xml returns canonical document shape
+NFSe Runtime Bootstrap (Tests\Unit\NFSe\NFSeRuntimeBootstrap)
+ [x] Make provider preserves runtime environment without reloading config
 

@@ -1,15 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <testsuites>
-  <testsuite name="/Users/johnsabba/Projects/Freeline/fiscal-core/phpunit.xml" tests="6" assertions="42" errors="0" failures="0" skipped="0" time="0.025931">
-    <testsuite name="Unit" tests="6" assertions="42" errors="0" failures="0" skipped="0" time="0.025931">
-      <testsuite name="Tests\Unit\NFeFacadeResponseShapeTest" file="/Users/johnsabba/Projects/Freeline/fiscal-core/tests/Unit/NFeFacadeResponseShapeTest.php" tests="6" assertions="42" errors="0" failures="0" skipped="0" time="0.025931">
-        <testcase name="test_emitir_returns_authorized_nfeproc_as_document_xml" file="/Users/johnsabba/Projects/Freeline/fiscal-core/tests/Unit/NFeFacadeResponseShapeTest.php" line="12" class="Tests\Unit\NFeFacadeResponseShapeTest" classname="Tests.Unit.NFeFacadeResponseShapeTest" assertions="10" time="0.019680"/>
-        <testcase name="test_emitir_builds_authorized_document_when_sefaz_response_is_wrapped_in_soap" file="/Users/johnsabba/Projects/Freeline/fiscal-core/tests/Unit/NFeFacadeResponseShapeTest.php" line="72" class="Tests\Unit\NFeFacadeResponseShapeTest" classname="Tests.Unit.NFeFacadeResponseShapeTest" assertions="6" time="0.001503"/>
-        <testcase name="test_emitir_rejected_keeps_document_xml_null_and_preserves_raw_response" file="/Users/johnsabba/Projects/Freeline/fiscal-core/tests/Unit/NFeFacadeResponseShapeTest.php" line="138" class="Tests\Unit\NFeFacadeResponseShapeTest" classname="Tests.Unit.NFeFacadeResponseShapeTest" assertions="5" time="0.001428"/>
-        <testcase name="test_consultar_returns_canonical_document_shape" file="/Users/johnsabba/Projects/Freeline/fiscal-core/tests/Unit/NFeFacadeResponseShapeTest.php" line="177" class="Tests\Unit\NFeFacadeResponseShapeTest" classname="Tests.Unit.NFeFacadeResponseShapeTest" assertions="7" time="0.001234"/>
-        <testcase name="test_gerar_danfe_returns_xml_and_pdf_in_canonical_shape" file="/Users/johnsabba/Projects/Freeline/fiscal-core/tests/Unit/NFeFacadeResponseShapeTest.php" line="198" class="Tests\Unit\NFeFacadeResponseShapeTest" classname="Tests.Unit.NFeFacadeResponseShapeTest" assertions="7" time="0.000770"/>
-        <testcase name="test_baixar_xml_returns_canonical_document_shape" file="/Users/johnsabba/Projects/Freeline/fiscal-core/tests/Unit/NFeFacadeResponseShapeTest.php" line="220" class="Tests\Unit\NFeFacadeResponseShapeTest" classname="Tests.Unit.NFeFacadeResponseShapeTest" assertions="7" time="0.001317"/>
-      </testsuite>
-    </testsuite>
+  <testsuite name="Tests\Unit\NFSe\NFSeRuntimeBootstrapTest" file="/Users/johnsabba/Projects/Freeline/NotaAgil/fiscal-core/tests/Unit/NFSe/NFSeRuntimeBootstrapTest.php" tests="1" assertions="5" errors="0" failures="0" skipped="0" time="0.028990">
+    <testcase name="test_make_provider_preserves_runtime_environment_without_reloading_config" file="/Users/johnsabba/Projects/Freeline/NotaAgil/fiscal-core/tests/Unit/NFSe/NFSeRuntimeBootstrapTest.php" line="19" class="Tests\Unit\NFSe\NFSeRuntimeBootstrapTest" classname="Tests.Unit.NFSe.NFSeRuntimeBootstrapTest" assertions="5" time="0.028990"/>
   </testsuite>
 </testsuites>
