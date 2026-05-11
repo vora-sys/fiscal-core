@@ -381,7 +381,7 @@ ENV);
         $this->assertSame('FREELINE INFORMATICA LTDA', $result['prestador']['razao_social']);
         $this->assertCount(1, $transport->calls);
         $this->assertSame(
-            'http://nfsehomologacao.joinville.sc.gov.br/nfse_integracao/Services',
+            'http://nfsehomologacao.joinville.sc.gov.br:80/nfse_integracao/Services',
             $transport->calls[0]['endpoint']
         );
         $this->assertStringContainsString('<svc:GerarNfse>', (string) $result['soap_envelope']);

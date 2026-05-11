@@ -726,7 +726,38 @@ class PublicaProvider extends AbstractNFSeProvider implements NFSeOperationalInt
 
         $trimmedResponse = ltrim($responseXml);
         $looksLikeHtml = str_starts_with(strtolower($trimmedResponse), '<html')
+            || str_contains(strtolower($trimmedResponse), '<title>301 moved permanently</title>')
             || str_contains(strtolower($trimmedResponse), '<title>502 bad gateway</title>');
+
+        if ($statusCode >= 300 && $statusCode < 400 && $looksLikeHtml) {
+            if (($parsedResponse['status'] ?? '') === 'unknown') {
+                $parsedResponse['status'] = 'invalid_xml';
+            }
+
+            $redirectLocation = $this->extractHeaderValue($responseHeaders, 'Location');
+            $mensagens = is_array($parsedResponse['mensagens'] ?? null) ? $parsedResponse['mensagens'] : [];
+            if ($mensagens === []) {
+                $mensagens[] = 'Resposta XML inválida do webservice de Joinville.';
+            }
+
+            $mensagens[] = $redirectLocation !== null
+                ? sprintf(
+                    'Endpoint de Joinville retornou HTTP %d redirecionando para %s antes de devolver XML NFSe. Configure o endpoint final HTTPS do webservice.',
+                    $statusCode,
+                    $redirectLocation
+                )
+                : sprintf(
+                    'Endpoint de Joinville retornou HTTP %d com HTML de redirecionamento antes de devolver XML NFSe.',
+                    $statusCode
+                );
+
+            $parsedResponse['mensagens'] = array_values(array_unique($mensagens));
+            $parsedResponse['retryable'] = false;
+            $parsedResponse['transport_error'] = 'redirect_response';
+            if ($redirectLocation !== null) {
+                $parsedResponse['redirect_location'] = $redirectLocation;
+            }
+        }
 
         if ($statusCode >= 500 && $looksLikeHtml) {
             if (($parsedResponse['status'] ?? '') === 'unknown') {
@@ -747,6 +778,25 @@ class PublicaProvider extends AbstractNFSeProvider implements NFSeOperationalInt
         }
 
         return $parsedResponse;
+    }
+
+    private function extractHeaderValue(array $headers, string $name): ?string
+    {
+        $prefix = strtolower($name) . ':';
+        foreach ($headers as $header) {
+            if (!is_scalar($header)) {
+                continue;
+            }
+
+            $line = trim((string) $header);
+            if (str_starts_with(strtolower($line), $prefix)) {
+                $value = trim(substr($line, strlen($prefix)));
+
+                return $value !== '' ? $value : null;
+            }
+        }
+
+        return null;
     }
 
     private function assertItensCompativeis(array $dados): void

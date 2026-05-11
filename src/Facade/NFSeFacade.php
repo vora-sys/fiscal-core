@@ -889,6 +889,7 @@ class NFSeFacade
                 'emission_status' => $emissionStatus,
                 'retryable' => (bool) ($parsedEmission['retryable'] ?? false),
                 'transport_error' => $parsedEmission['transport_error'] ?? null,
+                'redirect_location' => $parsedEmission['redirect_location'] ?? null,
                 'http_status' => $parsedEmission['http_status'] ?? null,
                 'emissao' => $lastEmission,
                 'response' => $data,

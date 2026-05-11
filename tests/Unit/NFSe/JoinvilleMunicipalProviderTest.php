@@ -48,7 +48,7 @@ final class JoinvilleMunicipalProviderTest extends TestCase
         $this->assertStringContainsString('GerarNfseResponse', $responseXml);
         $this->assertCount(1, $transport->calls);
         $this->assertSame(
-            'http://nfsehomologacao.joinville.sc.gov.br/nfse_integracao/Services',
+            'http://nfsehomologacao.joinville.sc.gov.br:80/nfse_integracao/Services',
             $transport->calls[0]['endpoint']
         );
 
@@ -107,7 +107,7 @@ final class JoinvilleMunicipalProviderTest extends TestCase
 
         $this->assertCount(1, $transport->calls);
         $this->assertSame(
-            'http://nfsehomologacao.joinville.sc.gov.br/nfse_integracao/Consultas',
+            'http://nfsehomologacao.joinville.sc.gov.br:80/nfse_integracao/Consultas',
             $transport->calls[0]['endpoint']
         );
         $this->assertStringContainsString('<svc:ConsultarLoteRps>', (string) $provider->getLastSoapEnvelope());
@@ -299,6 +299,58 @@ final class JoinvilleMunicipalProviderTest extends TestCase
         $this->assertSame(['Content-Type: text/xml; charset=utf-8'], $parsed['request_headers']);
     }
 
+    public function testEmitirComRedirectHttpRetornaDiagnosticoDeTransporte(): void
+    {
+        $location = 'https://nfsehomologacao.joinville.sc.gov.br/nfse_integracao/Services';
+        $transport = new class($location) implements NFSeSoapTransportInterface {
+            public function __construct(private readonly string $location)
+            {
+            }
+
+            public function send(string $endpoint, string $envelope, array $options = []): array
+            {
+                return [
+                    'request_xml' => $envelope,
+                    'response_xml' => "<html>\n<head><title>301 Moved Permanently</title></head>\n<body>nginx</body>\n</html>\n",
+                    'status_code' => 301,
+                    'headers' => [
+                        'HTTP/1.1 301 Moved Permanently',
+                        'Content-Type: text/html',
+                        'Location: ' . $this->location,
+                    ],
+                    'request_headers' => ['Content-Type: text/xml; charset=utf-8'],
+                    'response_headers' => [
+                        'HTTP/1.1 301 Moved Permanently',
+                        'Content-Type: text/html',
+                        'Location: ' . $this->location,
+                    ],
+                ];
+            }
+        };
+
+        $provider = $this->makeProvider($transport);
+        $provider->emitir(NFSeJoinvilleMunicipalFixtures::payload());
+
+        $parsed = $provider->getLastResponseData();
+
+        $this->assertSame('invalid_xml', $parsed['status']);
+        $this->assertSame(301, $parsed['http_status']);
+        $this->assertStringContainsString('301 Moved Permanently', (string) $parsed['raw_xml']);
+        $this->assertStringContainsString(
+            'Endpoint de Joinville retornou HTTP 301 redirecionando',
+            implode(' | ', $parsed['mensagens'])
+        );
+        $this->assertFalse($parsed['retryable']);
+        $this->assertSame('redirect_response', $parsed['transport_error']);
+        $this->assertSame($location, $parsed['redirect_location']);
+        $this->assertSame([
+            'HTTP/1.1 301 Moved Permanently',
+            'Content-Type: text/html',
+            'Location: ' . $location,
+        ], $parsed['response_headers']);
+        $this->assertSame(['Content-Type: text/xml; charset=utf-8'], $parsed['request_headers']);
+    }
+
     public function testFacadeEmitirReturnsErrorOnJoinvilleGatewayHtml(): void
     {
         $transport = new class implements NFSeSoapTransportInterface {
@@ -327,6 +379,45 @@ final class JoinvilleMunicipalProviderTest extends TestCase
         $this->assertSame(502, $response->getMetadata('http_status'));
         $this->assertTrue($response->getMetadata('retryable'));
         $this->assertSame('gateway_unavailable', $response->getMetadata('transport_error'));
+    }
+
+    public function testFacadeEmitirReturnsErrorOnJoinvilleHttpRedirect(): void
+    {
+        $location = 'https://nfsehomologacao.joinville.sc.gov.br/nfse_integracao/Services';
+        $transport = new class($location) implements NFSeSoapTransportInterface {
+            public function __construct(private readonly string $location)
+            {
+            }
+
+            public function send(string $endpoint, string $envelope, array $options = []): array
+            {
+                return [
+                    'request_xml' => $envelope,
+                    'response_xml' => "<html>\n<head><title>301 Moved Permanently</title></head>\n<body>nginx</body>\n</html>\n",
+                    'status_code' => 301,
+                    'request_headers' => ['Content-Type: text/xml; charset=utf-8'],
+                    'response_headers' => [
+                        'HTTP/1.1 301 Moved Permanently',
+                        'Content-Type: text/html',
+                        'Location: ' . $this->location,
+                    ],
+                ];
+            }
+        };
+
+        $provider = $this->makeProvider($transport);
+        $facade = new NFSeFacade('joinville', new NFSeAdapter('joinville', $provider));
+
+        $response = $facade->emitir(NFSeJoinvilleMunicipalFixtures::payload());
+
+        $this->assertTrue($response->isError());
+        $this->assertSame('NFSE_EMISSION_FAILED', $response->getErrorCode());
+        $this->assertStringContainsString('Endpoint de Joinville retornou HTTP 301', (string) $response->getError());
+        $this->assertSame('invalid_xml', $response->getMetadata('emission_status'));
+        $this->assertSame(301, $response->getMetadata('http_status'));
+        $this->assertFalse($response->getMetadata('retryable'));
+        $this->assertSame('redirect_response', $response->getMetadata('transport_error'));
+        $this->assertSame($location, $response->getMetadata('redirect_location'));
     }
 
     public function testRejectsIncompatibleItems(): void
