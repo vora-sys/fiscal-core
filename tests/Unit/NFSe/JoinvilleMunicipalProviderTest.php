@@ -48,7 +48,7 @@ final class JoinvilleMunicipalProviderTest extends TestCase
         $this->assertStringContainsString('GerarNfseResponse', $responseXml);
         $this->assertCount(1, $transport->calls);
         $this->assertSame(
-            'https://nfsehomologacao.joinville.sc.gov.br/nfse_integracao/Services',
+            'http://nfsehomologacao.joinville.sc.gov.br/nfse_integracao/Services',
             $transport->calls[0]['endpoint']
         );
 
@@ -107,7 +107,7 @@ final class JoinvilleMunicipalProviderTest extends TestCase
 
         $this->assertCount(1, $transport->calls);
         $this->assertSame(
-            'https://nfsehomologacao.joinville.sc.gov.br/nfse_integracao/Consultas',
+            'http://nfsehomologacao.joinville.sc.gov.br/nfse_integracao/Consultas',
             $transport->calls[0]['endpoint']
         );
         $this->assertStringContainsString('<svc:ConsultarLoteRps>', (string) $provider->getLastSoapEnvelope());
