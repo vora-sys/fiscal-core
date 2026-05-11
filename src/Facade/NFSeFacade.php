@@ -191,6 +191,10 @@ class NFSeFacade
                 ];
             }
 
+            if ($documento === null) {
+                $documento = $this->buildDocumentFromParsedEmission($consultaData, $emissaoData);
+            }
+
             $flowStatus = 'parcial';
             if (($impressao['disponivel'] ?? false) !== true && ($officialUrl = $this->resolveOfficialDocumentUrl($consultaData, $emissaoData)) !== null) {
                 $impressao = [
@@ -243,6 +247,10 @@ class NFSeFacade
         }
 
         try {
+            if ($this->isIsswebMunicipalFlow()) {
+                return $this->consultarDisponibilidadeIssweb($criterios, $options);
+            }
+
             if (!$this->isBelemMunicipalFlow()) {
                 throw new \RuntimeException(
                     "consultarDisponibilidade() ainda nao foi implementado para o provider '{$this->providerKey}'."
@@ -893,6 +901,11 @@ class NFSeFacade
         return $this->providerKey === 'BELEM_MUNICIPAL_2025';
     }
 
+    private function isIsswebMunicipalFlow(): bool
+    {
+        return $this->providerKey === 'ISSWEB_AM';
+    }
+
     private function validateManausNationalEmissionWindow(array $dados): ?FiscalResponse
     {
         $ibge = (string) ($this->municipioResolved['ibge'] ?? '');
@@ -1024,6 +1037,56 @@ class NFSeFacade
         )));
 
         return FiscalResponse::success($availability, 'nfse_document_availability', $this->buildCompatibilityMetadata());
+    }
+
+    private function consultarDisponibilidadeIssweb(array $criterios, array $options = []): FiscalResponse
+    {
+        unset($options);
+
+        $numero = trim((string) (
+            $criterios['numero_nfse']
+            ?? $criterios['numero']
+            ?? $criterios['chave']
+            ?? ''
+        ));
+        if ($numero === '') {
+            throw new \InvalidArgumentException('Informe numero_nfse para consultar disponibilidade ISSWEB.');
+        }
+
+        $consulta = $this->consultar($numero);
+        if ($consulta->isError()) {
+            return $consulta;
+        }
+
+        $consultaData = $consulta->getData();
+        $documento = is_array($consultaData['documento'] ?? null) ? $consultaData['documento'] : [];
+        $impressao = is_array($consultaData['impressao'] ?? null) ? $consultaData['impressao'] : [];
+        $parsedResponse = is_array($consultaData['raw']['parsed_response'] ?? null)
+            ? $consultaData['raw']['parsed_response']
+            : [];
+        $mensagens = is_array($consultaData['consulta']['mensagens'] ?? null) ? $consultaData['consulta']['mensagens'] : [];
+
+        $disponivel = ($documento['numero'] ?? null) !== null;
+        $authorizationStatus = (string) (
+            $documento['status_autorizacao']
+            ?? (in_array((string) ($parsedResponse['status'] ?? 'unknown'), ['error', 'invalid_xml', 'empty'], true) ? 'erro' : 'nao_encontrada')
+        );
+
+        return FiscalResponse::success([
+            'authorization_status' => $authorizationStatus,
+            'disponivel' => $disponivel,
+            'source' => 'consulta',
+            'protocolo' => $documento['protocolo'] ?? ($parsedResponse['lote'] ?? null),
+            'nfse' => $disponivel ? [
+                'numero' => $documento['numero'] ?? null,
+                'codigo_verificacao' => $documento['codigo_verificacao'] ?? null,
+                'chave_validacao' => $parsedResponse['chave_validacao'] ?? ($documento['codigo_verificacao'] ?? null),
+                'status_autorizacao' => $authorizationStatus,
+            ] : null,
+            'danfse_url' => ($impressao['disponivel'] ?? false) === true ? ($impressao['url'] ?? null) : null,
+            'consulta' => $consultaData['consulta'] ?? null,
+            'warnings' => array_values(array_filter($mensagens)),
+        ], 'nfse_document_availability', $this->buildCompatibilityMetadata());
     }
 
     private function normalizeAvailabilityCriteria(array $criterios): array
@@ -1367,16 +1430,53 @@ class NFSeFacade
         return $value !== '' ? $value : null;
     }
 
-    private function resolveParsedResponseNfseValue(?array $consultaData, array $emissaoData, string $field): ?string
+    private function buildDocumentFromParsedEmission(?array $consultaData, array $emissaoData): ?array
     {
-        $consultaParsed = $consultaData['raw']['parsed_response']['nfse'][$field] ?? null;
-        if (is_string($consultaParsed) && trim($consultaParsed) !== '') {
-            return trim($consultaParsed);
+        $numero = $this->resolveParsedResponseNfseValue($consultaData, $emissaoData, 'numero');
+        if ($numero === null) {
+            return null;
         }
 
-        $emissaoParsed = $emissaoData['emissao']['parsed_response']['nfse'][$field] ?? null;
-        if (is_string($emissaoParsed) && trim($emissaoParsed) !== '') {
-            return trim($emissaoParsed);
+        $parsedEmission = is_array($emissaoData['emissao']['parsed_response'] ?? null)
+            ? $emissaoData['emissao']['parsed_response']
+            : [];
+        $parsedConsulta = is_array($consultaData['raw']['parsed_response'] ?? null)
+            ? $consultaData['raw']['parsed_response']
+            : [];
+        $status = (string) (($parsedConsulta['status'] ?? null) ?: ($parsedEmission['status'] ?? 'unknown'));
+        $codigoVerificacao = $this->resolveParsedResponseNfseValue($consultaData, $emissaoData, 'codigo_verificacao')
+            ?? $this->resolveParsedResponseNfseValue($consultaData, $emissaoData, 'chave_validacao');
+
+        return [
+            'xml' => null,
+            'numero' => $numero,
+            'codigo_verificacao' => $codigoVerificacao,
+            'protocolo' => $this->resolveParsedResponseNfseValue($consultaData, $emissaoData, 'protocolo')
+                ?? $this->resolveParsedResponseNfseValue($consultaData, $emissaoData, 'lote'),
+            'status_autorizacao' => match (true) {
+                in_array($status, ['error', 'invalid_xml', 'empty'], true) => 'erro',
+                $codigoVerificacao !== null || $this->resolveOfficialDocumentUrl($consultaData, $emissaoData) !== null => 'autorizada',
+                $status === 'success' => 'pendente',
+                default => 'nao_encontrada',
+            },
+            'data_emissao' => $this->resolveParsedResponseNfseValue($consultaData, $emissaoData, 'data_emissao'),
+            'chave_consulta' => $numero,
+        ];
+    }
+
+    private function resolveParsedResponseNfseValue(?array $consultaData, array $emissaoData, string $field): ?string
+    {
+        $candidates = [
+            $consultaData['raw']['parsed_response']['nfse'][$field] ?? null,
+            $consultaData['raw']['parsed_response'][$field] ?? null,
+            $emissaoData['emissao']['parsed_response']['nfse'][$field] ?? null,
+            $emissaoData['emissao']['parsed_response'][$field] ?? null,
+        ];
+
+        foreach ($candidates as $candidate) {
+            if (is_scalar($candidate) && trim((string) $candidate) !== '') {
+                return trim((string) $candidate);
+            }
         }
 
         return null;

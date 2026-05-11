@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace sabbajohn\FiscalCore\Providers\NFSe\Municipal;
 
 use sabbajohn\FiscalCore\Contracts\NFSeConsultaResultInterface;
+use sabbajohn\FiscalCore\Contracts\NFSeImpressaoResultInterface;
 use sabbajohn\FiscalCore\Contracts\NFSeOperationalIntrospectionInterface;
 use sabbajohn\FiscalCore\Providers\NFSe\AbstractNFSeProvider;
 use sabbajohn\FiscalCore\Support\NFSeResultNormalizer;
@@ -82,6 +83,28 @@ final class IsswebProvider extends AbstractNFSeProvider implements NFSeOperation
         $this->dispatchOperation('cancelar_nfse', $requestXml);
 
         return ($this->lastResponseData['status'] ?? 'error') === 'success';
+    }
+
+    public function baixarDanfse(string $chave): NFSeImpressaoResultInterface
+    {
+        $consulta = $this->consultar($chave);
+        $impressao = $consulta->getImpressao();
+
+        if (($impressao['disponivel'] ?? false) === true && is_string($impressao['url'] ?? null)) {
+            return (new NFSeResultNormalizer())->normalizeUrl($impressao['url'], [
+                'provider_key' => 'ISSWEB_AM',
+                'provider_class' => static::class,
+                'municipio' => (string) ($this->config['municipio_nome'] ?? ''),
+                'source' => $impressao['source'] ?? 'official_url',
+            ], $consulta->getRaw());
+        }
+
+        return (new NFSeResultNormalizer())->normalizeIndisponivel([
+            'provider_key' => 'ISSWEB_AM',
+            'provider_class' => static::class,
+            'municipio' => (string) ($this->config['municipio_nome'] ?? ''),
+            'source' => 'issweb_url_unavailable',
+        ], $consulta->getRaw());
     }
 
     protected function montarXmlRps(array $dados): string
@@ -280,7 +303,7 @@ final class IsswebProvider extends AbstractNFSeProvider implements NFSeOperation
 
     public function getSupportedOperations(): array
     {
-        return ['emitir', 'consultar', 'cancelar'];
+        return ['emitir', 'consultar', 'cancelar', 'baixar_danfse'];
     }
 
     private function montarXmlConsultarNota(string $numeroNf): string

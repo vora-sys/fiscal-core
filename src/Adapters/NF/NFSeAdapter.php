@@ -143,6 +143,18 @@ class NFSeAdapter implements NotaServicoInterface
 
     public function baixarDanfse(string $chave): NFSeImpressaoResultInterface
     {
+        if (method_exists($this->provider, 'baixarDanfse')) {
+            /** @var callable $callable */
+            $callable = [$this->provider, 'baixarDanfse'];
+            $result = $callable($chave);
+            $this->lastOperationInfo = $this->buildProviderOperationInfo('baixar_danfse', $this->provider, [
+                'chave' => $chave,
+                'result' => $result,
+            ]);
+
+            return $result;
+        }
+
         return $this->requireNacionalCapabilities()->baixarDanfse($chave);
     }
 

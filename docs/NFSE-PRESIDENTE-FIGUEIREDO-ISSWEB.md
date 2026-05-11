@@ -56,6 +56,11 @@ Convencoes atuais do provider:
 O provider nao gera PDF local nesta etapa.
 
 Quando `official_validation_url_template` estiver configurado e a resposta do ISSWEB retornar `numero` e `chave_validacao`, o parser expora `nfse_url` para consulta/validacao oficial.
+Nesse caso:
+
+- `emitirCompleto()` retorna `impressao.modo = url`
+- `consultarDisponibilidade(['numero_nfse' => ...])` retorna `danfse_url`
+- `baixarDanfse($numero)` retorna a URL oficial normalizada em `impressao.url`
 
 ## Pendencias operacionais
 
