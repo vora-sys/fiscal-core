@@ -339,11 +339,15 @@ class NFSeFacade
 
         try {
             $resultado = $this->nfse->substituir($chave, $dados);
+            $operation = method_exists($this->nfse, 'getLastOperationInfo')
+                ? $this->nfse->getLastOperationInfo()
+                : [];
             return FiscalResponse::success([
                 'resultado' => $resultado,
                 'type' => 'nfse_substituicao',
                 'chave' => $chave,
                 'municipio' => $this->municipio,
+                'substituicao' => $operation,
             ], 'nfse_substitution', $this->buildCompatibilityMetadata());
         } catch (\Exception $e) {
             return $this->responseHandler->handle($e, 'nfse_substitution');

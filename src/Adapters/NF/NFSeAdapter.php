@@ -10,6 +10,7 @@ use sabbajohn\FiscalCore\Contracts\NFSeOperationalIntrospectionInterface;
 use sabbajohn\FiscalCore\Contracts\NFSeProviderConfigInterface;
 use sabbajohn\FiscalCore\Support\NFSeEmissionRoutingPolicy;
 use sabbajohn\FiscalCore\Support\NFSeProviderResolver;
+use sabbajohn\FiscalCore\Support\NFSeResultNormalizer;
 use sabbajohn\FiscalCore\Support\ProviderRegistry;
 use NFePHP\Common\Certificate;
 
@@ -93,7 +94,13 @@ class NFSeAdapter implements NotaServicoInterface
 
     public function substituir(string $chave, array $dados): string
     {
-        return $this->provider->substituir($chave, $dados);
+        $result = $this->provider->substituir($chave, $dados);
+        $this->lastOperationInfo = $this->buildProviderOperationInfo('substituir', $this->provider, [
+            'chave' => $chave,
+            'resultado' => $result,
+        ]);
+
+        return $result;
     }
 
     public function consultarPorRps(array $identificacaoRps): NFSeConsultaResultInterface
@@ -391,6 +398,22 @@ class NFSeAdapter implements NotaServicoInterface
 
         if ($provider instanceof NFSeOperationalIntrospectionInterface) {
             $info['artifacts'] = $provider->getLastOperationArtifacts();
+        }
+
+        $parsedResponse = is_array($info['parsed_response'] ?? null) ? $info['parsed_response'] : null;
+        if ($parsedResponse !== null) {
+            $info['normalized_result'] = (new NFSeResultNormalizer())->normalizeOperacao(
+                $operation,
+                $parsedResponse,
+                is_array($info['artifacts'] ?? null) ? $info['artifacts'] : [],
+                [
+                    'provider_key' => $this->providerKey,
+                    'provider_class' => get_class($provider),
+                    'municipio' => $this->municipio,
+                    'source' => $operation,
+                    'chave_consulta' => $context['chave'] ?? null,
+                ]
+            );
         }
 
         return $info;

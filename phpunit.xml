@@ -40,13 +40,6 @@
         </exclude>
     </source>
 
-    <coverage>
-        <report>
-            <html outputDirectory="coverage-html"/>
-            <text outputFile="php://stdout"/>
-        </report>
-    </coverage>
-
     <logging>
         <testdoxHtml outputFile="tests/logs/testdox.html"/>
         <testdoxText outputFile="tests/logs/testdox.txt"/>

@@ -300,6 +300,12 @@ class NFSeAdapterFacadeNacionalTest extends TestCase
 
         $habilitacao = $adapter->verificarHabilitacaoCnc('11222333000181');
         $this->assertFalse($habilitacao);
+
+        $substituicao = $facade->substituir('NFSE-1', ['motivo_substituicao' => 'Correcao']);
+        $this->assertTrue($substituicao->isSuccess());
+        $this->assertSame('nfse_substituicao', $substituicao->getData('type'));
+        $this->assertSame('substituir', $substituicao->getData('substituicao')['operation']);
+        $this->assertSame('<substituicao />', $substituicao->getData('substituicao')['resultado']);
     }
 
     public function test_facade_bloqueia_emissao_legada_de_manaus_no_fluxo_nacional(): void

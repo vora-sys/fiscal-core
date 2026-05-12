@@ -266,7 +266,6 @@ final class JoinvilleMunicipalProviderTest extends TestCase
         });
 
         $method = new ReflectionMethod(PublicaProvider::class, 'processarResposta');
-        $method->setAccessible(true);
 
         $parsed = $method->invoke($provider, NFSeJoinvilleMunicipalFixtures::sanitizedExampleResponseXml());
 

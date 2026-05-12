@@ -51,9 +51,136 @@
         </style>
     </head>
     <body>
+        <h2>Abrasf V2Provider (Tests\Unit\NFSe\AbrasfV2Provider)</h2>
+        <ul>
+            <li class="success">Monta xml rps abrasf com lote servico prestador e tomador</li>
+            <li class="success">Valida campos obrigatorios</li>
+            <li class="success">Processa resposta abrasf com nfse autorizada</li>
+            <li class="success">Processa resposta abrasf com mensagem de erro</li>
+            <li class="success">Emitir despacha soap e guarda artefatos</li>
+            <li class="success">Emitir assina xml quando operacao esta configurada</li>
+            <li class="success">Consultar por rps despacha soap e retorna resultado normalizado</li>
+            <li class="success">Cancelar despacha soap e retorna sucesso</li>
+            <li class="success">Substituir despacha soap com pedido cancelamento e rps substituto assinados</li>
+            <li class="success">Adapter expoe resultado normalizado da substituicao abrasf</li>
+        </ul>
+        <h2>Belem Municipal Document Url Builder</h2>
+        <ul>
+            <li class="success">Build creates official belem danfse url</li>
+        </ul>
+        <h2>Belem Municipal Provider</h2>
+        <ul>
+            <li class="success">Emitir builds signed schema valid request and parses synchronous response</li>
+            <li class="success">Consultar lote builds schema valid request and parses response</li>
+            <li class="success">Consultar nfse por rps builds schema valid request and parses response</li>
+            <li class="success">Consultar by chave builds schema valid request and parses response</li>
+            <li class="success">Consultar lote retries with alternative signature variant when fault mentions assinatura</li>
+            <li class="success">Consultar nfse por rps retries all signature variants and keeps failure artifacts</li>
+            <li class="success">Consultar by chave retries with alternative signature variant when fault mentions assinatura</li>
+            <li class="success">Cancelar nfse builds schema valid request and parses response</li>
+            <li class="success">Cancelar nfse returns false on business rejection</li>
+            <li class="success">Processa resposta da fixture sanitizada de exportacao</li>
+            <li class="success">Processa resposta com mensagem de rejeicao</li>
+            <li class="success">Rejects incompatible items for single belm document</li>
+            <li class="success">Rejects mei on municipal provider</li>
+            <li class="success">Consulta operations reuse prestador context from previous emission</li>
+            <li class="success">Consultar por rps requires required fields</li>
+            <li class="success">Homologation debug masks sensitive data</li>
+        </ul>
+        <h2>Issweb Provider</h2>
+        <ul>
+            <li class="success">Emitir generates schema valid xml and parses success</li>
+            <li class="success">Consultar generates schema valid xml</li>
+            <li class="success">Cancelar generates schema valid xml</li>
+            <li class="success">Parses rejection response</li>
+            <li class="success">Throws when auth key is missing</li>
+            <li class="success">Throws when endpoint is missing</li>
+            <li class="success">Rejects missing prestador inscricao municipal</li>
+            <li class="success">Rio preto da eva uses shared issweb family with municipal code</li>
+            <li class="success">Facade emitir completo returns issweb document and official url</li>
+            <li class="success">Facade consultar disponibilidade issweb uses consulta and official url</li>
+            <li class="success">Facade baixar danfse issweb returns official url</li>
+        </ul>
+        <h2>Joinville Municipal Provider</h2>
+        <ul>
+            <li class="success">Emitir builds signed schema valid request and parses soap response</li>
+            <li class="success">Emitir falls back to async lote when gerar nfse is discontinued</li>
+            <li class="success">Consultar lote builds signed schema valid request and parses response</li>
+            <li class="success">Consultar por rps builds signed schema valid request and parses response</li>
+            <li class="success">Cancelar builds signed schema valid request and parses response</li>
+            <li class="success">Cancelar returns false on business rejection</li>
+            <li class="success">Processa resposta da fixture sanitizada</li>
+            <li class="success">Processa resposta com mensagem de rejeicao</li>
+            <li class="success">Emitir com html de gateway retorna diagnostico de transporte</li>
+            <li class="success">Emitir com redirect http retorna diagnostico de transporte</li>
+            <li class="success">Facade emitir returns error on joinville gateway html</li>
+            <li class="success">Facade emitir returns error on joinville http redirect</li>
+            <li class="success">Rejects incompatible items</li>
+            <li class="success">Consultar por rps requires required fields</li>
+            <li class="success">Homologation debug masks sensitive data</li>
+            <li class="success">Facade emitir completo returns authorized joinville document and local danfse</li>
+        </ul>
+        <h2>NFSe Adapter Facade Nacional (Tests\Unit\NFSe\NFSeAdapterFacadeNacional)</h2>
+        <ul>
+            <li class="success">Policy nacional nao exige codigo municipal</li>
+            <li class="success">Adapter lanca erro quando provider nao suporta capability nacional</li>
+            <li class="success">Facade retorna fiscal response para operacoes nacionais</li>
+            <li class="success">Facade bloqueia emissao legada de manaus no fluxo nacional</li>
+        </ul>
+        <h2>NFSe Facade Bootstrap</h2>
+        <ul>
+            <li class="success">Facade bootstraps municipal runtime from config and certificate</li>
+            <li class="success">Facade fails clearly when fiscal im is missing for municipal provider</li>
+            <li class="success">Facade fails clearly when configured cnpj differs from certificate</li>
+            <li class="success">Facade preserves runtime certificate already loaded before bootstrap</li>
+        </ul>
+        <h2>NFSe National Only Mode (Tests\Unit\NFSe\NFSeNationalOnlyMode)</h2>
+        <ul>
+            <li class="success">Resolver retorna nacional para blank ou fallback e preserva rotas ativas</li>
+            <li class="success">Registry faz fallback para provider nacional</li>
+            <li class="success">Facade sinaliza deprecacao de municipio no metadata</li>
+            <li class="success">Facade default sem municipio expresso fica no fluxo nacional</li>
+        </ul>
         <h2>NFSe Runtime Bootstrap (Tests\Unit\NFSe\NFSeRuntimeBootstrap)</h2>
         <ul>
             <li class="success">Make provider preserves runtime environment without reloading config</li>
+        </ul>
+        <h2>Nacional Catalog Service (Tests\Unit\NFSe\NacionalCatalogService)</h2>
+        <ul>
+            <li class="success">Lista municipios com cache hit e miss</li>
+            <li class="success">Retorna cache stale quando falha remota</li>
+        </ul>
+        <h2>Nacional Provider (Tests\Unit\NFSe\NacionalProvider)</h2>
+        <ul>
+            <li class="success">Emitir monta xml e envia para endpoint correto</li>
+            <li class="success">Cancelar retorna true quando resposta indica sucesso</li>
+            <li class="success">Consultar retorno compnfse com xml real</li>
+            <li class="success">Consultar por rps valida campos obrigatorios</li>
+            <li class="success">Emitir resolve rota por servico configurado</li>
+            <li class="success">Dps nacional omite codigo municipal fora do padrao do schema</li>
+            <li class="success">Catalogo resolve rota por servico configurado</li>
+            <li class="success">Consulta cnc resolve rota por servico</li>
+            <li class="success">Consulta cnc contribuinte e habilitacao</li>
+        </ul>
+        <h2>Pilot Provider Xml Validation</h2>
+        <ul>
+            <li class="success">Pilot provider generates schema valid xml with data set "belem"</li>
+            <li class="success">Pilot provider generates schema valid xml with data set "manaus"</li>
+            <li class="success">Pilot provider generates schema valid xml with data set "joinville"</li>
+            <li class="success">Pilot provider rejects missing required field with data set "belem"</li>
+            <li class="success">Pilot provider rejects missing required field with data set "manaus"</li>
+            <li class="success">Pilot provider rejects missing required field with data set "joinville"</li>
+        </ul>
+        <h2>Provider Config</h2>
+        <ul>
+            <li class="success">Facade loads pilot provider info for belem</li>
+            <li class="success">Facade lists active municipios from current catalog</li>
+            <li class="success">Facade maps joinville to publica</li>
+            <li class="success">Facade falls back to national for unknown municipio</li>
+            <li class="success">Facade maps presidente figueiredo to issweb</li>
+            <li class="success">Facade maps rio preto da eva to issweb</li>
+            <li class="success">Facade maps manaus to national provider</li>
+            <li class="success">Facade homologation readiness uses national provider config for manaus</li>
         </ul>
     </body>
 </html>

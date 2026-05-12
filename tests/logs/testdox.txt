@@ -1,3 +1,118 @@
+Abrasf V2Provider (Tests\Unit\NFSe\AbrasfV2Provider)
+ [x] Monta xml rps abrasf com lote servico prestador e tomador
+ [x] Valida campos obrigatorios
+ [x] Processa resposta abrasf com nfse autorizada
+ [x] Processa resposta abrasf com mensagem de erro
+ [x] Emitir despacha soap e guarda artefatos
+ [x] Emitir assina xml quando operacao esta configurada
+ [x] Consultar por rps despacha soap e retorna resultado normalizado
+ [x] Cancelar despacha soap e retorna sucesso
+ [x] Substituir despacha soap com pedido cancelamento e rps substituto assinados
+ [x] Adapter expoe resultado normalizado da substituicao abrasf
+
+Belem Municipal Document Url Builder
+ [x] Build creates official belem danfse url
+
+Belem Municipal Provider
+ [x] Emitir builds signed schema valid request and parses synchronous response
+ [x] Consultar lote builds schema valid request and parses response
+ [x] Consultar nfse por rps builds schema valid request and parses response
+ [x] Consultar by chave builds schema valid request and parses response
+ [x] Consultar lote retries with alternative signature variant when fault mentions assinatura
+ [x] Consultar nfse por rps retries all signature variants and keeps failure artifacts
+ [x] Consultar by chave retries with alternative signature variant when fault mentions assinatura
+ [x] Cancelar nfse builds schema valid request and parses response
+ [x] Cancelar nfse returns false on business rejection
+ [x] Processa resposta da fixture sanitizada de exportacao
+ [x] Processa resposta com mensagem de rejeicao
+ [x] Rejects incompatible items for single belm document
+ [x] Rejects mei on municipal provider
+ [x] Consulta operations reuse prestador context from previous emission
+ [x] Consultar por rps requires required fields
+ [x] Homologation debug masks sensitive data
+
+Issweb Provider
+ [x] Emitir generates schema valid xml and parses success
+ [x] Consultar generates schema valid xml
+ [x] Cancelar generates schema valid xml
+ [x] Parses rejection response
+ [x] Throws when auth key is missing
+ [x] Throws when endpoint is missing
+ [x] Rejects missing prestador inscricao municipal
+ [x] Rio preto da eva uses shared issweb family with municipal code
+ [x] Facade emitir completo returns issweb document and official url
+ [x] Facade consultar disponibilidade issweb uses consulta and official url
+ [x] Facade baixar danfse issweb returns official url
+
+Joinville Municipal Provider
+ [x] Emitir builds signed schema valid request and parses soap response
+ [x] Emitir falls back to async lote when gerar nfse is discontinued
+ [x] Consultar lote builds signed schema valid request and parses response
+ [x] Consultar por rps builds signed schema valid request and parses response
+ [x] Cancelar builds signed schema valid request and parses response
+ [x] Cancelar returns false on business rejection
+ [x] Processa resposta da fixture sanitizada
+ [x] Processa resposta com mensagem de rejeicao
+ [x] Emitir com html de gateway retorna diagnostico de transporte
+ [x] Emitir com redirect http retorna diagnostico de transporte
+ [x] Facade emitir returns error on joinville gateway html
+ [x] Facade emitir returns error on joinville http redirect
+ [x] Rejects incompatible items
+ [x] Consultar por rps requires required fields
+ [x] Homologation debug masks sensitive data
+ [x] Facade emitir completo returns authorized joinville document and local danfse
+
+NFSe Adapter Facade Nacional (Tests\Unit\NFSe\NFSeAdapterFacadeNacional)
+ [x] Policy nacional nao exige codigo municipal
+ [x] Adapter lanca erro quando provider nao suporta capability nacional
+ [x] Facade retorna fiscal response para operacoes nacionais
+ [x] Facade bloqueia emissao legada de manaus no fluxo nacional
+
+NFSe Facade Bootstrap
+ [x] Facade bootstraps municipal runtime from config and certificate
+ [x] Facade fails clearly when fiscal im is missing for municipal provider
+ [x] Facade fails clearly when configured cnpj differs from certificate
+ [x] Facade preserves runtime certificate already loaded before bootstrap
+
+NFSe National Only Mode (Tests\Unit\NFSe\NFSeNationalOnlyMode)
+ [x] Resolver retorna nacional para blank ou fallback e preserva rotas ativas
+ [x] Registry faz fallback para provider nacional
+ [x] Facade sinaliza deprecacao de municipio no metadata
+ [x] Facade default sem municipio expresso fica no fluxo nacional
+
 NFSe Runtime Bootstrap (Tests\Unit\NFSe\NFSeRuntimeBootstrap)
  [x] Make provider preserves runtime environment without reloading config
+
+Nacional Catalog Service (Tests\Unit\NFSe\NacionalCatalogService)
+ [x] Lista municipios com cache hit e miss
+ [x] Retorna cache stale quando falha remota
+
+Nacional Provider (Tests\Unit\NFSe\NacionalProvider)
+ [x] Emitir monta xml e envia para endpoint correto
+ [x] Cancelar retorna true quando resposta indica sucesso
+ [x] Consultar retorno compnfse com xml real
+ [x] Consultar por rps valida campos obrigatorios
+ [x] Emitir resolve rota por servico configurado
+ [x] Dps nacional omite codigo municipal fora do padrao do schema
+ [x] Catalogo resolve rota por servico configurado
+ [x] Consulta cnc resolve rota por servico
+ [x] Consulta cnc contribuinte e habilitacao
+
+Pilot Provider Xml Validation
+ [x] Pilot provider generates schema valid xml with data set "belem"
+ [x] Pilot provider generates schema valid xml with data set "manaus"
+ [x] Pilot provider generates schema valid xml with data set "joinville"
+ [x] Pilot provider rejects missing required field with data set "belem"
+ [x] Pilot provider rejects missing required field with data set "manaus"
+ [x] Pilot provider rejects missing required field with data set "joinville"
+
+Provider Config
+ [x] Facade loads pilot provider info for belem
+ [x] Facade lists active municipios from current catalog
+ [x] Facade maps joinville to publica
+ [x] Facade falls back to national for unknown municipio
+ [x] Facade maps presidente figueiredo to issweb
+ [x] Facade maps rio preto da eva to issweb
+ [x] Facade maps manaus to national provider
+ [x] Facade homologation readiness uses national provider config for manaus
 

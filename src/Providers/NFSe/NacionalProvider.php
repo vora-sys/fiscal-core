@@ -2344,6 +2344,7 @@ class NacionalProvider extends AbstractNFSeProvider implements NFSeNacionalCapab
         return [
             'emitir',
             'consultar',
+            'consultar_por_rps',
             'consultar_rps',
             'consultar_lote',
             'cancelar',

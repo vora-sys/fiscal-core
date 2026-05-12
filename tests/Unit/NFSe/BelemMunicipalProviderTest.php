@@ -521,7 +521,6 @@ XML;
         });
 
         $method = new ReflectionMethod(BelemMunicipalProvider::class, 'processarResposta');
-        $method->setAccessible(true);
 
         $parsed = $method->invoke($provider, NFSeBelemMunicipalFixtures::sanitizedExportXml());
 

@@ -39,6 +39,34 @@ final class NFSeResultNormalizer
         );
     }
 
+    public function normalizeOperacao(
+        string $operation,
+        array $parsedResponse,
+        array $artifacts = [],
+        array $context = []
+    ): array {
+        $documento = $this->buildDocumento($parsedResponse, $context);
+        $mensagens = $this->extractMensagens($parsedResponse);
+        $status = (string) ($parsedResponse['status'] ?? 'unknown');
+
+        return [
+            'operacao' => [
+                'operation' => $operation,
+                'status' => $status,
+                'ok' => $this->isSuccessfulOperation($status, $documento, $parsedResponse),
+                'source' => (string) ($context['source'] ?? $operation),
+                'mensagens' => $mensagens,
+                'protocolo' => $documento['protocolo'],
+                'numero' => $documento['numero'],
+                'chave_consulta' => $documento['chave_consulta'],
+            ],
+            'documento' => $documento,
+            'cancelamento' => is_array($parsedResponse['cancelamento'] ?? null) ? $parsedResponse['cancelamento'] : null,
+            'provider' => $this->buildProvider($context),
+            'raw' => $this->buildRaw($parsedResponse, $artifacts, $context),
+        ];
+    }
+
     public function normalizeImpressao(
         array $impressao,
         array $raw = [],
@@ -247,6 +275,21 @@ final class NFSeResultNormalizer
             'success' => 'pendente',
             default => 'nao_encontrada',
         };
+    }
+
+    private function isSuccessfulOperation(string $status, array $documento, array $parsedResponse): bool
+    {
+        if (in_array($status, ['success', 'authorized', 'autorizada'], true)) {
+            return true;
+        }
+
+        if (($documento['status_autorizacao'] ?? null) === 'autorizada') {
+            return true;
+        }
+
+        $cancelamento = $parsedResponse['cancelamento'] ?? null;
+
+        return is_array($cancelamento) && ($cancelamento['sucesso'] ?? false) === true;
     }
 
     private function pickString(array $values): ?string
