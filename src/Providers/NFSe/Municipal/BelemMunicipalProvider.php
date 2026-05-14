@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace sabbajohn\FiscalCore\Providers\NFSe\Municipal;
 
 use sabbajohn\FiscalCore\Contracts\NFSeConsultaResultInterface;
+use sabbajohn\FiscalCore\Contracts\NFSeImpressaoResultInterface;
 use sabbajohn\FiscalCore\Contracts\NFSeOperationalIntrospectionInterface;
 use sabbajohn\FiscalCore\Providers\NFSe\AbstractNFSeProvider;
 use sabbajohn\FiscalCore\Support\CertificateManager;
@@ -128,6 +129,28 @@ class BelemMunicipalProvider extends AbstractNFSeProvider implements NFSeOperati
         ]);
     }
 
+    public function baixarDanfse(string $chave): NFSeImpressaoResultInterface
+    {
+        $consulta = $this->consultar($chave);
+        $impressao = $consulta->getImpressao();
+
+        if (($impressao['disponivel'] ?? false) === true && is_string($impressao['url'] ?? null)) {
+            return (new NFSeResultNormalizer())->normalizeUrl($impressao['url'], [
+                'provider_key' => 'BELEM_MUNICIPAL_2025',
+                'provider_class' => static::class,
+                'municipio' => (string) ($this->config['municipio_nome'] ?? 'Belém'),
+                'source' => $impressao['source'] ?? 'official_url',
+            ], $consulta->getRaw());
+        }
+
+        return (new NFSeResultNormalizer())->normalizeIndisponivel([
+            'provider_key' => 'BELEM_MUNICIPAL_2025',
+            'provider_class' => static::class,
+            'municipio' => (string) ($this->config['municipio_nome'] ?? 'Belém'),
+            'source' => 'belem_official_url_unavailable',
+        ], $consulta->getRaw());
+    }
+
     public function cancelar(string $chave, string $motivo, ?string $protocolo = null): bool
     {
         if (trim($chave) === '') {
@@ -215,7 +238,7 @@ class BelemMunicipalProvider extends AbstractNFSeProvider implements NFSeOperati
         $this->appendOptionalDecimal($dom, $valoresNode, 'DescontoIncondicionado', $servico['desconto_incondicionado'] ?? 0.0);
         $this->appendOptionalDecimal($dom, $valoresNode, 'DescontoCondicionado', $servico['desconto_condicionado'] ?? 0.0);
 
-        $this->appendXmlNode($dom, $servicoNode, 'IssRetido', $this->booleanCode((bool) ($servico['iss_retido'] ?? false)));
+        $this->appendXmlNode($dom, $servicoNode, 'IssRetido', $this->issRetidoCode($servico));
         $this->appendXmlNode($dom, $servicoNode, 'ItemListaServico', (string) $servico['item_lista_servico']);
         $this->appendXmlNode($dom, $servicoNode, 'CodigoCnae', (string) $servico['codigo_cnae']);
         if (!empty($servico['codigo_tributacao_municipio'])) {
@@ -488,6 +511,7 @@ class BelemMunicipalProvider extends AbstractNFSeProvider implements NFSeOperati
             'consultar_lote',
             'consultar_nfse_rps',
             'consultar_nfse_numero',
+            'baixar_danfse',
             'cancelar_nfse',
         ];
     }
@@ -857,7 +881,10 @@ class BelemMunicipalProvider extends AbstractNFSeProvider implements NFSeOperati
                 'classificacao' => (string) ($item['codigo_cnae'] ?? $item['codigo_cbo'] ?? $dados['servico']['codigo_cnae'] ?? $dados['servico']['codigo_atividade'] ?? ''),
                 'aliquota' => (string) ($item['aliquota'] ?? $dados['servico']['aliquota'] ?? ''),
                 'incidencia' => (string) ($item['exigibilidade_iss'] ?? $dados['servico']['exigibilidade_iss'] ?? '1'),
-                'iss_retido' => (string) ($item['iss_retido'] ?? $dados['servico']['iss_retido'] ?? '0'),
+                'iss_retido' => $this->issRetidoCode([
+                    'iss_retido' => $item['iss_retido'] ?? $dados['servico']['iss_retido'] ?? null,
+                    'tpRetISSQN' => $item['tpRetISSQN'] ?? $dados['servico']['tpRetISSQN'] ?? null,
+                ]),
             ];
 
             if ($first === null) {
@@ -886,6 +913,47 @@ class BelemMunicipalProvider extends AbstractNFSeProvider implements NFSeOperati
         }
 
         $this->appendXmlNode($dom, $parent, 'Cnpj', $documento, $namespace);
+    }
+
+    /**
+     * @param array<string,mixed> $servico
+     */
+    private function issRetidoCode(array $servico): string
+    {
+        foreach (['iss_retido', 'tpRetISSQN', 'IssRetido'] as $key) {
+            if (!array_key_exists($key, $servico)) {
+                continue;
+            }
+
+            $value = $servico[$key];
+            if (is_bool($value)) {
+                return $this->booleanCode($value);
+            }
+
+            if (!is_scalar($value)) {
+                continue;
+            }
+
+            $normalized = strtolower(trim((string) $value));
+            $converted = iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $normalized);
+            if ($converted !== false) {
+                $normalized = $converted;
+            }
+
+            if (in_array($normalized, ['1', '2'], true)) {
+                return $normalized;
+            }
+
+            if (in_array($normalized, ['true', 't', 's', 'sim', 'yes', 'y', 'retido', 'r'], true)) {
+                return '1';
+            }
+
+            if (in_array($normalized, ['false', 'f', 'n', 'nao', 'no', '0', 'nao_retido', 'nao-retido'], true)) {
+                return '2';
+            }
+        }
+
+        return '2';
     }
 
     private function appendOptionalDecimal(
@@ -1473,7 +1541,14 @@ class BelemMunicipalProvider extends AbstractNFSeProvider implements NFSeOperati
     private function extractNumeroNfseFromChave(string $chave): string
     {
         $digits = $this->normalizeDigits($chave);
+
         if (strlen($digits) !== 50) {
+            if ($digits !== '' && preg_match('/^\d+$/', $digits) === 1) {
+                $numero = ltrim($digits, '0');
+
+                return $numero !== '' ? $numero : '0';
+            }
+
             throw new \InvalidArgumentException('Chave de acesso da NFS-e de Belém deve conter 50 dígitos.');
         }
 

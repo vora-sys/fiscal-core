@@ -64,8 +64,12 @@ final class ProviderConfigTest extends TestCase
         $this->assertContains('consultar_nfse_rps', $data['supported_operations']);
         $this->assertSame('belem_municipal_policy', $data['form_policy']['policy_source']);
         $this->assertContains('service.cnae_code', $data['form_policy']['required_fields']);
+        $this->assertContains('prestador.mei', $data['form_policy']['required_fields']);
         $this->assertContains('service.activity_code', $data['form_policy']['visible_fields']);
+        $this->assertSame('select', $data['form_policy']['field_schema']['prestador.mei']['control']);
         $this->assertSame('864020100', $data['form_policy']['default_values']['service.cnae_code']);
+        $this->assertSame('1', $data['translation_policy']['field_translations']['service.iss_withheld']['codes']['true']);
+        $this->assertSame('2', $data['translation_policy']['field_translations']['service.iss_withheld']['codes']['false']);
     }
 
     public function testFacadeListsActiveMunicipiosFromCurrentCatalog(): void
@@ -158,6 +162,8 @@ final class ProviderConfigTest extends TestCase
         $this->assertSame('nfse_nacional_policy', $data['form_policy']['policy_source']);
         $this->assertNotContains('service.municipal_code', $data['form_policy']['required_fields']);
         $this->assertContains('service.nbs', $data['form_policy']['required_fields']);
+        $this->assertSame('2', $data['translation_policy']['field_translations']['service.iss_withheld']['codes']['true']);
+        $this->assertSame('1', $data['translation_policy']['field_translations']['service.iss_withheld']['codes']['false']);
     }
 
     public function testFacadeHomologationReadinessUsesNationalProviderConfigForManaus(): void

@@ -111,6 +111,35 @@ final class BelemMunicipalProviderTest extends TestCase
         $this->assertSame('ABC123XYZ', $parsed['nfse']['codigo_verificacao']);
     }
 
+    public function testEmitirPreservesTranslatedIssRetidoCodeInRequestXml(): void
+    {
+        $transport = new class(NFSeBelemMunicipalFixtures::successSoapResponse()) implements NFSeSoapTransportInterface {
+            public function __construct(private readonly string $response)
+            {
+            }
+
+            public function send(string $endpoint, string $envelope, array $options = []): array
+            {
+                return [
+                    'request_xml' => $envelope,
+                    'response_xml' => $this->response,
+                    'status_code' => 200,
+                    'headers' => ['Content-Type: text/xml'],
+                ];
+            }
+        };
+
+        $provider = $this->makeProvider($transport);
+        $provider->emitir(NFSeBelemMunicipalFixtures::payload([
+            'servico' => [
+                'iss_retido' => '2',
+                'tpRetISSQN' => '2',
+            ],
+        ]));
+
+        $this->assertStringContainsString('<IssRetido>2</IssRetido>', (string) $provider->getLastRequestXml());
+    }
+
     public function testConsultarLoteBuildsSchemaValidRequestAndParsesResponse(): void
     {
         $transport = new class(NFSeBelemMunicipalFixtures::consultarLoteSoapResponse()) implements NFSeSoapTransportInterface {
@@ -257,6 +286,62 @@ final class BelemMunicipalProviderTest extends TestCase
             '#PrestadorConsulta',
             $xpath->evaluate('string(//ds:Signature/ds:SignedInfo/ds:Reference/@URI)')
         );
+    }
+
+    public function testBaixarDanfseReturnsOfficialUrlByAccessKey(): void
+    {
+        $transport = new class(NFSeBelemMunicipalFixtures::consultarNfseServicoPrestadoSoapResponse()) implements NFSeSoapTransportInterface {
+            public function __construct(private readonly string $response)
+            {
+            }
+
+            public function send(string $endpoint, string $envelope, array $options = []): array
+            {
+                return [
+                    'request_xml' => $envelope,
+                    'response_xml' => $this->response,
+                    'status_code' => 200,
+                    'headers' => ['Content-Type: text/xml'],
+                ];
+            }
+        };
+
+        $provider = $this->makeProvider($transport);
+        $result = $provider->baixarDanfse(NFSeBelemMunicipalFixtures::chaveNfse());
+        $impressao = $result->getImpressao();
+
+        $this->assertSame('url', $impressao['modo']);
+        $this->assertSame('text/uri-list', $impressao['content_type']);
+        $this->assertStringContainsString('/cpfCnpj/12345678000195/', (string) $impressao['url']);
+        $this->assertStringContainsString('/inscricaoMunicipal/4007197/', (string) $impressao['url']);
+        $this->assertStringContainsString('/numeroNota/1105/', (string) $impressao['url']);
+        $this->assertStringContainsString('/codigoVerificacao/ABC123XYZ', (string) $impressao['url']);
+        $this->assertContains('baixar_danfse', $provider->getSupportedOperations());
+    }
+
+    public function testBaixarDanfseAcceptsNumberOnlyKey(): void
+    {
+        $transport = new class(NFSeBelemMunicipalFixtures::consultarNfseServicoPrestadoSoapResponse()) implements NFSeSoapTransportInterface {
+            public function __construct(private readonly string $response)
+            {
+            }
+
+            public function send(string $endpoint, string $envelope, array $options = []): array
+            {
+                return [
+                    'request_xml' => $envelope,
+                    'response_xml' => $this->response,
+                    'status_code' => 200,
+                    'headers' => ['Content-Type: text/xml'],
+                ];
+            }
+        };
+
+        $provider = $this->makeProvider($transport);
+        $result = $provider->baixarDanfse('1105');
+
+        $this->assertSame('url', $result->getImpressao()['modo']);
+        $this->assertStringContainsString('<NumeroNfse>1105</NumeroNfse>', (string) $provider->getLastRequestXml());
     }
 
     public function testConsultarLoteRetriesWithAlternativeSignatureVariantWhenFaultMentionsAssinatura(): void

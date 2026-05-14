@@ -10,6 +10,7 @@ use sabbajohn\FiscalCore\Contracts\NFSeOperationalIntrospectionInterface;
 use sabbajohn\FiscalCore\Contracts\NFSeProviderConfigInterface;
 use sabbajohn\FiscalCore\Support\NFSeEmissionRoutingPolicy;
 use sabbajohn\FiscalCore\Support\NFSeFormPolicy;
+use sabbajohn\FiscalCore\Support\NFSeProviderTranslationPolicy;
 use sabbajohn\FiscalCore\Support\NFSeProviderResolver;
 use sabbajohn\FiscalCore\Support\NFSeResultNormalizer;
 use sabbajohn\FiscalCore\Support\ProviderRegistry;
@@ -259,6 +260,7 @@ class NFSeAdapter implements NotaServicoInterface
             'timeout' => $this->provider->getTimeout(),
             'aliquota_format' => $this->provider->getAliquotaFormat(),
             'form_policy' => $this->buildFormPolicy(),
+            'translation_policy' => $this->buildTranslationPolicy(),
             'routing_rules' => $routingRules,
             'supported_operations' => $supportedOperations,
             'certificate_loaded' => (($this->provider->getConfig()['certificate'] ?? null) instanceof Certificate),
@@ -292,6 +294,17 @@ class NFSeAdapter implements NotaServicoInterface
             $municipioNome,
             $config
         );
+    }
+
+    private function buildTranslationPolicy(): array
+    {
+        $config = $this->provider->getConfig();
+
+        return NFSeProviderTranslationPolicy::fromProviderContext(
+            $this->providerKey,
+            (string) ($config['layout_family'] ?? ''),
+            $config
+        )->toArray();
     }
 
     private function requireNacionalCapabilities(): NFSeNacionalCapabilitiesInterface

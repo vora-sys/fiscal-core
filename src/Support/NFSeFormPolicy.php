@@ -116,6 +116,7 @@ final class NFSeFormPolicy
             'service.cnae_code' => 'CNAE do Serviço',
             'service.activity_code' => 'Código de Atividade',
             'prestador.op_simp_nac' => 'Simples Nacional',
+            'prestador.mei' => 'Emitente MEI',
         ];
     }
 
@@ -131,6 +132,7 @@ final class NFSeFormPolicy
             'service.cnae_code' => 'CNAE fiscal do serviço; alguns municípios validam esta tag no XML.',
             'service.activity_code' => 'Código de atividade municipal quando o provider exigir campo separado.',
             'prestador.op_simp_nac' => 'Opção do Simples Nacional exigida pelo layout nacional.',
+            'prestador.mei' => 'Classificação explícita do emitente para roteamento municipal ou nacional da NFSe.',
         ];
     }
 
@@ -174,6 +176,15 @@ final class NFSeFormPolicy
                     ['value' => '1', 'label' => '1 - Não optante'],
                     ['value' => '2', 'label' => '2 - MEI'],
                     ['value' => '3', 'label' => '3 - ME/EPP'],
+                ],
+            ],
+            'prestador.mei' => [
+                'label' => $labels['prestador.mei'],
+                'control' => 'select',
+                'payload_paths' => ['nota.emitente.mei', 'nota.emitente.microempreendedor_individual', 'prestador.mei', 'prestador.microempreendedor_individual'],
+                'options' => [
+                    ['value' => 'false', 'label' => 'Não MEI'],
+                    ['value' => 'true', 'label' => 'MEI'],
                 ],
             ],
         ];

@@ -74,16 +74,28 @@
             "policy_source": "belem_municipal_policy",
             "required_fields": [
                 "service.municipal_code",
-                "service.cnae_code"
+                "service.cnae_code",
+                "prestador.mei"
             ],
             "visible_fields": [
                 "service.municipal_code",
                 "service.cnae_code",
-                "service.activity_code"
+                "service.activity_code",
+                "prestador.mei"
             ],
             "default_values": {
                 "service.cnae_code": "864020100",
                 "service.activity_code": "864020100"
+            }
+        },
+        "field_translations": {
+            "service.iss_withheld": {
+                "payload_path": "servico.tpRetISSQN",
+                "codes": {
+                    "true": "1",
+                    "false": "2"
+                },
+                "description": "Belém usa 1 para ISS retido e 2 para ISS não retido."
             }
         }
     },
@@ -742,6 +754,16 @@
         "auth": {
             "token": "",
             "api_key": ""
+        },
+        "field_translations": {
+            "service.iss_withheld": {
+                "payload_path": "servico.tpRetISSQN",
+                "codes": {
+                    "true": "2",
+                    "false": "1"
+                },
+                "description": "NFSe Nacional usa 1 sem retenção e 2 com retenção pelo tomador."
+            }
         },
         "services": {
             "adn": {
