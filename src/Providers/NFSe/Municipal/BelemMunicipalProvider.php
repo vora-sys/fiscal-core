@@ -920,7 +920,7 @@ class BelemMunicipalProvider extends AbstractNFSeProvider implements NFSeOperati
      */
     private function issRetidoCode(array $servico): string
     {
-        foreach (['iss_retido', 'tpRetISSQN', 'IssRetido'] as $key) {
+        foreach (['tpRetISSQN', 'IssRetido', 'iss_retido'] as $key) {
             if (!array_key_exists($key, $servico)) {
                 continue;
             }

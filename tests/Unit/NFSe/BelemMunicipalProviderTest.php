@@ -140,6 +140,35 @@ final class BelemMunicipalProviderTest extends TestCase
         $this->assertStringContainsString('<IssRetido>2</IssRetido>', (string) $provider->getLastRequestXml());
     }
 
+    public function testEmitirPrioritizesExplicitProviderIssRetidoCode(): void
+    {
+        $transport = new class(NFSeBelemMunicipalFixtures::successSoapResponse()) implements NFSeSoapTransportInterface {
+            public function __construct(private readonly string $response)
+            {
+            }
+
+            public function send(string $endpoint, string $envelope, array $options = []): array
+            {
+                return [
+                    'request_xml' => $envelope,
+                    'response_xml' => $this->response,
+                    'status_code' => 200,
+                    'headers' => ['Content-Type: text/xml'],
+                ];
+            }
+        };
+
+        $provider = $this->makeProvider($transport);
+        $provider->emitir(NFSeBelemMunicipalFixtures::payload([
+            'servico' => [
+                'iss_retido' => false,
+                'tpRetISSQN' => '1',
+            ],
+        ]));
+
+        $this->assertStringContainsString('<IssRetido>1</IssRetido>', (string) $provider->getLastRequestXml());
+    }
+
     public function testConsultarLoteBuildsSchemaValidRequestAndParsesResponse(): void
     {
         $transport = new class(NFSeBelemMunicipalFixtures::consultarLoteSoapResponse()) implements NFSeSoapTransportInterface {
