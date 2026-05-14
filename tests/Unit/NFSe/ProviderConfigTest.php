@@ -62,6 +62,10 @@ final class ProviderConfigTest extends TestCase
         $this->assertSame('1501402', $data['codigo_municipio']);
         $this->assertStringContainsString('BelemMunicipalProvider', $data['provider_class']);
         $this->assertContains('consultar_nfse_rps', $data['supported_operations']);
+        $this->assertSame('belem_municipal_policy', $data['form_policy']['policy_source']);
+        $this->assertContains('service.cnae_code', $data['form_policy']['required_fields']);
+        $this->assertContains('service.activity_code', $data['form_policy']['visible_fields']);
+        $this->assertSame('864020100', $data['form_policy']['default_values']['service.cnae_code']);
     }
 
     public function testFacadeListsActiveMunicipiosFromCurrentCatalog(): void
@@ -94,6 +98,8 @@ final class ProviderConfigTest extends TestCase
         $this->assertSame('4209102', $data['codigo_municipio']);
         $this->assertStringContainsString('PublicaProvider', $data['provider_class']);
         $this->assertContains('consultar_nfse_rps', $data['supported_operations']);
+        $this->assertSame('publica_policy', $data['form_policy']['policy_source']);
+        $this->assertSame(['service.municipal_code'], $data['form_policy']['required_fields']);
     }
 
     public function testFacadeFallsBackToNationalForUnknownMunicipio(): void
@@ -149,6 +155,9 @@ final class ProviderConfigTest extends TestCase
         $this->assertSame('1302603', $data['codigo_municipio']);
         $this->assertStringContainsString('NacionalProvider', $data['provider_class']);
         $this->assertContains('consultar_por_rps', $data['supported_operations']);
+        $this->assertSame('nfse_nacional_policy', $data['form_policy']['policy_source']);
+        $this->assertNotContains('service.municipal_code', $data['form_policy']['required_fields']);
+        $this->assertContains('service.nbs', $data['form_policy']['required_fields']);
     }
 
     public function testFacadeHomologationReadinessUsesNationalProviderConfigForManaus(): void

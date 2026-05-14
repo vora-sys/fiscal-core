@@ -69,7 +69,23 @@
             "cancelar_nfse"
         ],
         "municipio_nome": "Belem",
-        "source": "custom_override"
+        "source": "custom_override",
+        "form_policy": {
+            "policy_source": "belem_municipal_policy",
+            "required_fields": [
+                "service.municipal_code",
+                "service.cnae_code"
+            ],
+            "visible_fields": [
+                "service.municipal_code",
+                "service.cnae_code",
+                "service.activity_code"
+            ],
+            "default_values": {
+                "service.cnae_code": "864020100",
+                "service.activity_code": "864020100"
+            }
+        }
     },
     "BETHA": {
         "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\BethaProvider",
@@ -343,6 +359,15 @@
         "wsdl_producao": "https://issweb-producao.example.test/servicos",
         "timeout": 30,
         "signature_mode": "none",
+        "form_policy": {
+            "policy_source": "issweb_am_policy",
+            "required_fields": [
+                "service.municipal_code"
+            ],
+            "visible_fields": [
+                "service.municipal_code"
+            ]
+        },
         "auth": {
             "chave": ""
         }
@@ -504,7 +529,16 @@
             "consultar_nfse_rps",
             "cancelar_nfse"
         ],
-        "source": "custom_override"
+        "source": "custom_override",
+        "form_policy": {
+            "policy_source": "publica_policy",
+            "required_fields": [
+                "service.municipal_code"
+            ],
+            "visible_fields": [
+                "service.municipal_code"
+            ]
+        }
     },
     "PUBLICENTER": {
         "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\PublicenterProvider",
@@ -791,6 +825,20 @@
         "versao": "1.00",
         "dps_root": "dps",
         "backend": "http",
-        "ambiente": "homologacao"
+        "ambiente": "homologacao",
+        "form_policy": {
+            "policy_source": "nfse_nacional_policy",
+            "required_fields": [
+                "service.national_tax_code",
+                "service.nbs",
+                "prestador.op_simp_nac"
+            ],
+            "visible_fields": [
+                "service.municipal_code",
+                "service.national_tax_code",
+                "service.nbs",
+                "prestador.op_simp_nac"
+            ]
+        }
     }
 }

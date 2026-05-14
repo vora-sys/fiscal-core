@@ -27,6 +27,8 @@ class NFSeAdapterFacadeNacionalTest extends TestCase
         $this->assertContains('service.municipal_code', $policy['visible_fields']);
         $this->assertContains('service.national_tax_code', $policy['required_fields']);
         $this->assertContains('service.nbs', $policy['required_fields']);
+        $this->assertSame('text', $policy['field_schema']['service.national_tax_code']['control']);
+        $this->assertSame('select', $policy['field_schema']['prestador.op_simp_nac']['control']);
     }
 
     public function test_adapter_lanca_erro_quando_provider_nao_suporta_capability_nacional(): void
