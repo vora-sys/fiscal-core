@@ -15,7 +15,6 @@ use sabbajohn\FiscalCore\Support\NFSeSchemaValidator;
 use sabbajohn\FiscalCore\Support\NFSeSoapCurlTransport;
 use sabbajohn\FiscalCore\Support\NFSeSoapTransportInterface;
 use NFePHP\Common\Certificate;
-use NFePHP\Common\Signer;
 
 class BelemMunicipalProvider extends AbstractNFSeProvider implements NFSeOperationalIntrospectionInterface
 {
@@ -161,19 +160,39 @@ class BelemMunicipalProvider extends AbstractNFSeProvider implements NFSeOperati
             throw new \InvalidArgumentException('Motivo do cancelamento é obrigatório para Belém.');
         }
 
-        $requestXml = $this->montarXmlCancelarNfse($chave, $motivo, $protocolo);
-        if ($this->shouldSignOperation('cancelar_nfse')) {
-            $requestXml = $this->assinarXml($requestXml, 'cancelar_nfse');
+        $numeroNfse = $this->extractNumeroNfseFromChave($chave);
+        $attempts = [];
+
+        foreach ($this->resolveCodigosCancelamento() as $codigoCancelamento) {
+            $requestXml = $this->montarXmlCancelarNfse($numeroNfse, $motivo, $protocolo, $codigoCancelamento);
+            if ($this->shouldSignOperation('cancelar_nfse')) {
+                $requestXml = $this->assinarXml($requestXml, 'cancelar_nfse');
+            }
+
+            $this->dispatchSoapOperation(
+                'cancelar_nfse',
+                'CancelarNfse',
+                $requestXml,
+                'cancelar_nfse'
+            );
+
+            $attempts[] = [
+                'codigo_cancelamento' => $codigoCancelamento,
+                'status' => $this->lastResponseData['status'] ?? 'unknown',
+                'mensagens' => $this->lastResponseData['mensagens'] ?? [],
+            ];
+            $this->annotateCancelamentoArtifacts($codigoCancelamento, $attempts);
+
+            if (($this->lastResponseData['status'] ?? 'unknown') === 'success') {
+                return true;
+            }
+
+            if (!$this->shouldRetryCancelamentoComCodigoAlternativo($this->lastResponseData)) {
+                break;
+            }
         }
 
-        $this->dispatchSoapOperation(
-            'cancelar_nfse',
-            'CancelarNfse',
-            $requestXml,
-            'cancelar_nfse'
-        );
-
-        return ($this->lastResponseData['status'] ?? 'unknown') === 'success';
+        return false;
     }
 
     protected function montarXmlRps(array $dados): string
@@ -418,7 +437,10 @@ class BelemMunicipalProvider extends AbstractNFSeProvider implements NFSeOperati
                 'numero' => $this->firstNodeValue($xpath, [".//*[local-name()='Numero']"], $nfseNode),
                 'codigo_verificacao' => $this->firstNodeValue($xpath, [".//*[local-name()='CodigoVerificacao']"], $nfseNode),
                 'data_emissao' => $this->firstNodeValue($xpath, [".//*[local-name()='DataEmissao']"], $nfseNode),
-                'tomador' => $this->firstNodeValue($xpath, [".//*[local-name()='RazaoSocial']"], $nfseNode),
+                'tomador' => $this->firstNodeValue($xpath, [
+                    ".//*[local-name()='TomadorServico']/*[local-name()='RazaoSocial']",
+                    ".//*[local-name()='Tomador']/*[local-name()='RazaoSocial']",
+                ], $nfseNode),
                 'valor_servicos' => $this->firstNodeValue($xpath, [".//*[local-name()='ValorServicos']"], $nfseNode),
             ];
         }
@@ -663,10 +685,14 @@ class BelemMunicipalProvider extends AbstractNFSeProvider implements NFSeOperati
         return $dom->saveXML($dom->documentElement) ?: '';
     }
 
-    private function montarXmlCancelarNfse(string $numeroNfse, string $motivo, ?string $protocolo): string
+    private function montarXmlCancelarNfse(
+        string $numeroNfse,
+        string $motivo,
+        ?string $protocolo,
+        string $codigoCancelamento
+    ): string
     {
         $prestador = $this->resolvePrestadorContext();
-        $codigoCancelamento = $this->resolveCodigoCancelamento($protocolo);
 
         $dom = new \DOMDocument('1.0', 'UTF-8');
         $root = $dom->createElement('CancelarNfseEnvio');
@@ -980,17 +1006,38 @@ class BelemMunicipalProvider extends AbstractNFSeProvider implements NFSeOperati
         return match ($operationKey) {
             'emitir' => $this->assinarXmlEmissao($certificate, $xml),
             'consultar_lote', 'consultar_nfse_rps', 'consultar_nfse_numero' => $this->assinarXmlConsulta($certificate, $xml),
-            'cancelar_nfse' => Signer::sign(
-                $certificate,
-                $xml,
-                'InfPedidoCancelamento',
-                'Id',
-                OPENSSL_ALGO_SHA1,
-                Signer::CANONICAL,
-                'CancelarNfseEnvio'
-            ),
+            'cancelar_nfse' => $this->assinarXmlCancelamento($certificate, $xml),
             default => $xml,
         };
+    }
+
+    private function assinarXmlCancelamento(Certificate $certificate, string $xml): string
+    {
+        $dom = new \DOMDocument('1.0', 'UTF-8');
+        $dom->preserveWhiteSpace = false;
+        $dom->formatOutput = false;
+        if (!@$dom->loadXML($xml)) {
+            throw new \RuntimeException('XML invalido para assinatura do cancelamento de Belem.');
+        }
+
+        $xpath = new \DOMXPath($dom);
+        $pedido = $xpath->query("//*[local-name()='Pedido']")->item(0);
+        $infPedido = $xpath->query("//*[local-name()='InfPedidoCancelamento']")->item(0);
+
+        if (!$pedido instanceof \DOMElement || !$infPedido instanceof \DOMElement) {
+            throw new \RuntimeException('Nos obrigatorios para assinatura do cancelamento de Belem nao encontrados.');
+        }
+
+        $this->appendSignatureNode(
+            $dom,
+            $certificate,
+            $pedido,
+            $infPedido,
+            'Id',
+            OPENSSL_ALGO_SHA1
+        );
+
+        return $dom->saveXML($dom->documentElement) ?: $xml;
     }
 
     private function assinarXmlConsulta(Certificate $certificate, string $xml): string
@@ -1526,16 +1573,78 @@ class BelemMunicipalProvider extends AbstractNFSeProvider implements NFSeOperati
         );
     }
 
-    private function resolveCodigoCancelamento(?string $protocolo): string
+    private function resolveCodigosCancelamento(): array
     {
-        $configured = trim((string) ($this->config['cancelamento_codigo'] ?? '1'));
-        $candidate = trim((string) ($protocolo ?? ''));
-
-        if ($candidate !== '' && preg_match('/^\d+$/', $candidate) === 1) {
-            return $candidate;
+        $configuredList = [];
+        if (is_array($this->config['cancelamento_codigos'] ?? null)) {
+            $configuredList = array_values(array_filter(array_map(
+                static fn (mixed $codigo): string => trim((string) $codigo),
+                $this->config['cancelamento_codigos']
+            )));
         }
 
-        return $configured !== '' ? $configured : '1';
+        $configured = trim((string) ($this->config['cancelamento_codigo'] ?? '9'));
+        if ($configured !== '') {
+            array_unshift($configuredList, $configured);
+        }
+
+        $codigos = array_values(array_unique(array_filter([
+            ...$configuredList,
+            '2',
+            '3',
+            '9',
+            '1',
+        ])));
+
+        return $codigos !== [] ? $codigos : ['9', '2', '3', '1'];
+    }
+
+    private function shouldRetryCancelamentoComCodigoAlternativo(array $parsedResponse): bool
+    {
+        if (($parsedResponse['status'] ?? null) !== 'error') {
+            return false;
+        }
+
+        $messages = implode(' ', array_map(
+            static fn (mixed $message): string => is_scalar($message) ? (string) $message : '',
+            (array) ($parsedResponse['mensagens'] ?? [])
+        ));
+
+        $normalized = strtr(strtolower(trim($messages)), [
+            'á' => 'a',
+            'à' => 'a',
+            'ã' => 'a',
+            'â' => 'a',
+            'é' => 'e',
+            'ê' => 'e',
+            'í' => 'i',
+            'ó' => 'o',
+            'ô' => 'o',
+            'õ' => 'o',
+            'ú' => 'u',
+            'ç' => 'c',
+        ]);
+        $converted = iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $normalized);
+        if ($converted !== false) {
+            $normalized = $converted;
+        }
+
+        return str_contains($normalized, 'codigo de cancelamento')
+            || str_contains($normalized, 'codigos de cancelamento')
+            || str_contains($normalized, 'codigocancelamento');
+    }
+
+    private function annotateCancelamentoArtifacts(string $codigoCancelamento, array $attempts): void
+    {
+        $this->lastTransportData['cancelamento_codigo'] = $codigoCancelamento;
+        $this->lastTransportData['cancelamento_retry_attempts'] = $attempts;
+        $this->lastOperationArtifacts['cancelamento_codigo'] = $codigoCancelamento;
+        $this->lastOperationArtifacts['cancelamento_retry_attempts'] = $attempts;
+        $this->lastOperationArtifacts['transport'] = $this->lastTransportData;
+
+        if (isset($this->lastResponseData['cancelamento']) && is_array($this->lastResponseData['cancelamento'])) {
+            $this->lastResponseData['cancelamento']['codigo_tentado'] = $codigoCancelamento;
+        }
     }
 
     private function extractNumeroNfseFromChave(string $chave): string

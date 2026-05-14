@@ -109,6 +109,7 @@ final class BelemMunicipalProviderTest extends TestCase
         $this->assertSame('PROTOCOLO-BELEM-2026', $parsed['protocolo']);
         $this->assertSame('1105', $parsed['nfse']['numero']);
         $this->assertSame('ABC123XYZ', $parsed['nfse']['codigo_verificacao']);
+        $this->assertSame('TOMADOR SANITIZADO LTDA', $parsed['lista_nfse'][0]['tomador']);
     }
 
     public function testEmitirPreservesTranslatedIssRetidoCodeInRequestXml(): void
@@ -577,12 +578,24 @@ XML;
 
         $provider = $this->makeProvider($transport);
         $result = $provider->cancelar(
-            NFSeBelemMunicipalFixtures::cancelamentoNumeroNfse(),
+            NFSeBelemMunicipalFixtures::chaveNfse(),
             'Cancelamento de homologacao'
         );
 
         $this->assertTrue($result);
         $this->assertStringContainsString('<svc:CancelarNfse>', $provider->getLastSoapEnvelope());
+        $this->assertStringContainsString('<Numero>1105</Numero>', (string) $provider->getLastRequestXml());
+        $this->assertStringNotContainsString(NFSeBelemMunicipalFixtures::chaveNfse(), (string) $provider->getLastRequestXml());
+
+        $dom = new DOMDocument();
+        $dom->loadXML((string) $provider->getLastRequestXml());
+        $xpath = new DOMXPath($dom);
+        $xpath->registerNamespace('ds', 'http://www.w3.org/2000/09/xmldsig#');
+        $this->assertSame(
+            '#Cancelamento_12345678000195_1105',
+            $xpath->evaluate('string(//ds:Signature/ds:SignedInfo/ds:Reference/@URI)')
+        );
+        $this->assertSame('Pedido', $xpath->evaluate('local-name(//ds:Signature/parent::*)'));
 
         $validation = (new NFSeSchemaValidator())->validate(
             $this->schemaCompatibleXml((string) $provider->getLastRequestXml()),
@@ -593,7 +606,101 @@ XML;
         $parsed = $provider->getLastResponseData();
         $this->assertSame('success', $parsed['status']);
         $this->assertSame('1105', $parsed['cancelamento']['numero']);
-        $this->assertSame('1', $parsed['cancelamento']['codigo_cancelamento']);
+        $this->assertStringContainsString('<CodigoCancelamento>9</CodigoCancelamento>', (string) $provider->getLastRequestXml());
+        $this->assertSame('9', $parsed['cancelamento']['codigo_cancelamento']);
+    }
+
+    public function testCancelarNfseNaoUsaProtocoloComoCodigoCancelamento(): void
+    {
+        $transport = new class(NFSeBelemMunicipalFixtures::cancelarSoapSuccessResponse()) implements NFSeSoapTransportInterface {
+            public function __construct(private readonly string $response)
+            {
+            }
+
+            public function send(string $endpoint, string $envelope, array $options = []): array
+            {
+                return [
+                    'request_xml' => $envelope,
+                    'response_xml' => $this->response,
+                    'status_code' => 200,
+                    'headers' => ['Content-Type: text/xml'],
+                ];
+            }
+        };
+
+        $provider = $this->makeProvider($transport);
+        $provider->cancelar(
+            NFSeBelemMunicipalFixtures::chaveNfse(),
+            'Cancelamento de homologacao',
+            '062969277'
+        );
+
+        $requestXml = (string) $provider->getLastRequestXml();
+        $this->assertStringContainsString('<CodigoCancelamento>9</CodigoCancelamento>', $requestXml);
+        $this->assertStringNotContainsString('<CodigoCancelamento>062969277</CodigoCancelamento>', $requestXml);
+    }
+
+    public function testCancelarNfseTentaCodigoAlternativoQuandoMunicipioRejeitaCodigoCancelamento(): void
+    {
+        $transport = new class implements NFSeSoapTransportInterface {
+            public array $calls = [];
+
+            public function send(string $endpoint, string $envelope, array $options = []): array
+            {
+                $this->calls[] = compact('endpoint', 'envelope', 'options');
+
+                return [
+                    'request_xml' => $envelope,
+                    'response_xml' => count($this->calls) === 1
+                        ? $this->codigoCancelamentoIncorretoResponse()
+                        : str_replace(
+                            '<nfse:CodigoCancelamento>9</nfse:CodigoCancelamento>',
+                            '<nfse:CodigoCancelamento>2</nfse:CodigoCancelamento>',
+                            NFSeBelemMunicipalFixtures::cancelarSoapSuccessResponse()
+                        ),
+                    'status_code' => 200,
+                    'headers' => ['Content-Type: text/xml'],
+                ];
+            }
+
+            private function codigoCancelamentoIncorretoResponse(): string
+            {
+                return <<<'XML'
+<?xml version="1.0" encoding="UTF-8"?>
+<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:tns="http://nfse.abrasf.org.br" xmlns:nfse="http://www.abrasf.org.br/nfse.xsd">
+  <soapenv:Body>
+    <tns:CancelarNfseResponse>
+      <tns:CancelarNfseResposta>
+        <nfse:ListaMensagemRetorno>
+          <nfse:MensagemRetorno>
+            <nfse:Codigo>E343</nfse:Codigo>
+            <nfse:Mensagem>Código de cancelamento incorreto</nfse:Mensagem>
+            <nfse:Correcao>Consulte o Manual da NFS-e para saber os códigos de cancelamento permitidos pelo sistema.</nfse:Correcao>
+          </nfse:MensagemRetorno>
+        </nfse:ListaMensagemRetorno>
+      </tns:CancelarNfseResposta>
+    </tns:CancelarNfseResponse>
+  </soapenv:Body>
+</soapenv:Envelope>
+XML;
+            }
+        };
+
+        $provider = $this->makeProvider($transport);
+        $result = $provider->cancelar(
+            NFSeBelemMunicipalFixtures::chaveNfse(),
+            'Cancelamento de homologacao',
+            '062969277'
+        );
+
+        $this->assertTrue($result);
+        $this->assertCount(2, $transport->calls);
+        $this->assertStringContainsString('<CodigoCancelamento>9</CodigoCancelamento>', $transport->calls[0]['envelope']);
+        $this->assertStringContainsString('<CodigoCancelamento>2</CodigoCancelamento>', $transport->calls[1]['envelope']);
+
+        $attempts = $provider->getLastOperationArtifacts()['cancelamento_retry_attempts'] ?? [];
+        $this->assertSame(['9', '2'], array_column($attempts, 'codigo_cancelamento'));
+        $this->assertSame('2', $provider->getLastOperationArtifacts()['cancelamento_codigo'] ?? null);
     }
 
     public function testCancelarNfseReturnsFalseOnBusinessRejection(): void

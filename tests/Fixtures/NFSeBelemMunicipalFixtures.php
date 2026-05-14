@@ -189,6 +189,16 @@ final class NFSeBelemMunicipalFixtures
                     <nfse:ValorLiquidoNfse>3000.00</nfse:ValorLiquidoNfse>
                   </nfse:Valores>
                 </nfse:Servico>
+                <nfse:PrestadorServico>
+                  <nfse:RazaoSocial>PRESTADOR SANITIZADO LTDA</nfse:RazaoSocial>
+                </nfse:PrestadorServico>
+                <nfse:DeclaracaoPrestacaoServico>
+                  <nfse:InfDeclaracaoPrestacaoServico>
+                    <nfse:Tomador>
+                      <nfse:RazaoSocial>TOMADOR SANITIZADO LTDA</nfse:RazaoSocial>
+                    </nfse:Tomador>
+                  </nfse:InfDeclaracaoPrestacaoServico>
+                </nfse:DeclaracaoPrestacaoServico>
               </nfse:InfNfse>
             </nfse:Nfse>
           </nfse:CompNfse>
@@ -336,7 +346,7 @@ XML;
               <nfse:InscricaoMunicipal>4007197</nfse:InscricaoMunicipal>
               <nfse:CodigoMunicipio>1501402</nfse:CodigoMunicipio>
             </nfse:IdentificacaoNfse>
-            <nfse:CodigoCancelamento>1</nfse:CodigoCancelamento>
+            <nfse:CodigoCancelamento>9</nfse:CodigoCancelamento>
           </nfse:InfPedidoCancelamento>
         </nfse:Pedido>
       </tns:CancelarNfseResposta>

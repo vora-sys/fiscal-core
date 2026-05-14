@@ -27,6 +27,27 @@ class NacionalProviderTest extends TestCase
         $this->assertIsString($xml);
         $this->assertStringContainsString('<DPS', $xml);
         $this->assertStringContainsString('infDPS', $xml);
+        $this->assertStringNotContainsString('<vRetIRRF>', $xml);
+    }
+
+    public function test_emitir_inclui_irrf_retido_na_tributacao_nacional(): void
+    {
+        $calls = [];
+        $provider = new NacionalProvider($this->buildConfig(function ($method, $path, $body, $headers = []) use (&$calls) {
+            $calls[] = compact('method', 'path', 'body');
+            return '<Resposta><Sucesso>true</Sucesso></Resposta>';
+        }));
+
+        $dados = $this->dadosValidos();
+        $dados['servico']['valor_irrf'] = 150.00;
+
+        $provider->emitir($dados);
+
+        $payload = json_decode((string) $calls[0]['body'], true);
+        $this->assertIsArray($payload);
+        $xml = gzdecode((string) base64_decode((string) $payload['dpsXmlGZipB64']));
+        $this->assertIsString($xml);
+        $this->assertStringContainsString('<tribNac><vRetIRRF>150.00</vRetIRRF></tribNac>', $xml);
     }
 
     public function test_cancelar_retorna_true_quando_resposta_indica_sucesso(): void

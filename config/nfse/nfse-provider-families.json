@@ -60,6 +60,13 @@
         "wsdl_homologacao": "https://sefin-hml.belem.pa.gov.br/notafiscal-abrasfv203-ws/NotaFiscalSoap?wsdl",
         "wsdl_producao": "https://notafiscal.belem.pa.gov.br/notafiscal-abrasfv203-ws/NotaFiscalSoap?wsdl",
         "signature_mode": "required",
+        "cancelamento_codigo": "9",
+        "cancelamento_codigos": [
+            "9",
+            "2",
+            "3",
+            "1"
+        ],
         "soap_operation": "RecepcionarLoteRpsSincrono",
         "supported_operations": [
             "emitir_sincrono",
@@ -201,6 +208,13 @@
         "wsdl_homologacao": "https://sefin-hml.belem.pa.gov.br/notafiscal-abrasfv203-ws/NotaFiscalSoap?wsdl",
         "wsdl_producao": "https://notafiscal.belem.pa.gov.br/notafiscal-abrasfv203-ws/NotaFiscalSoap?wsdl",
         "signature_mode": "required",
+        "cancelamento_codigo": "9",
+        "cancelamento_codigos": [
+            "9",
+            "2",
+            "3",
+            "1"
+        ],
         "soap_operation": "RecepcionarLoteRpsSincrono",
         "supported_operations": [
             "emitir_sincrono",

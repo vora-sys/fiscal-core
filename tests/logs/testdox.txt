@@ -1,21 +1,16 @@
-Belem Municipal Provider
- [x] Emitir builds signed schema valid request and parses synchronous response
- [x] Emitir preserves translated iss retido code in request xml
- [x] Consultar lote builds schema valid request and parses response
- [x] Consultar nfse por rps builds schema valid request and parses response
- [x] Consultar by chave builds schema valid request and parses response
- [x] Baixar danfse returns official url by access key
- [x] Baixar danfse accepts number only key
- [x] Consultar lote retries with alternative signature variant when fault mentions assinatura
- [x] Consultar nfse por rps retries all signature variants and keeps failure artifacts
- [x] Consultar by chave retries with alternative signature variant when fault mentions assinatura
- [x] Cancelar nfse builds schema valid request and parses response
- [x] Cancelar nfse returns false on business rejection
- [x] Processa resposta da fixture sanitizada de exportacao
- [x] Processa resposta com mensagem de rejeicao
- [x] Rejects incompatible items for single belm document
- [x] Rejects mei on municipal provider
- [x] Consulta operations reuse prestador context from previous emission
- [x] Consultar por rps requires required fields
- [x] Homologation debug masks sensitive data
+NFSe Belem Routing
+ [x] Belem mei routes automatically to national provider
+ [x] Belem rejects emission when mei classification is missing
+ [x] Any municipal provider routes mei emission to national provider
+ [x] Belem municipal consult and cancel use municipal provider capabilities
+ [x] Belem facade includes municipal operation metadata
+ [x] Belem facade returns error when cancellation is rejected
+ [x] Belem facade consultar by chave returns official url
+ [x] Belem facade emitir completo falls back to consultar lote and returns official url
+ [x] Belem facade emitir completo falls back to consultar por rps when lote has no nfse and returns official url
+ [x] Belem facade emitir completo returns partial when consultation does not resolve nfse
+ [x] Belem facade consultar disponibilidade by protocolo returns official url
+ [x] Belem facade consultar disponibilidade falls back to rps when lote has no nfse
+ [x] Belem facade consultar disponibilidade returns pendente when no nfse is available
+ [x] Belem facade gerar danfse renders local pdf from authorized xml
 

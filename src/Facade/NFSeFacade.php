@@ -308,6 +308,47 @@ class NFSeFacade
             $operation = method_exists($this->nfse, 'getLastOperationInfo')
                 ? $this->nfse->getLastOperationInfo()
                 : [];
+            if ($resultado !== true) {
+                $mensagens = is_array($operation['parsed_response']['mensagens'] ?? null)
+                    ? $operation['parsed_response']['mensagens']
+                    : [];
+                $mensagens = array_values(array_filter(array_map(static function ($mensagem): string {
+                    if (is_array($mensagem)) {
+                        $valor = $mensagem['mensagem']
+                            ?? $mensagem['message']
+                            ?? $mensagem['descricao']
+                            ?? $mensagem['codigo']
+                            ?? null;
+
+                        if (is_scalar($valor)) {
+                            return trim((string) $valor);
+                        }
+
+                        return trim(json_encode($mensagem, JSON_UNESCAPED_UNICODE) ?: '');
+                    }
+
+                    return is_scalar($mensagem) ? trim((string) $mensagem) : '';
+                }, $mensagens), static fn (string $mensagem): bool => $mensagem !== ''));
+                $message = $mensagens !== []
+                    ? implode(' | ', $mensagens)
+                    : 'Cancelamento da NFSe rejeitado pelo provedor.';
+
+                return FiscalResponse::error(
+                    $message,
+                    'NFSE_CANCELLATION_REJECTED',
+                    'nfse_cancellation',
+                    array_merge($this->buildCompatibilityMetadata(), [
+                        'chave' => $chave,
+                        'motivo' => $motivo,
+                        'municipio' => $this->municipio,
+                        'provider_key' => $this->providerKey,
+                        'municipio_ignored' => $this->municipioIgnored,
+                        'warnings' => $this->deprecationWarnings,
+                        'cancelamento' => $operation,
+                    ])
+                );
+            }
+
             return FiscalResponse::success([
                 'canceled' => $resultado,
                 'type' => 'nfse_cancelamento',
@@ -474,12 +515,6 @@ class NFSeFacade
         }
 
         try {
-            if ($this->isBelemMunicipalFlow()) {
-                throw new \RuntimeException(
-                    'Belém nao utiliza geracao local de DANFSe neste fluxo. Use consultarDisponibilidade() e consuma a danfse_url oficial da prefeitura.'
-                );
-            }
-
             if (trim($xmlNfse) === '') {
                 throw new \InvalidArgumentException('XML final da NFSe e obrigatorio para gerar o DANFSe.');
             }

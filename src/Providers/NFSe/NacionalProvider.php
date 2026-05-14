@@ -723,6 +723,18 @@ class NacionalProvider extends AbstractNFSeProvider implements NFSeNacionalCapab
         }
         $this->appendNodeDps($dom, $tribMun, 'tpRetISSQN', (string)($dados['servico']['tpRetISSQN'] ?? '1'));
 
+        $valorIrrf = $this->firstPositiveDecimal([
+            $dados['servico']['valor_irrf'] ?? null,
+            $dados['servico']['valor_ir'] ?? null,
+            $dados['valor_irrf'] ?? null,
+            $dados['valor_ir'] ?? null,
+        ]);
+        if ($valorIrrf !== null) {
+            $tribNac = $dom->createElementNS($ns, 'tribNac');
+            $trib->appendChild($tribNac);
+            $this->appendNodeDps($dom, $tribNac, 'vRetIRRF', $this->formatDecimal($valorIrrf, 2));
+        }
+
         $totTrib = $dom->createElementNS($ns, 'totTrib');
         $trib->appendChild($totTrib);
         $vTotTrib = $dom->createElementNS($ns, 'vTotTrib');
@@ -732,6 +744,25 @@ class NacionalProvider extends AbstractNFSeProvider implements NFSeNacionalCapab
         $this->appendNodeDps($dom, $vTotTrib, 'vTotTribMun', '0.00');
 
         return $dom->saveXML() ?: '';
+    }
+
+    /**
+     * @param list<mixed> $values
+     */
+    private function firstPositiveDecimal(array $values): ?float
+    {
+        foreach ($values as $value) {
+            if ($value === null || $value === '' || !is_numeric($value)) {
+                continue;
+            }
+
+            $numeric = round((float) $value, 2);
+            if ($numeric > 0) {
+                return $numeric;
+            }
+        }
+
+        return null;
     }
 
     private function appendObraGroup(\DOMDocument $dom, \DOMElement $serv, array $obra): void

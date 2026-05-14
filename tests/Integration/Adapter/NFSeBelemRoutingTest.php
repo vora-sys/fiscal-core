@@ -179,6 +179,36 @@ final class NFSeBelemRoutingTest extends TestCase
         $this->assertSame('cancelar', $cancelamento->getData('cancelamento')['operation']);
     }
 
+    public function testBelemFacadeReturnsErrorWhenCancellationIsRejected(): void
+    {
+        $transport = new class implements NFSeSoapTransportInterface {
+            public function send(string $endpoint, string $envelope, array $options = []): array
+            {
+                return [
+                    'request_xml' => $envelope,
+                    'response_xml' => NFSeBelemMunicipalFixtures::cancelarSoapRejectionResponse(),
+                    'status_code' => 200,
+                    'headers' => [],
+                ];
+            }
+        };
+
+        $provider = new BelemMunicipalProvider(NFSeBelemMunicipalFixtures::belemConfig([
+            'soap_transport' => $transport,
+        ]));
+        $facade = new NFSeFacade('belem', new NFSeAdapter('belem', $provider));
+
+        $cancelamento = $facade->cancelar(
+            NFSeBelemMunicipalFixtures::chaveNfse(),
+            'Cancelamento de homologacao'
+        );
+
+        $this->assertTrue($cancelamento->isError());
+        $this->assertSame('NFSE_CANCELLATION_REJECTED', $cancelamento->getErrorCode());
+        $this->assertStringContainsString('NFSe ja se encontra cancelada', (string) $cancelamento->getError());
+        $this->assertSame('cancelar', $cancelamento->getMetadata('cancelamento')['operation']);
+    }
+
     public function testBelemFacadeConsultarByChaveReturnsOfficialUrl(): void
     {
         $transport = new class(NFSeBelemMunicipalFixtures::consultarNfseServicoPrestadoSoapResponse()) implements NFSeSoapTransportInterface {
@@ -446,15 +476,18 @@ final class NFSeBelemRoutingTest extends TestCase
         $this->assertNull($response->getData('danfse_url'));
     }
 
-    public function testBelemFacadeGerarDanfseReturnsExplicitUnsupportedError(): void
+    public function testBelemFacadeGerarDanfseRendersLocalPdfFromAuthorizedXml(): void
     {
         $provider = new BelemMunicipalProvider(NFSeBelemMunicipalFixtures::belemConfig());
         $facade = new NFSeFacade('belem', new NFSeAdapter('belem', $provider));
 
-        $response = $facade->gerarDanfse('<CompNfse><Nfse><InfNfse><Numero>1105</Numero></InfNfse></Nfse></CompNfse>');
+        $response = $facade->gerarDanfse(NFSeBelemMunicipalFixtures::successSoapResponse());
 
-        $this->assertTrue($response->isError());
-        $this->assertStringContainsString('Belém nao utiliza geracao local de DANFSe', (string) $response->getError());
+        $this->assertTrue($response->isSuccess(), (string) $response->getError());
+        $this->assertSame('pdf_base64', $response->getData('impressao')['modo']);
+        $this->assertSame('render_local', $response->getData('impressao')['source']);
+        $this->assertSame('application/pdf', $response->getData('impressao')['content_type']);
+        $this->assertStringStartsWith('%PDF', base64_decode($response->getData('impressao')['pdf_base64'], true) ?: '');
     }
 
     public static function emissaoComProtocoloSemNfseSoapResponse(): string
