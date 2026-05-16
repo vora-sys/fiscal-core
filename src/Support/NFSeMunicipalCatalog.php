@@ -62,6 +62,23 @@ final class NFSeMunicipalCatalog
         return null;
     }
 
+    public function resolveProviderFamilyKey(string $input): ?string
+    {
+        $normalizedInput = $this->normalizeLookupKey($input);
+
+        if ($normalizedInput === '') {
+            return null;
+        }
+
+        foreach ($this->families(false) as $familyKey) {
+            if ($this->normalizeLookupKey($familyKey) === $normalizedInput) {
+                return $familyKey;
+            }
+        }
+
+        return null;
+    }
+
     public function resolveMunicipioOrFail(string $input): array
     {
         $resolved = $this->resolveMunicipio($input);

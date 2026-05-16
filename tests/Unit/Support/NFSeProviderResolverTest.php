@@ -29,6 +29,19 @@ final class NFSeProviderResolverTest extends TestCase
         $this->assertSame('BELEM_MUNICIPAL_2025', $resolver->resolveKey('belem'));
     }
 
+    public function testResolveDirectProviderFamilyKey(): void
+    {
+        $resolver = $this->makeResolver();
+
+        $this->assertSame('BELEM_MUNICIPAL_2025', $resolver->resolveKey('BELEM_MUNICIPAL_2025'));
+
+        $metadata = $resolver->buildMetadata('BELEM_MUNICIPAL_2025');
+        $this->assertSame('BELEM_MUNICIPAL_2025', $metadata['provider_key']);
+        $this->assertSame('provider_key', $metadata['routing_mode']);
+        $this->assertFalse($metadata['municipio_ignored']);
+        $this->assertSame([], $metadata['warnings']);
+    }
+
     public function testResolveManausToNational(): void
     {
         $resolver = $this->makeResolver();

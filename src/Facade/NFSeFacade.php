@@ -126,7 +126,23 @@ class NFSeFacade
 
             return FiscalResponse::success($data, 'nfse_emission', $metadata);
         } catch (\Exception $e) {
-            return $this->responseHandler->handle($e, 'nfse_emission');
+            $lastEmission = method_exists($this->nfse, 'getLastEmissionInfo')
+                ? $this->nfse->getLastEmissionInfo()
+                : [];
+            $metadata = [
+                'municipio' => $this->municipio,
+                'provider_key' => $this->providerKey,
+                'municipio_ignored' => $this->municipioIgnored,
+                'warnings' => $this->deprecationWarnings,
+                'emissao' => $lastEmission,
+            ];
+
+            return FiscalResponse::error(
+                $e->getMessage(),
+                $this->resolveEmissionExceptionCode($lastEmission),
+                'nfse_emission',
+                $metadata,
+            );
         }
     }
 
@@ -697,6 +713,36 @@ class NFSeFacade
         }
     }
 
+    public function gerarXmlEnvioPreview(array $payload): FiscalResponse
+    {
+        if ($check = $this->checkNFSeInitialization()) {
+            return $check;
+        }
+
+        try {
+            $xml = $this->nfse->gerarXmlEnvioPreview($payload);
+
+            return FiscalResponse::success([
+                'xml' => $xml,
+                'metadata' => [
+                    'artifacts' => [
+                        'request_xml_preview' => $xml,
+                    ],
+                ],
+            ], 'nfse_xml_envio_preview', [
+                'municipio' => $this->municipio,
+                'provider_key' => $this->providerKey,
+                'municipio_ignored' => $this->municipioIgnored,
+                'warnings' => $this->deprecationWarnings,
+                'artifacts' => [
+                    'request_xml_preview' => $xml,
+                ],
+            ]);
+        } catch (\Exception $e) {
+            return $this->responseHandler->handle($e, 'nfse_xml_envio_preview');
+        }
+    }
+
     public function validarXmlDps(array $payload): FiscalResponse
     {
         if ($check = $this->checkNFSeInitialization()) {
@@ -934,6 +980,25 @@ class NFSeFacade
                 'response' => $data,
             ]
         );
+    }
+
+    private function resolveEmissionExceptionCode(array $lastEmission): string
+    {
+        $parsedEmission = $lastEmission['parsed_response'] ?? [];
+        if (!is_array($parsedEmission)) {
+            return 'NFSE_EMISSION_ERROR';
+        }
+
+        $status = (string) ($parsedEmission['status'] ?? '');
+        if ($status === 'invalid_xml') {
+            return 'XML_ERROR';
+        }
+
+        if ($status === 'error') {
+            return 'NFSE_EMISSION_FAILED';
+        }
+
+        return 'NFSE_EMISSION_ERROR';
     }
 
     private function isBelemMunicipalFlow(): bool

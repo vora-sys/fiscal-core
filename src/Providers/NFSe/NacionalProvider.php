@@ -75,9 +75,19 @@ class NacionalProvider extends AbstractNFSeProvider implements NFSeNacionalCapab
         $xml = $this->montarXmlDpsNacional($dados);
         $xml = $this->assinarXmlSeNecessario($xml);
         $xml = $this->ensureUtf8XmlForTransmission($xml);
-        $response = $this->enviarOperacao('emitir', $xml);
-        $parsed = $this->processarResposta($response);
-        $this->storeOperationState('emitir', $xml, $response, $parsed);
+        try {
+            $response = $this->enviarOperacao('emitir', $xml);
+            $parsed = $this->processarResposta($response);
+            $this->storeOperationState('emitir', $xml, $response, $parsed);
+        } catch (\Throwable $e) {
+            $this->storeOperationState('emitir', $xml, $e->getMessage(), [
+                'status' => 'error',
+                'mensagens' => [$e->getMessage()],
+                'transport_error' => $e->getMessage(),
+            ]);
+
+            throw $e;
+        }
 
         return $response;
     }
@@ -713,15 +723,16 @@ class NacionalProvider extends AbstractNFSeProvider implements NFSeNacionalCapab
         $trib->appendChild($tribMun);
         $tribIssqn = (string)($dados['servico']['tribISSQN'] ?? '1');
         $this->appendNodeDps($dom, $tribMun, 'tribISSQN', $tribIssqn);
+        $this->appendBeneficioMunicipalGroup($dom, $tribMun, (array)($dados['servico'] ?? []));
         $aliquota = $this->normalizeDpsAliquotaPercent((float)($dados['servico']['aliquota'] ?? 0));
         $sendPAliq = (bool)($this->config['dps_send_paliq'] ?? ($tribIssqn === '1'));
         if (array_key_exists('enviarPAliq', (array)($dados['servico'] ?? []))) {
             $sendPAliq = (bool)$dados['servico']['enviarPAliq'];
         }
+        $this->appendNodeDps($dom, $tribMun, 'tpRetISSQN', $this->resolveDpsIssRetentionCode((array)($dados['servico'] ?? [])));
         if ($sendPAliq && $aliquota > 0) {
             $this->appendNodeDps($dom, $tribMun, 'pAliq', $this->formatDecimal($aliquota, 2));
         }
-        $this->appendNodeDps($dom, $tribMun, 'tpRetISSQN', (string)($dados['servico']['tpRetISSQN'] ?? '1'));
 
         $valorIrrf = $this->firstPositiveDecimal([
             $dados['servico']['valor_irrf'] ?? null,
@@ -730,9 +741,9 @@ class NacionalProvider extends AbstractNFSeProvider implements NFSeNacionalCapab
             $dados['valor_ir'] ?? null,
         ]);
         if ($valorIrrf !== null) {
-            $tribNac = $dom->createElementNS($ns, 'tribNac');
-            $trib->appendChild($tribNac);
-            $this->appendNodeDps($dom, $tribNac, 'vRetIRRF', $this->formatDecimal($valorIrrf, 2));
+            $tribFed = $dom->createElementNS($ns, 'tribFed');
+            $trib->appendChild($tribFed);
+            $this->appendNodeDps($dom, $tribFed, 'vRetIRRF', $this->formatDecimal($valorIrrf, 2));
         }
 
         $totTrib = $dom->createElementNS($ns, 'totTrib');
@@ -759,6 +770,25 @@ class NacionalProvider extends AbstractNFSeProvider implements NFSeNacionalCapab
             $numeric = round((float) $value, 2);
             if ($numeric > 0) {
                 return $numeric;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * @param list<mixed> $values
+     */
+    private function firstString(array $values): ?string
+    {
+        foreach ($values as $value) {
+            if (!is_scalar($value)) {
+                continue;
+            }
+
+            $string = trim((string) $value);
+            if ($string !== '') {
+                return $string;
             }
         }
 
@@ -804,6 +834,61 @@ class NacionalProvider extends AbstractNFSeProvider implements NFSeNacionalCapab
         if ($obraNode->childNodes->length > 0) {
             $serv->appendChild($obraNode);
         }
+    }
+
+    /**
+     * @param array<string,mixed> $servico
+     */
+    private function appendBeneficioMunicipalGroup(\DOMDocument $dom, \DOMElement $tribMun, array $servico): void
+    {
+        $beneficio = is_array($servico['BM'] ?? null) ? $servico['BM'] : [];
+        $tpBm = $this->firstString([
+            $beneficio['tpBM'] ?? null,
+            $servico['tpBM'] ?? null,
+            $servico['tipo_beneficio_municipal'] ?? null,
+            $servico['benefit_type'] ?? null,
+        ]);
+        if (!in_array($tpBm, ['1', '2', '3'], true)) {
+            return;
+        }
+
+        $nBm = $this->onlyDigits((string) ($this->firstString([
+            $beneficio['nBM'] ?? null,
+            $servico['nBM'] ?? null,
+            $servico['benefit_code'] ?? null,
+            $servico['codigo_beneficio'] ?? null,
+            $servico['codigoBeneficio'] ?? null,
+        ]) ?? ''));
+        if (strlen($nBm) !== 14) {
+            return;
+        }
+
+        $percentualReducao = $this->firstPositiveDecimal([
+            $beneficio['pRedBCBM'] ?? null,
+            $servico['pRedBCBM'] ?? null,
+            $servico['iss_reduction_percent'] ?? null,
+            $servico['base_reduction_percent'] ?? null,
+        ]);
+        $valorReducao = $this->firstPositiveDecimal([
+            $beneficio['vRedBCBM'] ?? null,
+            $servico['vRedBCBM'] ?? null,
+            $servico['valor_reducao_bc_bm'] ?? null,
+        ]);
+        if ($percentualReducao === null && $valorReducao === null) {
+            return;
+        }
+
+        $ns = $this->getDpsNamespace();
+        $bm = $dom->createElementNS($ns, 'BM');
+        $tribMun->appendChild($bm);
+        $this->appendNodeDps($dom, $bm, 'tpBM', $tpBm);
+        $this->appendNodeDps($dom, $bm, 'nBM', $nBm);
+        if ($percentualReducao !== null) {
+            $this->appendNodeDps($dom, $bm, 'pRedBCBM', $this->formatDecimal($percentualReducao, 2));
+            return;
+        }
+
+        $this->appendNodeDps($dom, $bm, 'vRedBCBM', $this->formatDecimal((float) $valorReducao, 2));
     }
 
     protected function processarResposta(string $xmlResposta): array
@@ -1053,12 +1138,12 @@ class NacionalProvider extends AbstractNFSeProvider implements NFSeNacionalCapab
             $errors[] = 'tribISSQN deve ser 1, 2, 3 ou 4.';
         }
 
-        $tpRetIssqn = (string)($dados['servico']['tpRetISSQN'] ?? '1');
+        $tpRetIssqn = $this->resolveDpsIssRetentionCode((array)($dados['servico'] ?? []));
         if (!in_array($tpRetIssqn, ['1', '2', '3'], true)) {
             $errors[] = 'tpRetISSQN deve ser 1, 2 ou 3.';
         }
-        if (in_array($tribIssqn, ['2', '3', '4'], true) && $tpRetIssqn !== '1') {
-            $errors[] = 'tpRetISSQN deve ser 1 quando tribISSQN for 2, 3 ou 4.';
+        if (in_array($tribIssqn, ['2', '3', '4'], true) && $tpRetIssqn !== '2') {
+            $errors[] = 'tpRetISSQN deve ser 2 quando tribISSQN for 2, 3 ou 4.';
         }
 
         $aliquota = (float)($dados['servico']['aliquota'] ?? 0);
@@ -2036,6 +2121,47 @@ class NacionalProvider extends AbstractNFSeProvider implements NFSeNacionalCapab
     private function formatDecimal(float $value, int $decimals = 2): string
     {
         return number_format($value, $decimals, '.', '');
+    }
+
+    /**
+     * @param array<string,mixed> $servico
+     */
+    private function resolveDpsIssRetentionCode(array $servico): string
+    {
+        foreach (['tpRetISSQN', 'IssRetido', 'iss_retido', 'issRetido'] as $key) {
+            if (!array_key_exists($key, $servico)) {
+                continue;
+            }
+
+            $value = $servico[$key];
+            if (is_bool($value)) {
+                return $value ? '1' : '2';
+            }
+
+            if (!is_scalar($value)) {
+                continue;
+            }
+
+            $normalized = strtolower(trim((string) $value));
+            $converted = iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $normalized);
+            if ($converted !== false) {
+                $normalized = $converted;
+            }
+
+            if (in_array($normalized, ['1', '2', '3'], true)) {
+                return $normalized;
+            }
+
+            if (in_array($normalized, ['true', 't', 's', 'sim', 'yes', 'y', 'retido', 'r'], true)) {
+                return '1';
+            }
+
+            if (in_array($normalized, ['false', 'f', 'n', 'nao', 'no', '0', 'nao_retido', 'nao-retido'], true)) {
+                return '2';
+            }
+        }
+
+        return '2';
     }
 
     private function normalizeDpsAliquotaPercent(float $aliquota): float

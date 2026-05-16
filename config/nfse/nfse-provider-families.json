@@ -773,10 +773,10 @@
             "service.iss_withheld": {
                 "payload_path": "servico.tpRetISSQN",
                 "codes": {
-                    "true": "2",
-                    "false": "1"
+                    "true": "1",
+                    "false": "2"
                 },
-                "description": "NFSe Nacional usa 1 sem retenção e 2 com retenção pelo tomador."
+                "description": "NFSe Nacional usa 1 para ISS retido e 2 para ISS não retido."
             }
         },
         "services": {

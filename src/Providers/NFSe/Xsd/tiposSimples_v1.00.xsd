@@ -1104,8 +1104,8 @@
     <xs:annotation>
       <xs:documentation>
         Tipo de retencao do ISSQN:
-        1 - Não Retido;
-        2 - Retido pelo Tomador;
+        1 - Retido;
+        2 - Não Retido;
         3 - Retido pelo Intermediario;
       </xs:documentation>
     </xs:annotation>

@@ -46,7 +46,7 @@ final class NFSeProviderTranslationPolicy
 
         return is_scalar($value) && (string) $value !== ''
             ? (string) $value
-            : ($issRetido ? '2' : '1');
+            : ($issRetido ? '1' : '2');
     }
 
     /**
@@ -73,12 +73,10 @@ final class NFSeProviderTranslationPolicy
             'payload_path' => $layoutFamily === 'nacional' || $providerKey === ProviderRegistry::NFSE_NATIONAL_KEY
                 ? 'servico.tpRetISSQN'
                 : ($isBelem ? 'servico.tpRetISSQN' : 'servico.iss_retido'),
-            'codes' => $isBelem
-                ? ['true' => '1', 'false' => '2']
-                : ['true' => '2', 'false' => '1'],
+            'codes' => ['true' => '1', 'false' => '2'],
             'description' => $isBelem
                 ? 'Belém usa 1 para ISS retido e 2 para ISS não retido.'
-                : 'Padrão nacional: 1 sem retenção e 2 com retenção pelo tomador.',
+                : 'NFSe Nacional usa 1 para ISS retido e 2 para ISS não retido.',
         ];
     }
 

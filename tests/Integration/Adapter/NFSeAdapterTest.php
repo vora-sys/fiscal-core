@@ -31,6 +31,16 @@ final class NFSeAdapterTest extends TestCase
         $this->assertContains('cancelar_nfse', $info['supported_operations']);
     }
 
+    public function testDirectBelemProviderKeyUsesCurrentMunicipalProvider(): void
+    {
+        $adapter = new NFSeAdapter('BELEM_MUNICIPAL_2025');
+
+        $info = $adapter->getProviderInfo();
+
+        $this->assertSame('BELEM_MUNICIPAL_2025', $info['provider_key']);
+        $this->assertStringContainsString('BelemMunicipalProvider', $info['provider_class']);
+    }
+
     public function testManausUsesNacionalProvider(): void
     {
         $adapter = new NFSeAdapter('manaus');

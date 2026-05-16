@@ -8,6 +8,7 @@ use sabbajohn\FiscalCore\Contracts\NFSeImpressaoResultInterface;
 use sabbajohn\FiscalCore\Contracts\NFSeNacionalCapabilitiesInterface;
 use sabbajohn\FiscalCore\Contracts\NFSeProviderConfigInterface;
 use sabbajohn\FiscalCore\Facade\NFSeFacade;
+use sabbajohn\FiscalCore\Providers\NFSe\NacionalProvider;
 use sabbajohn\FiscalCore\Support\NFSeResultNormalizer;
 use Tests\Fakes\FakeNfseProvider;
 use PHPUnit\Framework\TestCase;
@@ -145,6 +146,26 @@ class NFSeAdapterFacadeNacionalTest extends TestCase
             'serie' => 'A',
             'tipo' => '1',
         ]);
+    }
+
+    public function test_facade_preserva_dps_em_metadata_quando_emissao_nacional_falha(): void
+    {
+        $provider = new NacionalProvider($this->buildNacionalConfig(function () {
+            throw new \RuntimeException('HTTP 400 na operação /nfse | resposta: {"erros":[{"Codigo":"E36"}]}');
+        }));
+        $facade = new NFSeFacade('nfse_nacional', new NFSeAdapter('nfse_nacional', $provider));
+
+        $response = $facade->emitir($this->dadosNacionalValidos());
+
+        $this->assertTrue($response->isError());
+        $metadata = $response->getMetadata();
+        $this->assertStringContainsString('<DPS', (string) ($metadata['emissao']['artifacts']['request_xml'] ?? ''));
+        $this->assertStringContainsString('<infDPS', (string) ($metadata['emissao']['artifacts']['request_xml'] ?? ''));
+        $this->assertSame('error', $metadata['emissao']['parsed_response']['status'] ?? null);
+        $this->assertSame(
+            'HTTP 400 na operação /nfse | resposta: {"erros":[{"Codigo":"E36"}]}',
+            $response->getError()
+        );
     }
 
     public function test_facade_retorna_fiscal_response_para_operacoes_nacionais(): void
@@ -465,5 +486,58 @@ class NFSeAdapterFacadeNacionalTest extends TestCase
         $this->assertSame('NFSE_MANAUS_LEGACY_PERIOD', $response->getErrorCode());
         $this->assertSame('2025-12-31', $response->getMetadata('reference_date'));
         $this->assertStringContainsString('2026-01-01', (string) $response->getError());
+    }
+
+    private function buildNacionalConfig(callable $httpClient): array
+    {
+        return [
+            'codigo_municipio' => '3550308',
+            'versao' => '1.00',
+            'ambiente' => 'homologacao',
+            'api_base_url' => 'https://api.local',
+            'timeout' => 10,
+            'auth' => ['token' => 'abc'],
+            'endpoints' => [
+                'emitir' => '/nfse',
+                'consultar' => '/nfse/{id}',
+                'cancelar' => '/nfse/{id}/eventos',
+                'substituir' => '/nfse',
+                'consultar_rps' => '/nfse/consultar-rps',
+                'consultar_lote' => '/nfse/consultar-lote',
+                'baixar_xml' => '/nfse/download/xml',
+                'baixar_danfse' => '/danfse/{chave}',
+            ],
+            'operation_methods' => [
+                'emitir' => 'POST',
+                'consultar' => 'GET',
+                'cancelar' => 'POST',
+                'substituir' => 'POST',
+            ],
+            'http_client' => $httpClient,
+            'cache_dir' => sys_get_temp_dir() . '/fiscal-core-provider-' . uniqid(),
+        ];
+    }
+
+    private function dadosNacionalValidos(): array
+    {
+        return [
+            'prestador' => [
+                'cnpj' => '11.222.333/0001-81',
+                'inscricaoMunicipal' => '12345',
+            ],
+            'tomador' => [
+                'documento' => '12345678901',
+                'razaoSocial' => 'Tomador Teste',
+            ],
+            'servico' => [
+                'codigo' => '0107',
+                'discriminacao' => 'Servico de desenvolvimento',
+                'aliquota' => 0.02,
+            ],
+            'valor_servicos' => 1000.00,
+            'rps_numero' => '10',
+            'rps_serie' => 'A1',
+            'rps_tipo' => '1',
+        ];
     }
 }

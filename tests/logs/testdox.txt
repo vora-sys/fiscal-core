@@ -1,16 +1,15 @@
-NFSe Belem Routing
- [x] Belem mei routes automatically to national provider
- [x] Belem rejects emission when mei classification is missing
- [x] Any municipal provider routes mei emission to national provider
- [x] Belem municipal consult and cancel use municipal provider capabilities
- [x] Belem facade includes municipal operation metadata
- [x] Belem facade returns error when cancellation is rejected
- [x] Belem facade consultar by chave returns official url
- [x] Belem facade emitir completo falls back to consultar lote and returns official url
- [x] Belem facade emitir completo falls back to consultar por rps when lote has no nfse and returns official url
- [x] Belem facade emitir completo returns partial when consultation does not resolve nfse
- [x] Belem facade consultar disponibilidade by protocolo returns official url
- [x] Belem facade consultar disponibilidade falls back to rps when lote has no nfse
- [x] Belem facade consultar disponibilidade returns pendente when no nfse is available
- [x] Belem facade gerar danfse renders local pdf from authorized xml
+Nacional Provider (Tests\Unit\NFSe\NacionalProvider)
+ [x] Emitir monta xml e envia para endpoint correto
+ [x] Emitir inclui irrf retido na tributacao nacional
+ [x] Dps nacional inclui beneficio municipal quando payload tem reducao
+ [x] Emitir normaliza iss retido booleano para codigo sefin
+ [x] Emitir preserva dps nos artifacts quando transporte falha
+ [x] Cancelar retorna true quando resposta indica sucesso
+ [x] Consultar retorno compnfse com xml real
+ [x] Consultar por rps valida campos obrigatorios
+ [x] Emitir resolve rota por servico configurado
+ [x] Dps nacional omite codigo municipal fora do padrao do schema
+ [x] Catalogo resolve rota por servico configurado
+ [x] Consulta cnc resolve rota por servico
+ [x] Consulta cnc contribuinte e habilitacao
 

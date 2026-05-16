@@ -47,7 +47,89 @@ class NacionalProviderTest extends TestCase
         $this->assertIsArray($payload);
         $xml = gzdecode((string) base64_decode((string) $payload['dpsXmlGZipB64']));
         $this->assertIsString($xml);
-        $this->assertStringContainsString('<tribNac><vRetIRRF>150.00</vRetIRRF></tribNac>', $xml);
+        $this->assertStringContainsString('<tribFed><vRetIRRF>150.00</vRetIRRF></tribFed>', $xml);
+        $this->assertLessThan(
+            strpos($xml, '<pAliq>'),
+            strpos($xml, '<tpRetISSQN>'),
+            'tpRetISSQN must be emitted before pAliq in the national DPS schema order.'
+        );
+    }
+
+    public function test_dps_nacional_inclui_beneficio_municipal_quando_payload_tem_reducao(): void
+    {
+        $provider = new NacionalProvider($this->buildConfig(function () {
+            return '<Resposta><Sucesso>true</Sucesso></Resposta>';
+        }));
+
+        $dados = $this->dadosValidos();
+        $dados['servico']['tpBM'] = '2';
+        $dados['servico']['nBM'] = '15014020000001';
+        $dados['servico']['pRedBCBM'] = 50;
+
+        $xml = $provider->gerarXmlDpsPreview($dados);
+
+        $this->assertIsString($xml);
+        $this->assertStringContainsString('<BM><tpBM>2</tpBM><nBM>15014020000001</nBM><pRedBCBM>50.00</pRedBCBM></BM>', $xml);
+        $this->assertLessThan(
+            strpos($xml, '<BM>'),
+            strpos($xml, '<tribISSQN>'),
+            'BM must be emitted after tribISSQN in the national DPS schema order.'
+        );
+        $this->assertLessThan(
+            strpos($xml, '<tpRetISSQN>'),
+            strpos($xml, '<BM>'),
+            'BM must be emitted before tpRetISSQN in the national DPS schema order.'
+        );
+    }
+
+    public function test_emitir_normaliza_iss_retido_booleano_para_codigo_sefin(): void
+    {
+        $calls = [];
+        $provider = new NacionalProvider($this->buildConfig(function ($method, $path, $body, $headers = []) use (&$calls) {
+            $calls[] = compact('method', 'path', 'body');
+            return '<Resposta><Sucesso>true</Sucesso></Resposta>';
+        }));
+
+        $dados = $this->dadosValidos();
+        $dados['servico']['iss_retido'] = true;
+        $provider->emitir($dados);
+
+        $payload = json_decode((string) $calls[0]['body'], true);
+        $this->assertIsArray($payload);
+        $xml = gzdecode((string) base64_decode((string) $payload['dpsXmlGZipB64']));
+        $this->assertIsString($xml);
+        $this->assertStringContainsString('<tpRetISSQN>1</tpRetISSQN>', $xml);
+
+        $calls = [];
+        $dados = $this->dadosValidos();
+        $dados['servico']['iss_retido'] = false;
+        $provider->emitir($dados);
+
+        $payload = json_decode((string) $calls[0]['body'], true);
+        $this->assertIsArray($payload);
+        $xml = gzdecode((string) base64_decode((string) $payload['dpsXmlGZipB64']));
+        $this->assertIsString($xml);
+        $this->assertStringContainsString('<tpRetISSQN>2</tpRetISSQN>', $xml);
+    }
+
+    public function test_emitir_preserva_dps_nos_artifacts_quando_transporte_falha(): void
+    {
+        $provider = new NacionalProvider($this->buildConfig(function () {
+            throw new \RuntimeException('HTTP 400 na operação /nfse | resposta: {"erros":[{"Codigo":"E36"}]}');
+        }));
+
+        try {
+            $provider->emitir($this->dadosValidos());
+            $this->fail('A emissão deveria propagar a falha de transporte.');
+        } catch (\RuntimeException $e) {
+            $this->assertStringContainsString('HTTP 400', $e->getMessage());
+        }
+
+        $artifacts = $provider->getLastOperationArtifacts();
+        $this->assertSame('emitir', $artifacts['operation']);
+        $this->assertStringContainsString('<DPS', (string) $artifacts['request_xml']);
+        $this->assertStringContainsString('<infDPS', (string) $artifacts['request_xml']);
+        $this->assertSame('error', $artifacts['parsed_response']['status'] ?? null);
     }
 
     public function test_cancelar_retorna_true_quando_resposta_indica_sucesso(): void

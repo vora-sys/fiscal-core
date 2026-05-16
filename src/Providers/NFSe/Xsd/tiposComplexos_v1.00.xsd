@@ -1255,7 +1255,7 @@
           </xs:documentation>
         </xs:annotation>
       </xs:element>
-      <xs:element name="tribNac" type="TCTribNacional" minOccurs="0">
+      <xs:element name="tribFed" type="TCTribNacional" minOccurs="0">
         <xs:annotation>
           <xs:documentation>
             Grupo de informações de outros tributos relacionados ao serviço prestado
@@ -1494,24 +1494,6 @@
           </xs:documentation>
         </xs:annotation>
       </xs:element>
-      <xs:element name="BM" type="TCBeneficioMunicipal" minOccurs="0">
-        <xs:annotation>
-          <xs:documentation>
-            Tributação do ISSQN sobre o serviço prestado:
-            1 - Operação tributável;
-            2 - Exportação de serviço;
-            3 - Não Incidência;
-            4 - Imunidade;
-          </xs:documentation>
-        </xs:annotation>
-      </xs:element>
-      <xs:element name="exigSusp" type="TCExigSuspensa" minOccurs="0">
-        <xs:annotation>
-          <xs:documentation>
-            Informações para a suspensão da Exigibilidade do ISSQN
-          </xs:documentation>
-        </xs:annotation>
-      </xs:element>
       <xs:element name="tpImunidade" type="TSTipoImunidadeISSQN" minOccurs="0">
         <xs:annotation>
           <xs:documentation>
@@ -1524,12 +1506,21 @@
           </xs:documentation>
         </xs:annotation>
       </xs:element>
-      <xs:element name="pAliq" type="TSDec1V2" minOccurs="0">
+      <xs:element name="exigSusp" type="TCExigSuspensa" minOccurs="0">
         <xs:annotation>
           <xs:documentation>
-            Valor da alíquota (%) do serviço prestado relativo ao município sujeito ativo (município de incidência) do ISSQN.
-            Se o município de incidência pertence ao Sistema Nacional NFS-e a alíquota estará parametrizada e, portanto, será fornecida pelo sistema.
-            Se o município de incidência não pertence ao Sistema Nacional NFS-e a alíquota não estará parametrizada e, por isso, deverá ser fornecida pelo emitente.
+            Informações para a suspensão da Exigibilidade do ISSQN
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="BM" type="TCBeneficioMunicipal" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>
+            Tributação do ISSQN sobre o serviço prestado:
+            1 - Operação tributável;
+            2 - Exportação de serviço;
+            3 - Não Incidência;
+            4 - Imunidade;
           </xs:documentation>
         </xs:annotation>
       </xs:element>
@@ -1537,9 +1528,18 @@
         <xs:annotation>
           <xs:documentation>
             Tipo de retencao do ISSQN:
-            1 - Não Retido;
-            2 - Retido pelo Tomador;
+            1 - Retido;
+            2 - Não Retido;
             3 - Retido pelo Intermediario;
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="pAliq" type="TSDec1V2" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>
+            Valor da alíquota (%) do serviço prestado relativo ao município sujeito ativo (município de incidência) do ISSQN.
+            Se o município de incidência pertence ao Sistema Nacional NFS-e a alíquota estará parametrizada e, portanto, será fornecida pelo sistema.
+            Se o município de incidência não pertence ao Sistema Nacional NFS-e a alíquota não estará parametrizada e, por isso, deverá ser fornecida pelo emitente.
           </xs:documentation>
         </xs:annotation>
       </xs:element>

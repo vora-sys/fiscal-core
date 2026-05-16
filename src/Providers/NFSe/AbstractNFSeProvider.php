@@ -39,6 +39,16 @@ abstract class AbstractNFSeProvider implements NFSeProviderConfigInterface
      * @return array Dados normalizados
      */
     abstract protected function processarResposta(string $xmlResposta): array;
+
+    /**
+     * Gera o XML de envio sem transmitir para o webservice.
+     */
+    public function gerarXmlEnvioPreview(array $dados): string
+    {
+        $this->validarDados($dados);
+
+        return $this->montarXmlRps($dados);
+    }
     
     /**
      * {@inheritDoc}

@@ -51,22 +51,21 @@
         </style>
     </head>
     <body>
-        <h2>NFSe Belem Routing</h2>
+        <h2>Nacional Provider (Tests\Unit\NFSe\NacionalProvider)</h2>
         <ul>
-            <li class="success">Belem mei routes automatically to national provider</li>
-            <li class="success">Belem rejects emission when mei classification is missing</li>
-            <li class="success">Any municipal provider routes mei emission to national provider</li>
-            <li class="success">Belem municipal consult and cancel use municipal provider capabilities</li>
-            <li class="success">Belem facade includes municipal operation metadata</li>
-            <li class="success">Belem facade returns error when cancellation is rejected</li>
-            <li class="success">Belem facade consultar by chave returns official url</li>
-            <li class="success">Belem facade emitir completo falls back to consultar lote and returns official url</li>
-            <li class="success">Belem facade emitir completo falls back to consultar por rps when lote has no nfse and returns official url</li>
-            <li class="success">Belem facade emitir completo returns partial when consultation does not resolve nfse</li>
-            <li class="success">Belem facade consultar disponibilidade by protocolo returns official url</li>
-            <li class="success">Belem facade consultar disponibilidade falls back to rps when lote has no nfse</li>
-            <li class="success">Belem facade consultar disponibilidade returns pendente when no nfse is available</li>
-            <li class="success">Belem facade gerar danfse renders local pdf from authorized xml</li>
+            <li class="success">Emitir monta xml e envia para endpoint correto</li>
+            <li class="success">Emitir inclui irrf retido na tributacao nacional</li>
+            <li class="success">Dps nacional inclui beneficio municipal quando payload tem reducao</li>
+            <li class="success">Emitir normaliza iss retido booleano para codigo sefin</li>
+            <li class="success">Emitir preserva dps nos artifacts quando transporte falha</li>
+            <li class="success">Cancelar retorna true quando resposta indica sucesso</li>
+            <li class="success">Consultar retorno compnfse com xml real</li>
+            <li class="success">Consultar por rps valida campos obrigatorios</li>
+            <li class="success">Emitir resolve rota por servico configurado</li>
+            <li class="success">Dps nacional omite codigo municipal fora do padrao do schema</li>
+            <li class="success">Catalogo resolve rota por servico configurado</li>
+            <li class="success">Consulta cnc resolve rota por servico</li>
+            <li class="success">Consulta cnc contribuinte e habilitacao</li>
         </ul>
     </body>
 </html>

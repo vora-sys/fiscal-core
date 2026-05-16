@@ -51,7 +51,29 @@ class NFSeAdapter implements NotaServicoInterface
     {
         [$providerKey, $provider, $routingMode] = $this->resolveProviderForEmission($dados);
 
-        $result = $provider->emitir($dados);
+        try {
+            $result = $provider->emitir($dados);
+        } catch (\Throwable $e) {
+            $info = [
+                'effective_provider_key' => $providerKey,
+                'effective_provider_class' => get_class($provider),
+                'routing_mode' => $routingMode,
+                'parsed_response' => $provider instanceof NFSeOperationalIntrospectionInterface
+                    ? $provider->getLastResponseData()
+                    : null,
+                'artifacts' => $provider instanceof NFSeOperationalIntrospectionInterface
+                    ? $provider->getLastOperationArtifacts()
+                    : null,
+                'exception' => [
+                    'class' => get_class($e),
+                    'message' => $e->getMessage(),
+                ],
+            ];
+            $this->lastEmissionInfo = $info;
+            $this->lastOperationInfo = ['operation' => 'emitir'] + $info;
+
+            throw $e;
+        }
 
         $info = [
             'effective_provider_key' => $providerKey,
@@ -209,6 +231,35 @@ class NFSeAdapter implements NotaServicoInterface
     public function gerarXmlDpsPreview(array $payload): ?string
     {
         return $this->requireNacionalCapabilities()->gerarXmlDpsPreview($payload);
+    }
+
+    public function gerarXmlEnvioPreview(array $payload): ?string
+    {
+        [$providerKey, $provider, $routingMode] = $this->resolveProviderForEmission($payload);
+
+        if ($provider instanceof NFSeNacionalCapabilitiesInterface) {
+            $xml = $provider->gerarXmlDpsPreview($payload);
+        } elseif (method_exists($provider, 'gerarXmlEnvioPreview')) {
+            /** @var callable $callable */
+            $callable = [$provider, 'gerarXmlEnvioPreview'];
+            $xml = $callable($payload);
+        } else {
+            throw new \RuntimeException(
+                "Provider '{$providerKey}' não suporta preview do XML de envio."
+            );
+        }
+
+        $this->lastOperationInfo = [
+            'operation' => 'preview_xml_envio',
+            'effective_provider_key' => $providerKey,
+            'effective_provider_class' => get_class($provider),
+            'routing_mode' => $routingMode,
+            'artifacts' => [
+                'request_xml_preview' => $xml,
+            ],
+        ];
+
+        return $xml;
     }
 
     public function validarXmlDps(array $payload): array

@@ -20,6 +20,11 @@ final class NFSeProviderResolver
             return self::NATIONAL_KEY;
         }
 
+        $providerFamilyKey = $this->catalog->resolveProviderFamilyKey((string) $input);
+        if ($providerFamilyKey !== null) {
+            return $providerFamilyKey;
+        }
+
         $resolved = $this->catalog->resolveMunicipio($input);
 
         return $resolved['provider_family_key'] ?? self::NATIONAL_KEY;
@@ -34,6 +39,18 @@ final class NFSeProviderResolver
                 'municipio_ignored' => false,
                 'municipio_resolved' => null,
                 'routing_mode' => 'nacional',
+                'warnings' => [],
+            ];
+        }
+
+        $providerFamilyKey = $this->catalog->resolveProviderFamilyKey((string) $input);
+        if ($providerFamilyKey !== null) {
+            return [
+                'provider_key' => $providerFamilyKey,
+                'municipio_input' => $input,
+                'municipio_ignored' => false,
+                'municipio_resolved' => null,
+                'routing_mode' => $providerFamilyKey === self::NATIONAL_KEY ? 'nacional' : 'provider_key',
                 'warnings' => [],
             ];
         }

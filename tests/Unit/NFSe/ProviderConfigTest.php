@@ -162,8 +162,8 @@ final class ProviderConfigTest extends TestCase
         $this->assertSame('nfse_nacional_policy', $data['form_policy']['policy_source']);
         $this->assertNotContains('service.municipal_code', $data['form_policy']['required_fields']);
         $this->assertContains('service.nbs', $data['form_policy']['required_fields']);
-        $this->assertSame('2', $data['translation_policy']['field_translations']['service.iss_withheld']['codes']['true']);
-        $this->assertSame('1', $data['translation_policy']['field_translations']['service.iss_withheld']['codes']['false']);
+        $this->assertSame('1', $data['translation_policy']['field_translations']['service.iss_withheld']['codes']['true']);
+        $this->assertSame('2', $data['translation_policy']['field_translations']['service.iss_withheld']['codes']['false']);
     }
 
     public function testFacadeHomologationReadinessUsesNationalProviderConfigForManaus(): void
