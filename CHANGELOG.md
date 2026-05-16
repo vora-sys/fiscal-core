@@ -1,5 +1,16 @@
 # Changelog
 
+## v1.2.3 - 2026-05-16
+
+### Added
+- Politicas de formulario e traducao de provider NFSe para expor campos/labels por familia municipal.
+- Cobertura de testes para provider ABRASF v2, roteamento Belem e facade/adapters NFSe.
+
+### Changed
+- Evolucao do fluxo NFSe ABRASF v2 com normalizacao de payloads, assinatura/serializacao XML e suporte municipal expandido.
+- Ajustes no provider municipal de Belem e no catalogo de familias NFSe.
+- Melhorias na resolucao de providers e normalizacao de resultados NFSe.
+
 ## v1.2.2 - 2026-05-11
 
 ### Changed
