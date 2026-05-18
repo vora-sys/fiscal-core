@@ -24,7 +24,7 @@
 ## 📦 Instalação via Composer
 
 ```bash
-composer require fiscal/fiscal-core
+composer require sabbajohn/fiscal-core
 ```
 
 **Desenvolvimento local:**
