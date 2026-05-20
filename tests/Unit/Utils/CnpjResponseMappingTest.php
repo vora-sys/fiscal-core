@@ -13,7 +13,6 @@ class CnpjResponseMappingTest extends TestCase
         $adapter = new BrasilAPIAdapter();
         $reflection = new \ReflectionClass($adapter);
         $method = $reflection->getMethod('normalizeResponse');
-        $method->setAccessible(true);
 
         $normalized = $method->invoke($adapter, [
             'data' => [
@@ -31,7 +30,6 @@ class CnpjResponseMappingTest extends TestCase
         $facade = new UtilsFacade();
         $reflection = new \ReflectionClass($facade);
         $method = $reflection->getMethod('mapearConsultaCNPJ');
-        $method->setAccessible(true);
 
         $mapped = $method->invoke($facade, '50350496000100', [
             'cnpj' => '50350496000100',

@@ -99,7 +99,7 @@ ENV);
         $this->assertStringContainsString('PublicaProvider', $result['provider']['class']);
         $this->assertSame('success', $result['parsed_response']['status']);
         $this->assertSame('Tomador Mock Joinville Ltda', $result['tomador']['razao_social']);
-        $this->assertStringContainsString('<EnviarLoteRpsEnvio', (string) $result['request_xml']);
+        $this->assertStringContainsString('<GerarNfseEnvio', (string) $result['request_xml']);
         $this->assertNotEmpty($result['resolved_paths']['FISCAL_CERT_PATH'] ?? null);
     }
 
@@ -384,8 +384,8 @@ ENV);
             'https://nfsehomologacao.joinville.sc.gov.br/nfse_integracao/Services',
             $transport->calls[0]['endpoint']
         );
-        $this->assertStringContainsString('<svc:RecepcionarLoteRps>', (string) $result['soap_envelope']);
-        $this->assertStringContainsString('<EnviarLoteRpsEnvio', (string) $result['request_xml']);
+        $this->assertStringContainsString('<svc:GerarNfse>', (string) $result['soap_envelope']);
+        $this->assertStringContainsString('<GerarNfseEnvio', (string) $result['request_xml']);
         $this->assertStringContainsString('<Cnpj>83188342000104</Cnpj>', (string) $result['request_xml']);
         $this->assertStringContainsString('<InscricaoMunicipal>987654321</InscricaoMunicipal>', (string) $result['request_xml']);
     }

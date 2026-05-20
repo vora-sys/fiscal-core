@@ -150,7 +150,7 @@ function manausNacionalBuildPayload(array $options): array
     $serie = str_pad('1', 5, '0', STR_PAD_LEFT);
     $numero = str_pad(date('His'), 15, '0', STR_PAD_LEFT);
     $dpsId = 'DPS13026032' . $cnpj . $serie . $numero;
-    $nbs="120018900";
+    $nbs = '120018900';
 
     $cTribNac = (string) ($options['c_trib_nac'] ?? '140101');
     $payload = [
@@ -176,8 +176,9 @@ function manausNacionalBuildPayload(array $options): array
             'razaoSocial' => (string) ($options['tomador_nome'] ?? 'TOMADOR DE TESTE MANAUS'),
         ],
         'servico' => [
-            'codigo' => $nbs,
+            'codigo' => $cTribNac,
             'cTribNac' => $cTribNac,
+            'cNBS' => $nbs,
             'descricao' => 'Servico de homologacao NFSe nacional para Manaus.',
             'cLocPrestacao' => '1302603',
             'codigo_municipio' => '1302603',

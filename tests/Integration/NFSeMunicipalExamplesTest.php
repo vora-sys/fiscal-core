@@ -27,8 +27,9 @@ final class NFSeMunicipalExamplesTest extends TestCase
 
     private function runScript(string $relativePath): string
     {
-        $script = dirname(__DIR__, 2) . '/' . $relativePath;
-        $command = sprintf('php %s 2>&1', escapeshellarg($script));
+        $root = dirname(__DIR__, 2);
+        $script = $root . '/' . $relativePath;
+        $command = sprintf('env -u OPENSSL_CONF php %s 2>&1', escapeshellarg($script));
         exec($command, $lines, $exitCode);
 
         $output = implode(PHP_EOL, $lines);

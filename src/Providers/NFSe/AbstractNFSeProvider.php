@@ -110,9 +110,10 @@ abstract class AbstractNFSeProvider implements NFSeProviderConfigInterface
      */
     public function getWsdlUrl(): string
     {
+        $defaultWsdl = $this->config['wsdl'] ?? '';
         $urls = [
-            'producao' => $this->config['wsdl_producao'] ?? $this->config['wsdl'],
-            'homologacao' => $this->config['wsdl_homologacao'] ?? $this->config['wsdl']
+            'producao' => $this->config['wsdl_producao'] ?? $defaultWsdl,
+            'homologacao' => $this->config['wsdl_homologacao'] ?? $defaultWsdl
         ];
         
         return (string) ($urls[$this->ambiente] ?? '');

@@ -148,8 +148,13 @@ class UtilsFacade
             }
 
             return array_map(function($banco) {
+                $codigo = (string) ($banco['code'] ?? '');
+                if (is_numeric($codigo)) {
+                    $codigo = str_pad($codigo, 3, '0', STR_PAD_LEFT);
+                }
+
                 return [
-                    'codigo' => $banco['code'] ?? '',
+                    'codigo' => $codigo,
                     'nome' => $banco['name'] ?? '',
                     'nome_completo' => $banco['fullName'] ?? '',
                     'ispb' => $banco['ispb'] ?? ''
@@ -170,8 +175,9 @@ class UtilsFacade
                 throw new \Exception('Erro ao consultar bancos');
             }
 
-            $banco = array_filter($bancos->getData(), function($b) use ($codigo) {
-                return $b['codigo'] === $codigo;
+            $codigoNormalizado = str_pad(preg_replace('/\D/', '', $codigo) ?? '', 3, '0', STR_PAD_LEFT);
+            $banco = array_filter($bancos->getData(), function($b) use ($codigoNormalizado) {
+                return $b['codigo'] === $codigoNormalizado;
             });
 
             if (empty($banco)) {

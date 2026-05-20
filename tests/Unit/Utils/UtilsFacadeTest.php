@@ -115,21 +115,20 @@ class UtilsFacadeTest extends TestCase
     {
         $resultado = $this->utils->listarBancos();
 
-        // Se API externa estiver disponível
-        if ($resultado->isSuccess()) {
-            $bancos = $resultado->getData();
-            $this->assertIsArray($bancos);
-            
-            if (!empty($bancos)) {
-                $banco = $bancos[0];
-                $this->assertArrayHasKey('codigo', $banco);
-                $this->assertArrayHasKey('nome', $banco);
-                
-                // Deve ter pelo menos os bancos principais
-                $codigos = array_column($bancos, 'codigo');
-                $this->assertContains('001', $codigos); // Banco do Brasil
-            }
+        if (!$resultado->isSuccess()) {
+            $this->markTestSkipped('BrasilAPI indisponível para listar bancos.');
         }
+
+        $bancos = $resultado->getData();
+        $this->assertIsArray($bancos);
+        $this->assertNotEmpty($bancos);
+
+        $banco = $bancos[0];
+        $this->assertArrayHasKey('codigo', $banco);
+        $this->assertArrayHasKey('nome', $banco);
+
+        $codigos = array_column($bancos, 'codigo');
+        $this->assertContains('001', $codigos);
     }
 
     /** @test */
@@ -137,11 +136,13 @@ class UtilsFacadeTest extends TestCase
     {
         $resultado = $this->utils->consultarBanco('001'); // Banco do Brasil
 
-        if ($resultado->isSuccess()) {
-            $banco = $resultado->getData();
-            $this->assertEquals('001', $banco['codigo']);
-            $this->assertNotEmpty($banco['nome']);
+        if (!$resultado->isSuccess()) {
+            $this->markTestSkipped('BrasilAPI indisponível para consultar banco.');
         }
+
+        $banco = $resultado->getData();
+        $this->assertEquals('001', $banco['codigo']);
+        $this->assertNotEmpty($banco['nome']);
     }
 
     /** @test */
@@ -184,17 +185,18 @@ class UtilsFacadeTest extends TestCase
         foreach ($ufs_teste as $uf) {
             $resultado = $this->utils->listarMunicipios($uf);
             
-            if ($resultado->isSuccess()) {
-                $municipios = $resultado->getData();
-                $this->assertIsArray($municipios);
-                
-                if (!empty($municipios)) {
-                    $municipio = $municipios[0];
-                    $this->assertArrayHasKey('codigo_ibge', $municipio);
-                    $this->assertArrayHasKey('nome', $municipio);
-                    $this->assertEquals($uf, $municipio['uf']);
-                }
+            if (!$resultado->isSuccess()) {
+                $this->markTestSkipped("BrasilAPI indisponível para listar municípios de {$uf}.");
             }
+
+            $municipios = $resultado->getData();
+            $this->assertIsArray($municipios);
+            $this->assertNotEmpty($municipios);
+
+            $municipio = $municipios[0];
+            $this->assertArrayHasKey('codigo_ibge', $municipio);
+            $this->assertArrayHasKey('nome', $municipio);
+            $this->assertEquals($uf, $municipio['uf']);
         }
     }
 

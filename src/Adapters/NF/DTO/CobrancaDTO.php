@@ -116,12 +116,11 @@ class CobrancaDTO
             
             // Tolerância maior para XMLs importados (pode haver arredondamentos)
             if (abs($somaParc - $valorEsperado) > 0.10) {
-                // Validação relaxada - diferenças pequenas são comuns em XMLs reais
-                // $errors[] = sprintf(
-                //     'Soma das duplicatas (%.2f) difere do valor da fatura (%.2f)',
-                //     $somaParc,
-                //     $valorEsperado
-                // );
+                $errors[] = sprintf(
+                    'Soma das duplicatas (%.2f) difere do valor da fatura (%.2f)',
+                    $somaParc,
+                    $valorEsperado
+                );
             }
         }
         
