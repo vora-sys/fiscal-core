@@ -35,13 +35,16 @@ files/*
 
 .vscode/settings.json
 .phpunit.cache/test-results
-tests/logs/testdox.txt
-tests/logs/testdox.html
+tests/.DS_Store
+tests/**/.DS_Store
+tests/logs/*
 
 
 Uninfe
 .phpunit.cache/*
 coverage-html/*
+tmp/*
+!tmp/.gitkeep
 examples/producao/saida/*
 platform-api/*
 docs/Agroam/*
