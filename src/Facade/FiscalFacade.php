@@ -178,9 +178,9 @@ class FiscalFacade
     /**
      * Gera DANFCE (PDF da NFCe)
      */
-    public function gerarDanfce(string $xmlNfce): FiscalResponse
+    public function gerarDanfce(string $xmlNfce, array $context = []): FiscalResponse
     {
-        return $this->impressao->gerarDanfce($xmlNfce);
+        return $this->impressao->gerarDanfce($xmlNfce, $context);
     }
 
     // ===== OPERAÇÕES DE TRIBUTAÇÃO =====

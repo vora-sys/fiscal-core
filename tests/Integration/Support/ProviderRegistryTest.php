@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use sabbajohn\FiscalCore\Providers\NFSe\Municipal\BelemMunicipalProvider;
+use sabbajohn\FiscalCore\Providers\NFSe\Municipal\AbrasfSharedProvider;
 use sabbajohn\FiscalCore\Providers\NFSe\Municipal\IsswebProvider;
 use sabbajohn\FiscalCore\Providers\NFSe\Municipal\PublicaProvider;
 use sabbajohn\FiscalCore\Providers\NFSe\NacionalProvider;
@@ -39,6 +40,25 @@ final class ProviderRegistryTest extends TestCase
         $this->assertInstanceOf(NacionalProvider::class, $provider);
     }
 
+    public function testGetByMunicipioSaoLuisReturnsNacionalProvider(): void
+    {
+        $registry = ProviderRegistry::getInstance();
+
+        $provider = $registry->getByMunicipio('sao-luis');
+
+        $this->assertInstanceOf(NacionalProvider::class, $provider);
+    }
+
+    public function testGetByMunicipioCampoGrandeReturnsAbrasfSharedProvider(): void
+    {
+        $registry = ProviderRegistry::getInstance();
+
+        $provider = $registry->getByMunicipio('campo-grande');
+
+        $this->assertInstanceOf(AbrasfSharedProvider::class, $provider);
+        $this->assertSame('5002704', $provider->getCodigoMunicipio());
+    }
+
     public function testGetByMunicipioPresidenteFigueiredoReturnsIsswebProvider(): void
     {
         $registry = ProviderRegistry::getInstance();
@@ -46,6 +66,7 @@ final class ProviderRegistryTest extends TestCase
         $provider = $registry->getByMunicipio('presidente-figueiredo');
 
         $this->assertInstanceOf(IsswebProvider::class, $provider);
+        $this->assertSame('1303536', $provider->getCodigoMunicipio());
         $this->assertSame(
             'https://servicosweb.pmpf.am.gov.br/issweb/validacao?numero={numero}&chave={chave_validacao}',
             $provider->getConfig()['official_validation_url_template'] ?? null

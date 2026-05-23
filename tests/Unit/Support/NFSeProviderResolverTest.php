@@ -49,14 +49,157 @@ final class NFSeProviderResolverTest extends TestCase
         $this->assertSame(NFSeProviderResolver::NATIONAL_KEY, $resolver->resolveKey('manaus'));
     }
 
-    public function testResolvePresidenteFigueiredoToIssweb(): void
+    public function testResolveRioBrancoToNational(): void
+    {
+        $resolver = $this->makeResolver();
+
+        $this->assertSame(NFSeProviderResolver::NATIONAL_KEY, $resolver->resolveKey('rio-branco'));
+    }
+
+    public function testResolveAnanindeuaToNational(): void
+    {
+        $resolver = $this->makeResolver();
+
+        $this->assertSame(NFSeProviderResolver::NATIONAL_KEY, $resolver->resolveKey('ananindeua'));
+    }
+
+    public function testResolveMarabaToNational(): void
+    {
+        $resolver = $this->makeResolver();
+
+        $this->assertSame(NFSeProviderResolver::NATIONAL_KEY, $resolver->resolveKey('maraba'));
+    }
+
+    public function testResolveSaoLuisToNational(): void
+    {
+        $resolver = $this->makeResolver();
+
+        $this->assertSame(NFSeProviderResolver::NATIONAL_KEY, $resolver->resolveKey('sao-luis'));
+    }
+
+    public function testResolveCampoGrandeToAbrasfShared(): void
+    {
+        $resolver = $this->makeResolver();
+
+        $this->assertSame('ABRASF_SHARED', $resolver->resolveKey('campo-grande'));
+    }
+
+    public function testResolveJoaoPessoaToAbrasfShared(): void
+    {
+        $resolver = $this->makeResolver();
+
+        $this->assertSame('ABRASF_SHARED', $resolver->resolveKey('joao-pessoa'));
+    }
+
+    public function testResolveNatalToNational(): void
+    {
+        $resolver = $this->makeResolver();
+
+        $this->assertSame(NFSeProviderResolver::NATIONAL_KEY, $resolver->resolveKey('natal'));
+    }
+
+    public function testResolveCampoAlegreScToIpm(): void
+    {
+        $resolver = $this->makeResolver();
+
+        $this->assertSame('IPM', $resolver->resolveKey('campo-alegre'));
+    }
+
+    public function testResolveJaraguaShortAliasToNationalJaraguaDoSul(): void
+    {
+        $resolver = $this->makeResolver();
+
+        $this->assertSame(NFSeProviderResolver::NATIONAL_KEY, $resolver->resolveKey('jaragua'));
+    }
+
+    public function testResolveNorthCoastScMunicipios(): void
+    {
+        $resolver = $this->makeResolver();
+
+        $expected = [
+            'itajai' => 'PUBLICA',
+            'barra-do-sul' => 'IPM',
+            'sao-francisco' => 'IPM',
+            'garuva' => 'IPM',
+            'itapoa' => 'IPM',
+        ];
+
+        foreach ($expected as $municipio => $family) {
+            $this->assertSame($family, $resolver->resolveKey($municipio), "Family inesperada para {$municipio}");
+        }
+    }
+
+    public function testResolveBrasiliaToIssnet(): void
+    {
+        $resolver = $this->makeResolver();
+
+        $this->assertSame('ISSNET', $resolver->resolveKey('brasilia'));
+    }
+
+    public function testResolveFortalezaToGinfes(): void
+    {
+        $resolver = $this->makeResolver();
+
+        $this->assertSame('GINFES', $resolver->resolveKey('fortaleza'));
+    }
+
+    public function testResolveMaceioToGinfes(): void
+    {
+        $resolver = $this->makeResolver();
+
+        $this->assertSame('GINFES', $resolver->resolveKey('maceio'));
+    }
+
+    public function testResolveGoianiaToIssnet(): void
+    {
+        $resolver = $this->makeResolver();
+
+        $this->assertSame('ISSNET', $resolver->resolveKey('goiania'));
+    }
+
+    public function testResolveCuiabaToIssnet(): void
+    {
+        $resolver = $this->makeResolver();
+
+        $this->assertSame('ISSNET', $resolver->resolveKey('cuiaba'));
+    }
+
+    public function testResolveSaoPauloToPaulistana(): void
+    {
+        $resolver = $this->makeResolver();
+
+        $this->assertSame('PAULISTANA', $resolver->resolveKey('sao-paulo'));
+    }
+
+    public function testResolveSalvadorToSalvadorBa(): void
+    {
+        $resolver = $this->makeResolver();
+
+        $this->assertSame('SALVADOR_BA', $resolver->resolveKey('salvador'));
+    }
+
+    public function testResolvePortoVelhoToEl(): void
+    {
+        $resolver = $this->makeResolver();
+
+        $this->assertSame('EL', $resolver->resolveKey('porto-velho'));
+    }
+
+    public function testResolveAracajuToWebiss(): void
+    {
+        $resolver = $this->makeResolver();
+
+        $this->assertSame('WEBISS', $resolver->resolveKey('aracaju'));
+    }
+
+    public function testResolvePresidenteFigueiredoToIsswebAm(): void
     {
         $resolver = $this->makeResolver();
 
         $this->assertSame('ISSWEB_AM', $resolver->resolveKey('presidente-figueiredo'));
     }
 
-    public function testResolveRioPretoDaEvaToIssweb(): void
+    public function testResolveRioPretoDaEvaToIsswebAm(): void
     {
         $resolver = $this->makeResolver();
 

@@ -179,9 +179,9 @@ class NFCeFacade
      * @param string $xmlAutorizado XML da NFCe autorizada
      * @return FiscalResponse Response com o PDF ou erro
      */
-    public function gerarDanfce(string $xmlAutorizado): FiscalResponse
+    public function gerarDanfce(string $xmlAutorizado, array $context = []): FiscalResponse
     {
-        return $this->responseHandler->handle(function() use ($xmlAutorizado) {
+        return $this->responseHandler->handle(function() use ($xmlAutorizado, $context) {
             if (!isset($this->impressao)) {
                 throw new \RuntimeException('Impressao adapter não disponível.');
             }
@@ -190,14 +190,15 @@ class NFCeFacade
                 throw new \InvalidArgumentException('XML autorizado é obrigatório');
             }
             
-            $pdf = $this->impressao->gerarDanfce($xmlAutorizado);
+            $pdf = $this->impressao->gerarDanfce($xmlAutorizado, $context);
 
             return $this->resultNormalizer->normalizePdfBase64(
                 'nfce',
                 'geracao_danfce',
                 $xmlAutorizado,
                 base64_encode($pdf),
-                'danfce_' . date('Ymd_His') . '.pdf'
+                'danfce_' . date('Ymd_His') . '.pdf',
+                ['print_source' => 'custom_thermal_layout']
             );
         }, 'geracao_danfce');
     }

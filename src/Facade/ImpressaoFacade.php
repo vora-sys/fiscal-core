@@ -73,7 +73,7 @@ class ImpressaoFacade
     /**
      * Gera DANFCE (PDF da NFCe)
      */
-    public function gerarDanfce(string $xmlNfce): FiscalResponse
+    public function gerarDanfce(string $xmlNfce, array $context = []): FiscalResponse
     {
         try {
             if (!function_exists('imagefontheight')) {
@@ -104,7 +104,7 @@ class ImpressaoFacade
                 );
             }
 
-            $pdf = $this->impressao->gerarDanfce($xmlNfce);
+            $pdf = $this->impressao->gerarDanfce($xmlNfce, $context);
             
             return FiscalResponse::success([
                 'pdf' => $pdf,

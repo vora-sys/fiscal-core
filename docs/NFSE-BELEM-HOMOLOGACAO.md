@@ -1,6 +1,6 @@
 # NFSe Belém - Homologação do ciclo municipal
 
-Este guia cobre o provider municipal atual de Belém no `fiscal-core` com foco em:
+Este guia cobre o provider municipal atual de Belém (layout ABRASF 2.03, sem uso operacional de DSF) no `fiscal-core` com foco em:
 
 - emissão síncrona por `RecepcionarLoteRpsSincrono`
 - consulta por lote

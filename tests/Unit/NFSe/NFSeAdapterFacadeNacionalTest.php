@@ -488,6 +488,53 @@ class NFSeAdapterFacadeNacionalTest extends TestCase
         $this->assertStringContainsString('2026-01-01', (string) $response->getError());
     }
 
+    public function test_facade_bloqueia_emissao_pre_corte_generica_para_municipio_nacional(): void
+    {
+        $facade = new NFSeFacade('recife', new NFSeAdapter('recife', new FakeNfseProvider()));
+
+        $response = $facade->emitir([
+            'dCompet' => '2025-10-14',
+            'dhEmi' => '2025-10-14T10:00:00-03:00',
+        ]);
+
+        $this->assertTrue($response->isError());
+        $this->assertSame('NFSE_NATIONAL_MIGRATION_LEGACY_PERIOD', $response->getErrorCode());
+        $this->assertSame('2025-10-14', $response->getMetadata('reference_date'));
+        $this->assertSame('2025-10-15', $response->getMetadata('legacy_cutoff'));
+        $this->assertSame('2611606', $response->getMetadata('municipio_ibge'));
+        $this->assertStringContainsString('Recife', (string) $response->getError());
+    }
+
+    public function test_facade_permite_emissao_nacional_na_data_de_vigencia_da_migracao(): void
+    {
+        $facade = new NFSeFacade('recife', new NFSeAdapter('recife', new FakeNfseProvider()));
+
+        $response = $facade->emitir([
+            'dCompet' => '2025-10-15',
+            'dhEmi' => '2025-10-15T10:00:00-03:00',
+        ]);
+
+        $this->assertTrue($response->isSuccess());
+        $this->assertSame('nfse_xml', $response->getData('type'));
+    }
+
+    public function test_facade_bloqueia_emissao_pre_corte_para_natal_migrado_nacional(): void
+    {
+        $facade = new NFSeFacade('natal', new NFSeAdapter('natal', new FakeNfseProvider()));
+
+        $response = $facade->emitir([
+            'dCompet' => '2025-12-31',
+            'dhEmi' => '2025-12-31T10:00:00-03:00',
+        ]);
+
+        $this->assertTrue($response->isError());
+        $this->assertSame('NFSE_NATIONAL_MIGRATION_LEGACY_PERIOD', $response->getErrorCode());
+        $this->assertSame('2025-12-31', $response->getMetadata('reference_date'));
+        $this->assertSame('2026-01-01', $response->getMetadata('legacy_cutoff'));
+        $this->assertSame('2408102', $response->getMetadata('municipio_ibge'));
+        $this->assertStringContainsString('Natal', (string) $response->getError());
+    }
+
     private function buildNacionalConfig(callable $httpClient): array
     {
         return [

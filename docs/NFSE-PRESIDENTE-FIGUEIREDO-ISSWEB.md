@@ -1,6 +1,7 @@
 # NFSe Presidente Figueiredo - ISSWEB
 
-Este guia cobre a preparacao do municipio de Presidente Figueiredo/AM no `fiscal-core` via familia municipal compartilhada `ISSWEB_AM`.
+Este guia registra o fluxo ativo ISSWEB de Presidente Figueiredo/AM.
+No catalogo atual, o municipio usa `provider_family = ISSWEB_AM`.
 
 ## Status
 
@@ -13,7 +14,7 @@ Este guia cobre a preparacao do municipio de Presidente Figueiredo/AM no `fiscal
   - `XSDISSECancelaNFe.xsd`
   - `XSDRetorno.xsd`
 - homologacao real ainda depende de credenciais e endpoints oficiais
-- a premissa de uso de ISSWEB deve continuar validada com a prefeitura/fornecedor antes da entrada em producao
+- homologacao de producao exige validacao final junto a prefeitura/fornecedor
 
 ## Variaveis obrigatorias
 

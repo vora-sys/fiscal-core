@@ -7,9 +7,9 @@ namespace sabbajohn\FiscalCore\Providers\NFSe\Municipal;
 /**
  * Alias legado para a antiga família DSF.
  *
- * Belém migrou para o provider municipal atual, mas o alias é preservado
- * para compatibilidade interna com código que ainda referencia DsfProvider.
+ * DSF passa a reutilizar a base ABRASF compartilhada por compatibilidade
+ * enquanto os municípios legados são migrados para a família canônica.
  */
-final class DsfProvider extends BelemMunicipalProvider
+final class DsfProvider extends AbrasfSharedProvider
 {
 }

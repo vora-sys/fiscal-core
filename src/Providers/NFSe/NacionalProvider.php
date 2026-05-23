@@ -680,6 +680,7 @@ class NacionalProvider extends AbstractNFSeProvider implements NFSeNacionalCapab
                 $this->appendNodeDps($dom, $toma, 'CPF', str_pad(substr($tomadorDoc, 0, 11), 11, '0', STR_PAD_LEFT));
             }
             $this->appendNodeDps($dom, $toma, 'xNome', $tomadorNome);
+            $this->appendTomadorEnderecoDps($dom, $toma, (array) ($dados['tomador'] ?? []));
         }
 
         $serv = $dom->createElementNS($ns, 'serv');
@@ -793,6 +794,124 @@ class NacionalProvider extends AbstractNFSeProvider implements NFSeNacionalCapab
         }
 
         return null;
+    }
+
+    /**
+     * @param array<string,mixed> $tomador
+     */
+    private function appendTomadorEnderecoDps(\DOMDocument $dom, \DOMElement $toma, array $tomador): void
+    {
+        $resolved = $this->resolveTomadorEnderecoDps($tomador);
+        if (!$this->tomadorEnderecoDpsCompleto($resolved)) {
+            return;
+        }
+
+        $ns = $this->getDpsNamespace();
+        $end = $dom->createElementNS($ns, 'end');
+        $toma->appendChild($end);
+
+        $endNac = $dom->createElementNS($ns, 'endNac');
+        $end->appendChild($endNac);
+        $this->appendNodeDps(
+            $dom,
+            $endNac,
+            'cMun',
+            $resolved['codigo_municipio']
+        );
+        $this->appendNodeDps(
+            $dom,
+            $endNac,
+            'CEP',
+            $resolved['cep']
+        );
+
+        $this->appendNodeDps($dom, $end, 'xLgr', $resolved['logradouro']);
+        $this->appendNodeDps($dom, $end, 'nro', $resolved['numero']);
+        if ($resolved['complemento'] !== '') {
+            $this->appendNodeDps($dom, $end, 'xCpl', $resolved['complemento']);
+        }
+        $this->appendNodeDps($dom, $end, 'xBairro', $resolved['bairro']);
+    }
+
+    /**
+     * @param array<string,mixed> $tomador
+     * @return array{codigo_municipio:string,cep:string,logradouro:string,numero:string,complemento:string,bairro:string}
+     */
+    private function resolveTomadorEnderecoDps(array $tomador): array
+    {
+        $endereco = is_array($tomador['endereco'] ?? null)
+            ? $tomador['endereco']
+            : (is_array($tomador['address'] ?? null) ? $tomador['address'] : []);
+
+        return [
+            'codigo_municipio' => $this->onlyDigits((string) ($this->firstString([
+                $tomador['codigoMunicipio'] ?? null,
+                $tomador['codigo_municipio'] ?? null,
+                $tomador['codigo_ibge'] ?? null,
+                $tomador['municipality_ibge'] ?? null,
+                $tomador['cMun'] ?? null,
+                $endereco['codigoMunicipio'] ?? null,
+                $endereco['codigo_municipio'] ?? null,
+                $endereco['codigo_ibge'] ?? null,
+                $endereco['municipality_ibge'] ?? null,
+                $endereco['cMun'] ?? null,
+            ]) ?? '')),
+            'cep' => $this->onlyDigits((string) ($this->firstString([
+                $tomador['cep'] ?? null,
+                $tomador['CEP'] ?? null,
+                $tomador['postal_code'] ?? null,
+                $tomador['zip'] ?? null,
+                $endereco['cep'] ?? null,
+                $endereco['CEP'] ?? null,
+                $endereco['postal_code'] ?? null,
+                $endereco['zip'] ?? null,
+            ]) ?? '')),
+            'logradouro' => trim((string) ($this->firstString([
+                $tomador['logradouro'] ?? null,
+                $tomador['xLgr'] ?? null,
+                $tomador['street'] ?? null,
+                $endereco['logradouro'] ?? null,
+                $endereco['xLgr'] ?? null,
+                $endereco['street'] ?? null,
+            ]) ?? '')),
+            'numero' => trim((string) ($this->firstString([
+                $tomador['numero'] ?? null,
+                $tomador['nro'] ?? null,
+                $tomador['number'] ?? null,
+                $endereco['numero'] ?? null,
+                $endereco['nro'] ?? null,
+                $endereco['number'] ?? null,
+                'S/N',
+            ]) ?? 'S/N')),
+            'complemento' => trim((string) ($this->firstString([
+                $tomador['complemento'] ?? null,
+                $tomador['xCpl'] ?? null,
+                $tomador['complement'] ?? null,
+                $endereco['complemento'] ?? null,
+                $endereco['xCpl'] ?? null,
+                $endereco['complement'] ?? null,
+            ]) ?? '')),
+            'bairro' => trim((string) ($this->firstString([
+                $tomador['bairro'] ?? null,
+                $tomador['xBairro'] ?? null,
+                $tomador['district'] ?? null,
+                $endereco['bairro'] ?? null,
+                $endereco['xBairro'] ?? null,
+                $endereco['district'] ?? null,
+            ]) ?? '')),
+        ];
+    }
+
+    /**
+     * @param array{codigo_municipio:string,cep:string,logradouro:string,numero:string,complemento:string,bairro:string} $endereco
+     */
+    private function tomadorEnderecoDpsCompleto(array $endereco): bool
+    {
+        return strlen($endereco['codigo_municipio']) === 7
+            && strlen($endereco['cep']) === 8
+            && $endereco['logradouro'] !== ''
+            && $endereco['numero'] !== ''
+            && $endereco['bairro'] !== '';
     }
 
     private function appendObraGroup(\DOMDocument $dom, \DOMElement $serv, array $obra): void
@@ -1142,8 +1261,16 @@ class NacionalProvider extends AbstractNFSeProvider implements NFSeNacionalCapab
         if (!in_array($tpRetIssqn, ['1', '2', '3'], true)) {
             $errors[] = 'tpRetISSQN deve ser 1, 2 ou 3.';
         }
-        if (in_array($tribIssqn, ['2', '3', '4'], true) && $tpRetIssqn !== '2') {
-            $errors[] = 'tpRetISSQN deve ser 2 quando tribISSQN for 2, 3 ou 4.';
+        if (in_array($tribIssqn, ['2', '3', '4'], true) && $tpRetIssqn !== '1') {
+            $errors[] = 'tpRetISSQN deve ser 1 quando tribISSQN for 2, 3 ou 4.';
+        }
+
+        $tomadorDoc = $this->onlyDigits((string)($dados['tomador']['documento'] ?? ''));
+        if (($tpEmit === '1' && strlen($tomadorDoc) === 14) || ($tpEmit !== '2' && $tpRetIssqn === '2')) {
+            $tomadorEndereco = $this->resolveTomadorEnderecoDps((array)($dados['tomador'] ?? []));
+            if (!$this->tomadorEnderecoDpsCompleto($tomadorEndereco)) {
+                $errors[] = 'Endereco nacional do tomador deve conter codigo IBGE, CEP, logradouro, numero e bairro para DPS nacional.';
+            }
         }
 
         $aliquota = (float)($dados['servico']['aliquota'] ?? 0);
@@ -2128,14 +2255,21 @@ class NacionalProvider extends AbstractNFSeProvider implements NFSeNacionalCapab
      */
     private function resolveDpsIssRetentionCode(array $servico): string
     {
-        foreach (['tpRetISSQN', 'IssRetido', 'iss_retido', 'issRetido'] as $key) {
+        if (array_key_exists('tpRetISSQN', $servico) && is_scalar($servico['tpRetISSQN'])) {
+            $explicitCode = trim((string)$servico['tpRetISSQN']);
+            if (in_array($explicitCode, ['1', '2', '3'], true)) {
+                return $explicitCode;
+            }
+        }
+
+        foreach (['IssRetido', 'iss_retido', 'issRetido'] as $key) {
             if (!array_key_exists($key, $servico)) {
                 continue;
             }
 
             $value = $servico[$key];
             if (is_bool($value)) {
-                return $value ? '1' : '2';
+                return $value ? '2' : '1';
             }
 
             if (!is_scalar($value)) {
@@ -2148,20 +2282,28 @@ class NacionalProvider extends AbstractNFSeProvider implements NFSeNacionalCapab
                 $normalized = $converted;
             }
 
-            if (in_array($normalized, ['1', '2', '3'], true)) {
-                return $normalized;
+            if ($normalized === '1') {
+                return '2';
             }
 
-            if (in_array($normalized, ['true', 't', 's', 'sim', 'yes', 'y', 'retido', 'r'], true)) {
+            if ($normalized === '2' || $normalized === '0') {
                 return '1';
             }
 
-            if (in_array($normalized, ['false', 'f', 'n', 'nao', 'no', '0', 'nao_retido', 'nao-retido'], true)) {
+            if ($normalized === '3') {
+                return '3';
+            }
+
+            if (in_array($normalized, ['true', 't', 's', 'sim', 'yes', 'y', 'retido', 'r'], true)) {
                 return '2';
+            }
+
+            if (in_array($normalized, ['false', 'f', 'n', 'nao', 'no', 'nao_retido', 'nao-retido'], true)) {
+                return '1';
             }
         }
 
-        return '2';
+        return '1';
     }
 
     private function normalizeDpsAliquotaPercent(float $aliquota): float

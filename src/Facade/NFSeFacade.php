@@ -96,7 +96,7 @@ class NFSeFacade
             return $check;
         }
 
-        if ($check = $this->validateManausNationalEmissionWindow($dados)) {
+        if ($check = $this->validateNationalMigrationEmissionWindow($dados)) {
             return $check;
         }
 
@@ -152,7 +152,7 @@ class NFSeFacade
             return $check;
         }
 
-        if ($check = $this->validateManausNationalEmissionWindow($dados)) {
+        if ($check = $this->validateNationalMigrationEmissionWindow($dados)) {
             return $check;
         }
 
@@ -1011,30 +1011,55 @@ class NFSeFacade
         return $this->providerKey === 'ISSWEB_AM';
     }
 
-    private function validateManausNationalEmissionWindow(array $dados): ?FiscalResponse
+    private function validateNationalMigrationEmissionWindow(array $dados): ?FiscalResponse
     {
-        $ibge = (string) ($this->municipioResolved['ibge'] ?? '');
-        if ($ibge !== '1302603') {
+        if (!is_array($this->municipioResolved)) {
             return null;
         }
 
-        $referenceDate = $this->extractManausEmissionReferenceDate($dados);
-        if ($referenceDate === null || $referenceDate >= '2026-01-01') {
+        $policy = is_array($this->municipioResolved['national_migration_policy'] ?? null)
+            ? $this->municipioResolved['national_migration_policy']
+            : [];
+        if ($policy === [] || !($policy['enforce_emission_block_before_effective_date'] ?? false)) {
             return null;
         }
+
+        $effectiveFrom = trim((string) ($policy['effective_from'] ?? ''));
+        if ($effectiveFrom === '' || preg_match('/^\d{4}-\d{2}-\d{2}$/', $effectiveFrom) !== 1) {
+            return null;
+        }
+
+        $referenceDate = $this->extractNationalMigrationReferenceDate($dados);
+        if ($referenceDate === null || $referenceDate >= $effectiveFrom) {
+            return null;
+        }
+
+        $ibge = (string) ($this->municipioResolved['ibge'] ?? '');
+        $legacySystem = trim((string) ($policy['legacy_system'] ?? 'sistema legado municipal'));
+        $defaultMessage = sprintf(
+            '%s utiliza exclusivamente o emissor nacional para fatos geradores a partir de %s. Competências até %s permanecem no sistema legado %s.',
+            (string) ($this->municipioResolved['nome'] ?? $this->municipio),
+            $effectiveFrom,
+            (new \DateTimeImmutable($effectiveFrom))->modify('-1 day')->format('Y-m-d'),
+            $legacySystem
+        );
+        $message = trim((string) ($policy['message'] ?? '')) ?: $defaultMessage;
+        $errorCode = trim((string) ($policy['error_code'] ?? '')) ?: 'NFSE_NATIONAL_MIGRATION_LEGACY_PERIOD';
 
         return FiscalResponse::error(
-            'Manaus utiliza exclusivamente o emissor nacional para fatos geradores a partir de 2026-01-01. Competências até 2025-12-31 permanecem no sistema legado Nota Manaus.',
-            'NFSE_MANAUS_LEGACY_PERIOD',
+            $message,
+            $errorCode,
             'nfse_emission',
             $this->buildCompatibilityMetadata() + [
+                'municipio_ibge' => $ibge,
                 'reference_date' => $referenceDate,
-                'legacy_cutoff' => '2026-01-01',
+                'legacy_cutoff' => $effectiveFrom,
+                'legacy_system' => $legacySystem,
             ]
         );
     }
 
-    private function extractManausEmissionReferenceDate(array $dados): ?string
+    private function extractNationalMigrationReferenceDate(array $dados): ?string
     {
         $candidates = [
             (string) ($dados['dCompet'] ?? ''),

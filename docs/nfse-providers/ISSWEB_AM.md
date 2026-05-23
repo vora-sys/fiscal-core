@@ -5,7 +5,7 @@
 - Provider: `IsswebProvider`
 - Transporte: SOAP
 - Layout: ISSWEB
-- Municípios atuais: Presidente Figueiredo/AM, Rio Preto da Eva/AM
+- Municípios atuais: Presidente Figueiredo/AM (`1303536`) e Rio Preto da Eva/AM (`1303569`)
 
 ## Requisitos
 

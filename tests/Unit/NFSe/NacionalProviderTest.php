@@ -55,6 +55,37 @@ class NacionalProviderTest extends TestCase
         );
     }
 
+    public function test_emitir_inclui_endereco_nacional_do_tomador_no_bloco_toma(): void
+    {
+        $calls = [];
+        $provider = new NacionalProvider($this->buildConfig(function ($method, $path, $body, $headers = []) use (&$calls) {
+            $calls[] = compact('method', 'path', 'body');
+            return '<Resposta><Sucesso>true</Sucesso></Resposta>';
+        }));
+
+        $dados = $this->dadosValidos();
+        $dados['tomador']['endereco'] = [
+            'logradouro' => 'Rua Teste',
+            'numero' => '100',
+            'bairro' => 'Centro',
+            'cep' => '01310930',
+            'codigo_municipio' => '3550308',
+        ];
+
+        $provider->emitir($dados);
+
+        $payload = json_decode((string) $calls[0]['body'], true);
+        $this->assertIsArray($payload);
+        $xml = gzdecode((string) base64_decode((string) $payload['dpsXmlGZipB64']));
+        $this->assertIsString($xml);
+        $this->assertStringContainsString('<toma>', $xml);
+        $this->assertStringContainsString('<end>', $xml);
+        $this->assertStringContainsString('<endNac><cMun>3550308</cMun><CEP>01310930</CEP></endNac>', $xml);
+        $this->assertStringContainsString('<xLgr>Rua Teste</xLgr>', $xml);
+        $this->assertStringContainsString('<nro>100</nro>', $xml);
+        $this->assertStringContainsString('<xBairro>Centro</xBairro>', $xml);
+    }
+
     public function test_dps_nacional_inclui_beneficio_municipal_quando_payload_tem_reducao(): void
     {
         $provider = new NacionalProvider($this->buildConfig(function () {
@@ -92,13 +123,14 @@ class NacionalProviderTest extends TestCase
 
         $dados = $this->dadosValidos();
         $dados['servico']['iss_retido'] = true;
+        $dados['tomador']['endereco'] = $this->enderecoTomadorValido();
         $provider->emitir($dados);
 
         $payload = json_decode((string) $calls[0]['body'], true);
         $this->assertIsArray($payload);
         $xml = gzdecode((string) base64_decode((string) $payload['dpsXmlGZipB64']));
         $this->assertIsString($xml);
-        $this->assertStringContainsString('<tpRetISSQN>1</tpRetISSQN>', $xml);
+        $this->assertStringContainsString('<tpRetISSQN>2</tpRetISSQN>', $xml);
 
         $calls = [];
         $dados = $this->dadosValidos();
@@ -109,7 +141,25 @@ class NacionalProviderTest extends TestCase
         $this->assertIsArray($payload);
         $xml = gzdecode((string) base64_decode((string) $payload['dpsXmlGZipB64']));
         $this->assertIsString($xml);
-        $this->assertStringContainsString('<tpRetISSQN>2</tpRetISSQN>', $xml);
+        $this->assertStringContainsString('<tpRetISSQN>1</tpRetISSQN>', $xml);
+    }
+
+    public function test_dps_nacional_inclui_endereco_nacional_do_tomador(): void
+    {
+        $provider = new NacionalProvider($this->buildConfig(function () {
+            return '<Resposta><Sucesso>true</Sucesso></Resposta>';
+        }));
+
+        $dados = $this->dadosValidos();
+        $dados['tomador']['documento'] = '83.188.342/0001-04';
+        $dados['tomador']['endereco'] = $this->enderecoTomadorValido();
+
+        $xml = $provider->gerarXmlDpsPreview($dados);
+
+        $this->assertStringContainsString(
+            '<end><endNac><cMun>1302603</cMun><CEP>69005000</CEP></endNac><xLgr>Rua Silva Ramos</xLgr><nro>10</nro><xCpl>Sala 2</xCpl><xBairro>Centro</xBairro></end>',
+            $xml
+        );
     }
 
     public function test_emitir_preserva_dps_nos_artifacts_quando_transporte_falha(): void
@@ -361,6 +411,18 @@ class NacionalProviderTest extends TestCase
             'rps_numero' => '10',
             'rps_serie' => 'A1',
             'rps_tipo' => '1',
+        ];
+    }
+
+    private function enderecoTomadorValido(): array
+    {
+        return [
+            'logradouro' => 'Rua Silva Ramos',
+            'numero' => '10',
+            'complemento' => 'Sala 2',
+            'bairro' => 'Centro',
+            'codigo_municipio' => '1302603',
+            'cep' => '69005000',
         ];
     }
 }

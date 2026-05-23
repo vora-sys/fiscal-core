@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema
+    xmlns:xs="http://www.w3.org/2001/XMLSchema"
+    targetNamespace="http://www.abrasf.org.br/nfse.xsd"
+    xmlns="http://www.abrasf.org.br/nfse.xsd"
+    elementFormDefault="qualified"
+    attributeFormDefault="unqualified">
+
+    <xs:element name="CancelarNfseEnvio">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="Pedido" type="tcPedidoCancelamento"/>
+                <xs:any namespace="http://www.w3.org/2000/09/xmldsig#" minOccurs="0" maxOccurs="1" processContents="lax"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+
+    <xs:complexType name="tcPedidoCancelamento">
+        <xs:sequence>
+            <xs:element name="InfPedidoCancelamento">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="IdentificacaoNfse" type="tcIdentificacaoNfse"/>
+                        <xs:element name="CodigoCancelamento" type="xs:string"/>
+                    </xs:sequence>
+                    <xs:attribute name="Id" type="xs:string" use="required"/>
+                </xs:complexType>
+            </xs:element>
+            <xs:any namespace="http://www.w3.org/2000/09/xmldsig#" minOccurs="0" maxOccurs="1" processContents="lax"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:complexType name="tcIdentificacaoNfse">
+        <xs:sequence>
+            <xs:element name="Numero" type="xs:string"/>
+            <xs:element name="CpfCnpj" type="tcCpfCnpj"/>
+            <xs:element name="InscricaoMunicipal" type="xs:string"/>
+            <xs:element name="CodigoMunicipio" type="xs:string"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:complexType name="tcCpfCnpj">
+        <xs:sequence>
+            <xs:choice>
+                <xs:element name="Cpf" type="xs:string"/>
+                <xs:element name="Cnpj" type="xs:string"/>
+            </xs:choice>
+        </xs:sequence>
+    </xs:complexType>
+</xs:schema>
