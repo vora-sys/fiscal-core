@@ -2,6 +2,10 @@
 
 Esta matriz resume as famílias/providers sob manutenção operacional ativa no `fiscal-core`.
 
+Tabela completa de providers implementados x municipios atendidos:
+
+- `docs/NFSE-PROVIDERS-MUNICIPIOS.md`
+
 | Família | Provider | Transporte | Operações | Assinatura | Origem dos schemas | Municípios atuais | Política MEI | DANFSe / pós-emissão | Gaps |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | `nfse_nacional` | `NacionalProvider` | REST | emitir, consultar, cancelar, consultar RPS/lote, baixar XML/DANFSe, CNC | obrigatória | configuração canônica em `config/nfse/` | nacional, manaus | sempre nacional | XML e DANFSe via endpoints nacionais | depende de parametrização municipal real |

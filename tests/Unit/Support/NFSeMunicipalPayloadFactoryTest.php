@@ -114,11 +114,45 @@ final class NFSeMunicipalPayloadFactoryTest extends TestCase
         $this->assertSame('Cliente Presidente Figueiredo Ltda', $payload['tomador']['razao_social']);
     }
 
+    #[DataProvider('priorityMunicipioPayloadDefaultsProvider')]
+    public function testDemoPayloadUsesCanonizedDefaultsForPriorityMunicipios(
+        string $municipio,
+        string $ibge,
+        string $expectedDescricao
+    ): void {
+        $factory = new NFSeMunicipalPayloadFactory();
+        $payload = $factory->demo($municipio);
+
+        $this->assertSame('123', (string) ($payload['rps']['numero'] ?? ''));
+        $this->assertSame($ibge, (string) ($payload['tomador']['endereco']['codigo_municipio'] ?? ''));
+        $this->assertSame($ibge, (string) ($payload['servico']['local_prestacao']['codigo_municipio'] ?? ''));
+        $this->assertSame($expectedDescricao, (string) ($payload['servico']['descricao'] ?? ''));
+    }
+
     public static function municipioProvider(): array
     {
         return [
             'belem' => ['belem'],
             'joinville' => ['joinville'],
+        ];
+    }
+
+    public static function priorityMunicipioPayloadDefaultsProvider(): array
+    {
+        return [
+            'campo-grande' => ['campo-grande', '5002704', 'Servico de homologacao NFSe para Campo Grande.'],
+            'joao-pessoa' => ['joao-pessoa', '2507507', 'Servico de homologacao NFSe para Joao Pessoa.'],
+            'teresina' => ['teresina', '2211001', 'Servico de homologacao NFSe para Teresina.'],
+            'brasilia' => ['brasilia', '5300108', 'Servico de homologacao NFSe para Brasilia.'],
+            'goiania' => ['goiania', '5208707', 'Servico de homologacao NFSe para Goiania.'],
+            'cuiaba' => ['cuiaba', '5103403', 'Servico de homologacao NFSe para Cuiaba.'],
+            'fortaleza' => ['fortaleza', '2304400', 'Servico de homologacao NFSe para Fortaleza.'],
+            'maceio' => ['maceio', '2704302', 'Servico de homologacao NFSe para Maceio.'],
+            'sao-paulo' => ['sao-paulo', '3550308', 'Servico de homologacao NFSe para Sao Paulo.'],
+            'salvador' => ['salvador', '2927408', 'Servico de homologacao NFSe para Salvador.'],
+            'porto-velho' => ['porto-velho', '1100205', 'Servico de homologacao NFSe para Porto Velho.'],
+            'aracaju' => ['aracaju', '2800308', 'Servico de homologacao NFSe para Aracaju.'],
+            'palmas' => ['palmas', '1721000', 'Servico de homologacao NFSe para Palmas.'],
         ];
     }
 

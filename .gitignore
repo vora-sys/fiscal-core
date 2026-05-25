@@ -19,6 +19,8 @@ scripts/nfse/*
 !scripts/nfse/schema-overrides/**
 !scripts/nfse/scaffold-family.php
 !scripts/nfse/scaffold-municipio.php
+!scripts/nfse/provider-switch.php
+!scripts/nfse/reconcile-uninfe-providers.php
 !scripts/nfse/templates/
 scripts/nfse/templates/*
 !scripts/nfse/templates/*.stub.php

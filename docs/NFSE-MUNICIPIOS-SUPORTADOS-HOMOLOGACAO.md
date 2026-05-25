@@ -62,6 +62,7 @@ Base: `config/nfse/providers-catalog.json` (snapshot em `2026-05-23`).
 - Lista completa suportada: `docs/nfse-municipios-suportados.csv`
 - Lista pendente municipal: `docs/nfse-municipios-pendentes-homologacao.csv`
 - Tracker de capitais: `docs/NFSE-CAPITAIS-HOMOLOGACAO-TRACKER.md`
+- Reconciliacao Uninfe x catalogo: `docs/NFSE-UNINFE-RECONCILIACAO.md`
 
 ## Observacao sobre o catalogo
 

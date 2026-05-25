@@ -39,9 +39,9 @@ Este tracker formaliza o criterio de aceite por capital sem bloquear a onda quan
 | Capital | IBGE | Provider ativo | Status | Evidencias | Bloqueio formal |
 | --- | --- | --- | --- | --- | --- |
 | Belem/PA | 1501402 | `BELEM_MUNICIPAL_2025` | CONCLUIDA | Emissao + consulta + cancelamento homologados no provider municipal ABRASF. | - |
-| Campo Grande/MS | 5002704 | `ABRASF_SHARED` | PENDENTE | - | - |
+| Campo Grande/MS | 5002704 | `ABRASF_SHARED` | EM_ANDAMENTO | Roteamento ABRASF_SHARED + payload defaults canonizados no catalogo; pendente homologacao real. | - |
 | Joao Pessoa/PB | 2507507 | `ABRASF_SHARED` | EM_ANDAMENTO | Roteamento ABRASF_SHARED validado em testes automatizados; pendente homologacao real. | - |
-| Teresina/PI | 2211001 | `ABRASF_SHARED` | PENDENTE | - | - |
+| Teresina/PI | 2211001 | `ABRASF_SHARED` | EM_ANDAMENTO | Roteamento ABRASF_SHARED + payload defaults canonizados no catalogo; pendente homologacao real. | - |
 
 ## Onda 3 - Demais capitais (municipais)
 
@@ -49,27 +49,27 @@ Este tracker formaliza o criterio de aceite por capital sem bloquear a onda quan
 
 | Capital | IBGE | Family alvo | Status | Evidencias | Bloqueio formal |
 | --- | --- | --- | --- | --- | --- |
-| Brasilia/DF | 5300108 | `ISSNET` | EM_ANDAMENTO | Roteamento ISSNET validado em testes automatizados; pendente homologacao real. | - |
-| Goiania/GO | 5208707 | `ISSNET` | EM_ANDAMENTO | Roteamento ISSNET validado em testes automatizados; pendente homologacao real. | - |
-| Cuiaba/MT | 5103403 | `ISSNET` | EM_ANDAMENTO | Roteamento ISSNET validado em testes automatizados; pendente homologacao real. | - |
-| Fortaleza/CE | 2304400 | `GINFES` | EM_ANDAMENTO | Roteamento GINFES validado em testes automatizados; pendente homologacao real. | - |
-| Maceio/AL | 2704302 | `GINFES` | EM_ANDAMENTO | Roteamento GINFES validado em testes automatizados; pendente homologacao real. | - |
+| Brasilia/DF | 5300108 | `ISSNET` | EM_ANDAMENTO | Roteamento ISSNET + payload defaults canonizados no catalogo; pendente homologacao real. | - |
+| Goiania/GO | 5208707 | `ISSNET` | EM_ANDAMENTO | Roteamento ISSNET + payload defaults canonizados no catalogo; pendente homologacao real. | - |
+| Cuiaba/MT | 5103403 | `ISSNET` | EM_ANDAMENTO | Roteamento ISSNET + payload defaults canonizados no catalogo; pendente homologacao real. | - |
+| Fortaleza/CE | 2304400 | `GINFES` | EM_ANDAMENTO | Roteamento GINFES + payload defaults canonizados no catalogo; pendente homologacao real. | - |
+| Maceio/AL | 2704302 | `GINFES` | EM_ANDAMENTO | Roteamento GINFES + payload defaults canonizados no catalogo; pendente homologacao real. | - |
 
 ### Lote 2
 
 | Capital | IBGE | Family alvo | Status | Evidencias | Bloqueio formal |
 | --- | --- | --- | --- | --- | --- |
-| Sao Paulo/SP | 3550308 | `PAULISTANA` | PENDENTE | - | - |
-| Salvador/BA | 2927408 | `SALVADOR_BA` | PENDENTE | - | - |
-| Porto Velho/RO | 1100205 | `EL` | PENDENTE | - | - |
-| Aracaju/SE | 2800308 | `WEBISS` | PENDENTE | - | - |
-| Palmas/TO | 1721000 | `WEBISS` | PENDENTE | - | - |
+| Sao Paulo/SP | 3550308 | `PAULISTANA` | EM_ANDAMENTO | Roteamento PAULISTANA + payload defaults canonizados no catalogo; pendente homologacao real. | - |
+| Salvador/BA | 2927408 | `SALVADOR_BA` | EM_ANDAMENTO | Roteamento SALVADOR_BA + payload defaults canonizados no catalogo; pendente homologacao real. | - |
+| Porto Velho/RO | 1100205 | `EL` | EM_ANDAMENTO | Roteamento EL + payload defaults canonizados no catalogo; pendente homologacao real. | - |
+| Aracaju/SE | 2800308 | `WEBISS` | EM_ANDAMENTO | Roteamento WEBISS + payload defaults canonizados no catalogo; pendente homologacao real. | - |
+| Palmas/TO | 1721000 | `WEBISS` | EM_ANDAMENTO | Roteamento WEBISS + payload defaults canonizados no catalogo; pendente homologacao real. | - |
 
 ### Lote 3
 
 | Capital | IBGE | Family alvo | Status | Evidencias | Bloqueio formal |
 | --- | --- | --- | --- | --- | --- |
-| Macapa/AP | 1600303 | `ABRASF_SHARED` (provisorio) | PENDENTE | - | - |
+| Macapa/AP | 1600303 | `ABRASF_SHARED` (provisorio) | EM_ANDAMENTO | Roteamento ABRASF_SHARED + payload default municipal canonizado; pendente homologacao real. | - |
 
 ## Focos operacionais adicionais (fora de capitais)
 

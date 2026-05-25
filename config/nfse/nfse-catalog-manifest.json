@@ -328,7 +328,35 @@
             "slug": "teresina",
             "nome": "Teresina",
             "uf": "PI",
-            "provider_note": "Teresina migrado do alias DSF para base ABRASF_SHARED; DSF permanece apenas para compatibilidade temporária."
+            "provider_note": "Teresina migrado do alias DSF para base ABRASF_SHARED; DSF permanece apenas para compatibilidade temporária.",
+            "payload_defaults": {
+                "rps": {
+                    "numero": "123"
+                },
+                "tomador": {
+                    "razao_social": "Cliente Teresina Ltda",
+                    "email": "financeiro@example.com",
+                    "endereco": {
+                        "logradouro": "Avenida Frei Serafim",
+                        "bairro": "Centro",
+                        "codigo_municipio": "2211001",
+                        "uf": "PI",
+                        "cep": "64001-020",
+                        "municipio": "Teresina"
+                    }
+                },
+                "servico": {
+                    "codigo": "101",
+                    "descricao": "Servico de homologacao NFSe para Teresina.",
+                    "discriminacao": "Servico de homologacao NFSe para Teresina.",
+                    "local_prestacao": {
+                        "tipo": "1",
+                        "uf": "PI",
+                        "codigo_municipio": "2211001",
+                        "cep": "64001-020"
+                    }
+                }
+            }
         },
         "2408102": {
             "provider_family": "nfse_nacional",
@@ -355,7 +383,35 @@
             "slug": "joao-pessoa",
             "nome": "João Pessoa",
             "uf": "PB",
-            "provider_note": "João Pessoa migrado do alias DSF para base ABRASF_SHARED; DSF permanece apenas para compatibilidade temporária."
+            "provider_note": "João Pessoa migrado do alias DSF para base ABRASF_SHARED; DSF permanece apenas para compatibilidade temporária.",
+            "payload_defaults": {
+                "rps": {
+                    "numero": "123"
+                },
+                "tomador": {
+                    "razao_social": "Cliente Joao Pessoa Ltda",
+                    "email": "financeiro@example.com",
+                    "endereco": {
+                        "logradouro": "Avenida Epitacio Pessoa",
+                        "bairro": "Tambaú",
+                        "codigo_municipio": "2507507",
+                        "uf": "PB",
+                        "cep": "58039-000",
+                        "municipio": "Joao Pessoa"
+                    }
+                },
+                "servico": {
+                    "codigo": "101",
+                    "descricao": "Servico de homologacao NFSe para Joao Pessoa.",
+                    "discriminacao": "Servico de homologacao NFSe para Joao Pessoa.",
+                    "local_prestacao": {
+                        "tipo": "1",
+                        "uf": "PB",
+                        "codigo_municipio": "2507507",
+                        "cep": "58039-000"
+                    }
+                }
+            }
         },
         "2611606": {
             "provider_family": "nfse_nacional",
@@ -3993,7 +4049,35 @@
             "slug": "campo-grande",
             "nome": "Campo Grande",
             "uf": "MS",
-            "provider_note": "Campo Grande migrado do alias DSF para base ABRASF_SHARED; DSF permanece apenas para compatibilidade temporária."
+            "provider_note": "Campo Grande migrado do alias DSF para base ABRASF_SHARED; DSF permanece apenas para compatibilidade temporária.",
+            "payload_defaults": {
+                "rps": {
+                    "numero": "123"
+                },
+                "tomador": {
+                    "razao_social": "Cliente Campo Grande Ltda",
+                    "email": "financeiro@example.com",
+                    "endereco": {
+                        "logradouro": "Avenida Afonso Pena",
+                        "bairro": "Centro",
+                        "codigo_municipio": "5002704",
+                        "uf": "MS",
+                        "cep": "79002-970",
+                        "municipio": "Campo Grande"
+                    }
+                },
+                "servico": {
+                    "codigo": "101",
+                    "descricao": "Servico de homologacao NFSe para Campo Grande.",
+                    "discriminacao": "Servico de homologacao NFSe para Campo Grande.",
+                    "local_prestacao": {
+                        "tipo": "1",
+                        "uf": "MS",
+                        "codigo_municipio": "5002704",
+                        "cep": "79002-970"
+                    }
+                }
+            }
         },
         "5003801": {
             "provider_family": "nfse_nacional",
@@ -4221,6 +4305,181 @@
                     "https://www.gov.br/nfse/pt-br/municipios/monitoramento-adesoes",
                     "https://www.gov.br/nfse/pt-br/municipios/monitoramento-adesoes/municipiosaderentes202600514.xlsx"
                 ]
+            }
+        },
+        "3550308": {
+            "provider_family": "PAULISTANA",
+            "schema_package": "PAULISTANA",
+            "slug": "sao-paulo",
+            "nome": "São Paulo",
+            "uf": "SP",
+            "payload_defaults": {
+                "rps": {
+                    "numero": "123"
+                },
+                "tomador": {
+                    "razao_social": "Cliente Sao Paulo Ltda",
+                    "email": "financeiro@example.com",
+                    "endereco": {
+                        "logradouro": "Avenida Paulista",
+                        "bairro": "Bela Vista",
+                        "codigo_municipio": "3550308",
+                        "uf": "SP",
+                        "cep": "01311-000",
+                        "municipio": "Sao Paulo"
+                    }
+                },
+                "servico": {
+                    "codigo": "101",
+                    "descricao": "Servico de homologacao NFSe para Sao Paulo.",
+                    "discriminacao": "Servico de homologacao NFSe para Sao Paulo.",
+                    "local_prestacao": {
+                        "tipo": "1",
+                        "uf": "SP",
+                        "codigo_municipio": "3550308",
+                        "cep": "01311-000"
+                    }
+                }
+            }
+        },
+        "2927408": {
+            "provider_family": "SALVADOR_BA",
+            "schema_package": "SALVADOR_BA",
+            "slug": "salvador",
+            "nome": "Salvador",
+            "uf": "BA",
+            "payload_defaults": {
+                "rps": {
+                    "numero": "123"
+                },
+                "tomador": {
+                    "razao_social": "Cliente Salvador Ltda",
+                    "email": "financeiro@example.com",
+                    "endereco": {
+                        "logradouro": "Avenida Tancredo Neves",
+                        "bairro": "Caminho das Arvores",
+                        "codigo_municipio": "2927408",
+                        "uf": "BA",
+                        "cep": "41820-021",
+                        "municipio": "Salvador"
+                    }
+                },
+                "servico": {
+                    "codigo": "101",
+                    "descricao": "Servico de homologacao NFSe para Salvador.",
+                    "discriminacao": "Servico de homologacao NFSe para Salvador.",
+                    "local_prestacao": {
+                        "tipo": "1",
+                        "uf": "BA",
+                        "codigo_municipio": "2927408",
+                        "cep": "41820-021"
+                    }
+                }
+            }
+        },
+        "1100205": {
+            "provider_family": "EL",
+            "schema_package": "EL",
+            "slug": "porto-velho",
+            "nome": "Porto Velho",
+            "uf": "RO",
+            "payload_defaults": {
+                "rps": {
+                    "numero": "123"
+                },
+                "tomador": {
+                    "razao_social": "Cliente Porto Velho Ltda",
+                    "email": "financeiro@example.com",
+                    "endereco": {
+                        "logradouro": "Avenida Sete de Setembro",
+                        "bairro": "Centro",
+                        "codigo_municipio": "1100205",
+                        "uf": "RO",
+                        "cep": "76801-124",
+                        "municipio": "Porto Velho"
+                    }
+                },
+                "servico": {
+                    "codigo": "101",
+                    "descricao": "Servico de homologacao NFSe para Porto Velho.",
+                    "discriminacao": "Servico de homologacao NFSe para Porto Velho.",
+                    "local_prestacao": {
+                        "tipo": "1",
+                        "uf": "RO",
+                        "codigo_municipio": "1100205",
+                        "cep": "76801-124"
+                    }
+                }
+            }
+        },
+        "2800308": {
+            "provider_family": "WEBISS",
+            "schema_package": "WEBISS",
+            "slug": "aracaju",
+            "nome": "Aracaju",
+            "uf": "SE",
+            "payload_defaults": {
+                "rps": {
+                    "numero": "123"
+                },
+                "tomador": {
+                    "razao_social": "Cliente Aracaju Ltda",
+                    "email": "financeiro@example.com",
+                    "endereco": {
+                        "logradouro": "Avenida Beira Mar",
+                        "bairro": "13 de Julho",
+                        "codigo_municipio": "2800308",
+                        "uf": "SE",
+                        "cep": "49025-040",
+                        "municipio": "Aracaju"
+                    }
+                },
+                "servico": {
+                    "codigo": "101",
+                    "descricao": "Servico de homologacao NFSe para Aracaju.",
+                    "discriminacao": "Servico de homologacao NFSe para Aracaju.",
+                    "local_prestacao": {
+                        "tipo": "1",
+                        "uf": "SE",
+                        "codigo_municipio": "2800308",
+                        "cep": "49025-040"
+                    }
+                }
+            }
+        },
+        "1721000": {
+            "provider_family": "WEBISS",
+            "schema_package": "WEBISS",
+            "slug": "palmas",
+            "nome": "Palmas",
+            "uf": "TO",
+            "payload_defaults": {
+                "rps": {
+                    "numero": "123"
+                },
+                "tomador": {
+                    "razao_social": "Cliente Palmas Ltda",
+                    "email": "financeiro@example.com",
+                    "endereco": {
+                        "logradouro": "Avenida JK",
+                        "bairro": "Plano Diretor Sul",
+                        "codigo_municipio": "1721000",
+                        "uf": "TO",
+                        "cep": "77015-012",
+                        "municipio": "Palmas"
+                    }
+                },
+                "servico": {
+                    "codigo": "101",
+                    "descricao": "Servico de homologacao NFSe para Palmas.",
+                    "discriminacao": "Servico de homologacao NFSe para Palmas.",
+                    "local_prestacao": {
+                        "tipo": "1",
+                        "uf": "TO",
+                        "codigo_municipio": "1721000",
+                        "cep": "77015-012"
+                    }
+                }
             }
         }
     },

@@ -3,16 +3,49 @@
 declare(strict_types=1);
 
 use sabbajohn\FiscalCore\Support\NFSeMunicipalCatalog;
+use sabbajohn\FiscalCore\Support\NFSeMunicipalProviderOverrides;
 use sabbajohn\FiscalCore\Support\NFSeProviderResolver;
 use PHPUnit\Framework\TestCase;
 
 final class NFSeProviderResolverTest extends TestCase
 {
-    private function makeResolver(): NFSeProviderResolver
+    /** @var string[] */
+    private array $tempFiles = [];
+
+    protected function tearDown(): void
+    {
+        foreach ($this->tempFiles as $file) {
+            if (is_file($file)) {
+                @unlink($file);
+            }
+        }
+
+        $this->tempFiles = [];
+    }
+
+    private function makeResolver(?array $overrides = null): NFSeProviderResolver
     {
         $catalog = new NFSeMunicipalCatalog(dirname(__DIR__, 3) . '/config/nfse/providers-catalog.json');
 
-        return new NFSeProviderResolver($catalog);
+        if ($overrides === null) {
+            return new NFSeProviderResolver($catalog);
+        }
+
+        $tmp = tempnam(sys_get_temp_dir(), 'nfse-override-');
+        if (!is_string($tmp) || $tmp === '') {
+            throw new RuntimeException('Não foi possível criar arquivo temporário de override.');
+        }
+
+        $this->tempFiles[] = $tmp;
+        file_put_contents(
+            $tmp,
+            json_encode([
+                'version' => 1,
+                'overrides' => $overrides,
+            ], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR)
+        );
+
+        return new NFSeProviderResolver($catalog, new NFSeMunicipalProviderOverrides($tmp));
     }
 
     public function testResolveJoinvilleToPublica(): void
@@ -204,6 +237,47 @@ final class NFSeProviderResolverTest extends TestCase
         $resolver = $this->makeResolver();
 
         $this->assertSame('ISSWEB_AM', $resolver->resolveKey('rio-preto-da-eva'));
+    }
+
+    public function testResolveMunicipioWithOperationalOverride(): void
+    {
+        $resolver = $this->makeResolver([
+            '1303536' => [
+                'provider_family' => 'ABRASF_SHARED',
+                'reason' => 'Fallback temporário por instabilidade no endpoint original',
+                'ticket' => 'NFSE-1234',
+                'active' => true,
+            ],
+        ]);
+
+        $this->assertSame('ABRASF_SHARED', $resolver->resolveKey('presidente-figueiredo'));
+
+        $metadata = $resolver->buildMetadata('presidente-figueiredo');
+        $this->assertSame('municipal_override', $metadata['routing_mode']);
+        $this->assertSame('ABRASF_SHARED', $metadata['provider_key']);
+        $this->assertFalse($metadata['municipio_ignored']);
+        $this->assertSame('1303536', $metadata['municipio_provider_override']['source_key'] ?? null);
+        $this->assertSame('ABRASF_SHARED', $metadata['municipio_provider_override']['provider_key'] ?? null);
+        $this->assertTrue($metadata['municipio_provider_override']['applied'] ?? false);
+        $this->assertNotEmpty($metadata['warnings']);
+    }
+
+    public function testIgnoreInvalidOperationalOverrideProvider(): void
+    {
+        $resolver = $this->makeResolver([
+            '1303536' => [
+                'provider_family' => 'PROVIDER_INEXISTENTE',
+                'active' => true,
+            ],
+        ]);
+
+        $this->assertSame('ISSWEB_AM', $resolver->resolveKey('presidente-figueiredo'));
+
+        $metadata = $resolver->buildMetadata('presidente-figueiredo');
+        $this->assertSame('municipal', $metadata['routing_mode']);
+        $this->assertSame('ISSWEB_AM', $metadata['provider_key']);
+        $this->assertFalse($metadata['municipio_provider_override']['applied'] ?? true);
+        $this->assertNotEmpty($metadata['warnings']);
     }
 
     public function testUnknownFallsBackToNational(): void
