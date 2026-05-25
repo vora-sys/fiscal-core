@@ -13,6 +13,35 @@
         "xsd_entrypoints": [],
         "transport": "soap"
     },
+    "ABRASF_SHARED": {
+        "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\AbrasfSharedProvider",
+        "layout_family": "ABRASF_203",
+        "schema_root": "resources/nfse/schemas/ABRASF_SHARED",
+        "xsd_entrypoints": {
+            "emitir": "enviar_lote_rps_sincrono_envio.xsd",
+            "enviar_lote_rps": "enviar_lote_rps_sincrono_envio.xsd",
+            "consultar_lote": "consultar_lote_rps_envio.xsd",
+            "consultar_nfse_rps": "consultar_nfse_rps_envio.xsd",
+            "consultar_nfse_numero": "consultar_nfse_servico_prestado_envio.xsd",
+            "cancelar_nfse": "cancelar_nfse_envio.xsd"
+        },
+        "aliquota_format": "decimal",
+        "transport": "soap",
+        "versao": "2.03",
+        "wsdl_homologacao": "https://municipio-homologacao.example.test/nfse?wsdl",
+        "wsdl_producao": "https://municipio-producao.example.test/nfse?wsdl",
+        "signature_mode": "optional",
+        "soap_operation": "RecepcionarLoteRpsSincrono",
+        "supported_operations": [
+            "emitir_sincrono",
+            "consultar_lote",
+            "consultar_nfse_rps",
+            "consultar_nfse_numero",
+            "cancelar_nfse",
+            "substituir_nfse"
+        ],
+        "source": "shared_abrasf_base"
+    },
     "ADM_SISTEMAS": {
         "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\AdmSistemasProvider",
         "layout_family": "ADM_SISTEMAS",
@@ -362,6 +391,13 @@
         "xsd_entrypoints": [],
         "transport": "soap"
     },
+    "ISSONLINE_ASSESSORPUBLICO": {
+        "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\IssonlineAssessorpublicoProvider",
+        "layout_family": "ISSONLINE_ASSESSORPUBLICO",
+        "schema_root": "resources/nfse/schemas/ISSONLINE_ASSESSORPUBLICO",
+        "xsd_entrypoints": [],
+        "transport": "soap"
+    },
     "ISSWEB_AM": {
         "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\IsswebProvider",
         "layout_family": "ISSWEB_AM",
@@ -394,13 +430,6 @@
             "chave": ""
         }
     },
-    "ISSONLINE_ASSESSORPUBLICO": {
-        "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\IssonlineAssessorpublicoProvider",
-        "layout_family": "ISSONLINE_ASSESSORPUBLICO",
-        "schema_root": "resources/nfse/schemas/ISSONLINE_ASSESSORPUBLICO",
-        "xsd_entrypoints": [],
-        "transport": "soap"
-    },
     "JLSOFT": {
         "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\JlsoftProvider",
         "layout_family": "JLSOFT",
@@ -414,6 +443,19 @@
         "schema_root": "resources/nfse/schemas/LIBRE",
         "xsd_entrypoints": [],
         "transport": "soap"
+    },
+    "MANAUS_AM": {
+        "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\ManausAmProvider",
+        "layout_family": "MANAUS_AM",
+        "schema_root": "resources/nfse/schemas/MANAUS_AM",
+        "xsd_entrypoints": [],
+        "transport": "soap",
+        "source": "uninfe_legacy_provider_catalog",
+        "deprecation": {
+            "status": "legacy",
+            "canonical_provider_family": "nfse_nacional",
+            "notes": "Manaus migrou para fluxo nacional; manter familia legada para compatibilidade documental com Uninfe."
+        }
     },
     "MEGASOFT": {
         "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\MegasoftProvider",
@@ -872,34 +914,5 @@
                 "prestador.op_simp_nac"
             ]
         }
-    },
-    "ABRASF_SHARED": {
-        "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\AbrasfSharedProvider",
-        "layout_family": "ABRASF_203",
-        "schema_root": "resources/nfse/schemas/ABRASF_SHARED",
-        "xsd_entrypoints": {
-            "emitir": "enviar_lote_rps_sincrono_envio.xsd",
-            "enviar_lote_rps": "enviar_lote_rps_sincrono_envio.xsd",
-            "consultar_lote": "consultar_lote_rps_envio.xsd",
-            "consultar_nfse_rps": "consultar_nfse_rps_envio.xsd",
-            "consultar_nfse_numero": "consultar_nfse_servico_prestado_envio.xsd",
-            "cancelar_nfse": "cancelar_nfse_envio.xsd"
-        },
-        "aliquota_format": "decimal",
-        "transport": "soap",
-        "versao": "2.03",
-        "wsdl_homologacao": "https://municipio-homologacao.example.test/nfse?wsdl",
-        "wsdl_producao": "https://municipio-producao.example.test/nfse?wsdl",
-        "signature_mode": "optional",
-        "soap_operation": "RecepcionarLoteRpsSincrono",
-        "supported_operations": [
-            "emitir_sincrono",
-            "consultar_lote",
-            "consultar_nfse_rps",
-            "consultar_nfse_numero",
-            "cancelar_nfse",
-            "substituir_nfse"
-        ],
-        "source": "shared_abrasf_base"
     }
 }

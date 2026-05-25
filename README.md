@@ -27,6 +27,8 @@
 composer require sabbajohn/fiscal-core
 ```
 
+> Nome canônico do pacote: `sabbajohn/fiscal-core`. Se ainda houver publicação antiga como `freeline/fiscal-core` no Packagist, trate como legado/desalinhado e publique a próxima release no nome canônico.
+
 **Desenvolvimento local:**
 
 ```json
@@ -99,7 +101,7 @@ if ($resultado->sucesso) {
 
 - **IBPT** - Cálculo automático de tributos
 - **Múltiplos produtos** em lote
-- **Cache** inteligente
+- **Cache** parcial em fluxos específicos
 - **Fallbacks** por estado/federal
 
 ## 📚 Exemplos Práticos
@@ -384,9 +386,9 @@ FiscalResponse {
 ### 🛡️ **Error Handling**
 
 - **Fallbacks** automáticos entre providers
-- **Cache** de resultados
-- **Logging** detalhado
-- **Retry** inteligente
+- **Cache** local em fluxos específicos, com política unificada ainda pendente
+- **Logging/diagnóstico** em evolução
+- **Retry** ainda não é uniforme entre adapters
 
 ## 📊 Casos de Uso
 
@@ -423,7 +425,7 @@ foreach ($clientes as $cliente) {
 
 ## 🔧 Requisitos Técnicos
 
-- **PHP** ^8.0
+- **PHP** >=8.1
 - **OpenSSL** (para certificados)
 - **cURL** (para APIs externas)  
 - **JSON** (manipulação de dados)
@@ -515,28 +517,28 @@ php examples/GuiaCompletoDeUso.php
 
 ## 🗺️ Roadmap
 
-### ✅ **Concluído**
+O status consolidado e a lista priorizada de pendências estão em [docs/STATUS-E-PENDENCIAS.md](docs/STATUS-E-PENDENCIAS.md).
 
-- [x] Interface unificada (Facades)
-- [x] Sistema de respostas padronizado
-- [x] Error handling robusto
-- [x] Múltiplos providers NFSe
-- [x] Consultas públicas
-- [x] Tributação IBPT
+### ✅ **Concluído ou operacional**
 
-### 🔄 **Em Desenvolvimento**
+- [x] Facades principais: `FiscalFacade`, `NFeFacade`, `NFCeFacade`, `NFSeFacade`, `ImpressaoFacade`, `TributacaoFacade` e `UtilsFacade`
+- [x] Adapters principais para documentos fiscais, impressão, consultas públicas, IBPT e GTIN
+- [x] NFSe provider-based com catálogo municipal, families, resolver, registry, bootstrap e scripts operacionais
+- [x] Playbook municipal e matriz operacional NFSe
+- [x] Cache local em fluxos específicos, como catálogo nacional e instâncias NFSe por município
+- [x] Nome Composer canônico definido como `sabbajohn/fiscal-core`
 
-- [ ] Interface web de administração
-- [ ] Mais municípios NFSe  
-- [ ] Integração com bancos de dados
-- [ ] Dashboard de monitoramento
+### 🔄 **Pendente ou parcial**
 
-### 🎯 **Planejado**
-
-- [ ] API REST para microserviços
-- [ ] SDK JavaScript/Python
-- [ ] Plugins para principais ERPs
-- [ ] Certificação digital em nuvem
+- [ ] Publicar/atualizar o Packagist no pacote canônico `sabbajohn/fiscal-core`
+- [ ] Expandir homologação municipal real seguindo o playbook, sem contar roteamento em catálogo como homologação
+- [ ] Fechar contrato público uniforme das facades para respostas, erros, XML, impressão e eventos
+- [ ] Criar Service Provider Laravel com publish de config e bindings
+- [ ] Criar middleware de validação automática depois de estabilizar contrato/config Laravel
+- [ ] Consolidar política de cache para consultas remotas e configurações
+- [ ] Publicar/documentar GitHub Packages, se este canal for necessário
+- [ ] Criar referência detalhada por Facade e Adapter
+- [ ] Adicionar CI, PHPStan e formatter
 
 ## 🛠️ Configuração Avançada
 
@@ -652,12 +654,16 @@ Roadmap
 **Próximas features:**
 
 - [ ] Expandir cobertura municipal seguindo o playbook ([ver guia](docs/NFSE-MUNICIPAL-PROVIDER-PLAYBOOK.md))
-- [ ] Facades com APIs coesas (NFe/NFCe/NFSe/Impressão/Tributação)
+- [ ] Consolidar contrato público coeso das Facades já existentes (NFe/NFCe/NFSe/Impressão/Tributação)
 - [ ] Service Provider para Laravel
 - [ ] Middleware para validação automática
-- [ ] Cache de consultas e configurações
-- [ ] Publicar pacote no Packagist/GitHub Packages
+- [ ] Política unificada de cache de consultas e configurações
+- [ ] Publicar/atualizar pacote no Packagist como `sabbajohn/fiscal-core`
+- [ ] Descontinuar ou documentar como legado qualquer publicação antiga em `freeline/fiscal-core`
+- [ ] Publicar/documentar GitHub Packages, se necessário
 - [ ] Documentação detalhada de cada Facade e Adapter
+
+📋 **Status consolidado:** [docs/STATUS-E-PENDENCIAS.md](docs/STATUS-E-PENDENCIAS.md)
 
 **Quick start para retomar:**
 

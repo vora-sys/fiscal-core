@@ -1,7 +1,7 @@
 # NFSe - Provedores Implementados e Municipios Atendidos
 
 Base: `config/nfse/nfse-provider-families.json` + `config/nfse/providers-catalog.json`.
-Gerado em: `2026-05-25 11:01:55 UTC`.
+Gerado em: `2026-05-25 11:13:38 UTC`.
 
 Legenda: considera somente municipios `active=true`; entradas tecnicas (`UF=AN/XX`) sao separadas na contagem.
 
@@ -52,6 +52,7 @@ Legenda: considera somente municipios `active=true`; entradas tecnicas (`UF=AN/X
 | `ISSWEB_AM` | `sabbajohn\FiscalCore\Providers\NFSe\Municipal\IsswebProvider` | 2 | 0 | Presidente Figueiredo/AM (`1303536`)<br>Rio Preto da Eva/AM (`1303569`) |
 | `JLSOFT` | `sabbajohn\FiscalCore\Providers\NFSe\Municipal\JlsoftProvider` | 0 | 0 | - |
 | `LIBRE` | `sabbajohn\FiscalCore\Providers\NFSe\Municipal\LibreProvider` | 0 | 0 | - |
+| `MANAUS_AM` | `sabbajohn\FiscalCore\Providers\NFSe\Municipal\ManausAmProvider` | 0 | 0 | - |
 | `MEGASOFT` | `sabbajohn\FiscalCore\Providers\NFSe\Municipal\MegasoftProvider` | 2 | 0 | Mairipotaba/GO (`5212600`)<br>Professor Jamil/GO (`5218391`) |
 | `MEMORY` | `sabbajohn\FiscalCore\Providers\NFSe\Municipal\MemoryProvider` | 1 | 1 | Matozinhos/MG (`3141108`) |
 | `METROPOLIS` | `sabbajohn\FiscalCore\Providers\NFSe\Municipal\MetropolisProvider` | 0 | 0 | - |
