@@ -47,7 +47,7 @@ class AbrasfV2Provider extends AbstractNFSeProvider implements NFSeOperationalIn
 
         return $this->dispatchSoapOperation(
             'emitir',
-            'RecepcionarLoteRpsSincrono',
+            $this->resolveSoapOperationName('emitir', 'RecepcionarLoteRpsSincrono'),
             $this->montarXmlRps($dados)
         );
     }
@@ -61,7 +61,7 @@ class AbrasfV2Provider extends AbstractNFSeProvider implements NFSeOperationalIn
 
         $this->dispatchSoapOperation(
             'consultar_nfse_numero',
-            'ConsultarNfseServicoPrestado',
+            $this->resolveSoapOperationName('consultar_nfse_numero', 'ConsultarNfseServicoPrestado'),
             $this->montarXmlConsultarNfsePorNumero($numeroNfse)
         );
 
@@ -77,13 +77,31 @@ class AbrasfV2Provider extends AbstractNFSeProvider implements NFSeOperationalIn
 
         $this->dispatchSoapOperation(
             'consultar_nfse_rps',
-            'ConsultarNfsePorRps',
+            $this->resolveSoapOperationName('consultar_nfse_rps', 'ConsultarNfsePorRps'),
             $this->montarXmlConsultarNfsePorRps($identificacaoRps)
         );
 
         return $this->normalizeConsultaResult('consultar_nfse_rps', [
             'chave_consulta' => (string) $identificacaoRps['numero'],
             'source' => 'consultar_nfse_rps',
+        ]);
+    }
+
+    public function consultarLote(string $protocolo): NFSeConsultaResultInterface
+    {
+        if (trim($protocolo) === '') {
+            throw new \InvalidArgumentException('Protocolo do lote e obrigatorio para consulta ABRASF.');
+        }
+
+        $this->dispatchSoapOperation(
+            'consultar_lote',
+            $this->resolveSoapOperationName('consultar_lote', 'ConsultarLoteRps'),
+            $this->montarXmlConsultarLote($protocolo)
+        );
+
+        return $this->normalizeConsultaResult('consultar_lote', [
+            'chave_consulta' => $protocolo,
+            'source' => 'consultar_lote',
         ]);
     }
 
@@ -95,7 +113,7 @@ class AbrasfV2Provider extends AbstractNFSeProvider implements NFSeOperationalIn
 
         $this->dispatchSoapOperation(
             'cancelar_nfse',
-            'CancelarNfse',
+            $this->resolveSoapOperationName('cancelar_nfse', 'CancelarNfse'),
             $this->montarXmlCancelarNfse($chave, $motivo, $protocolo)
         );
 
@@ -113,7 +131,7 @@ class AbrasfV2Provider extends AbstractNFSeProvider implements NFSeOperationalIn
 
         return $this->dispatchSoapOperation(
             'substituir_nfse',
-            'SubstituirNfse',
+            $this->resolveSoapOperationName('substituir_nfse', 'SubstituirNfse'),
             $this->montarXmlSubstituirNfse($chave, $dados)
         );
     }
@@ -471,6 +489,26 @@ class AbrasfV2Provider extends AbstractNFSeProvider implements NFSeOperationalIn
         return $dom->saveXML($dom->documentElement) ?: '';
     }
 
+    private function montarXmlConsultarLote(string $protocolo): string
+    {
+        $prestador = $this->resolvePrestadorContext();
+
+        $dom = new \DOMDocument('1.0', 'UTF-8');
+        $dom->preserveWhiteSpace = false;
+        $dom->formatOutput = false;
+
+        $root = $dom->createElementNS(self::NFSE_NS, 'ConsultarLoteRpsEnvio');
+        $dom->appendChild($root);
+
+        $prestadorNode = $this->appendXmlNode($dom, $root, 'Prestador', null, self::NFSE_NS);
+        $cpfCnpj = $this->appendXmlNode($dom, $prestadorNode, 'CpfCnpj', null, self::NFSE_NS);
+        $this->appendCpfCnpjNode($dom, $cpfCnpj, $prestador['cnpj']);
+        $this->appendXmlNode($dom, $prestadorNode, 'InscricaoMunicipal', $prestador['inscricao_municipal'], self::NFSE_NS);
+        $this->appendXmlNode($dom, $root, 'Protocolo', trim($protocolo), self::NFSE_NS);
+
+        return $dom->saveXML($dom->documentElement) ?: '';
+    }
+
     private function montarXmlCancelarNfse(string $numeroNfse, string $motivo, ?string $protocolo): string
     {
         $prestador = $this->resolvePrestadorContext();
@@ -588,7 +626,7 @@ class AbrasfV2Provider extends AbstractNFSeProvider implements NFSeOperationalIn
             $this->resolveSoapEndpoint(),
             $soapEnvelope,
             [
-                'soap_action' => '',
+                'soap_action' => $this->resolveSoapAction($operationKey),
                 'timeout' => $this->getTimeout(),
                 'soap_operation' => $soapOperation,
                 'operation' => $operationKey,
@@ -985,13 +1023,33 @@ class AbrasfV2Provider extends AbstractNFSeProvider implements NFSeOperationalIn
 
     public function getSupportedOperations(): array
     {
+        if (is_array($this->config['supported_operations'] ?? null) && $this->config['supported_operations'] !== []) {
+            return array_values(array_map('strval', $this->config['supported_operations']));
+        }
+
         return [
             'emitir',
+            'consultar_lote',
             'consultar_nfse_numero',
             'consultar_nfse_rps',
             'cancelar_nfse',
             'substituir_nfse',
         ];
+    }
+
+    private function resolveSoapOperationName(string $operationKey, string $default): string
+    {
+        $operations = is_array($this->config['soap_operations'] ?? null) ? $this->config['soap_operations'] : [];
+        $operation = trim((string) ($operations[$operationKey] ?? ''));
+
+        return $operation !== '' ? $operation : $default;
+    }
+
+    private function resolveSoapAction(string $operationKey): string
+    {
+        $actions = is_array($this->config['soap_action'] ?? null) ? $this->config['soap_action'] : [];
+
+        return trim((string) ($actions[$operationKey] ?? ''));
     }
 
     private function appendDecimalNode(\DOMDocument $dom, \DOMElement $parent, string $name, mixed $value, int $precision = 2): void

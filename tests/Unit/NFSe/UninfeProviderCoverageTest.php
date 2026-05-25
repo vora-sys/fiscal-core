@@ -41,6 +41,21 @@ final class UninfeProviderCoverageTest extends TestCase
                 class_exists($providerClass),
                 "Provider {$providerKey} referencia classe inexistente: {$providerClass}"
             );
+
+            $supportedOperations = $families[$providerKey]['supported_operations'] ?? null;
+            $this->assertIsArray(
+                $supportedOperations,
+                "Provider {$providerKey} sem supported_operations configurado."
+            );
+            $this->assertNotEmpty(
+                $supportedOperations,
+                "Provider {$providerKey} sem operacoes suportadas."
+            );
+            $this->assertContains(
+                'emitir',
+                $supportedOperations,
+                "Provider {$providerKey} deve declarar suporte minimo a emissao."
+            );
         }
     }
 

@@ -6,6 +6,12 @@ Tabela completa de providers implementados x municipios atendidos:
 
 - `docs/NFSE-PROVIDERS-MUNICIPIOS.md`
 
+Cobertura Uninfe:
+
+- Todos os providers listados em `Uninfe/source/NFe.Components.Wsdl/NFse/WSDL/provedores_municipios_por_estado.csv` possuem família em `config/nfse/nfse-provider-families.json`.
+- Toda família documentada pelo Uninfe possui `provider_class` carregável e `supported_operations` declarado.
+- A base ABRASF compartilhada implementa emissão, consulta de lote, consulta por número, consulta por RPS, cancelamento e substituição; variações municipais devem entrar por `soap_operations`, `soap_action` e overrides de catálogo antes de criar nova classe.
+
 | Família | Provider | Transporte | Operações | Assinatura | Origem dos schemas | Municípios atuais | Política MEI | DANFSe / pós-emissão | Gaps |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | `nfse_nacional` | `NacionalProvider` | REST | emitir, consultar, cancelar, consultar RPS/lote, baixar XML/DANFSe, CNC | obrigatória | configuração canônica em `config/nfse/` | capitais e municípios aderentes ao emissor nacional | sempre nacional | XML e DANFSe via endpoints nacionais | depende de parametrização municipal real |

@@ -129,6 +129,31 @@ XML);
         $this->assertSame('success', $provider->getLastOperationArtifacts()['parsed_response']['status']);
     }
 
+    public function testOperacaoSoapPodeSerConfiguradaPorFamilia(): void
+    {
+        $transport = new RecordingSoapTransport(<<<'XML'
+<RecepcionarLoteRpsResposta xmlns="http://www.abrasf.org.br/nfse.xsd">
+  <NumeroLote>1</NumeroLote>
+  <Protocolo>PROTO456</Protocolo>
+</RecepcionarLoteRpsResposta>
+XML);
+        $provider = new TestableAbrasfV2Provider($this->config([
+            'soap_transport' => $transport,
+            'soap_operations' => [
+                'emitir' => 'RecepcionarLoteRps',
+            ],
+            'soap_action' => [
+                'emitir' => 'urn:RecepcionarLoteRps',
+            ],
+        ]));
+
+        $provider->emitir($this->payload());
+
+        $this->assertStringContainsString('RecepcionarLoteRps', $transport->lastEnvelope);
+        $this->assertStringNotContainsString('RecepcionarLoteRpsSincrono', $transport->lastEnvelope);
+        $this->assertSame('urn:RecepcionarLoteRps', $transport->lastOptions['soap_action']);
+    }
+
     public function testEmitirAssinaXmlQuandoOperacaoEstaConfigurada(): void
     {
         $certificateFile = \TestCertificateFile::create('ABRASF Teste', 'secret', '11222333000181');
@@ -188,6 +213,26 @@ XML);
         $this->assertSame('202600000000777', $result->getDocumento()['numero']);
         $this->assertSame('XYZ789', $result->getDocumento()['codigo_verificacao']);
         $this->assertSame('consultar_nfse_rps', $result->getConsulta()['operation']);
+    }
+
+    public function testConsultarLoteDespachaSoapERetornaResultadoNormalizado(): void
+    {
+        $transport = new RecordingSoapTransport(<<<'XML'
+<ConsultarLoteRpsResposta xmlns="http://www.abrasf.org.br/nfse.xsd">
+  <NumeroLote>1</NumeroLote>
+  <DataRecebimento>2026-05-12T10:00:00</DataRecebimento>
+  <Protocolo>PROTO123</Protocolo>
+</ConsultarLoteRpsResposta>
+XML);
+        $provider = new TestableAbrasfV2Provider($this->config(['soap_transport' => $transport]));
+
+        $result = $provider->consultarLote('PROTO123');
+
+        $this->assertStringContainsString('ConsultarLoteRps', $transport->lastEnvelope);
+        $this->assertStringContainsString('ConsultarLoteRpsEnvio', $transport->lastEnvelope);
+        $this->assertStringContainsString('<Protocolo>PROTO123</Protocolo>', $transport->lastEnvelope);
+        $this->assertSame('PROTO123', $result->getConsulta()['chave_consulta']);
+        $this->assertSame('consultar_lote', $result->getConsulta()['operation']);
     }
 
     public function testCancelarDespachaSoapERetornaSucesso(): void
