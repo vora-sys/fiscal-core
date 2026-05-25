@@ -632,8 +632,8 @@ Status do projeto
 - ✅ Documento Adapter: validação CPF/CNPJ
 - ✅ BrasilAPI Adapter: consultas públicas
 - ✅ Singletons: CertificateManager, ConfigManager, ToolsFactory
-- 🔄 NFSe: arquitetura provider-based (stubs implementados)
-- 🔄 Facades: orquestração de múltiplos adapters
+- ✅ NFSe: arquitetura provider-based ativa (catálogo municipal, families, resolver, registry, runtime bootstrap, facade e scripts operacionais)
+- ✅ Facades: orquestração de múltiplos adapters
 
 Roadmap
 
@@ -643,7 +643,10 @@ Roadmap
 
 - ✅ Catálogo municipal, families config, registry e runtime bootstrap implementados
 - ✅ Providers municipais reais para fluxos específicos já integrados
+- ✅ Hot swap operacional por município (`municipio-provider-overrides.json` + `provider-switch.php`)
+- ✅ Reconciliação contínua com base Uninfe (`reconcile-uninfe-providers.php`)
 - 📚 Playbook mestre: [docs/NFSE-MUNICIPAL-PROVIDER-PLAYBOOK.md](docs/NFSE-MUNICIPAL-PROVIDER-PLAYBOOK.md)
+- 📚 Tabela completa provider x municípios: [docs/NFSE-PROVIDERS-MUNICIPIOS.md](docs/NFSE-PROVIDERS-MUNICIPIOS.md)
 - 📚 Ponte legada: [docs/PROVIDERS-RETOMADA.md](docs/PROVIDERS-RETOMADA.md)
 
 **Próximas features:**
@@ -659,11 +662,17 @@ Roadmap
 **Quick start para retomar:**
 
 ```bash
-# Ver estrutura criada
-tree src/Providers config/
+# Ver estrutura de NFSe
+tree src/Providers/NFSe config/nfse docs/nfse-providers
 
-# Rodar exemplo funcional
-php scripts/exemplo-providers-nfse.php
+# Listar overrides operacionais
+php scripts/nfse/provider-switch.php --list
+
+# Gerar tabela de cobertura por provider
+php scripts/nfse/generate-providers-municipios-doc.php
+
+# Reconciliar catalogo local com base Uninfe
+php scripts/nfse/reconcile-uninfe-providers.php --fail-on-unexpected
 
 # Ler playbook municipal
 cat docs/NFSE-MUNICIPAL-PROVIDER-PLAYBOOK.md

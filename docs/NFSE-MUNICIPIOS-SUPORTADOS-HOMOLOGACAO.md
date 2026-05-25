@@ -1,6 +1,6 @@
 # NFSe - Municipios suportados, homologados e pendentes
 
-Base: `config/nfse/providers-catalog.json` (snapshot em `2026-05-23`).
+Base: `config/nfse/providers-catalog.json` (snapshot em `2026-05-25`).
 
 ## Regra vigente para homologacao
 
@@ -63,6 +63,7 @@ Base: `config/nfse/providers-catalog.json` (snapshot em `2026-05-23`).
 - Lista pendente municipal: `docs/nfse-municipios-pendentes-homologacao.csv`
 - Tracker de capitais: `docs/NFSE-CAPITAIS-HOMOLOGACAO-TRACKER.md`
 - Reconciliacao Uninfe x catalogo: `docs/NFSE-UNINFE-RECONCILIACAO.md`
+- Tabela completa provider x municipios: `docs/NFSE-PROVIDERS-MUNICIPIOS.md`
 
 ## Observacao sobre o catalogo
 

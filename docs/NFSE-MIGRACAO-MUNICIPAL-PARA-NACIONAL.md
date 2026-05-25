@@ -13,16 +13,18 @@ Migre quando o município:
 ## Passos obrigatórios
 
 1. Atualize `config/nfse/providers-catalog.json` para apontar `provider_family = nfse_nacional`.
-2. Sincronize `config/nfse/nfse-catalog-manifest.json` com a mesma decisão e a nota de vigência.
-3. Preserve o provider municipal histórico fora da rota ativa.
-4. Atualize exemplos e scripts de homologação para o fluxo nacional.
-5. Valide emissão, consulta, cancelamento e download no provider nacional.
-6. Documente a janela de vigência e qualquer limitação de retroativos.
+2. Defina `national_migration_policy` no município (`effective_from`, `legacy_system`, `error_code` e URLs oficiais).
+3. Sincronize `config/nfse/nfse-catalog-manifest.json` com a mesma decisão e política de vigência.
+4. Preserve o provider municipal histórico fora da rota ativa.
+5. Atualize exemplos e scripts de homologação para o fluxo nacional.
+6. Valide emissão, consulta, cancelamento e download no provider nacional.
+7. Documente a janela de vigência e qualquer limitação de retroativos.
 
 ## Regras de compatibilidade
 
 - O resolver não deve fazer roteamento híbrido por data.
-- A vigência deve ficar documentada, não embutida implicitamente no runtime.
+- A vigência deve ficar explícita em metadata municipal (`national_migration_policy`) e não em regra hardcoded por cidade.
+- A facade aplica bloqueio genérico de emissão pré-vigência quando `enforce_emission_block_before_effective_date=true`.
 - Consultas e cancelamentos seguem o provider efetivo da nota já emitida.
 - MEI continua seguindo a política global: emissão sempre no nacional.
 

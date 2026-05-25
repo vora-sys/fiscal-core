@@ -426,6 +426,8 @@ Ao concluir a implementacao:
 
 - atualizar este playbook se houver regra nova reutilizavel
 - atualizar docs especificos do municipio, quando existirem
+- atualizar `docs/NFSE-PROVIDERS-MUNICIPIOS.md` via `php scripts/nfse/generate-providers-municipios-doc.php`
+- quando houver migracao para nacional, revisar `docs/NFSE-MIGRACAO-MUNICIPAL-PARA-NACIONAL.md`
 - atualizar `README.md`
 - atualizar changelog/release notes
 

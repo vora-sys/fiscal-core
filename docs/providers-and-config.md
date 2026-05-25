@@ -116,6 +116,17 @@ Script utilitário:
 
 Use `--dry-run` para simular sem gravar.
 
+## Tabela de cobertura por provider
+
+Documento consolidado:
+
+- `docs/NFSE-PROVIDERS-MUNICIPIOS.md`
+
+Geração/atualização:
+
+- `php scripts/nfse/generate-providers-municipios-doc.php`
+- `php scripts/nfse/generate-providers-municipios-doc.php --output=docs/NFSE-PROVIDERS-MUNICIPIOS.md`
+
 ## Reconciliação com Uninfe
 
 Use o repositório `Uninfe` local como fonte auxiliar de mapeamento de provedores municipais.

@@ -1,7 +1,7 @@
 # NFSe - Provedores Implementados e Municipios Atendidos
 
 Base: `config/nfse/nfse-provider-families.json` + `config/nfse/providers-catalog.json`.
-Gerado em: `2026-05-25 10:55:10 UTC`.
+Gerado em: `2026-05-25 11:01:55 UTC`.
 
 Legenda: considera somente municipios `active=true`; entradas tecnicas (`UF=AN/XX`) sao separadas na contagem.
 
@@ -98,5 +98,10 @@ Legenda: considera somente municipios `active=true`; entradas tecnicas (`UF=AN/X
 
 ## Observacoes
 
-- `DSF` permanece no catálogo de famílias por compatibilidade legada, com migração em andamento para `ABRASF_SHARED`/`BELEM_MUNICIPAL_2025`.
-- `nfse_nacional` pode concentrar muitos municípios por adesão ao emissor nacional.
+- `DSF` permanece no catalogo de familias por compatibilidade legada, com migracao em andamento para `ABRASF_SHARED`/`BELEM_MUNICIPAL_2025`.
+- `nfse_nacional` pode concentrar muitos municipios por adesao ao emissor nacional.
+
+## Como atualizar
+
+- `php scripts/nfse/generate-providers-municipios-doc.php`
+- `php scripts/nfse/generate-providers-municipios-doc.php --output=docs/NFSE-PROVIDERS-MUNICIPIOS.md`

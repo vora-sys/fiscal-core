@@ -21,6 +21,7 @@ scripts/nfse/*
 !scripts/nfse/scaffold-municipio.php
 !scripts/nfse/provider-switch.php
 !scripts/nfse/reconcile-uninfe-providers.php
+!scripts/nfse/generate-providers-municipios-doc.php
 !scripts/nfse/templates/
 scripts/nfse/templates/*
 !scripts/nfse/templates/*.stub.php
