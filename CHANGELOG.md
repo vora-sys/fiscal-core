@@ -1,5 +1,19 @@
 # Changelog
 
+## v1.2.4 - 2026-05-25
+
+### Added
+- Scripts Composer para testes (`test`, `test:unit`, `test:nfse`, `test:ci`) e analise estatica (`analyse`).
+- Workflow GitHub Actions com matriz PHP 8.1/8.2, instalacao de extensoes, suite CI e PHPStan inicial.
+- Configuracao inicial do PHPStan em `phpstan.neon`.
+- Documentacao publica das Facades em `docs/API-FACADES.md`.
+- Checklist de release Packagist em `docs/RELEASE-PACKAGIST.md`.
+
+### Changed
+- Roadmap e status do release Composer alinhados ao pacote canonico `sabbajohn/fiscal-core`.
+- Contrato publico das facades documentado em torno de `FiscalResponse`, sem breaking changes.
+- GitHub Packages, Laravel Service Provider, middleware e cache unificado permanecem explicitamente como pos-release.
+
 ## v1.2.3 - 2026-05-16
 
 ### Added

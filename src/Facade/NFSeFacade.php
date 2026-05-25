@@ -11,6 +11,7 @@ use sabbajohn\FiscalCore\Support\NFSeProviderResolver;
 use sabbajohn\FiscalCore\Support\NFSeRuntimeBootstrap;
 use sabbajohn\FiscalCore\Support\ProviderRegistry;
 use sabbajohn\FiscalCore\Support\ResponseHandler;
+use sabbajohn\FiscalCore\Support\FiscalResponseNormalizer;
 use sabbajohn\FiscalCore\Support\XmlUtils;
 
 /**
@@ -28,11 +29,13 @@ class NFSeFacade
     private array $deprecationWarnings = [];
     private ?array $municipioResolved = null;
     private array $runtimeContext = [];
+    private FiscalResponseNormalizer $publicNormalizer;
 
     public function __construct(string $municipio = 'nacional', ?NFSeAdapter $nfse = null)
     {
         $this->municipio = $municipio;
         $this->responseHandler = new ResponseHandler();
+        $this->publicNormalizer = new FiscalResponseNormalizer();
         $resolver = new NFSeProviderResolver();
         $compat = $resolver->buildMetadata($municipio);
         $this->providerKey = $compat['provider_key'];
@@ -53,6 +56,7 @@ class NFSeFacade
                         'PROVIDER_NOT_FOUND',
                         'nfse_initialization',
                         [
+                            'category' => 'configuration',
                             'available_municipios' => $registry->listMunicipios(),
                             'provider_key' => $this->providerKey,
                             'municipio_input' => $municipio,
@@ -112,6 +116,33 @@ class NFSeFacade
                 'municipio' => $this->municipio,
                 'emissao' => $lastEmission,
             ];
+            $parsed = is_array($lastEmission['parsed_response'] ?? null) ? $lastEmission['parsed_response'] : [];
+            $artifacts = is_array($lastEmission['artifacts'] ?? null) ? $lastEmission['artifacts'] : [];
+            $documentoXml = $this->extractNfseXmlFromParsedResponse($parsed) ?? $this->extractFiscalXmlFromCandidate($resultado);
+            $documento = [
+                'modelo' => 'nfse',
+                'xml' => $documentoXml,
+                'chave_consulta' => $parsed['numero'] ?? $parsed['numero_nfse'] ?? null,
+                'numero' => $parsed['numero'] ?? $parsed['numero_nfse'] ?? null,
+                'protocolo' => $parsed['protocolo'] ?? $parsed['numero_lote'] ?? null,
+                'situacao' => $parsed['status'] ?? null,
+            ];
+            $data += $this->publicNormalizer->normalizeFiscalOperation('nfse', 'nfse_emission', [
+                'status' => $parsed['status'] ?? null,
+                'ok' => !in_array((string) ($parsed['status'] ?? ''), ['error', 'invalid_xml', 'empty'], true),
+                'mensagens' => is_array($parsed['mensagens'] ?? null) ? $parsed['mensagens'] : [],
+                'protocolo' => $documento['protocolo'],
+            ], $documento, [
+                'provider_key' => $this->providerKey,
+                'municipio' => $this->municipio,
+                'provider_class' => $lastEmission['effective_provider_class'] ?? null,
+            ], [
+                'request_payload' => $artifacts['request_payload'] ?? null,
+                'request_xml' => $artifacts['request_xml'] ?? null,
+                'response_body' => $artifacts['response_raw'] ?? $resultado,
+                'response_xml' => $artifacts['response_xml'] ?? (str_starts_with(ltrim($resultado), '<') ? $resultado : null),
+                'parsed_response' => $parsed ?: null,
+            ]);
             $metadata = [
                 'municipio' => $this->municipio,
                 'provider_key' => $this->providerKey,
@@ -293,7 +324,17 @@ class NFSeFacade
             $operation = method_exists($this->nfse, 'getLastOperationInfo')
                 ? $this->nfse->getLastOperationInfo()
                 : [];
-            return FiscalResponse::success(array_merge($resultado->toArray(), [
+            $data = $resultado->toArray();
+            $data['operacao'] = [
+                'tipo' => 'nfse_query',
+                'status' => $data['consulta']['status'] ?? $data['documento']['status_autorizacao'] ?? null,
+                'ok' => ($data['consulta']['disponivel'] ?? false) === true,
+                'cstat' => null,
+                'xmotivo' => null,
+                'mensagens' => $data['consulta']['mensagens'] ?? [],
+                'protocolo' => $data['documento']['protocolo'] ?? null,
+            ];
+            return FiscalResponse::success(array_merge($data, [
                 'type' => 'nfse_consulta',
                 'chave' => $chave,
                 'municipio' => $this->municipio,
@@ -365,7 +406,24 @@ class NFSeFacade
                 );
             }
 
-            return FiscalResponse::success([
+            $normalized = $this->publicNormalizer->normalizeFiscalOperation('nfse', 'nfse_cancellation', [
+                'status' => 'cancelada',
+                'ok' => true,
+                'mensagens' => [],
+                'protocolo' => $protocolo ?: ($operation['normalized_result']['operacao']['protocolo'] ?? null),
+            ], [
+                'chave_consulta' => $chave,
+                'situacao' => 'cancelada',
+                'protocolo' => $protocolo ?: ($operation['normalized_result']['operacao']['protocolo'] ?? null),
+            ], [
+                'provider_key' => $this->providerKey,
+                'municipio' => $this->municipio,
+            ], [
+                'parsed_response' => $operation['parsed_response'] ?? null,
+                'response_body' => $operation,
+            ]);
+
+            return FiscalResponse::success($normalized + [
                 'canceled' => $resultado,
                 'type' => 'nfse_cancelamento',
                 'chave' => $chave,
@@ -399,7 +457,24 @@ class NFSeFacade
             $operation = method_exists($this->nfse, 'getLastOperationInfo')
                 ? $this->nfse->getLastOperationInfo()
                 : [];
-            return FiscalResponse::success([
+            $normalized = $this->publicNormalizer->normalizeFiscalOperation('nfse', 'nfse_substitution', [
+                'status' => $operation['normalized_result']['operacao']['status'] ?? null,
+                'ok' => $operation['normalized_result']['operacao']['ok'] ?? null,
+                'mensagens' => $operation['normalized_result']['operacao']['mensagens'] ?? [],
+                'protocolo' => $operation['normalized_result']['operacao']['protocolo'] ?? null,
+            ], [
+                'xml' => $this->extractFiscalXmlFromCandidate($resultado),
+                'chave_consulta' => $chave,
+                'protocolo' => $operation['normalized_result']['operacao']['protocolo'] ?? null,
+            ], [
+                'provider_key' => $this->providerKey,
+                'municipio' => $this->municipio,
+            ], [
+                'response_body' => $resultado,
+                'response_xml' => str_starts_with(ltrim($resultado), '<') ? $resultado : null,
+                'parsed_response' => $operation['parsed_response'] ?? null,
+            ]);
+            return FiscalResponse::success($normalized + [
                 'resultado' => $resultado,
                 'type' => 'nfse_substituicao',
                 'chave' => $chave,
@@ -470,33 +545,31 @@ class NFSeFacade
                 ? $rawResult
                 : null;
 
-            return FiscalResponse::success([
-                'documento' => [
-                    'modelo' => 'nfse',
-                    'xml' => $documentoXml,
-                    'chave_consulta' => $chave,
-                ],
-                'impressao' => [
-                    'disponivel' => false,
-                    'modo' => 'indisponivel',
-                    'url' => null,
-                    'pdf_base64' => null,
-                    'content_type' => null,
-                    'filename' => null,
-                    'source' => null,
-                ],
-                'provider' => [
-                    'type' => 'nfse',
-                    'operation' => 'baixar_xml',
-                    'municipio' => $this->municipio,
-                ],
-                'raw' => [
-                    'parsed_response' => is_array($parsed) ? $parsed : null,
-                    'request_payload' => null,
-                    'request_xml' => null,
-                    'response_body' => $rawResult,
-                    'response_xml' => $responseXml,
-                ],
+            $parsedArray = is_array($parsed) ? $parsed : [];
+            $normalized = $this->publicNormalizer->normalizeFiscalOperation('nfse', 'nfse_download_xml', [
+                'status' => $parsedArray['status'] ?? null,
+                'ok' => !in_array((string) ($parsedArray['status'] ?? ''), ['error', 'invalid_xml', 'empty'], true),
+                'mensagens' => is_array($parsedArray['mensagens'] ?? null) ? $parsedArray['mensagens'] : [],
+                'protocolo' => $parsedArray['protocolo'] ?? null,
+            ], [
+                'xml' => $documentoXml,
+                'chave_consulta' => $chave,
+                'situacao' => $parsedArray['status'] ?? null,
+                'protocolo' => $parsedArray['protocolo'] ?? null,
+                'numero' => $parsedArray['numero'] ?? $parsedArray['numero_nfse'] ?? null,
+            ], [
+                'operation' => 'baixar_xml',
+                'municipio' => $this->municipio,
+                'provider_key' => $this->providerKey,
+            ], [
+                'parsed_response' => is_array($parsed) ? $parsed : null,
+                'request_payload' => null,
+                'request_xml' => null,
+                'response_body' => $rawResult,
+                'response_xml' => $responseXml,
+            ]);
+
+            return FiscalResponse::success($normalized + [
                 'type' => 'nfse_xml_download',
                 'chave' => $chave,
                 'municipio' => $this->municipio,
@@ -514,7 +587,25 @@ class NFSeFacade
 
         try {
             $resultado = $this->nfse->baixarDanfse($chave);
-            return FiscalResponse::success(array_merge($resultado->toArray(), [
+            $data = $resultado->toArray();
+            $data['operacao'] = [
+                'tipo' => 'nfse_download_danfse',
+                'status' => ($data['impressao']['disponivel'] ?? false) ? 'disponivel' : 'indisponivel',
+                'ok' => ($data['impressao']['disponivel'] ?? false) === true,
+                'cstat' => null,
+                'xmotivo' => null,
+                'mensagens' => [],
+                'protocolo' => null,
+            ];
+            $data['documento'] = [
+                'modelo' => 'nfse',
+                'xml' => null,
+                'chave_acesso' => null,
+                'chave_consulta' => $chave,
+                'situacao' => $data['operacao']['status'],
+                'protocolo' => null,
+            ];
+            return FiscalResponse::success(array_merge($data, [
                 'type' => 'nfse_danfse_download',
                 'chave' => $chave,
                 'municipio' => $this->municipio,
@@ -551,7 +642,26 @@ class NFSeFacade
                 ]
             );
 
-            return FiscalResponse::success(array_merge($printResult->toArray(), [
+            $data = $printResult->toArray();
+            $data['operacao'] = [
+                'tipo' => 'nfse_generate_danfse',
+                'status' => ($data['impressao']['disponivel'] ?? false) ? 'disponivel' : 'indisponivel',
+                'ok' => ($data['impressao']['disponivel'] ?? false) === true,
+                'cstat' => null,
+                'xmotivo' => null,
+                'mensagens' => [],
+                'protocolo' => null,
+            ];
+            $data['documento'] = [
+                'modelo' => 'nfse',
+                'xml' => $xmlNfse,
+                'chave_acesso' => null,
+                'chave_consulta' => null,
+                'situacao' => 'renderizada',
+                'protocolo' => null,
+            ];
+            $data['xml'] = $xmlNfse;
+            return FiscalResponse::success(array_merge($data, [
                 'type' => 'nfse_generate_danfse',
             ]), 'nfse_generate_danfse', $this->buildCompatibilityMetadata());
         } catch (\Exception $e) {

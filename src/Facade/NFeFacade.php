@@ -13,6 +13,7 @@ use sabbajohn\FiscalCore\Support\ToolsFactory;
 use NFePHP\NFe\Tools;
 use NFePHP\NFe\Complements;
 use sabbajohn\FiscalCore\Support\FiscalDocumentResultNormalizer;
+use sabbajohn\FiscalCore\Support\FiscalResponseNormalizer;
 
 /**
  * Facade para NFe - Interface simplificada e com tratamento de erros
@@ -24,6 +25,7 @@ class NFeFacade
     private ?ImpressaoAdapter $impressao = null;
     private ResponseHandler $responseHandler;
     private FiscalDocumentResultNormalizer $resultNormalizer;
+    private FiscalResponseNormalizer $publicNormalizer;
     private ?FiscalResponse $initializationError = null;
 
     public function __construct(
@@ -32,6 +34,7 @@ class NFeFacade
     ) {
         $this->responseHandler = new ResponseHandler();
         $this->resultNormalizer = new FiscalDocumentResultNormalizer();
+        $this->publicNormalizer = new FiscalResponseNormalizer();
         
         if ($nfe !== null) {
             $this->nfe = $nfe;
@@ -67,7 +70,8 @@ class NFeFacade
             return $this->initializationError ?? FiscalResponse::error(
                 'NFe adapter não inicializado devido a erro de configuração',
                 'INITIALIZATION_ERROR',
-                'adapter_check'
+                'adapter_check',
+                ['category' => 'configuration']
             );
         }
         return null;
@@ -173,15 +177,30 @@ class NFeFacade
             }
             
             $xmlResponse = $this->nfe->cancelar($chave, $motivo, $protocolo);
+            $parsed = $this->parseEventResponse($xmlResponse);
+            $ok = $this->isSefazOperationSuccessful($xmlResponse);
             
-            return [
+            return $this->publicNormalizer->normalizeFiscalOperation('nfe', 'cancelamento_nfe', [
+                'status' => $parsed['xmotivo'] ?? null,
+                'ok' => $ok,
+                'cstat' => $parsed['cstat'] ?? null,
+                'xmotivo' => $parsed['xmotivo'] ?? null,
+                'protocolo' => $parsed['protocolo'] ?? $protocolo,
+            ], [
+                'chave_acesso' => $chave,
+                'situacao' => $parsed['xmotivo'] ?? null,
+                'protocolo' => $parsed['protocolo'] ?? $protocolo,
+            ], [], [
+                'response_xml' => $xmlResponse,
+                'parsed_response' => $parsed,
+            ], [
                 'cancelado' => $this->isSefazOperationSuccessful($xmlResponse),
                 'xml_response' => $xmlResponse,
                 'cstat' => $this->extrairCStat($xmlResponse),
                 'chave_acesso' => $chave,
                 'motivo' => $motivo,
                 'protocolo' => $protocolo
-            ];
+            ]);
         }, 'cancelamento_nfe');
     }
 
@@ -213,8 +232,22 @@ class NFeFacade
                 $ano, $cnpj, 55, $serie, 
                 $numeroInicial, $numeroFinal, $justificativa
             );
+            $parsed = $this->parseEventResponse($xmlResponse);
+            $ok = $this->isSefazOperationSuccessful($xmlResponse);
             
-            return [
+            return $this->publicNormalizer->normalizeFiscalOperation('nfe', 'inutilizacao_nfe', [
+                'status' => $parsed['xmotivo'] ?? null,
+                'ok' => $ok,
+                'cstat' => $parsed['cstat'] ?? null,
+                'xmotivo' => $parsed['xmotivo'] ?? null,
+                'protocolo' => $parsed['protocolo'] ?? null,
+            ], [
+                'situacao' => $parsed['xmotivo'] ?? null,
+                'protocolo' => $parsed['protocolo'] ?? null,
+            ], [], [
+                'response_xml' => $xmlResponse,
+                'parsed_response' => $parsed,
+            ], [
                 'inutilizado' => $this->isSefazOperationSuccessful($xmlResponse),
                 'xml_response' => $xmlResponse,
                 'cstat' => $this->extrairCStat($xmlResponse),
@@ -224,7 +257,7 @@ class NFeFacade
                     'final' => $numeroFinal
                 ],
                 'justificativa' => $justificativa
-            ];
+            ]);
         }, 'inutilizacao_nfe');
     }
 
@@ -245,13 +278,26 @@ class NFeFacade
         
         return $this->responseHandler->handle(function() use ($uf, $ambiente) {
             $result = $this->nfe->sefazStatus($uf, $ambiente);
+            $parsed = \sabbajohn\FiscalCore\Support\XmlUtils::parseSefazRetorno($result);
+            $cstat = $parsed['lote']['cStat'] ?? $this->extractTagValue($result, ['cStat']);
+            $xmotivo = $parsed['lote']['xMotivo'] ?? $this->extractTagValue($result, ['xMotivo']);
             
-            return [
+            return $this->publicNormalizer->normalizeFiscalOperation('nfe', 'status_sefaz', [
+                'status' => $xmotivo,
+                'ok' => in_array((string) $cstat, ['107', '108', '109'], true),
+                'cstat' => $cstat,
+                'xmotivo' => $xmotivo,
+            ], [
+                'situacao' => $xmotivo,
+            ], [], [
+                'response_xml' => $result,
+                'parsed_response' => $parsed,
+            ], [
                 'xml_response' => $result,
                 'uf' => $uf ?: 'SC',
                 'ambiente' => $ambiente ?: 2,
                 'status' => $this->extrairStatusSefaz($result)
-            ];
+            ]);
         }, 'status_sefaz');
     }
 
@@ -268,11 +314,20 @@ class NFeFacade
 
         return $this->responseHandler->handle(function () use ($ultNsu, $numNsu, $chave, $fonte) {
             $xmlResponse = $this->nfe->consultaNotasEmitidasParaEstabelecimento($ultNsu, $numNsu, $chave, $fonte);
+            $parsed = $this->parseDistDFeResponse($xmlResponse);
 
-            return array_merge(
-                ['xml_response' => $xmlResponse],
-                $this->parseDistDFeResponse($xmlResponse)
-            );
+            return $this->publicNormalizer->normalizeFiscalOperation('nfe', 'distdfe_nfe', [
+                'status' => $parsed['xmotivo'] ?? null,
+                'ok' => in_array((string) ($parsed['cstat'] ?? ''), ['137', '138'], true),
+                'cstat' => $parsed['cstat'] ?? null,
+                'xmotivo' => $parsed['xmotivo'] ?? null,
+            ], [
+                'chave_acesso' => $chave,
+                'situacao' => $parsed['xmotivo'] ?? null,
+            ], [], [
+                'response_xml' => $xmlResponse,
+                'parsed_response' => $parsed,
+            ], array_merge(['xml_response' => $xmlResponse], $parsed));
         }, 'distdfe_nfe');
     }
 
@@ -294,17 +349,30 @@ class NFeFacade
 
             $manifestationType = is_string($tipo) ? ManifestationType::fromValue($tipo) : $tipo;
             $xmlResponse = $this->nfe->manifestarDestinatario($chave, $manifestationType, $justificativa, $sequencia);
+            $parsed = $this->parseEventResponse($xmlResponse);
 
-            return array_merge(
-                [
+            return $this->publicNormalizer->normalizeFiscalOperation('nfe', 'manifestacao_destinatario_nfe', [
+                'status' => $parsed['xmotivo'] ?? null,
+                'ok' => $this->isSefazOperationSuccessful($xmlResponse),
+                'cstat' => $parsed['cstat'] ?? null,
+                'xmotivo' => $parsed['xmotivo'] ?? null,
+                'protocolo' => $parsed['protocolo'] ?? null,
+            ], [
+                'chave_acesso' => $chave,
+                'situacao' => $parsed['xmotivo'] ?? null,
+                'protocolo' => $parsed['protocolo'] ?? null,
+            ], [], [
+                'response_xml' => $xmlResponse,
+                'parsed_response' => $parsed,
+            ], array_merge([
                     'chave_acesso' => $chave,
                     'manifestation_type' => $manifestationType->value,
                     'justificativa' => $justificativa,
                     'sequencia' => $sequencia,
                     'xml_response' => $xmlResponse,
                 ],
-                $this->parseEventResponse($xmlResponse)
-            );
+                $parsed
+            ));
         }, 'manifestacao_destinatario_nfe');
     }
 

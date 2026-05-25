@@ -9,6 +9,7 @@ use sabbajohn\FiscalCore\Support\FiscalResponse;
 use sabbajohn\FiscalCore\Adapters\NF\Builder\NotaFiscalBuilder;
 use sabbajohn\FiscalCore\Support\ToolsFactory;
 use sabbajohn\FiscalCore\Support\FiscalDocumentResultNormalizer;
+use sabbajohn\FiscalCore\Support\FiscalResponseNormalizer;
 /**
  * Facade para NFCe - Interface simplificada com tratamento de erros
  * Evita que aplicações recebam erros 500 fornecendo responses padronizados
@@ -19,6 +20,7 @@ class NFCeFacade
     private ?ImpressaoAdapter $impressao = null;
     private ResponseHandler $responseHandler;
     private FiscalDocumentResultNormalizer $resultNormalizer;
+    private FiscalResponseNormalizer $publicNormalizer;
     private ?FiscalResponse $initializationError = null;
 
     public function __construct(
@@ -27,6 +29,7 @@ class NFCeFacade
     ) {
         $this->responseHandler = new ResponseHandler();
         $this->resultNormalizer = new FiscalDocumentResultNormalizer();
+        $this->publicNormalizer = new FiscalResponseNormalizer();
         
         if ($nfce !== null) {
             $this->nfce = $nfce;
@@ -62,7 +65,8 @@ class NFCeFacade
             return $this->initializationError ?? FiscalResponse::error(
                 'NFCe adapter não inicializado devido a erro de configuração',
                 'INITIALIZATION_ERROR',
-                'adapter_check'
+                'adapter_check',
+                ['category' => 'configuration']
             );
         }
         return null;
@@ -161,15 +165,30 @@ class NFCeFacade
             }
             
             $xmlResponse = $this->nfce->cancelar($chave, $motivo, $protocolo);
+            $parsed = $this->parseEventResponse($xmlResponse);
+            $ok = $this->isSefazOperationSuccessful($xmlResponse);
             
-            return [
-                'cancelado' => $this->isSefazOperationSuccessful($xmlResponse),
+            return $this->publicNormalizer->normalizeFiscalOperation('nfce', 'cancelamento_nfce', [
+                'status' => $parsed['xmotivo'] ?? null,
+                'ok' => $ok,
+                'cstat' => $parsed['cstat'] ?? null,
+                'xmotivo' => $parsed['xmotivo'] ?? null,
+                'protocolo' => $parsed['protocolo'] ?? $protocolo,
+            ], [
+                'chave_acesso' => $chave,
+                'situacao' => $parsed['xmotivo'] ?? null,
+                'protocolo' => $parsed['protocolo'] ?? $protocolo,
+            ], [], [
+                'response_xml' => $xmlResponse,
+                'parsed_response' => $parsed,
+            ], [
+                'cancelado' => $ok,
                 'xml_response' => $xmlResponse,
                 'cstat' => $this->extrairCStat($xmlResponse),
                 'chave_acesso' => $chave,
                 'motivo' => $motivo,
                 'protocolo' => $protocolo
-            ];
+            ]);
         }, 'cancelamento_nfce');
     }
 
@@ -221,13 +240,25 @@ class NFCeFacade
         
         return $this->responseHandler->handle(function() use ($uf, $ambiente) {
             $result = $this->nfce->sefazStatus($uf, $ambiente);
+            $cstat = $this->extractTagValue($result, ['cStat']);
+            $xmotivo = $this->extractTagValue($result, ['xMotivo']);
             
-            return [
+            return $this->publicNormalizer->normalizeFiscalOperation('nfce', 'status_sefaz', [
+                'status' => $xmotivo,
+                'ok' => in_array((string) $cstat, ['107', '108', '109'], true),
+                'cstat' => $cstat,
+                'xmotivo' => $xmotivo,
+            ], [
+                'situacao' => $xmotivo,
+            ], [], [
+                'response_xml' => $result,
+                'parsed_response' => ['cstat' => $cstat, 'xmotivo' => $xmotivo],
+            ], [
                 'xml_response' => $result,
                 'uf' => $uf ?: 'SC',
                 'ambiente' => $ambiente ?: 2,
                 'status' => $this->extrairStatusSefaz($result)
-            ];
+            ]);
         }, 'status_sefaz');
     }
 
@@ -324,6 +355,38 @@ class NFCeFacade
         } catch (\Exception $e) {
             return null;
         }
+    }
+
+    private function parseEventResponse(string $xml): array
+    {
+        return [
+            'cstat' => $this->extractTagValue($xml, ['cStat']),
+            'xmotivo' => $this->extractTagValue($xml, ['xMotivo']),
+            'protocolo' => $this->extractTagValue($xml, ['nProt']),
+            'chave' => $this->extractTagValue($xml, ['chNFe']),
+        ];
+    }
+
+    private function extractTagValue(string $xml, array $tagNames): ?string
+    {
+        try {
+            $dom = new \DOMDocument();
+            $dom->loadXML($xml);
+            $xpath = new \DOMXPath($dom);
+            foreach ($tagNames as $tagName) {
+                $node = $xpath->query("//*[local-name()='{$tagName}']")->item(0);
+                if ($node instanceof \DOMNode) {
+                    $value = trim((string) $node->textContent);
+                    if ($value !== '') {
+                        return $value;
+                    }
+                }
+            }
+        } catch (\Throwable) {
+            return null;
+        }
+
+        return null;
     }
 
     private function isSefazOperationSuccessful(string $xml): bool

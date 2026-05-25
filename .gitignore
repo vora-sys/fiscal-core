@@ -38,6 +38,7 @@ files/*
 
 .vscode/settings.json
 .phpunit.cache/test-results
+.phpstan.cache/
 tests/.DS_Store
 tests/**/.DS_Store
 tests/logs/*

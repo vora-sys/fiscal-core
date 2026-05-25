@@ -29,6 +29,15 @@ class FiscalDocumentResultNormalizer
             ], $raw);
 
         return array_merge([
+            'operacao' => [
+                'tipo' => $operation,
+                'status' => $normalizedDocumento['situacao'],
+                'ok' => null,
+                'cstat' => null,
+                'xmotivo' => $normalizedDocumento['situacao'],
+                'mensagens' => [],
+                'protocolo' => $normalizedDocumento['protocolo'],
+            ],
             'documento' => $normalizedDocumento,
             'impressao' => array_merge($this->emptyImpressao(), $impressao),
             'provider' => array_merge([

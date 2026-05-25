@@ -8,7 +8,7 @@ Data de referencia: 2026-05-25
 
 Resumo atual:
 
-- Versao local documentada no changelog: `1.2.3`.
+- Versao local documentada no changelog: `1.2.4`.
 - Consumido pelo backend Laravel por path repository em desenvolvimento.
 - Nome Composer canonico definido no `composer.json`: `sabbajohn/fiscal-core`; ainda falta publicar/atualizar este nome no Packagist.
 - NF-e/NFC-e possuem adapters/facades e testes de formato de resposta.
@@ -19,7 +19,7 @@ Resumo atual:
 Validacao executada neste corte:
 
 - Comando: `vendor/bin/phpunit --testsuite NFSe`
-- Resultado: `92 tests`, `438 assertions`
+- Resultado: `123 tests`, `1300 assertions`
 - Status: `OK`
 - Falha corrigida: `ProviderConfigTest::testFacadeMapsManausToNationalProvider`
 - Deprecations corrigidas: remocao de `ReflectionMethod::setAccessible()` nos testes NFSe
@@ -121,6 +121,7 @@ Status: implementados, com contrato publico ainda em consolidacao.
 - [x] `UtilsFacade`.
 - [x] Adapters principais para documentos, NFe, NFCe, NFSe, impressao, IBPT/GTIN e BrasilAPI.
 - [ ] Fechar contrato semantico uniforme entre NFe/NFCe/NFSe/Impressao/Tributacao.
+- [x] Documentar envelope publico `FiscalResponse` e shape canonico das facades em `docs/API-FACADES.md`.
 - [ ] Padronizar tratamento de erros em todos os adapters.
 - [ ] Completar logs/diagnostico.
 - [ ] Revisar shape publico de respostas para compatibilidade semantica com backend.
@@ -149,7 +150,9 @@ Status: parcial, mas substancialmente melhor que o corte antigo.
 - [x] Tratar as 2 deprecations restantes.
 - [ ] Separar testes externos reais de homologacao com flag clara.
 - [ ] Definir meta de cobertura realista por modulo.
-- [ ] Adicionar CI para rodar suites criticas.
+- [x] Adicionar CI para rodar suite critica com `ENABLE_EXTERNAL_TESTS=false`.
+- [x] Adicionar PHPStan inicial em nivel baixo para nao bloquear por divida antiga.
+- [ ] Definir formatter e politica de estilo.
 
 ### 7. Documentacao
 
@@ -162,22 +165,25 @@ Status: em progresso.
 - [x] Matrix de providers NFSe.
 - [x] Documentos especificos para Belem, Manaus/Nacional, ISSWeb e migracao municipal/nacional.
 - [x] Status consolidado de pendencias em `docs/STATUS-E-PENDENCIAS.md`.
-- [ ] API reference final.
+- [x] Referencia inicial das Facades em `docs/API-FACADES.md`.
+- [x] Checklist operacional de Packagist em `docs/RELEASE-PACKAGIST.md`.
+- [ ] API reference final por adapter/provider.
 - [ ] Guia Laravel final.
 - [ ] Guia de troubleshooting por provider.
-- [ ] Changelog por versao.
+- [x] Changelog por versao para `v1.2.4`.
 
 ### 8. DevOps e publicacao
 
 Status: parcialmente iniciado.
 
-- [ ] GitHub Actions.
-- [ ] PHPStan.
+- [x] GitHub Actions com matriz PHP 8.1/8.2 para release MVP.
+- [x] PHPStan inicial.
 - [ ] PHP-CS-Fixer ou Pint equivalente.
 - [ ] Relatorio de coverage.
-- [ ] Semantic versioning aplicado com changelog e tags consistentes.
+- [x] Changelog preparado para `v1.2.4`.
+- [ ] Tag `v1.2.4` publicada.
 - [x] Nome canonico local definido como `sabbajohn/fiscal-core`.
-- [ ] Publicar/atualizar Packagist como `sabbajohn/fiscal-core`.
+- [ ] Publicar/atualizar Packagist como `sabbajohn/fiscal-core` (acao externa).
 - [ ] Descontinuar ou documentar publicacao antiga `freeline/fiscal-core`, se ela continuar existindo.
 - [ ] Preparar GitHub Packages, se for canal de distribuicao necessario.
 
@@ -193,12 +199,13 @@ Status: parcialmente iniciado.
 
 ## Proxima sequencia recomendada
 
-1. Publicar/atualizar Packagist com o nome canonico `sabbajohn/fiscal-core` e ajustar tag de release.
-2. Decidir contrato publico futuro para retorno de emissao, cancelamento e substituicao sem quebrar compatibilidade.
-3. Criar Service Provider Laravel depois que o contrato/config estiverem estabilizados.
-4. Especializar substituicao por municipio/provider quando o contrato municipal divergir da base ABRASF.
-5. Rodar suites `NFSe`, `NFe`, `Tributacao` e `Integration` sem testes externos reais.
-6. Atualizar docs NFSe com a matriz final de suporte por municipio/provider.
+1. Rodar `composer validate --strict`, `composer test:ci`, `composer test:nfse` e `composer analyse`.
+2. Publicar/atualizar Packagist com o nome canonico `sabbajohn/fiscal-core` e tag `v1.2.4`.
+3. Decidir contrato publico futuro para retorno de emissao, cancelamento e substituicao sem quebrar compatibilidade.
+4. Criar Service Provider Laravel depois que o contrato/config estiverem estabilizados.
+5. Especializar substituicao por municipio/provider quando o contrato municipal divergir da base ABRASF.
+6. Rodar suites `NFe`, `Tributacao` e `Integration` sem testes externos reais.
+7. Atualizar docs NFSe com a matriz final de suporte por municipio/provider.
 
 ## Arquivos de retomada
 

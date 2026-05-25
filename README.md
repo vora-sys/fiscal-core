@@ -16,6 +16,8 @@
 - [📚 Exemplos Práticos](#-exemplos-práticos)
 - [⚙️ Configuração](#️-configuração-opcional)
 - [🏗️ Arquitetura](#️-arquitetura)
+- [📖 API das Facades](docs/API-FACADES.md)
+- [🚢 Release Packagist](docs/RELEASE-PACKAGIST.md)
 - [📊 Casos de Uso](#-casos-de-uso)
 - [🔧 Requisitos](#-requisitos-técnicos)
 - [🚨 Troubleshooting](#-troubleshooting)
@@ -444,6 +446,15 @@ monolog/monolog            # Logging
 composer test
 # ou
 vendor/bin/phpunit
+
+# Suite critica para CI/release
+composer test:ci
+
+# NFSe focado
+composer test:nfse
+
+# Analise estatica inicial
+composer analyse
 ```
 
 // App\Providers\AppServiceProvider.php
@@ -527,6 +538,7 @@ O status consolidado e a lista priorizada de pendências estão em [docs/STATUS-
 - [x] Playbook municipal e matriz operacional NFSe
 - [x] Cache local em fluxos específicos, como catálogo nacional e instâncias NFSe por município
 - [x] Nome Composer canônico definido como `sabbajohn/fiscal-core`
+- [x] Scripts Composer, CI mínimo e PHPStan inicial preparados para release `v1.2.4`
 
 ### 🔄 **Pendente ou parcial**
 
@@ -537,14 +549,17 @@ O status consolidado e a lista priorizada de pendências estão em [docs/STATUS-
 - [ ] Criar middleware de validação automática depois de estabilizar contrato/config Laravel
 - [ ] Consolidar política de cache para consultas remotas e configurações
 - [ ] Publicar/documentar GitHub Packages, se este canal for necessário
-- [ ] Criar referência detalhada por Facade e Adapter
-- [ ] Adicionar CI, PHPStan e formatter
+- [x] Criar referência inicial por Facade
+- [ ] Criar referência detalhada por Adapter
+- [ ] Definir formatter
 
 ## 🛠️ Configuração Avançada
 
 Para informações detalhadas sobre configuração de certificados e providers, consulte:
 
 - 📄 [docs/providers-and-config.md](docs/providers-and-config.md)
+- 📄 [docs/API-FACADES.md](docs/API-FACADES.md)
+- 📄 [docs/RELEASE-PACKAGIST.md](docs/RELEASE-PACKAGIST.md)
 - 📄 [docs/NFSE-MUNICIPAL-PROVIDER-PLAYBOOK.md](docs/NFSE-MUNICIPAL-PROVIDER-PLAYBOOK.md)
 - 📄 [config/nfse/providers-catalog.json](config/nfse/providers-catalog.json)
 - 📄 [config/nfse/nfse-provider-families.json](config/nfse/nfse-provider-families.json)
@@ -661,7 +676,8 @@ Roadmap
 - [ ] Publicar/atualizar pacote no Packagist como `sabbajohn/fiscal-core`
 - [ ] Descontinuar ou documentar como legado qualquer publicação antiga em `freeline/fiscal-core`
 - [ ] Publicar/documentar GitHub Packages, se necessário
-- [ ] Documentação detalhada de cada Facade e Adapter
+- [x] Documentação inicial de cada Facade
+- [ ] Documentação detalhada de cada Adapter
 
 📋 **Status consolidado:** [docs/STATUS-E-PENDENCIAS.md](docs/STATUS-E-PENDENCIAS.md)
 

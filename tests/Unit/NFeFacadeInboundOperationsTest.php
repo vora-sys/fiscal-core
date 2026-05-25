@@ -23,6 +23,9 @@ class NFeFacadeInboundOperationsTest extends TestCase
 
         $this->assertTrue($response->isSuccess());
         $this->assertSame('138', $response->getData('cstat'));
+        $this->assertSame('138', $response->getData('operacao')['cstat']);
+        $this->assertTrue($response->getData('operacao')['ok']);
+        $this->assertSame($this->distDfeXml(), $response->getData('raw')['response_xml']);
         $this->assertCount(1, $response->getData('documents'));
         $this->assertSame('35123456789012345678901234567890123456789012', $response->getData('documents')[0]['chave']);
     }
@@ -50,6 +53,9 @@ class NFeFacadeInboundOperationsTest extends TestCase
         $this->assertSame('confirmacao', $response->getData('manifestation_type'));
         $this->assertSame('123', $response->getData('protocolo'));
         $this->assertSame('135', $response->getData('cstat'));
+        $this->assertSame('135', $response->getData('operacao')['cstat']);
+        $this->assertSame('123', $response->getData('documento')['protocolo']);
+        $this->assertSame('35123456789012345678901234567890123456789012', $response->getData('documento')['chave_acesso']);
     }
 
     private function distDfeXml(): string

@@ -5,6 +5,7 @@ namespace sabbajohn\FiscalCore\Facade;
 use sabbajohn\FiscalCore\Adapters\ImpressaoAdapter;
 use sabbajohn\FiscalCore\Support\ResponseHandler;
 use sabbajohn\FiscalCore\Support\FiscalResponse;
+use sabbajohn\FiscalCore\Support\FiscalResponseNormalizer;
 
 /**
  * Facade para impressão de documentos fiscais
@@ -14,11 +15,13 @@ class ImpressaoFacade
 {
     private ImpressaoAdapter $impressao;
     private ResponseHandler $responseHandler;
+    private FiscalResponseNormalizer $normalizer;
 
     public function __construct(?ImpressaoAdapter $impressao = null)
     {
         $this->responseHandler = new ResponseHandler();
         $this->impressao = $impressao ?? new ImpressaoAdapter();
+        $this->normalizer = new FiscalResponseNormalizer();
     }
 
     /**
@@ -29,10 +32,11 @@ class ImpressaoFacade
         try {
             if (!function_exists('imagefontheight')) {
                 return FiscalResponse::error(
-                    'GD_EXTENSION_MISSING',
                     'Extensão GD não disponível no runtime PHP para gerar DANFE.',
+                    'GD_EXTENSION_MISSING',
                     'impressao_danfe',
                     [
+                        'category' => 'configuration',
                         'suggestions' => [
                             'Rebuild do container PHP com a extensão gd habilitada',
                             'Verifique se imagefontheight() está disponível no PHP em execução',
@@ -43,10 +47,11 @@ class ImpressaoFacade
 
             if (empty($xmlNfe)) {
                 return FiscalResponse::error(
-                    'XML_EMPTY',
                     'XML da NFe não pode estar vazio',
+                    'XML_EMPTY',
                     'impressao_danfe',
                     [
+                        'category' => 'validation',
                         'suggestions' => [
                             'Forneça um XML válido de NFe autorizada',
                             'Verifique se o XML contém todos os elementos obrigatórios'
@@ -57,7 +62,17 @@ class ImpressaoFacade
 
             $pdf = $this->impressao->gerarDanfe($xmlNfe);
             
-            return FiscalResponse::success([
+            return FiscalResponse::success($this->normalizer->normalizeImpressaoPdf(
+                'nfe',
+                'impressao_danfe',
+                $xmlNfe,
+                $pdf,
+                'danfe_' . date('Ymd_His') . '.pdf',
+                [
+                    'type' => 'danfe_nfe',
+                    'xml_size' => strlen($xmlNfe),
+                ]
+            ) + [
                 'pdf' => $pdf,
                 'size' => strlen($pdf),
                 'type' => 'danfe_nfe'
@@ -78,10 +93,11 @@ class ImpressaoFacade
         try {
             if (!function_exists('imagefontheight')) {
                 return FiscalResponse::error(
-                    'GD_EXTENSION_MISSING',
                     'Extensão GD não disponível no runtime PHP para gerar DANFCE.',
+                    'GD_EXTENSION_MISSING',
                     'impressao_danfce',
                     [
+                        'category' => 'configuration',
                         'suggestions' => [
                             'Rebuild do container PHP com a extensão gd habilitada',
                             'Verifique se imagefontheight() está disponível no PHP em execução',
@@ -92,10 +108,11 @@ class ImpressaoFacade
 
             if (empty($xmlNfce)) {
                 return FiscalResponse::error(
-                    'XML_EMPTY',
                     'XML da NFCe não pode estar vazio',
+                    'XML_EMPTY',
                     'impressao_danfce',
                     [
+                        'category' => 'validation',
                         'suggestions' => [
                             'Forneça um XML válido de NFCe autorizada',
                             'Verifique se o XML contém o QR Code obrigatório'
@@ -106,7 +123,18 @@ class ImpressaoFacade
 
             $pdf = $this->impressao->gerarDanfce($xmlNfce, $context);
             
-            return FiscalResponse::success([
+            return FiscalResponse::success($this->normalizer->normalizeImpressaoPdf(
+                'nfce',
+                'impressao_danfce',
+                $xmlNfce,
+                $pdf,
+                'danfce_' . date('Ymd_His') . '.pdf',
+                [
+                    'print_source' => 'custom_thermal_layout',
+                    'type' => 'danfce_nfce',
+                    'xml_size' => strlen($xmlNfce),
+                ]
+            ) + [
                 'pdf' => $pdf,
                 'size' => strlen($pdf),
                 'type' => 'danfce_nfce'
@@ -127,10 +155,11 @@ class ImpressaoFacade
         try {
             if (!function_exists('imagefontheight')) {
                 return FiscalResponse::error(
-                    'GD_EXTENSION_MISSING',
                     'Extensão GD não disponível no runtime PHP para gerar DACTE.',
+                    'GD_EXTENSION_MISSING',
                     'impressao_dacte',
                     [
+                        'category' => 'configuration',
                         'suggestions' => [
                             'Rebuild do container PHP com a extensão gd habilitada',
                         ],
@@ -140,10 +169,11 @@ class ImpressaoFacade
 
             if (empty($xmlCte)) {
                 return FiscalResponse::error(
-                    'XML_EMPTY',
                     'XML do CTe não pode estar vazio',
+                    'XML_EMPTY',
                     'impressao_dacte',
                     [
+                        'category' => 'validation',
                         'suggestions' => [
                             'Forneça um XML válido de CTe autorizado',
                             'Verifique se o XML contém todos os dados de transporte'
@@ -154,7 +184,17 @@ class ImpressaoFacade
 
             $pdf = $this->impressao->gerarCte($xmlCte);
             
-            return FiscalResponse::success([
+            return FiscalResponse::success($this->normalizer->normalizeImpressaoPdf(
+                'cte',
+                'impressao_dacte',
+                $xmlCte,
+                $pdf,
+                'dacte_' . date('Ymd_His') . '.pdf',
+                [
+                    'type' => 'dacte_cte',
+                    'xml_size' => strlen($xmlCte),
+                ]
+            ) + [
                 'pdf' => $pdf,
                 'size' => strlen($pdf),
                 'type' => 'dacte_cte'
@@ -175,10 +215,11 @@ class ImpressaoFacade
         try {
             if (!function_exists('imagefontheight')) {
                 return FiscalResponse::error(
-                    'GD_EXTENSION_MISSING',
                     'Extensão GD não disponível no runtime PHP para gerar DAMDFE.',
+                    'GD_EXTENSION_MISSING',
                     'impressao_damdfe',
                     [
+                        'category' => 'configuration',
                         'suggestions' => [
                             'Rebuild do container PHP com a extensão gd habilitada',
                         ],
@@ -188,10 +229,11 @@ class ImpressaoFacade
 
             if (empty($xmlMdfe)) {
                 return FiscalResponse::error(
-                    'XML_EMPTY',
                     'XML do MDFe não pode estar vazio',
+                    'XML_EMPTY',
                     'impressao_damdfe',
                     [
+                        'category' => 'validation',
                         'suggestions' => [
                             'Forneça um XML válido de MDFe autorizado',
                             'Verifique se o XML contém todos os manifestos eletrônicos'
@@ -202,7 +244,17 @@ class ImpressaoFacade
 
             $pdf = $this->impressao->gerarMdfe($xmlMdfe);
             
-            return FiscalResponse::success([
+            return FiscalResponse::success($this->normalizer->normalizeImpressaoPdf(
+                'mdfe',
+                'impressao_damdfe',
+                $xmlMdfe,
+                $pdf,
+                'damdfe_' . date('Ymd_His') . '.pdf',
+                [
+                    'type' => 'damdfe_mdfe',
+                    'xml_size' => strlen($xmlMdfe),
+                ]
+            ) + [
                 'pdf' => $pdf,
                 'size' => strlen($pdf),
                 'type' => 'damdfe_mdfe'
@@ -223,10 +275,11 @@ class ImpressaoFacade
         try {
             if (empty($pdfContent)) {
                 return FiscalResponse::error(
-                    'PDF_CONTENT_EMPTY',
                     'Conteúdo do PDF está vazio',
+                    'PDF_CONTENT_EMPTY',
                     'impressao_salvar_pdf',
                     [
+                        'category' => 'validation',
                         'suggestions' => [
                             'Gere o PDF primeiro usando os métodos gerarDanfe(), gerarDanfce(), etc.',
                             'Verifique se o conteúdo do PDF foi gerado corretamente'
@@ -237,10 +290,11 @@ class ImpressaoFacade
 
             if (empty($filename)) {
                 return FiscalResponse::error(
-                    'FILENAME_EMPTY',
                     'Nome do arquivo não pode estar vazio',
+                    'FILENAME_EMPTY',
                     'impressao_salvar_pdf',
                     [
+                        'category' => 'validation',
                         'suggestions' => [
                             'Forneça um nome válido para o arquivo',
                             'Exemplo: "danfe_12345.pdf"'
@@ -258,10 +312,11 @@ class ImpressaoFacade
             
             if ($bytes === false) {
                 return FiscalResponse::error(
-                    'FILE_WRITE_FAILED',
                     'Falha ao salvar arquivo PDF',
+                    'FILE_WRITE_FAILED',
                     'impressao_salvar_pdf',
                     [
+                        'category' => 'runtime',
                         'filename' => $filename,
                         'suggestions' => [
                             'Verifique se o diretório tem permissão de escrita',
@@ -292,10 +347,11 @@ class ImpressaoFacade
         try {
             if (empty($xml)) {
                 return FiscalResponse::error(
-                    'XML_EMPTY',
                     'XML não pode estar vazio',
+                    'XML_EMPTY',
                     'impressao_validar_xml',
                     [
+                        'category' => 'validation',
                         'tipo' => $tipo,
                         'suggestions' => ['Forneça um XML válido']
                     ]
@@ -314,10 +370,11 @@ class ImpressaoFacade
                 }
 
                 return FiscalResponse::error(
-                    'XML_INVALID',
                     'XML inválido: ' . implode('; ', $errorMessages),
+                    'XML_INVALID',
                     'impressao_validar_xml',
                     [
+                        'category' => 'xml',
                         'tipo' => $tipo,
                         'xml_errors' => $errorMessages,
                         'suggestions' => [

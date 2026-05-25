@@ -21,15 +21,15 @@ Este documento consolida o estado atual do pacote e substitui a lista antiga de 
 | Middleware de validacao automatica | Pendente | Nao ha middleware Laravel/Symfony no pacote |
 | Packagist | Pendente de alinhamento | Nome canonico definido como `sabbajohn/fiscal-core`; publicar/atualizar este pacote no Packagist |
 | GitHub Packages | Pendente | Nao ha workflow/documentacao de publicacao no GitHub Packages |
-| Documentacao de Facades/Adapters | Parcial | README, arquitetura, exemplos e docs NFSe existem; falta referencia publica por classe/metodo |
-| CI/Qualidade | Pendente | Falta GitHub Actions, phpstan/pint/php-cs-fixer operacional e meta de coverage |
+| Documentacao de Facades/Adapters | Parcial | Referencia inicial de facades existe; falta referencia publica detalhada por adapter/provider |
+| CI/Qualidade | Parcial | GitHub Actions e PHPStan inicial existem; falta formatter e meta de coverage |
 
 ## Pendencias priorizadas
 
 ### 1. Publicar o pacote Composer canonico
 
 - Manter `sabbajohn/fiscal-core` como nome canonico do pacote.
-- Publicar/submeter `sabbajohn/fiscal-core` no Packagist.
+- Publicar/submeter `sabbajohn/fiscal-core` no Packagist usando o checklist em `docs/RELEASE-PACKAGIST.md`.
 - Garantir que README, tags e instalacao apontem para `sabbajohn/fiscal-core`.
 - Descontinuar ou documentar como legado qualquer publicacao antiga em `freeline/fiscal-core`.
 
@@ -76,8 +76,8 @@ Este documento consolida o estado atual do pacote e substitui a lista antiga de 
 
 ### 8. DevOps
 
-- Adicionar GitHub Actions para testes criticos.
-- Ativar PHPStan com baseline ou escopo inicial realista.
+- Manter GitHub Actions para testes criticos em PHP 8.1 e 8.2.
+- Manter PHPStan em nivel inicial ate reduzir divida tecnica.
 - Definir formatter (`php-cs-fixer`, Pint ou equivalente).
 - Publicar tags com changelog e processo de release.
 - Documentar GitHub Packages se a publicacao for mantida alem do Packagist.

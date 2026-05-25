@@ -13,9 +13,20 @@ jobs:
   build:
 
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        php-version: [ "8.1", "8.2" ]
 
     steps:
     - uses: actions/checkout@v4
+
+    - name: Setup PHP
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: ${{ matrix.php-version }}
+        extensions: curl, dom, json, libxml, mbstring, openssl, soap, zip
+        coverage: none
 
     - name: Validate composer.json and composer.lock
       run: composer validate --strict
@@ -25,15 +36,17 @@ jobs:
       uses: actions/cache@v3
       with:
         path: vendor
-        key: ${{ runner.os }}-php-${{ hashFiles('**/composer.lock') }}
+        key: ${{ runner.os }}-php-${{ matrix.php-version }}-${{ hashFiles('**/composer.lock') }}
         restore-keys: |
-          ${{ runner.os }}-php-
+          ${{ runner.os }}-php-${{ matrix.php-version }}-
 
     - name: Install dependencies
       run: composer install --prefer-dist --no-progress
 
-    # Add a test script to composer.json, for instance: "test": "vendor/bin/phpunit"
-    # Docs: https://getcomposer.org/doc/articles/scripts.md
+    - name: Run CI test suite
+      env:
+        ENABLE_EXTERNAL_TESTS: "false"
+      run: composer test:ci
 
-    # - name: Run test suite
-    #   run: composer run-script test
+    - name: Run static analysis
+      run: composer analyse

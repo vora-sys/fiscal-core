@@ -76,4 +76,32 @@ class NFSeFacadeXmlResponseShapeTest extends TestCase
         $this->assertIsString($response->getData('raw')['response_body']);
         $this->assertNull($response->getData('raw')['response_xml']);
     }
+
+    public function test_cancelar_returns_canonical_operation_shape(): void
+    {
+        $adapter = $this->createMock(NFSeAdapter::class);
+        $adapter->expects($this->once())
+            ->method('cancelar')
+            ->with('NFSE123', 'Cancelamento por erro operacional', 'PROTO')
+            ->willReturn(true);
+        $adapter->expects($this->once())
+            ->method('getLastOperationInfo')
+            ->willReturn([
+                'parsed_response' => ['status' => 'success'],
+                'normalized_result' => [
+                    'operacao' => [
+                        'protocolo' => 'PROTO',
+                    ],
+                ],
+            ]);
+
+        $facade = new NFSeFacade('nacional', $adapter);
+        $response = $facade->cancelar('NFSE123', 'Cancelamento por erro operacional', 'PROTO');
+
+        $this->assertTrue($response->isSuccess());
+        $this->assertTrue($response->getData('operacao')['ok']);
+        $this->assertSame('cancelada', $response->getData('documento')['situacao']);
+        $this->assertSame('NFSE123', $response->getData('documento')['chave_consulta']);
+        $this->assertSame('nfse_cancelamento', $response->getData('type'));
+    }
 }

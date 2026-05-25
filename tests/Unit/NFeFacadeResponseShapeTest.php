@@ -249,4 +249,30 @@ XML;
         $this->assertSame($distXml, $response->getData('raw')['response_xml']);
         $this->assertCount(1, $response->getData('documents'));
     }
+
+    public function test_cancelar_returns_canonical_operation_shape_and_legacy_aliases(): void
+    {
+        $xml = '<retEvento><infEvento><cStat>135</cStat><xMotivo>Evento registrado</xMotivo><chNFe>35123456789012345678901234567890123456789012</chNFe><nProt>999</nProt></infEvento></retEvento>';
+
+        $adapter = $this->createMock(NFeAdapter::class);
+        $adapter->expects($this->once())
+            ->method('cancelar')
+            ->with('35123456789012345678901234567890123456789012', 'Cancelamento por erro operacional', '123')
+            ->willReturn($xml);
+
+        $facade = new NFeFacade($adapter, $this->createMock(ImpressaoAdapter::class));
+        $response = $facade->cancelar(
+            '35123456789012345678901234567890123456789012',
+            'Cancelamento por erro operacional',
+            '123'
+        );
+
+        $this->assertTrue($response->isSuccess());
+        $this->assertTrue($response->getData('cancelado'));
+        $this->assertSame('135', $response->getData('operacao')['cstat']);
+        $this->assertSame('Evento registrado', $response->getData('documento')['situacao']);
+        $this->assertSame('999', $response->getData('documento')['protocolo']);
+        $this->assertSame($xml, $response->getData('raw')['response_xml']);
+        $this->assertSame('123', $response->getData('protocolo'));
+    }
 }

@@ -54,4 +54,27 @@ class NFCeFacadeResponseShapeTest extends TestCase
         $this->assertSame('custom_thermal_layout', $response->getData('impressao')['source']);
         $this->assertTrue(str_starts_with($response->getData('impressao')['filename'], 'danfce_'));
     }
+
+    public function test_cancelar_returns_canonical_operation_shape(): void
+    {
+        $xml = '<retEvento><infEvento><cStat>135</cStat><xMotivo>Evento registrado</xMotivo><chNFe>35123456789012345678901234567890123456789012</chNFe><nProt>321</nProt></infEvento></retEvento>';
+
+        $adapter = $this->createMock(NFCeAdapter::class);
+        $adapter->expects($this->once())
+            ->method('cancelar')
+            ->willReturn($xml);
+
+        $facade = new NFCeFacade($adapter, $this->createMock(ImpressaoAdapter::class));
+        $response = $facade->cancelar(
+            '35123456789012345678901234567890123456789012',
+            'Cancelamento por erro operacional',
+            '123'
+        );
+
+        $this->assertTrue($response->isSuccess());
+        $this->assertTrue($response->getData('operacao')['ok']);
+        $this->assertSame('135', $response->getData('operacao')['cstat']);
+        $this->assertSame('321', $response->getData('documento')['protocolo']);
+        $this->assertSame($xml, $response->getData('raw')['response_xml']);
+    }
 }
