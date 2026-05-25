@@ -40,6 +40,8 @@ class NFCeAdapter implements NotaFiscalInterface
 			$dados['identificacao']['mod'] = 65;
 		}
 
+		$dados = $this->removeSupplementalInfoForAutomaticQRCode($dados);
+
 		// Constrói a nota usando o Builder
 		$nota = NotaFiscalBuilder::fromArray($dados)->build();
 
@@ -56,8 +58,7 @@ class NFCeAdapter implements NotaFiscalInterface
 			$indSinc = 1;
 		}
 		
-		// Para NFCe, precisa adicionar QR Code antes do envio
-		// O Tools deve estar configurado com CSC/CSRT
+		// Para NFCe, signNFe() adiciona o QR Code quando o Tools tem CSC/CSCid.
 		
 		// Envia para SEFAZ
 		$this->lastSignedXml = $xmlAssinado;
@@ -133,4 +134,19 @@ class NFCeAdapter implements NotaFiscalInterface
     {
         return $this->tools->sefazDistDFe($ultimoNsu, $numNSU, $chave, $fonte);
     }
+
+	/**
+	 * Para NFC-e, a NFePHP gera a tag infNFeSupl no signNFe().
+	 * Qualquer valor preexistente impediria o recálculo canônico do QR Code.
+	 */
+	private function removeSupplementalInfoForAutomaticQRCode(array $dados): array
+	{
+		if ((int) ($dados['identificacao']['mod'] ?? 65) !== 65) {
+			return $dados;
+		}
+
+		unset($dados['infoSuplementar']);
+
+		return $dados;
+	}
 }

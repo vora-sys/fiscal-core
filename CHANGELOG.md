@@ -1,5 +1,20 @@
 # Changelog
 
+## v1.2.4 - 2026-05-25
+
+### Changed
+- NFC-e passa a alimentar `CSC`/`CSCid` na configuração da NFePHP a partir das chaves publicas `csc` e `csc_id`.
+- `ToolsFactory::createNFCeTools()` agora inicializa o modelo 65 e aceita `nfce_qrcode_version` para forcar QR Code versao `200` ou `300` quando necessario.
+- `NFCeAdapter` deixa a NFePHP gerar a tag `<infNFeSupl>` automaticamente no `signNFe()`, evitando QR Code/hash legado ou incompleto informado no payload.
+
+### Added
+- Variaveis de ambiente `FISCAL_NFCE_CSC`, `FISCAL_NFCE_CSC_ID` e `FISCAL_NFCE_QRCODE_VERSION`.
+- Testes cobrindo QR Code NFC-e com CSC/hash, geracao automatica sem `infoSuplementar` e mapeamento de configuracao/env.
+
+### Tests
+- `vendor/bin/phpunit tests/SingletonManagersTest.php tests/Unit/NFCeQRCodeTest.php`
+- `vendor/bin/phpunit --filter NFCe`
+
 ## v1.2.3 - 2026-05-16
 
 ### Added
