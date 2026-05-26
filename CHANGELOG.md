@@ -1,5 +1,17 @@
 # Changelog
 
+## v1.3.0 - 2026-05-26
+
+### Added
+- `NFSeFormPolicy` passa a expor `enum_fields`, `conditional_rules` e `extensions_supported` no contrato de policy NFSe.
+
+### Changed
+- `form_policy` de NFSe foi padronizada em paths públicos canônicos PT-BR como `servico.cTribMun`, `servico.cTribNac`, `servico.cNBS`, `servico.codigoCnae`, `servico.codigo_atividade`, `servico.benefit_code`, `prestador.opSimpNac` e `prestador.mei`.
+- Overrides de famílias NFSe deixam de expor chaves mistas como `service.*` e passam a publicar apenas o vocabulário canônico consumido pela API pública.
+
+### Tests
+- `vendor/bin/phpunit --filter "NFSeAdapterFacadeNacionalTest|ProviderConfigTest"`
+
 ## v1.2.4 - 2026-05-25
 
 ### Changed

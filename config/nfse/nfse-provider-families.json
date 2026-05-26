@@ -80,19 +80,19 @@
         "form_policy": {
             "policy_source": "belem_municipal_policy",
             "required_fields": [
-                "service.municipal_code",
-                "service.cnae_code",
+                "servico.cTribMun",
+                "servico.codigoCnae",
                 "prestador.mei"
             ],
             "visible_fields": [
-                "service.municipal_code",
-                "service.cnae_code",
-                "service.activity_code",
+                "servico.cTribMun",
+                "servico.codigoCnae",
+                "servico.codigo_atividade",
                 "prestador.mei"
             ],
             "default_values": {
-                "service.cnae_code": "864020100",
-                "service.activity_code": "864020100"
+                "servico.codigoCnae": "864020100",
+                "servico.codigo_atividade": "864020100"
             }
         },
         "field_translations": {
@@ -388,10 +388,10 @@
         "form_policy": {
             "policy_source": "issweb_am_policy",
             "required_fields": [
-                "service.municipal_code"
+                "servico.cTribMun"
             ],
             "visible_fields": [
-                "service.municipal_code"
+                "servico.cTribMun"
             ]
         },
         "auth": {
@@ -559,10 +559,10 @@
         "form_policy": {
             "policy_source": "publica_policy",
             "required_fields": [
-                "service.municipal_code"
+                "servico.cTribMun"
             ],
             "visible_fields": [
-                "service.municipal_code"
+                "servico.cTribMun"
             ]
         }
     },
@@ -865,15 +865,15 @@
         "form_policy": {
             "policy_source": "nfse_nacional_policy",
             "required_fields": [
-                "service.national_tax_code",
-                "service.nbs",
-                "prestador.op_simp_nac"
+                "servico.cTribNac",
+                "servico.cNBS",
+                "prestador.opSimpNac"
             ],
             "visible_fields": [
-                "service.municipal_code",
-                "service.national_tax_code",
-                "service.nbs",
-                "prestador.op_simp_nac"
+                "servico.cTribMun",
+                "servico.cTribNac",
+                "servico.cNBS",
+                "prestador.opSimpNac"
             ]
         }
     }
