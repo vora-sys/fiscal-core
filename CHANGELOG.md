@@ -1,5 +1,14 @@
 # Changelog
 
+## v1.3.1 - 2026-05-29
+
+### Changed
+- `NacionalProvider` passou a extrair e resumir erros da SEFIN Nacional em formato legível (`codigo: descricao`) durante falhas HTTP de emissão.
+- `NFSeFacade` agora promove o código fiscal real da rejeição nacional para `errorCode` e preserva a descrição consolidada da rejeição no erro retornado.
+
+### Tests
+- `vendor/bin/phpunit tests/Unit/NFSe/NFSeAdapterFacadeNacionalTest.php tests/Unit/NFSe/NacionalProviderTest.php`
+
 ## v1.3.0 - 2026-05-26
 
 ### Added
