@@ -130,6 +130,7 @@ class NacionalProviderTest extends TestCase
         $this->assertStringContainsString('<DPS', (string) $artifacts['request_xml']);
         $this->assertStringContainsString('<infDPS', (string) $artifacts['request_xml']);
         $this->assertSame('error', $artifacts['parsed_response']['status'] ?? null);
+        $this->assertSame('E36', $artifacts['parsed_response']['errors'][0]['code'] ?? null);
     }
 
     public function test_cancelar_retorna_true_quando_resposta_indica_sucesso(): void

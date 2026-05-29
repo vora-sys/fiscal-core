@@ -162,10 +162,9 @@ class NFSeAdapterFacadeNacionalTest extends TestCase
         $this->assertStringContainsString('<DPS', (string) ($metadata['emissao']['artifacts']['request_xml'] ?? ''));
         $this->assertStringContainsString('<infDPS', (string) ($metadata['emissao']['artifacts']['request_xml'] ?? ''));
         $this->assertSame('error', $metadata['emissao']['parsed_response']['status'] ?? null);
-        $this->assertSame(
-            'HTTP 400 na operação /nfse | resposta: {"erros":[{"Codigo":"E36"}]}',
-            $response->getError()
-        );
+        $this->assertSame('E36', $response->getError());
+        $this->assertSame('E36', $response->getErrorCode());
+        $this->assertSame('E36', $metadata['emissao']['parsed_response']['errors'][0]['code'] ?? null);
     }
 
     public function test_facade_retorna_fiscal_response_para_operacoes_nacionais(): void
