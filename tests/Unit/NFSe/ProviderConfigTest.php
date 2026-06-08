@@ -63,11 +63,11 @@ final class ProviderConfigTest extends TestCase
         $this->assertStringContainsString('BelemMunicipalProvider', $data['provider_class']);
         $this->assertContains('consultar_nfse_rps', $data['supported_operations']);
         $this->assertSame('belem_municipal_policy', $data['form_policy']['policy_source']);
-        $this->assertContains('service.cnae_code', $data['form_policy']['required_fields']);
+        $this->assertContains('servico.codigoCnae', $data['form_policy']['required_fields']);
         $this->assertContains('prestador.mei', $data['form_policy']['required_fields']);
-        $this->assertContains('service.activity_code', $data['form_policy']['visible_fields']);
+        $this->assertContains('servico.codigo_atividade', $data['form_policy']['visible_fields']);
         $this->assertSame('select', $data['form_policy']['field_schema']['prestador.mei']['control']);
-        $this->assertSame('864020100', $data['form_policy']['default_values']['service.cnae_code']);
+        $this->assertSame('864020100', $data['form_policy']['default_values']['servico.codigoCnae']);
         $this->assertSame('1', $data['translation_policy']['field_translations']['service.iss_withheld']['codes']['true']);
         $this->assertSame('2', $data['translation_policy']['field_translations']['service.iss_withheld']['codes']['false']);
     }
@@ -103,7 +103,7 @@ final class ProviderConfigTest extends TestCase
         $this->assertStringContainsString('PublicaProvider', $data['provider_class']);
         $this->assertContains('consultar_nfse_rps', $data['supported_operations']);
         $this->assertSame('publica_policy', $data['form_policy']['policy_source']);
-        $this->assertSame(['service.municipal_code'], $data['form_policy']['required_fields']);
+        $this->assertSame(['servico.cTribMun'], $data['form_policy']['required_fields']);
     }
 
     public function testFacadeMapsSouthPriorityCitiesToExpectedFamilies(): void
@@ -186,10 +186,23 @@ final class ProviderConfigTest extends TestCase
         $this->assertStringContainsString('NacionalProvider', $data['provider_class']);
         $this->assertContains('consultar_por_rps', $data['supported_operations']);
         $this->assertSame('nfse_nacional_policy', $data['form_policy']['policy_source']);
-        $this->assertNotContains('service.municipal_code', $data['form_policy']['required_fields']);
-        $this->assertContains('service.nbs', $data['form_policy']['required_fields']);
+        $this->assertNotContains('servico.cTribMun', $data['form_policy']['required_fields']);
+        $this->assertContains('servico.cNBS', $data['form_policy']['required_fields']);
         $this->assertSame('2', $data['translation_policy']['field_translations']['service.iss_withheld']['codes']['true']);
         $this->assertSame('1', $data['translation_policy']['field_translations']['service.iss_withheld']['codes']['false']);
+    }
+
+    public function testFacadeHomologationReadinessUsesNationalProviderConfigForManaus(): void
+    {
+        $facade = new NFSeFacade('manaus');
+        $response = $facade->verificarProntidaoHomologacao();
+
+        $this->assertTrue($response->isSuccess());
+        $this->assertTrue($response->getData('ready'));
+        $this->assertSame('nfse_nacional', $response->getData('provider_key'));
+        $this->assertSame([], $response->getData('missing_requirements'));
+        $this->assertTrue($response->getData('certificado_carregado'));
+        $this->assertTrue($response->getData('certificado_valido'));
     }
 
     public function testFacadeMapsSaoLuisToNationalProvider(): void
@@ -307,19 +320,6 @@ final class ProviderConfigTest extends TestCase
             $this->assertSame($ibge, $data['codigo_municipio'], "IBGE inesperado para {$slug}");
             $this->assertStringContainsString('IssnetProvider', $data['provider_class']);
         }
-    }
-
-    public function testFacadeHomologationReadinessUsesNationalProviderConfigForManaus(): void
-    {
-        $facade = new NFSeFacade('manaus');
-        $response = $facade->verificarProntidaoHomologacao();
-
-        $this->assertTrue($response->isSuccess());
-        $this->assertTrue($response->getData('ready'));
-        $this->assertSame('nfse_nacional', $response->getData('provider_key'));
-        $this->assertSame([], $response->getData('missing_requirements'));
-        $this->assertTrue($response->getData('certificado_carregado'));
-        $this->assertTrue($response->getData('certificado_valido'));
     }
 
     private function bootstrapEnvironment(): void

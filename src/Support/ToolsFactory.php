@@ -93,8 +93,16 @@ class ToolsFactory
      */
     public static function createNFCeTools(): NFeTools
     {
-        // NFCe usa a mesma classe Tools da NFe
-        return self::createNFeTools();
+        // NFCe usa a mesma classe Tools da NFe, com modelo e QR Code ajustados.
+        $tools = self::createNFeTools();
+        $tools->model(65);
+
+        $qrCodeVersion = ConfigManager::getInstance()->get('nfce_qrcode_version');
+        if (in_array((string) $qrCodeVersion, ['200', '300'], true)) {
+            $tools->forceQRCodeVersion((string) $qrCodeVersion);
+        }
+
+        return $tools;
     }
 
     /**

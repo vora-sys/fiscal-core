@@ -1,8 +1,31 @@
 # Changelog
 
+## v1.3.1 - 2026-05-29
+
+### Changed
+- `NacionalProvider` passou a extrair e resumir erros da SEFIN Nacional em formato legível (`codigo: descricao`) durante falhas HTTP de emissão.
+- `NFSeFacade` agora promove o código fiscal real da rejeição nacional para `errorCode` e preserva a descrição consolidada da rejeição no erro retornado.
+
+### Tests
+- `vendor/bin/phpunit tests/Unit/NFSe/NFSeAdapterFacadeNacionalTest.php tests/Unit/NFSe/NacionalProviderTest.php`
+
+## v1.3.0 - 2026-05-26
+
+### Added
+- `NFSeFormPolicy` passa a expor `enum_fields`, `conditional_rules` e `extensions_supported` no contrato de policy NFSe.
+
+### Changed
+- `form_policy` de NFSe foi padronizada em paths públicos canônicos PT-BR como `servico.cTribMun`, `servico.cTribNac`, `servico.cNBS`, `servico.codigoCnae`, `servico.codigo_atividade`, `servico.benefit_code`, `prestador.opSimpNac` e `prestador.mei`.
+- Overrides de famílias NFSe deixam de expor chaves mistas como `service.*` e passam a publicar apenas o vocabulário canônico consumido pela API pública.
+
+### Tests
+- `vendor/bin/phpunit --filter "NFSeAdapterFacadeNacionalTest|ProviderConfigTest"`
+
 ## v1.2.4 - 2026-05-25
 
 ### Added
+- Variaveis de ambiente `FISCAL_NFCE_CSC`, `FISCAL_NFCE_CSC_ID` e `FISCAL_NFCE_QRCODE_VERSION`.
+- Testes cobrindo QR Code NFC-e com CSC/hash, geracao automatica sem `infoSuplementar` e mapeamento de configuracao/env.
 - Scripts Composer para testes (`test`, `test:unit`, `test:nfse`, `test:ci`) e analise estatica (`analyse`).
 - Workflow GitHub Actions com matriz PHP 8.1/8.2, instalacao de extensoes, suite CI e PHPStan inicial.
 - Configuracao inicial do PHPStan em `phpstan.neon`.
@@ -10,9 +33,16 @@
 - Checklist de release Packagist em `docs/RELEASE-PACKAGIST.md`.
 
 ### Changed
+- NFC-e passa a alimentar `CSC`/`CSCid` na configuração da NFePHP a partir das chaves publicas `csc` e `csc_id`.
+- `ToolsFactory::createNFCeTools()` agora inicializa o modelo 65 e aceita `nfce_qrcode_version` para forcar QR Code versao `200` ou `300` quando necessario.
+- `NFCeAdapter` deixa a NFePHP gerar a tag `<infNFeSupl>` automaticamente no `signNFe()`, evitando QR Code/hash legado ou incompleto informado no payload.
 - Roadmap e status do release Composer alinhados ao pacote canonico `sabbajohn/fiscal-core`.
 - Contrato publico das facades documentado em torno de `FiscalResponse`, sem breaking changes.
 - GitHub Packages, Laravel Service Provider, middleware e cache unificado permanecem explicitamente como pos-release.
+
+### Tests
+- `vendor/bin/phpunit tests/SingletonManagersTest.php tests/Unit/NFCeQRCodeTest.php`
+- `vendor/bin/phpunit --filter NFCe`
 
 ## v1.2.3 - 2026-05-16
 

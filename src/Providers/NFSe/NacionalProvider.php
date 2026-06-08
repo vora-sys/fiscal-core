@@ -80,10 +80,15 @@ class NacionalProvider extends AbstractNFSeProvider implements NFSeNacionalCapab
             $parsed = $this->processarResposta($response);
             $this->storeOperationState('emitir', $xml, $response, $parsed);
         } catch (\Throwable $e) {
+            $transportError = $this->parseTransportErrorDetails($e->getMessage());
             $this->storeOperationState('emitir', $xml, $e->getMessage(), [
                 'status' => 'error',
-                'mensagens' => [$e->getMessage()],
+                'http_status' => $transportError['status'] ?? null,
+                'mensagens' => $transportError['messages'] !== [] ? $transportError['messages'] : [$e->getMessage()],
+                'errors' => $transportError['errors'] ?? [],
                 'transport_error' => $e->getMessage(),
+                'request_id' => $transportError['request_id'] ?? null,
+                'operation_path' => $transportError['path'] ?? null,
             ]);
 
             throw $e;
@@ -1034,6 +1039,7 @@ class NacionalProvider extends AbstractNFSeProvider implements NFSeNacionalCapab
 
         $json = json_decode($xmlResposta, true);
         if (is_array($json)) {
+            $errors = $this->extractProcessingErrorDetails($json);
             $mensagens = $this->extractProcessingMessages($json);
             $mensagemErro = $mensagens[0] ?? null;
             $nfseXml = $this->decodeGZipBase64((string)($json['nfseXmlGZipB64'] ?? ''));
@@ -1047,6 +1053,7 @@ class NacionalProvider extends AbstractNFSeProvider implements NFSeNacionalCapab
                     'status' => 'success',
                     'mensagem' => 'Processado com sucesso',
                     'mensagens' => $mensagens,
+                    'errors' => $errors,
                     'raw_xml' => $nfseXml,
                     'nfse' => $nfseResumo,
                     'dados' => [
@@ -1068,6 +1075,7 @@ class NacionalProvider extends AbstractNFSeProvider implements NFSeNacionalCapab
                 'status' => ($chave !== '' && $idDps !== '') ? 'success' : 'error',
                 'mensagem' => (string)($mensagemErro ?: ($chave !== '' ? 'Processado com sucesso' : 'Falha no processamento da NFS-e')),
                 'mensagens' => $mensagens,
+                'errors' => $errors,
                 'raw_xml' => null,
                 'nfse' => $chave !== '' ? ['chave_acesso' => $chave] : null,
                 'dados' => [
@@ -1548,7 +1556,7 @@ class NacionalProvider extends AbstractNFSeProvider implements NFSeNacionalCapab
             ]);
 
             if ($status >= 400) {
-                $snippet = substr(trim((string)$response), 0, 300);
+                $snippet = $this->formatHttpErrorResponseSnippet((string) $response);
                 $suffix = $snippet !== '' ? " | resposta: {$snippet}" : '';
                 throw new \RuntimeException(
                     $this->buildHttpErrorMessage("HTTP {$status} na operação {$path} [req:{$requestId}]{$suffix}")
@@ -2754,8 +2762,22 @@ class NacionalProvider extends AbstractNFSeProvider implements NFSeNacionalCapab
 
     private function extractProcessingMessages(array $json): array
     {
-        $messages = [];
-        foreach (['erros', 'alertas'] as $listKey) {
+        $messages = array_map(
+            fn (array $error): string => $this->formatProcessingErrorMessage($error),
+            $this->extractProcessingErrorDetails($json)
+        );
+
+        return array_values(array_filter(array_unique($messages), static fn (string $message): bool => trim($message) !== ''));
+    }
+
+    /**
+     * @return array<int,array{code?:string,description?:string,message?:string}>
+     */
+    private function extractProcessingErrorDetails(array $json): array
+    {
+        $errors = [];
+
+        foreach (['erros', 'alertas', 'errors'] as $listKey) {
             $items = $json[$listKey] ?? null;
             if (!is_array($items)) {
                 continue;
@@ -2766,17 +2788,148 @@ class NacionalProvider extends AbstractNFSeProvider implements NFSeNacionalCapab
                     continue;
                 }
 
-                $message = trim((string) ($item['descricao'] ?? $item['mensagem'] ?? $item['Mensagem'] ?? ''));
-                $code = trim((string) ($item['codigo'] ?? $item['Codigo'] ?? ''));
-                if ($message === '' && $code === '') {
+                $description = trim((string) ($item['descricao'] ?? $item['Descricao'] ?? $item['mensagem'] ?? $item['Mensagem'] ?? $item['message'] ?? ''));
+                $code = trim((string) ($item['codigo'] ?? $item['Codigo'] ?? $item['code'] ?? ''));
+                if ($description === '' && $code === '') {
                     continue;
                 }
 
-                $messages[] = $code !== '' && $message !== '' ? "{$code}: {$message}" : ($message !== '' ? $message : $code);
+                $errors[] = array_filter([
+                    'code' => $code !== '' ? $code : null,
+                    'description' => $description !== '' ? $description : null,
+                    'message' => $description !== '' ? $description : null,
+                ], static fn ($value): bool => is_string($value) && trim($value) !== '');
             }
         }
 
-        return array_values(array_filter(array_unique($messages)));
+        return array_values($errors);
+    }
+
+    /**
+     * @param array{code?:string,description?:string,message?:string} $error
+     */
+    private function formatProcessingErrorMessage(array $error): string
+    {
+        $code = trim((string) ($error['code'] ?? ''));
+        $description = trim((string) ($error['description'] ?? $error['message'] ?? ''));
+
+        if ($code !== '' && $description !== '') {
+            return "{$code}: {$description}";
+        }
+
+        return $description !== '' ? $description : $code;
+    }
+
+    private function formatHttpErrorResponseSnippet(string $response): string
+    {
+        $response = trim($response);
+        if ($response === '') {
+            return '';
+        }
+
+        $json = json_decode($response, true);
+        if (is_array($json)) {
+            $errors = $this->extractProcessingErrorDetails($json);
+            if ($errors !== []) {
+                return implode(' | ', array_map(
+                    fn (array $error): string => $this->formatProcessingErrorMessage($error),
+                    $errors
+                ));
+            }
+
+            foreach (['mensagem', 'message'] as $key) {
+                $message = trim((string) ($json[$key] ?? ''));
+                if ($message !== '') {
+                    return $message;
+                }
+            }
+        }
+
+        $plainText = trim(preg_replace('/\s+/u', ' ', strip_tags($response)) ?? '');
+        if ($plainText !== '') {
+            return $this->truncate($plainText, 600);
+        }
+
+        return $this->truncate($response, 600);
+    }
+
+    /**
+     * @return array{
+     *   status:?int,
+     *   request_id:?string,
+     *   path:?string,
+     *   errors:array<int,array{code?:string,description?:string,message?:string}>,
+     *   messages:array<int,string>
+     * }
+     */
+    private function parseTransportErrorDetails(string $message): array
+    {
+        $status = null;
+        $requestId = null;
+        $path = null;
+        $responseText = trim($message);
+
+        if (preg_match('/HTTP\s+(\d{3})\s+na operação\s+(.+?)(?:\s+\[req:([^\]]+)\])?(?:\s+\|\s+resposta:\s*(.+))?$/u', $message, $matches) === 1) {
+            $status = isset($matches[1]) ? (int) $matches[1] : null;
+            $path = isset($matches[2]) ? trim((string) $matches[2]) : null;
+            $requestId = isset($matches[3]) ? trim((string) $matches[3]) : null;
+            $responseText = isset($matches[4]) ? trim((string) $matches[4]) : '';
+        }
+
+        $errors = $this->extractTransportErrorEntries($responseText);
+        $messages = array_map(
+            fn (array $error): string => $this->formatProcessingErrorMessage($error),
+            $errors
+        );
+
+        if ($messages === [] && $responseText !== '') {
+            $messages[] = $responseText;
+        }
+
+        return [
+            'status' => $status,
+            'request_id' => $requestId !== '' ? $requestId : null,
+            'path' => $path !== '' ? $path : null,
+            'errors' => $errors,
+            'messages' => array_values(array_filter($messages, static fn (string $value): bool => trim($value) !== '')),
+        ];
+    }
+
+    /**
+     * @return array<int,array{code?:string,description?:string,message?:string}>
+     */
+    private function extractTransportErrorEntries(string $responseText): array
+    {
+        $responseText = trim($responseText);
+        if ($responseText === '') {
+            return [];
+        }
+
+        $json = json_decode($responseText, true);
+        if (is_array($json)) {
+            return $this->extractProcessingErrorDetails($json);
+        }
+
+        $errors = [];
+        foreach (preg_split('/\s+\|\s+/u', $responseText) ?: [] as $segment) {
+            $segment = trim((string) $segment);
+            if ($segment === '') {
+                continue;
+            }
+
+            if (preg_match('/^([A-Z]{1,6}\d{2,}|\d{3,}|[A-Z0-9_]+)\s*[:\-]\s*(.+)$/u', $segment, $matches) === 1) {
+                $errors[] = [
+                    'code' => trim((string) $matches[1]),
+                    'description' => trim((string) $matches[2]),
+                    'message' => trim((string) $matches[2]),
+                ];
+                continue;
+            }
+
+            $errors[] = ['description' => $segment, 'message' => $segment];
+        }
+
+        return $errors;
     }
 
     private function extractNfseSummary(?string $nfseXml, ?string $chaveAcesso = null): ?array

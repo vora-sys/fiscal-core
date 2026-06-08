@@ -24,12 +24,12 @@ class NFSeAdapterFacadeNacionalTest extends TestCase
         $policy = $adapter->getProviderInfo()['form_policy'];
 
         $this->assertSame('nfse_nacional_policy', $policy['policy_source']);
-        $this->assertNotContains('service.municipal_code', $policy['required_fields']);
-        $this->assertContains('service.municipal_code', $policy['visible_fields']);
-        $this->assertContains('service.national_tax_code', $policy['required_fields']);
-        $this->assertContains('service.nbs', $policy['required_fields']);
-        $this->assertSame('text', $policy['field_schema']['service.national_tax_code']['control']);
-        $this->assertSame('select', $policy['field_schema']['prestador.op_simp_nac']['control']);
+        $this->assertNotContains('servico.cTribMun', $policy['required_fields']);
+        $this->assertContains('servico.cTribMun', $policy['visible_fields']);
+        $this->assertContains('servico.cTribNac', $policy['required_fields']);
+        $this->assertContains('servico.cNBS', $policy['required_fields']);
+        $this->assertSame('text', $policy['field_schema']['servico.cTribNac']['control']);
+        $this->assertSame('select', $policy['field_schema']['prestador.opSimpNac']['control']);
     }
 
     public function test_adapter_lanca_erro_quando_provider_nao_suporta_capability_nacional(): void
@@ -162,10 +162,9 @@ class NFSeAdapterFacadeNacionalTest extends TestCase
         $this->assertStringContainsString('<DPS', (string) ($metadata['emissao']['artifacts']['request_xml'] ?? ''));
         $this->assertStringContainsString('<infDPS', (string) ($metadata['emissao']['artifacts']['request_xml'] ?? ''));
         $this->assertSame('error', $metadata['emissao']['parsed_response']['status'] ?? null);
-        $this->assertSame(
-            'HTTP 400 na operação /nfse | resposta: {"erros":[{"Codigo":"E36"}]}',
-            $response->getError()
-        );
+        $this->assertSame('E36', $response->getError());
+        $this->assertSame('E36', $response->getErrorCode());
+        $this->assertSame('E36', $metadata['emissao']['parsed_response']['errors'][0]['code'] ?? null);
     }
 
     public function test_facade_retorna_fiscal_response_para_operacoes_nacionais(): void

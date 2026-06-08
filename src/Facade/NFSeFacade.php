@@ -167,9 +167,10 @@ class NFSeFacade
                 'warnings' => $this->deprecationWarnings,
                 'emissao' => $lastEmission,
             ];
+            $normalizedError = $this->resolveEmissionExceptionMessage($lastEmission, $e->getMessage());
 
             return FiscalResponse::error(
-                $e->getMessage(),
+                $normalizedError,
                 $this->resolveEmissionExceptionCode($lastEmission),
                 'nfse_emission',
                 $metadata,
@@ -1075,10 +1076,11 @@ class NFSeFacade
         }
 
         $mensagens = is_array($parsedEmission['mensagens'] ?? null) ? $parsedEmission['mensagens'] : [];
+        $errorCode = $this->resolveProviderErrorCode($parsedEmission) ?? 'NFSE_EMISSION_FAILED';
 
         return FiscalResponse::error(
             $mensagens !== [] ? implode(' | ', $mensagens) : 'Falha na emissao da NFSe.',
-            'NFSE_EMISSION_FAILED',
+            $errorCode,
             $operation,
             $metadata + [
                 'emission_status' => $emissionStatus,
@@ -1099,6 +1101,11 @@ class NFSeFacade
             return 'NFSE_EMISSION_ERROR';
         }
 
+        $providerErrorCode = $this->resolveProviderErrorCode($parsedEmission);
+        if ($providerErrorCode !== null) {
+            return $providerErrorCode;
+        }
+
         $status = (string) ($parsedEmission['status'] ?? '');
         if ($status === 'invalid_xml') {
             return 'XML_ERROR';
@@ -1109,6 +1116,70 @@ class NFSeFacade
         }
 
         return 'NFSE_EMISSION_ERROR';
+    }
+
+    private function resolveEmissionExceptionMessage(array $lastEmission, string $fallback): string
+    {
+        $parsedEmission = $lastEmission['parsed_response'] ?? [];
+        if (!is_array($parsedEmission)) {
+            return $fallback;
+        }
+
+        $messages = array_values(array_filter((array) ($parsedEmission['mensagens'] ?? []), static fn ($value): bool => is_string($value) && trim($value) !== ''));
+        if ($messages !== []) {
+            return implode(' | ', $messages);
+        }
+
+        $errors = is_array($parsedEmission['errors'] ?? null) ? $parsedEmission['errors'] : [];
+        if ($errors !== []) {
+            $messages = [];
+            foreach ($errors as $error) {
+                if (!is_array($error)) {
+                    continue;
+                }
+
+                $code = trim((string) ($error['code'] ?? $error['codigo'] ?? ''));
+                $description = trim((string) ($error['description'] ?? $error['descricao'] ?? $error['message'] ?? $error['mensagem'] ?? ''));
+                if ($code === '' && $description === '') {
+                    continue;
+                }
+
+                $messages[] = $code !== '' && $description !== '' ? "{$code}: {$description}" : ($description !== '' ? $description : $code);
+            }
+
+            if ($messages !== []) {
+                return implode(' | ', array_values(array_unique($messages)));
+            }
+        }
+
+        return $fallback;
+    }
+
+    private function resolveProviderErrorCode(array $parsedEmission): ?string
+    {
+        $errors = is_array($parsedEmission['errors'] ?? null) ? $parsedEmission['errors'] : [];
+        foreach ($errors as $error) {
+            if (!is_array($error)) {
+                continue;
+            }
+
+            $code = trim((string) ($error['code'] ?? $error['codigo'] ?? ''));
+            if ($code !== '') {
+                return $code;
+            }
+        }
+
+        foreach ((array) ($parsedEmission['mensagens'] ?? []) as $message) {
+            if (!is_string($message)) {
+                continue;
+            }
+
+            if (preg_match('/^([A-Z]{1,6}\d{2,}|\d{3,}|[A-Z0-9_]+)\s*[:\-]/u', trim($message), $matches) === 1) {
+                return trim((string) $matches[1]);
+            }
+        }
+
+        return null;
     }
 
     private function isBelemMunicipalFlow(): bool

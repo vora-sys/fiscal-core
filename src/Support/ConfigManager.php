@@ -32,6 +32,7 @@ class ConfigManager
         'schemas' => 'PL_009_V4',
         'csc' => '',
         'csc_id' => '000001',
+        'nfce_qrcode_version' => null,
         'uf' => 'SP',
         'municipio_ibge' => '3550308', // São Paulo
         'token_ibpt' => '',
@@ -120,6 +121,9 @@ class ConfigManager
             'schemes' => $this->get('schemas'),
             'cnpj' => CertificateManager::getInstance()->getCnpj(),
             'razaosocial' => CertificateManager::getInstance()->getRazaoSocial(),
+            'CSC' => $this->get('csc'),
+            'CSCid' => $this->get('csc_id'),
+            'nfce_qrcode_version' => $this->get('nfce_qrcode_version'),
         ];
     }
 
@@ -192,6 +196,9 @@ class ConfigManager
             'FISCAL_IM' => 'empresa.inscricao_municipal',
             'FISCAL_NFE_SERIE' => 'serie_nfe',
             'FISCAL_XML_VERSION' => 'versao_nfe',
+            'FISCAL_NFCE_CSC' => 'csc',
+            'FISCAL_NFCE_CSC_ID' => 'csc_id',
+            'FISCAL_NFCE_QRCODE_VERSION' => 'nfce_qrcode_version',
             'FISCAL_UF' => 'uf',
             'FISCAL_CERT_PATH' => 'certificado.cert_path',
             'FISCAL_CERT_PASSWORD' => 'certificado.cert_password'

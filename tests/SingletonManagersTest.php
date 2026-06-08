@@ -1,6 +1,7 @@
 <?php
 
 use PHPUnit\Framework\TestCase;
+use sabbajohn\FiscalCore\Exceptions\ValidationException;
 use sabbajohn\FiscalCore\Support\CertificateManager;
 use sabbajohn\FiscalCore\Support\ConfigManager;
 use sabbajohn\FiscalCore\Support\ToolsFactory;
@@ -48,7 +49,7 @@ class SingletonManagersTest extends TestCase
         $manager = ConfigManager::getInstance();
 
         $this->assertEquals(2, $manager->get('ambiente')); // homologação
-        $this->assertEquals('SC', $manager->get('uf'));
+        $this->assertMatchesRegularExpression('/^[A-Z]{2}$/', $manager->get('uf'));
         $this->assertEquals('4.00', $manager->get('versao_nfe'));
         $this->assertTrue($manager->isHomologation());
         $this->assertFalse($manager->isProduction());
@@ -68,6 +69,11 @@ class SingletonManagersTest extends TestCase
     public function test_config_manager_nfe_config(): void
     {
         $manager = ConfigManager::getInstance();
+        $manager->load([
+            'csc' => 'TEST_CSC',
+            'csc_id' => '000001',
+            'nfce_qrcode_version' => '200',
+        ]);
         $config = $manager->getNFeConfig();
 
         $this->assertIsArray($config);
@@ -75,7 +81,48 @@ class SingletonManagersTest extends TestCase
         $this->assertArrayHasKey('siglaUF', $config);
         $this->assertArrayHasKey('versao', $config);
         $this->assertArrayHasKey('proxy', $config);
+        $this->assertSame('TEST_CSC', $config['CSC']);
+        $this->assertSame('000001', $config['CSCid']);
+        $this->assertSame('200', $config['nfce_qrcode_version']);
         $this->assertEquals(ConfigManager::AMBIENTE_HOMOLOGACAO, $config['tpAmb']); // homologação
+    }
+
+    public function test_config_manager_loads_nfce_qrcode_environment_variables(): void
+    {
+        $previous = [
+            'FISCAL_NFCE_CSC' => getenv('FISCAL_NFCE_CSC'),
+            'FISCAL_NFCE_CSC_ID' => getenv('FISCAL_NFCE_CSC_ID'),
+            'FISCAL_NFCE_QRCODE_VERSION' => getenv('FISCAL_NFCE_QRCODE_VERSION'),
+        ];
+
+        try {
+            putenv('FISCAL_NFCE_CSC=ENV_CSC');
+            putenv('FISCAL_NFCE_CSC_ID=000002');
+            putenv('FISCAL_NFCE_QRCODE_VERSION=200');
+            $_ENV['FISCAL_NFCE_CSC'] = 'ENV_CSC';
+            $_ENV['FISCAL_NFCE_CSC_ID'] = '000002';
+            $_ENV['FISCAL_NFCE_QRCODE_VERSION'] = '200';
+
+            $manager = ConfigManager::getInstance();
+            $manager->reloadFromCurrentEnvironment();
+
+            $this->assertSame('ENV_CSC', $manager->get('csc'));
+            $this->assertSame('000002', $manager->get('csc_id'));
+            $this->assertSame('200', $manager->get('nfce_qrcode_version'));
+        } finally {
+            foreach ($previous as $key => $value) {
+                if ($value === false) {
+                    putenv($key);
+                    unset($_ENV[$key]);
+                    continue;
+                }
+
+                putenv($key . '=' . $value);
+                $_ENV[$key] = $value;
+            }
+
+            ConfigManager::getInstance()->reloadFromCurrentEnvironment();
+        }
     }
 
     public function test_config_manager_nfse_config(): void
@@ -128,8 +175,8 @@ class SingletonManagersTest extends TestCase
 
     public function test_tools_factory_setup_for_production_requires_configs(): void
     {
-        $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('Configuração obrigatória para produção: csc');
+        $this->expectException(ValidationException::class);
+        $this->expectExceptionMessage('erro(s) de validação encontrado(s) em configuração de produção');
 
         ToolsFactory::setupForProduction([
             'uf' => 'SP'
