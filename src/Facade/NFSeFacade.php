@@ -244,7 +244,11 @@ class NFSeFacade
             }
 
             $flowStatus = 'parcial';
-            if (($impressao['disponivel'] ?? false) !== true && ($officialUrl = $this->resolveOfficialDocumentUrl($consultaData, $emissaoData)) !== null) {
+            if (
+                !$this->isNationalProviderFlow()
+                && ($impressao['disponivel'] ?? false) !== true
+                && ($officialUrl = $this->resolveOfficialDocumentUrl($consultaData, $emissaoData)) !== null
+            ) {
                 $impressao = [
                     'disponivel' => true,
                     'modo' => 'url',
@@ -589,6 +593,32 @@ class NFSeFacade
         try {
             $resultado = $this->nfse->baixarDanfse($chave);
             $data = $resultado->toArray();
+
+            if ($this->isNationalProviderFlow() && ($data['impressao']['disponivel'] ?? false) !== true) {
+                $xml = $this->resolveNationalDanfseXml($chave, $data);
+                if ($xml !== null) {
+                    $rendered = $this->gerarDanfse($xml);
+                    if ($rendered->isSuccess()) {
+                        $renderedData = $rendered->getData();
+                        $renderedData['chave'] = $chave;
+                        $renderedData['municipio'] = $this->municipio;
+
+                        return FiscalResponse::success(
+                            $renderedData,
+                            'nfse_download_danfse',
+                            $this->buildCompatibilityMetadata()
+                        );
+                    }
+                } else {
+                    return FiscalResponse::error(
+                        'Nao foi possivel obter o XML final da NFS-e para gerar o DANFSe nacional localmente.',
+                        'NFSE_DANFSE_XML_UNAVAILABLE',
+                        'nfse_download_danfse',
+                        $this->buildCompatibilityMetadata()
+                    );
+                }
+            }
+
             $data['operacao'] = [
                 'tipo' => 'nfse_download_danfse',
                 'status' => ($data['impressao']['disponivel'] ?? false) ? 'disponivel' : 'indisponivel',
@@ -600,8 +630,8 @@ class NFSeFacade
             ];
             $data['documento'] = [
                 'modelo' => 'nfse',
-                'xml' => null,
-                'chave_acesso' => null,
+                'xml' => $data['raw']['response_xml'] ?? null,
+                'chave_acesso' => $chave,
                 'chave_consulta' => $chave,
                 'situacao' => $data['operacao']['status'],
                 'protocolo' => null,
@@ -610,7 +640,7 @@ class NFSeFacade
                 'type' => 'nfse_danfse_download',
                 'chave' => $chave,
                 'municipio' => $this->municipio,
-            ]), 'nfse_generate_danfse', $this->buildCompatibilityMetadata());
+            ]), 'nfse_download_danfse', $this->buildCompatibilityMetadata());
         } catch (\Exception $e) {
             return $this->responseHandler->handle($e, 'nfse_download_danfse');
         }
@@ -656,8 +686,10 @@ class NFSeFacade
             $data['documento'] = [
                 'modelo' => 'nfse',
                 'xml' => $xmlNfse,
-                'chave_acesso' => null,
-                'chave_consulta' => null,
+                'chave_acesso' => $this->extractNodeValue($xmlNfse, 'chaveAcesso')
+                    ?? $this->extractNodeAttributeValue($xmlNfse, 'infNFSe', 'Id'),
+                'chave_consulta' => $this->extractNodeValue($xmlNfse, 'nNFSe')
+                    ?? $this->extractNodeAttributeValue($xmlNfse, 'infNFSe', 'Id'),
                 'situacao' => 'renderizada',
                 'protocolo' => null,
             ];
@@ -1741,6 +1773,24 @@ class NFSeFacade
         return $value !== '' ? $value : null;
     }
 
+    private function extractNodeAttributeValue(string $xml, string $nodeLocalName, string $attributeName): ?string
+    {
+        $dom = new \DOMDocument();
+        if (!@$dom->loadXML($xml)) {
+            return null;
+        }
+
+        $xpath = new \DOMXPath($dom);
+        $node = $xpath->query("//*[local-name()='{$nodeLocalName}']/@{$attributeName}")->item(0);
+        if (!$node instanceof \DOMNode) {
+            return null;
+        }
+
+        $value = trim((string) $node->textContent);
+
+        return $value !== '' ? $value : null;
+    }
+
     private function buildDocumentFromParsedEmission(?array $consultaData, array $emissaoData): ?array
     {
         $numero = $this->resolveParsedResponseNfseValue($consultaData, $emissaoData, 'numero');
@@ -1829,6 +1879,49 @@ class NFSeFacade
                     return $this->buildBelemOfficialDocumentUrl($nfseData, $parsed, $candidateData['consulta'] ?? null);
                 }
             }
+        }
+
+        return null;
+    }
+
+    private function isNationalProviderFlow(): bool
+    {
+        return strtolower($this->providerKey) === 'nfse_nacional';
+    }
+
+    private function resolveNationalDanfseXml(string $chave, array $printData): ?string
+    {
+        $raw = is_array($printData['raw'] ?? null) ? $printData['raw'] : [];
+        $parsedResponse = is_array($raw['parsed_response'] ?? null) ? $raw['parsed_response'] : [];
+
+        $fromPrintResult = $this->extractNfseXmlFromParsedResponse($parsedResponse)
+            ?? $this->extractFiscalXmlFromCandidate($raw['response_xml'] ?? null)
+            ?? $this->extractFiscalXmlFromCandidate($raw['response_body'] ?? null);
+
+        if ($fromPrintResult !== null) {
+            return $fromPrintResult;
+        }
+
+        try {
+            $baixarXml = $this->baixarXml($chave);
+            if ($baixarXml->isSuccess()) {
+                $xml = $baixarXml->getData('documento')['xml'] ?? $baixarXml->getData('xml');
+                if (is_string($xml) && trim($xml) !== '') {
+                    return $xml;
+                }
+            }
+        } catch (\Throwable) {
+        }
+
+        try {
+            $consulta = $this->consultar($chave);
+            if ($consulta->isSuccess()) {
+                $xml = $consulta->getData('documento')['xml'] ?? null;
+                if (is_string($xml) && trim($xml) !== '') {
+                    return $xml;
+                }
+            }
+        } catch (\Throwable) {
         }
 
         return null;

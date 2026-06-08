@@ -21,7 +21,7 @@
 - consultar por RPS
 - consultar lote
 - baixar XML
-- baixar DANFSe
+- baixar DANFSe com geracao local preferencial
 - CNC e parametrização municipal
 
 ## Overrides conhecidos
@@ -32,3 +32,6 @@
 ## Limitações
 
 - aceitação final depende da parametrização municipal e do `cTribNac`
+- a API oficial de geracao de DANFSe nacional sera descontinuada em `2026-07-01`
+- `baixarDanfse()` agora tenta primeiro reaproveitar PDF/URL remoto, mas faz fallback para renderizacao local a partir do XML final da NFS-e
+- quando o provider nao entregar PDF pronto, a disponibilidade do DANFSe depende de conseguir resolver o XML final via resposta da operacao, `baixarXml()` ou `consultar()`

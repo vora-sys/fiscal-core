@@ -48,7 +48,7 @@ Comportamento:
   --consultar-rps-* Consulta por RPS
   --consultar-lote  Consulta status do lote
   --baixar-xml      Baixa XML da NFSe
-  --baixar-danfse   Baixa DANFSe
+  --baixar-danfse   Baixa DANFSe; no fluxo nacional o PDF e preferencialmente gerado localmente a partir do XML final
   --cancelar-chave  Cancela NFSe pela chave
   --listar-codigos  Lista codigos cTribNac da tabela nacional oficial usada pelo projeto
   --buscar-codigo   Filtra a lista por descricao ou codigo
@@ -58,6 +58,7 @@ Comportamento:
   --convenio        Consulta convenio do municipio no catalogo
 
 Sem --send, o modo de emissao executa somente preview seguro do XML DPS.
+A API oficial de geracao de DANFSe nacional sera suspensa em 2026-07-01.
 TXT;
 }
 
