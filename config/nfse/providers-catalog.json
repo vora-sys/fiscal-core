@@ -1122,7 +1122,35 @@
             "schema_package": "WEBISS",
             "ibge": "2910800",
             "homologado": false,
-            "active": true
+            "active": true,
+            "payload_defaults": {
+                "rps": {
+                    "numero": "123"
+                },
+                "tomador": {
+                    "razao_social": "Cliente Feira de Santana Ltda",
+                    "email": "financeiro@example.com",
+                    "endereco": {
+                        "logradouro": "Avenida Getulio Vargas",
+                        "bairro": "Centro",
+                        "codigo_municipio": "2910800",
+                        "uf": "BA",
+                        "cep": "44001-325",
+                        "municipio": "Feira de Santana"
+                    }
+                },
+                "servico": {
+                    "codigo": "101",
+                    "descricao": "Servico de homologacao NFSe para Feira de Santana.",
+                    "discriminacao": "Servico de homologacao NFSe para Feira de Santana.",
+                    "local_prestacao": {
+                        "tipo": "1",
+                        "uf": "BA",
+                        "codigo_municipio": "2910800",
+                        "cep": "44001-325"
+                    }
+                }
+            }
         },
         "2912202": {
             "slug": "ibicoara",
@@ -1152,7 +1180,35 @@
             "schema_package": "WEBISS",
             "ibge": "2914802",
             "homologado": false,
-            "active": true
+            "active": true,
+            "payload_defaults": {
+                "rps": {
+                    "numero": "123"
+                },
+                "tomador": {
+                    "razao_social": "Cliente Itabuna Ltda",
+                    "email": "financeiro@example.com",
+                    "endereco": {
+                        "logradouro": "Avenida do Cinquentenario",
+                        "bairro": "Centro",
+                        "codigo_municipio": "2914802",
+                        "uf": "BA",
+                        "cep": "45600-002",
+                        "municipio": "Itabuna"
+                    }
+                },
+                "servico": {
+                    "codigo": "101",
+                    "descricao": "Servico de homologacao NFSe para Itabuna.",
+                    "discriminacao": "Servico de homologacao NFSe para Itabuna.",
+                    "local_prestacao": {
+                        "tipo": "1",
+                        "uf": "BA",
+                        "codigo_municipio": "2914802",
+                        "cep": "45600-002"
+                    }
+                }
+            }
         },
         "2917508": {
             "slug": "jacobina",
@@ -1324,7 +1380,35 @@
             "schema_package": "EL",
             "ibge": "2933307",
             "homologado": false,
-            "active": true
+            "active": true,
+            "payload_defaults": {
+                "rps": {
+                    "numero": "123"
+                },
+                "tomador": {
+                    "razao_social": "Cliente Vitoria da Conquista Ltda",
+                    "email": "financeiro@example.com",
+                    "endereco": {
+                        "logradouro": "Avenida Olivia Flores",
+                        "bairro": "Candeias",
+                        "codigo_municipio": "2933307",
+                        "uf": "BA",
+                        "cep": "45028-100",
+                        "municipio": "Vitoria da Conquista"
+                    }
+                },
+                "servico": {
+                    "codigo": "101",
+                    "descricao": "Servico de homologacao NFSe para Vitoria da Conquista.",
+                    "discriminacao": "Servico de homologacao NFSe para Vitoria da Conquista.",
+                    "local_prestacao": {
+                        "tipo": "1",
+                        "uf": "BA",
+                        "codigo_municipio": "2933307",
+                        "cep": "45028-100"
+                    }
+                }
+            }
         },
         "3101102": {
             "slug": "aimores",

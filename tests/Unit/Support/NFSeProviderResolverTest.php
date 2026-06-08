@@ -225,6 +225,30 @@ final class NFSeProviderResolverTest extends TestCase
         $this->assertSame('WEBISS', $resolver->resolveKey('aracaju'));
     }
 
+    public function testResolveFeiraDeSantanaToWebiss(): void
+    {
+        $resolver = $this->makeResolver();
+
+        $this->assertSame('WEBISS', $resolver->resolveKey('feira-de-santana'));
+        $this->assertSame('WEBISS', $resolver->resolveKey('2910800'));
+    }
+
+    public function testResolveItabunaToWebiss(): void
+    {
+        $resolver = $this->makeResolver();
+
+        $this->assertSame('WEBISS', $resolver->resolveKey('itabuna'));
+        $this->assertSame('WEBISS', $resolver->resolveKey('2914802'));
+    }
+
+    public function testResolveVitoriaDaConquistaToEl(): void
+    {
+        $resolver = $this->makeResolver();
+
+        $this->assertSame('EL', $resolver->resolveKey('vitoria-da-conquista'));
+        $this->assertSame('EL', $resolver->resolveKey('2933307'));
+    }
+
     public function testResolvePresidenteFigueiredoToIsswebAm(): void
     {
         $resolver = $this->makeResolver();

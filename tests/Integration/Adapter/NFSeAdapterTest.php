@@ -194,6 +194,24 @@ final class NFSeAdapterTest extends TestCase
         }
     }
 
+    public function testWave4NordesteMunicipalLotUsesExpectedFamilies(): void
+    {
+        $expectedMappings = [
+            'aracaju' => ['provider_key' => 'WEBISS', 'ibge' => '2800308'],
+            'feira-de-santana' => ['provider_key' => 'WEBISS', 'ibge' => '2910800'],
+            'itabuna' => ['provider_key' => 'WEBISS', 'ibge' => '2914802'],
+            'vitoria-da-conquista' => ['provider_key' => 'EL', 'ibge' => '2933307'],
+        ];
+
+        foreach ($expectedMappings as $municipio => $expected) {
+            $adapter = new NFSeAdapter($municipio);
+            $info = $adapter->getProviderInfo();
+
+            $this->assertSame($expected['provider_key'], $info['provider_key'], "family invalida para {$municipio}");
+            $this->assertSame($expected['ibge'], $info['codigo_municipio'], "ibge invalido para {$municipio}");
+        }
+    }
+
     public function testPresidenteFigueiredoUsesIsswebProvider(): void
     {
         $adapter = new NFSeAdapter('presidente-figueiredo');

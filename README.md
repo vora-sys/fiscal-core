@@ -194,6 +194,53 @@ export IBPT_UF="SP"
 - A migração de município municipal para nacional está em [docs/NFSE-MIGRACAO-MUNICIPAL-PARA-NACIONAL.md](docs/NFSE-MIGRACAO-MUNICIPAL-PARA-NACIONAL.md)
 - A matriz operacional de famílias e providers está em [docs/NFSE-PROVIDER-MATRIX.md](docs/NFSE-PROVIDER-MATRIX.md)
 
+#### Cidades-UF já compatíveis
+
+Status usados abaixo:
+
+- `HOMOLOGADO`: fluxo real já validado
+- `DISPENSADO_NACIONAL`: compatível via provider nacional; não exige homologação municipal individual
+- `PENDENTE_HOMOLOGACAO_REAL`: compatível em catálogo/runtime/testes, mas ainda depende de evidência real por município
+
+| Cidade/UF | Provider | Status |
+| --- | --- | --- |
+| Manaus/AM | `nfse_nacional` | `HOMOLOGADO` |
+| Belém/PA | `BELEM_MUNICIPAL_2025` | `HOMOLOGADO` |
+| Rio Branco/AC | `nfse_nacional` | `DISPENSADO_NACIONAL` |
+| Vitória/ES | `nfse_nacional` | `DISPENSADO_NACIONAL` |
+| São Luís/MA | `nfse_nacional` | `DISPENSADO_NACIONAL` |
+| Belo Horizonte/MG | `nfse_nacional` | `DISPENSADO_NACIONAL` |
+| Recife/PE | `nfse_nacional` | `DISPENSADO_NACIONAL` |
+| Curitiba/PR | `nfse_nacional` | `DISPENSADO_NACIONAL` |
+| Rio de Janeiro/RJ | `nfse_nacional` | `DISPENSADO_NACIONAL` |
+| Natal/RN | `nfse_nacional` | `DISPENSADO_NACIONAL` |
+| Porto Alegre/RS | `nfse_nacional` | `DISPENSADO_NACIONAL` |
+| Florianópolis/SC | `nfse_nacional` | `DISPENSADO_NACIONAL` |
+| Brasília/DF | `ISSNET` | `PENDENTE_HOMOLOGACAO_REAL` |
+| Goiânia/GO | `ISSNET` | `PENDENTE_HOMOLOGACAO_REAL` |
+| Cuiabá/MT | `ISSNET` | `PENDENTE_HOMOLOGACAO_REAL` |
+| Fortaleza/CE | `GINFES` | `PENDENTE_HOMOLOGACAO_REAL` |
+| Maceió/AL | `GINFES` | `PENDENTE_HOMOLOGACAO_REAL` |
+| São Paulo/SP | `PAULISTANA` | `PENDENTE_HOMOLOGACAO_REAL` |
+| Salvador/BA | `SALVADOR_BA` | `PENDENTE_HOMOLOGACAO_REAL` |
+| Porto Velho/RO | `EL` | `PENDENTE_HOMOLOGACAO_REAL` |
+| Aracaju/SE | `WEBISS` | `PENDENTE_HOMOLOGACAO_REAL` |
+| Palmas/TO | `WEBISS` | `PENDENTE_HOMOLOGACAO_REAL` |
+| Feira de Santana/BA | `WEBISS` | `PENDENTE_HOMOLOGACAO_REAL` |
+| Itabuna/BA | `WEBISS` | `PENDENTE_HOMOLOGACAO_REAL` |
+| Vitória da Conquista/BA | `EL` | `PENDENTE_HOMOLOGACAO_REAL` |
+| Presidente Figueiredo/AM | `ISSWEB_AM` | `PENDENTE_HOMOLOGACAO_REAL` |
+| Rio Preto da Eva/AM | `ISSWEB_AM` | `PENDENTE_HOMOLOGACAO_REAL` |
+| Joinville/SC | `PUBLICA` | `PENDENTE_HOMOLOGACAO_REAL` |
+| Itajaí/SC | `PUBLICA` | `PENDENTE_HOMOLOGACAO_REAL` |
+| São Bento do Sul/SC | `IPM` | `PENDENTE_HOMOLOGACAO_REAL` |
+
+Lista completa e status detalhado:
+
+- [docs/NFSE-MUNICIPIOS-SUPORTADOS-HOMOLOGACAO.md](docs/NFSE-MUNICIPIOS-SUPORTADOS-HOMOLOGACAO.md)
+- [docs/NFSE-CAPITAIS-HOMOLOGACAO-TRACKER.md](docs/NFSE-CAPITAIS-HOMOLOGACAO-TRACKER.md)
+- [docs/nfse-municipios-suportados.csv](docs/nfse-municipios-suportados.csv)
+
 ## Uso Detalhado
 
 ### 1) **NFe: emitir, consultar e cancelar**
@@ -663,8 +710,9 @@ Roadmap
 - ✅ Hot swap operacional por município (`municipio-provider-overrides.json` + `provider-switch.php`)
 - ✅ Reconciliação contínua com base Uninfe (`reconcile-uninfe-providers.php`)
 - 📚 Playbook mestre: [docs/NFSE-MUNICIPAL-PROVIDER-PLAYBOOK.md](docs/NFSE-MUNICIPAL-PROVIDER-PLAYBOOK.md)
+- 📚 Grid completa de municípios compatíveis: [docs/NFSE-MUNICIPIOS-COMPATIVEIS-GRID.md](docs/NFSE-MUNICIPIOS-COMPATIVEIS-GRID.md)
 - 📚 Tabela completa provider x municípios: [docs/NFSE-PROVIDERS-MUNICIPIOS.md](docs/NFSE-PROVIDERS-MUNICIPIOS.md)
-- 📚 Ponte legada: [docs/PROVIDERS-RETOMADA.md](docs/PROVIDERS-RETOMADA.md)
+- 📚 Tracker de homologação por ondas: [docs/NFSE-CAPITAIS-HOMOLOGACAO-TRACKER.md](docs/NFSE-CAPITAIS-HOMOLOGACAO-TRACKER.md)
 
 **Próximas features:**
 

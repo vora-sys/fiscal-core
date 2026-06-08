@@ -152,6 +152,9 @@ final class NFSeMunicipalPayloadFactoryTest extends TestCase
             'salvador' => ['salvador', '2927408', 'Servico de homologacao NFSe para Salvador.'],
             'porto-velho' => ['porto-velho', '1100205', 'Servico de homologacao NFSe para Porto Velho.'],
             'aracaju' => ['aracaju', '2800308', 'Servico de homologacao NFSe para Aracaju.'],
+            'feira-de-santana' => ['feira-de-santana', '2910800', 'Servico de homologacao NFSe para Feira de Santana.'],
+            'itabuna' => ['itabuna', '2914802', 'Servico de homologacao NFSe para Itabuna.'],
+            'vitoria-da-conquista' => ['vitoria-da-conquista', '2933307', 'Servico de homologacao NFSe para Vitoria da Conquista.'],
             'palmas' => ['palmas', '1721000', 'Servico de homologacao NFSe para Palmas.'],
         ];
     }
