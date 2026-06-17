@@ -61,6 +61,38 @@ class NFCeQRCodeTest extends TestCase
         $this->assertMatchesRegularExpression('/\\?p=\\d{44}\\|3\\|2/', $signedXml);
     }
 
+    public function test_sc_production_signature_generates_qrcode_with_csc_hash(): void
+    {
+        $this->loadTestCertificateAndConfig([
+            'ambiente' => ConfigManager::AMBIENTE_PRODUCAO,
+            'uf' => 'SC',
+            'municipio_ibge' => '4205407',
+        ]);
+
+        $dados = $this->nfceData([
+            'identificacao' => [
+                'cUF' => 42,
+                'cMunFG' => 4205407,
+                'tpAmb' => 1,
+            ],
+            'emitente' => [
+                'codigoMunicipio' => '4205407',
+                'municipio' => 'FLORIANOPOLIS',
+                'uf' => 'SC',
+            ],
+        ]);
+        unset($dados['infoSuplementar']);
+
+        $xml = NotaFiscalBuilder::fromArray($dados)->build()->toXml();
+        $signedXml = ToolsFactory::createNFCeTools()->signNFe($xml);
+
+        $this->assertStringContainsString('<urlChave>https://sat.sef.sc.gov.br/nfce/consulta</urlChave>', $signedXml);
+        $this->assertMatchesRegularExpression(
+            '/https:\\/\\/sat\\.sef\\.sc\\.gov\\.br\\/nfce\\/consulta\\?p=\\d{44}\\|2\\|1\\|1\\|[A-F0-9]{40}/',
+            $signedXml
+        );
+    }
+
     public function test_adapter_drops_incomplete_supplemental_info_before_signing(): void
     {
         $tools = $this->getMockBuilder(Tools::class)

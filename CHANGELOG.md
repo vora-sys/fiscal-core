@@ -1,5 +1,17 @@
 # Changelog
 
+## v1.4.1 - 2026-06-17
+
+### Added
+- Cobertura de regressao para NFC-e SC em producao garantindo QRCode versao 2 com `CSCid` e hash CSC.
+
+### Changed
+- Documentacao operacional da `NFCeFacade` esclarece quando usar `FISCAL_NFCE_QRCODE_VERSION=200` para forcar QRCode com CSC/hash.
+- Documentado que, sem versao forcada, a NFePHP segue a tabela de UF/ambiente e pode gerar QRCode v3 online sem CSC/hash em homologacao.
+
+### Tests
+- `vendor/bin/phpunit --filter NFCeQRCodeTest`
+
 ## v1.4.0 - 2026-06-17
 
 ### Added

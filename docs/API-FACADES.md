@@ -107,6 +107,13 @@ Principais metodos estaveis:
 - `gerarDanfce(string $xmlAutorizado, array $context = [])`
 - `validarXmlSchemaSefaz(string $xml)`
 
+QRCode e CSC:
+
+- A tag `infNFeSupl` deve ser recalculada na assinatura da NFCe. O adapter remove qualquer `infoSuplementar` recebido no payload antes de chamar `signNFe()`.
+- Configure `FISCAL_NFCE_CSC` e `FISCAL_NFCE_CSC_ID` para QRCode versao 2, que gera `p=chave|2|ambiente|idCSC|hash`.
+- Use `FISCAL_NFCE_QRCODE_VERSION=200` quando precisar forcar QRCode com CSC/hash. Sem essa variavel, a versao segue a tabela de UF/ambiente da NFePHP.
+- Em Santa Catarina, a tabela da dependencia gera QRCode v2 em producao e v3 em homologacao. O v3 online nao inclui CSC/hash.
+
 Eventos SEFAZ retornam o mesmo shape canônico de operação, com `operacao`, `documento`, `provider`, `raw`, `eventos`, `cstat`, `xmotivo`, `protocolo`, `chave_acesso` e `xml_response`. Em respostas de lote, o parser prioriza o `retEvento/infEvento` efetivo em vez do `cStat` externo do envelope.
 
 ### NFSeFacade
