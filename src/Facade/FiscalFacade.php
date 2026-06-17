@@ -69,6 +69,27 @@ class FiscalFacade
         return $this->nfe->cancelar($chave, $motivo, $protocolo);
     }
 
+    public function cartaCorrecaoNFe(string $chave, string $correcao, int $sequencia = 1, array $opcoes = []): FiscalResponse
+    {
+        return $this->nfe->cartaCorrecao($chave, $correcao, $sequencia, $opcoes);
+    }
+
+    public function registrarEventoSefazNFe(
+        string $uf,
+        string $chave,
+        int $tipoEvento,
+        int $sequencia = 1,
+        string $tagAdicional = '',
+        array $opcoes = []
+    ): FiscalResponse {
+        return $this->nfe->registrarEventoSefaz($uf, $chave, $tipoEvento, $sequencia, $tagAdicional, $opcoes);
+    }
+
+    public function registrarEventoSefazLoteNFe(string $uf, array|\stdClass $eventos, array $opcoes = []): FiscalResponse
+    {
+        return $this->nfe->registrarEventoSefazLote($uf, $eventos, $opcoes);
+    }
+
     // ===== OPERAÇÕES NFCe =====
 
     /**
@@ -130,6 +151,33 @@ class FiscalFacade
     public function cancelarNFCe(string $chave, string $motivo, string $protocolo): FiscalResponse
     {
         return $this->nfce->cancelar($chave, $motivo, $protocolo);
+    }
+
+    public function cancelarPorSubstituicaoNFCe(
+        string $chave,
+        string $motivo,
+        string $protocolo,
+        string $chaveSubstituta,
+        ?string $verAplic = null,
+        array $opcoes = []
+    ): FiscalResponse {
+        return $this->nfce->cancelarPorSubstituicao($chave, $motivo, $protocolo, $chaveSubstituta, $verAplic, $opcoes);
+    }
+
+    public function registrarEventoSefazNFCe(
+        string $uf,
+        string $chave,
+        int $tipoEvento,
+        int $sequencia = 1,
+        string $tagAdicional = '',
+        array $opcoes = []
+    ): FiscalResponse {
+        return $this->nfce->registrarEventoSefaz($uf, $chave, $tipoEvento, $sequencia, $tagAdicional, $opcoes);
+    }
+
+    public function registrarEventoSefazLoteNFCe(string $uf, array|\stdClass $eventos, array $opcoes = []): FiscalResponse
+    {
+        return $this->nfce->registrarEventoSefazLote($uf, $eventos, $opcoes);
     }
 
     // ===== OPERAÇÕES NFSe =====

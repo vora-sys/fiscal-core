@@ -151,15 +151,15 @@ Leitura do resultado:
 
 ## Status NFePHP (phpnfe)
 
-Validação executada em `2026-05-25`:
+Validação executada em `2026-06-17`:
 
 - `composer outdated 'nfephp-org/*' --direct`: sem pendências.
 - `composer outdated 'nfephp-org/*'`: sem pendências diretas e transitivas.
 
 Versões efetivas no lock:
 
-- `nfephp-org/sped-nfe`: `v5.2.5`
-- `nfephp-org/sped-common`: `v5.1.16`
+- `nfephp-org/sped-nfe`: `v5.2.6`
+- `nfephp-org/sped-common`: `v5.1.17`
 - `nfephp-org/sped-da`: `v1.1.6`
 - `nfephp-org/sped-gtin`: `v1.1.2`
 - `nfephp-org/sped-ibpt`: `v2.0.2`

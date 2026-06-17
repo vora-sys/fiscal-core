@@ -72,10 +72,20 @@ Principais metodos estaveis:
 - `emitir(array $dados)`
 - `consultar(string $chave)`
 - `cancelar(string $chave, string $motivo, string $protocolo)`
+- `consultarRecibo(string $recibo, ?int $ambiente = null)`
+- `consultarCadastroContribuinte(string $uf, string $cnpj = '', string $iest = '', string $cpf = '')`
+- `cartaCorrecao(string $chave, string $correcao, int $sequencia = 1, array $opcoes = [])`
+- `manifestarDestinatario(string $chave, ManifestationType|string $tipo, string $justificativa = '', int $sequencia = 1)`
+- `manifestarDestinatarioLote(array|\stdClass $eventos, array $opcoes = [])`
+- `registrarEventoSefaz(string $uf, string $chave, int $tipoEvento, int $sequencia = 1, string $tagAdicional = '', array $opcoes = [])`
+- `registrarEventoSefazLote(string $uf, array|\stdClass $eventos, array $opcoes = [])`
+- `registrarEventoAvancado(string $metodo, array|\stdClass $dados, array $opcoes = [])`
+- `registrarEpec(string $xml, ?string $verAplic = null)`
 - `baixarXml(string $chave)`
 - `gerarDanfe(string $xmlAutorizado)`
 - `validarXML(string $xml)`
 - `validarChaveAcesso(string $chave)`
+- `validarXmlSchemaSefaz(string $xml)`
 
 ### NFCeFacade
 
@@ -86,8 +96,18 @@ Principais metodos estaveis:
 - `emitir(array $dados)`
 - `consultar(string $chave)`
 - `cancelar(string $chave, string $motivo, string $protocolo)`
+- `cancelarPorSubstituicao(string $chave, string $motivo, string $protocolo, string $chaveSubstituta, ?string $verAplic = null, array $opcoes = [])`
+- `registrarEventoSefaz(string $uf, string $chave, int $tipoEvento, int $sequencia = 1, string $tagAdicional = '', array $opcoes = [])`
+- `registrarEventoSefazLote(string $uf, array|\stdClass $eventos, array $opcoes = [])`
+- `registrarEventoAvancado(string $metodo, array|\stdClass $dados, array $opcoes = [])`
+- `registrarEpec(string $xml, ?string $verAplic = null)`
+- `verificarStatusEpec(string $uf = '', ?int $ambiente = null, bool $ignorarContigencia = true)`
+- `consultarCsc(int $indOperacao)`
 - `baixarXml(string $chave)`
 - `gerarDanfce(string $xmlAutorizado, array $context = [])`
+- `validarXmlSchemaSefaz(string $xml)`
+
+Eventos SEFAZ retornam o mesmo shape canônico de operação, com `operacao`, `documento`, `provider`, `raw`, `eventos`, `cstat`, `xmotivo`, `protocolo`, `chave_acesso` e `xml_response`. Em respostas de lote, o parser prioriza o `retEvento/infEvento` efetivo em vez do `cStat` externo do envelope.
 
 ### NFSeFacade
 
@@ -158,4 +178,3 @@ Principais metodos estaveis:
 ## Compatibilidade
 
 Este release nao remove metodos existentes nem altera assinaturas publicas. Melhorias futuras devem expandir o envelope e os metadados sem quebrar consumidores atuais.
-

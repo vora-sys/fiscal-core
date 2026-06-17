@@ -1,12 +1,12 @@
 # Release Packagist
 
-Data de referencia: 2026-05-25
+Data de referencia: 2026-06-17
 
 Nome canonico do pacote: `sabbajohn/fiscal-core`.
 
 Publicacoes com outro vendor, como `freeline/fiscal-core`, devem ser tratadas como legado/desalinhamento e nao devem aparecer como instalacao principal.
 
-## Checklist de release v1.2.4
+## Checklist de release v1.4.0
 
 1. Validar metadados do Composer:
 
@@ -41,13 +41,13 @@ Publicacoes com outro vendor, como `freeline/fiscal-core`, devem ser tratadas co
    ENABLE_EXTERNAL_TESTS=false composer test:ci
    ```
 
-6. Atualizar `CHANGELOG.md` com a versao `v1.2.4`.
+6. Atualizar `CHANGELOG.md` com a versao `v1.4.0`.
 
 7. Criar tag:
 
    ```bash
-   git tag v1.2.4
-   git push origin v1.2.4
+   git tag v1.4.0
+   git push origin v1.4.0
    ```
 
 8. Publicar/submeter no Packagist usando o repositorio GitHub deste pacote e o nome `sabbajohn/fiscal-core`.
@@ -76,4 +76,3 @@ O release Composer e considerado pronto quando:
 - `composer analyse` passa no nivel inicial configurado;
 - README aponta para `composer require sabbajohn/fiscal-core`;
 - Packagist resolve o pacote canonico `sabbajohn/fiscal-core`.
-

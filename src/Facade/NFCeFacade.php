@@ -10,6 +10,8 @@ use sabbajohn\FiscalCore\Adapters\NF\Builder\NotaFiscalBuilder;
 use sabbajohn\FiscalCore\Support\ToolsFactory;
 use sabbajohn\FiscalCore\Support\FiscalDocumentResultNormalizer;
 use sabbajohn\FiscalCore\Support\FiscalResponseNormalizer;
+use sabbajohn\FiscalCore\Support\SefazAdvancedMethodRegistry;
+use sabbajohn\FiscalCore\Support\SefazResponseParser;
 /**
  * Facade para NFCe - Interface simplificada com tratamento de erros
  * Evita que aplicações recebam erros 500 fornecendo responses padronizados
@@ -21,6 +23,7 @@ class NFCeFacade
     private ResponseHandler $responseHandler;
     private FiscalDocumentResultNormalizer $resultNormalizer;
     private FiscalResponseNormalizer $publicNormalizer;
+    private SefazResponseParser $sefazParser;
     private ?FiscalResponse $initializationError = null;
 
     public function __construct(
@@ -30,6 +33,7 @@ class NFCeFacade
         $this->responseHandler = new ResponseHandler();
         $this->resultNormalizer = new FiscalDocumentResultNormalizer();
         $this->publicNormalizer = new FiscalResponseNormalizer();
+        $this->sefazParser = new SefazResponseParser();
         
         if ($nfce !== null) {
             $this->nfce = $nfce;
@@ -184,12 +188,51 @@ class NFCeFacade
             ], [
                 'cancelado' => $ok,
                 'xml_response' => $xmlResponse,
-                'cstat' => $this->extrairCStat($xmlResponse),
+                'cstat' => $parsed['cstat'] ?? null,
                 'chave_acesso' => $chave,
                 'motivo' => $motivo,
                 'protocolo' => $protocolo
             ]);
         }, 'cancelamento_nfce');
+    }
+
+    public function cancelarPorSubstituicao(
+        string $chave,
+        string $motivo,
+        string $protocolo,
+        string $chaveSubstituta,
+        ?string $verAplic = null,
+        array $opcoes = []
+    ): FiscalResponse {
+        $initError = $this->checkNFCeInitialization();
+        if ($initError !== null) {
+            return $initError;
+        }
+
+        return $this->responseHandler->handle(function () use ($chave, $motivo, $protocolo, $chaveSubstituta, $verAplic, $opcoes) {
+            if (strlen($motivo) < 15) {
+                throw new \InvalidArgumentException('Motivo deve ter pelo menos 15 caracteres');
+            }
+
+            $xmlResponse = $this->nfce->cancelarPorSubstituicao(
+                $chave,
+                $motivo,
+                $protocolo,
+                $chaveSubstituta,
+                $verAplic,
+                $this->extractDhEventoOption($opcoes),
+                $opcoes['lote'] ?? null
+            );
+
+            return $this->normalizeSefazEventOperation('cancelamento_substituicao_nfce', $xmlResponse, [
+                'chave_acesso' => $chave,
+            ], [
+                'cancelado' => $this->sefazParser->isSuccessfulEventResponse($xmlResponse),
+                'chave_substituta' => $chaveSubstituta,
+                'motivo' => $motivo,
+                'protocolo_autorizacao' => $protocolo,
+            ]);
+        }, 'cancelamento_substituicao_nfce');
     }
 
     /**
@@ -260,6 +303,178 @@ class NFCeFacade
                 'status' => $this->extrairStatusSefaz($result)
             ]);
         }, 'status_sefaz');
+    }
+
+    public function registrarEventoSefaz(
+        string $uf,
+        string $chave,
+        int $tipoEvento,
+        int $sequencia = 1,
+        string $tagAdicional = '',
+        array $opcoes = []
+    ): FiscalResponse {
+        $initError = $this->checkNFCeInitialization();
+        if ($initError !== null) {
+            return $initError;
+        }
+
+        return $this->responseHandler->handle(function () use ($uf, $chave, $tipoEvento, $sequencia, $tagAdicional, $opcoes) {
+            $this->sefazParser->validateXmlFragment($tagAdicional);
+            $xmlResponse = $this->nfce->registrarEventoSefaz(
+                $uf,
+                $chave,
+                $tipoEvento,
+                $sequencia,
+                $tagAdicional,
+                $this->extractDhEventoOption($opcoes),
+                $opcoes['lote'] ?? null
+            );
+
+            return $this->normalizeSefazEventOperation('registro_evento_sefaz_nfce', $xmlResponse, [
+                'chave_acesso' => $chave,
+            ], [
+                'uf' => $uf,
+                'tipo_evento' => $tipoEvento,
+                'sequencia' => $sequencia,
+            ]);
+        }, 'registro_evento_sefaz_nfce');
+    }
+
+    public function registrarEventoSefazLote(string $uf, array|\stdClass $eventos, array $opcoes = []): FiscalResponse
+    {
+        $initError = $this->checkNFCeInitialization();
+        if ($initError !== null) {
+            return $initError;
+        }
+
+        return $this->responseHandler->handle(function () use ($uf, $eventos, $opcoes) {
+            $this->validateEventBatchTags($eventos);
+            $xmlResponse = $this->nfce->registrarEventoSefazLote(
+                $uf,
+                $eventos,
+                $this->extractDhEventoOption($opcoes),
+                $opcoes['lote'] ?? null
+            );
+
+            return $this->normalizeSefazEventOperation('registro_evento_sefaz_lote_nfce', $xmlResponse, [], [
+                'uf' => $uf,
+                'eventos_enviados' => $eventos,
+            ]);
+        }, 'registro_evento_sefaz_lote_nfce');
+    }
+
+    public function registrarEventoAvancado(string $metodo, array|\stdClass $dados, array $opcoes = []): FiscalResponse
+    {
+        $initError = $this->checkNFCeInitialization();
+        if ($initError !== null) {
+            return $initError;
+        }
+
+        if (!SefazAdvancedMethodRegistry::isAllowedForModel($metodo, 65)) {
+            return FiscalResponse::error(
+                "Método SEFAZ não suportado para NFCe: {$metodo}",
+                'UNSUPPORTED_SEFAZ_METHOD',
+                'registro_evento_avancado_nfce',
+                [
+                    'method' => $metodo,
+                    'allowed_methods' => SefazAdvancedMethodRegistry::allowedMethodsForModel(65),
+                    'category' => 'validation',
+                ]
+            );
+        }
+
+        return $this->responseHandler->handle(function () use ($metodo, $dados, $opcoes) {
+            $xmlResponse = $this->nfce->registrarEventoAvancado($metodo, $dados, $opcoes);
+
+            return $this->normalizeSefazEventOperation('registro_evento_avancado_nfce', $xmlResponse, [], [
+                'metodo' => $metodo,
+                'payload' => $dados,
+            ]);
+        }, 'registro_evento_avancado_nfce');
+    }
+
+    public function registrarEpec(string $xml, ?string $verAplic = null): FiscalResponse
+    {
+        $initError = $this->checkNFCeInitialization();
+        if ($initError !== null) {
+            return $initError;
+        }
+
+        return $this->responseHandler->handle(function () use ($xml, $verAplic) {
+            $result = $this->nfce->registrarEpec($xml, $verAplic);
+            $xmlResponse = $result['response_xml'];
+
+            return $this->normalizeSefazEventOperation('registro_epec_nfce', $xmlResponse, [
+                'xml' => $result['xml'],
+            ], [
+                'xml_contingencia' => $result['xml'],
+                'ver_aplic' => $verAplic,
+            ]);
+        }, 'registro_epec_nfce');
+    }
+
+    public function verificarStatusEpec(string $uf = '', ?int $ambiente = null, bool $ignorarContigencia = true): FiscalResponse
+    {
+        $initError = $this->checkNFCeInitialization();
+        if ($initError !== null) {
+            return $initError;
+        }
+
+        return $this->responseHandler->handle(function () use ($uf, $ambiente, $ignorarContigencia) {
+            $xmlResponse = $this->nfce->verificarStatusEpec($uf, $ambiente, $ignorarContigencia);
+            $parsed = $this->sefazParser->parseCommonResponse($xmlResponse);
+            $ok = in_array((string) ($parsed['cstat'] ?? ''), ['107', '108', '109'], true);
+
+            return $this->publicNormalizer->normalizeFiscalOperation('nfce', 'status_epec_nfce', [
+                'status' => $parsed['xmotivo'] ?? null,
+                'ok' => $ok,
+                'cstat' => $parsed['cstat'] ?? null,
+                'xmotivo' => $parsed['xmotivo'] ?? null,
+            ], [
+                'situacao' => $parsed['xmotivo'] ?? null,
+            ], [], [
+                'request_xml' => $this->nfce?->getLastRequestXml(),
+                'response_xml' => $xmlResponse,
+                'parsed_response' => $parsed,
+            ], [
+                'xml_response' => $xmlResponse,
+                'uf' => $uf,
+                'ambiente' => $ambiente,
+                'cstat' => $parsed['cstat'] ?? null,
+                'xmotivo' => $parsed['xmotivo'] ?? null,
+            ]);
+        }, 'status_epec_nfce');
+    }
+
+    public function consultarCsc(int $indOperacao): FiscalResponse
+    {
+        $initError = $this->checkNFCeInitialization();
+        if ($initError !== null) {
+            return $initError;
+        }
+
+        return $this->responseHandler->handle(function () use ($indOperacao) {
+            $xmlResponse = $this->nfce->consultarCsc($indOperacao);
+
+            return $this->normalizeSefazCommonOperation('consulta_csc_nfce', $xmlResponse, [], [
+                'ind_operacao' => $indOperacao,
+            ]);
+        }, 'consulta_csc_nfce');
+    }
+
+    public function validarXmlSchemaSefaz(string $xml): FiscalResponse
+    {
+        $initError = $this->checkNFCeInitialization();
+        if ($initError !== null) {
+            return $initError;
+        }
+
+        return $this->responseHandler->handle(function () use ($xml) {
+            return [
+                'xml_valido_schema_sefaz' => $this->nfce->validarXmlSchemaSefaz($xml),
+                'tamanho_xml' => strlen($xml),
+            ];
+        }, 'validacao_schema_sefaz_nfce');
     }
 
     /**
@@ -344,6 +559,111 @@ class NFCeFacade
         }
     }
 
+    private function normalizeSefazEventOperation(
+        string $operation,
+        string $xmlResponse,
+        array $documento = [],
+        array $extra = []
+    ): array {
+        $parsed = $this->sefazParser->parseEventResponse($xmlResponse);
+
+        $documento = array_merge([
+            'chave_acesso' => $parsed['chave'] ?? null,
+            'situacao' => $parsed['xmotivo'] ?? null,
+            'protocolo' => $parsed['protocolo'] ?? null,
+        ], $documento);
+
+        if (($documento['chave_acesso'] ?? null) === null && ($parsed['chave'] ?? null) !== null) {
+            $documento['chave_acesso'] = $parsed['chave'];
+        }
+        if (($documento['protocolo'] ?? null) === null && ($parsed['protocolo'] ?? null) !== null) {
+            $documento['protocolo'] = $parsed['protocolo'];
+        }
+
+        return $this->publicNormalizer->normalizeFiscalOperation('nfce', $operation, [
+            'status' => $parsed['xmotivo'] ?? null,
+            'ok' => $parsed['ok'] ?? null,
+            'cstat' => $parsed['cstat'] ?? null,
+            'xmotivo' => $parsed['xmotivo'] ?? null,
+            'protocolo' => $parsed['protocolo'] ?? null,
+        ], $documento, [], [
+            'request_xml' => $this->nfce?->getLastRequestXml(),
+            'response_xml' => $xmlResponse,
+            'parsed_response' => $parsed,
+        ], array_merge([
+            'xml_response' => $xmlResponse,
+            'cstat' => $parsed['cstat'] ?? null,
+            'xmotivo' => $parsed['xmotivo'] ?? null,
+            'protocolo' => $parsed['protocolo'] ?? null,
+            'chave_acesso' => $documento['chave_acesso'] ?? null,
+            'eventos' => $parsed['eventos'] ?? [],
+        ], $extra));
+    }
+
+    private function normalizeSefazCommonOperation(
+        string $operation,
+        string $xmlResponse,
+        array $documento = [],
+        array $extra = []
+    ): array {
+        $parsed = $this->sefazParser->parseCommonResponse($xmlResponse);
+
+        $documento = array_merge([
+            'chave_acesso' => $parsed['chave'] ?? null,
+            'situacao' => $parsed['xmotivo'] ?? null,
+            'protocolo' => $parsed['protocolo'] ?? null,
+        ], $documento);
+
+        return $this->publicNormalizer->normalizeFiscalOperation('nfce', $operation, [
+            'status' => $parsed['xmotivo'] ?? null,
+            'ok' => $parsed['ok'] ?? null,
+            'cstat' => $parsed['cstat'] ?? null,
+            'xmotivo' => $parsed['xmotivo'] ?? null,
+            'protocolo' => $parsed['protocolo'] ?? null,
+        ], $documento, [], [
+            'request_xml' => $this->nfce?->getLastRequestXml(),
+            'response_xml' => $xmlResponse,
+            'parsed_response' => $parsed,
+        ], array_merge([
+            'xml_response' => $xmlResponse,
+            'cstat' => $parsed['cstat'] ?? null,
+            'xmotivo' => $parsed['xmotivo'] ?? null,
+            'protocolo' => $parsed['protocolo'] ?? null,
+            'chave_acesso' => $documento['chave_acesso'] ?? null,
+        ], $extra));
+    }
+
+    private function extractDhEventoOption(array $opcoes): ?\DateTimeInterface
+    {
+        $value = $opcoes['dhEvento'] ?? $opcoes['dh_evento'] ?? null;
+        if ($value === null || $value instanceof \DateTimeInterface) {
+            return $value;
+        }
+
+        throw new \InvalidArgumentException('dhEvento deve implementar DateTimeInterface.');
+    }
+
+    private function validateEventBatchTags(array|\stdClass $eventos): void
+    {
+        $items = $eventos instanceof \stdClass ? ($eventos->evento ?? []) : $eventos;
+        if (!is_iterable($items)) {
+            throw new \InvalidArgumentException('Lote de eventos inválido.');
+        }
+
+        foreach ($items as $evento) {
+            $tag = null;
+            if (is_array($evento)) {
+                $tag = $evento['tagAdic'] ?? $evento['tagAdicional'] ?? $evento['tag_adicional'] ?? null;
+            } elseif ($evento instanceof \stdClass) {
+                $tag = $evento->tagAdic ?? $evento->tagAdicional ?? $evento->tag_adicional ?? null;
+            }
+
+            if (is_string($tag)) {
+                $this->sefazParser->validateXmlFragment($tag);
+            }
+        }
+    }
+
     private function extrairCStat(string $xml): ?string
     {
         try {
@@ -359,12 +679,7 @@ class NFCeFacade
 
     private function parseEventResponse(string $xml): array
     {
-        return [
-            'cstat' => $this->extractTagValue($xml, ['cStat']),
-            'xmotivo' => $this->extractTagValue($xml, ['xMotivo']),
-            'protocolo' => $this->extractTagValue($xml, ['nProt']),
-            'chave' => $this->extractTagValue($xml, ['chNFe']),
-        ];
+        return $this->sefazParser->parseEventResponse($xml);
     }
 
     private function extractTagValue(string $xml, array $tagNames): ?string
@@ -391,11 +706,7 @@ class NFCeFacade
 
     private function isSefazOperationSuccessful(string $xml): bool
     {
-        $cStat = $this->extrairCStat($xml);
-        if ($cStat === null) {
-            return false;
-        }
-        return in_array($cStat, ['100', '101', '102', '135', '136', '155'], true);
+        return $this->sefazParser->isSuccessfulEventResponse($xml);
     }
     
     private function simularChaveAcesso(array $dados): string

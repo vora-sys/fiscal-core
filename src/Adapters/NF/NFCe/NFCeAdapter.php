@@ -5,6 +5,7 @@ namespace sabbajohn\FiscalCore\Adapters\NF\NFCe;
 use sabbajohn\FiscalCore\Contracts\NotaFiscalInterface;
 use sabbajohn\FiscalCore\Adapters\NF\Builder\NotaFiscalBuilder;
 use sabbajohn\FiscalCore\Adapters\NF\Core\NotaFiscal;
+use sabbajohn\FiscalCore\Support\SefazAdvancedMethodRegistry;
 use NFePHP\NFe\Tools;
 
 /**
@@ -77,6 +78,11 @@ class NFCeAdapter implements NotaFiscalInterface
 		return $this->lastResponseXml;
 	}
 
+	public function getLastRequestXml(): ?string
+	{
+		return $this->tools->lastRequest !== '' ? $this->tools->lastRequest : null;
+	}
+
 	/**
 	 * Construtor fluente para NFCe
 	 * Retorna NotaFiscalBuilder para construção incremental
@@ -104,14 +110,38 @@ class NFCeAdapter implements NotaFiscalInterface
 	{
 		$this->tools->model(65);
 
-		return $this->tools->sefazConsultaChave($chave);
+		return $this->captureResponse($this->tools->sefazConsultaChave($chave));
 	}
 
 	public function cancelar(string $chave, string $motivo, string $protocolo): string
 	{
 		$this->tools->model(65);
 
-		return $this->tools->sefazCancela($chave, $motivo, $protocolo);
+		return $this->captureResponse($this->tools->sefazCancela($chave, $motivo, $protocolo));
+	}
+
+	public function cancelarPorSubstituicao(
+		string $chave,
+		string $motivo,
+		string $protocolo,
+		string $chaveSubstituta,
+		?string $verAplic = null,
+		?\DateTimeInterface $dhEvento = null,
+		?string $lote = null
+	): string {
+		$this->tools->model(65);
+
+		return $this->captureResponse(
+			$this->tools->sefazCancelaPorSubstituicao(
+				$chave,
+				$motivo,
+				$protocolo,
+				$chaveSubstituta,
+				$verAplic,
+				$dhEvento,
+				$lote
+			)
+		);
 	}
 
 	public function inutilizar(int $ano, int $cnpj, int $modelo, int $serie, int $numeroInicial, int $numeroFinal, string $justificativa): string
@@ -120,20 +150,112 @@ class NFCeAdapter implements NotaFiscalInterface
 
 		// sped-nfe v5 usa (serie, numeroInicial, numeroFinal, justificativa, tpAmb, ano[2])
 		$ano2Digitos = str_pad((string) ($ano % 100), 2, '0', STR_PAD_LEFT);
-		return $this->tools->sefazInutiliza($serie, $numeroInicial, $numeroFinal, $justificativa, null, $ano2Digitos);
+		return $this->captureResponse(
+			$this->tools->sefazInutiliza($serie, $numeroInicial, $numeroFinal, $justificativa, null, $ano2Digitos)
+		);
 	}
 
 	public function sefazStatus(string $uf = '', ?int $ambiente = null, bool $ignorarContigencia = true): string
 	{
 		$this->tools->model(65);
 
-		return $this->tools->sefazStatus($uf, $ambiente, $ignorarContigencia);
+		return $this->captureResponse($this->tools->sefazStatus($uf, $ambiente, $ignorarContigencia));
 	}
 
 	public function consultaNotasEmitidasParaEstabelecimento(int $ultimoNsu=0, int $numNSU=0, ?string $chave=null, string $fonte='AN'): string
     {
-        return $this->tools->sefazDistDFe($ultimoNsu, $numNSU, $chave, $fonte);
+		$this->tools->model(65);
+
+        return $this->captureResponse($this->tools->sefazDistDFe($ultimoNsu, $numNSU, $chave, $fonte));
     }
+
+	public function registrarEventoSefaz(
+		string $uf,
+		string $chave,
+		int $tipoEvento,
+		int $sequencia = 1,
+		string $tagAdicional = '',
+		?\DateTimeInterface $dhEvento = null,
+		?string $lote = null
+	): string {
+		$this->tools->model(65);
+
+		return $this->captureResponse(
+			$this->tools->sefazEvento($uf, $chave, $tipoEvento, $sequencia, $tagAdicional, $dhEvento, $lote)
+		);
+	}
+
+	public function registrarEventoSefazLote(
+		string $uf,
+		array|\stdClass $eventos,
+		?\DateTimeInterface $dhEvento = null,
+		?string $lote = null
+	): string {
+		$this->tools->model(65);
+
+		return $this->captureResponse(
+			$this->tools->sefazEventoLote($uf, $this->buildEventBatch($eventos), $dhEvento, $lote)
+		);
+	}
+
+	public function registrarEventoAvancado(string $metodo, array|\stdClass $dados, array $opcoes = []): string
+	{
+		$this->tools->model(65);
+
+		if (!SefazAdvancedMethodRegistry::isAllowedForModel($metodo, 65)) {
+			throw new \InvalidArgumentException("Método SEFAZ não suportado para NFCe: {$metodo}");
+		}
+
+		$std = $this->toStdClass($dados);
+		$strategy = SefazAdvancedMethodRegistry::strategy($metodo);
+
+		return $this->captureResponse(match ($strategy) {
+			'std_event' => $this->tools->{$metodo}(
+				$std,
+				$opcoes['dhEvento'] ?? $opcoes['dh_evento'] ?? null,
+				$opcoes['lote'] ?? null
+			),
+			'std_ver_aplic' => $this->tools->{$metodo}($std, $opcoes['verAplic'] ?? $opcoes['ver_aplic'] ?? null),
+			default => throw new \InvalidArgumentException("Estratégia SEFAZ não suportada: {$metodo}"),
+		});
+	}
+
+	/**
+	 * @return array{response_xml:string,xml:string}
+	 */
+	public function registrarEpec(string $xml, ?string $verAplic = null): array
+	{
+		$this->tools->model(65);
+
+		$xmlContingencia = $xml;
+		$response = $this->tools->sefazEpecNfce($xmlContingencia, $verAplic);
+
+		return [
+			'response_xml' => $this->captureResponse($response),
+			'xml' => $xmlContingencia,
+		];
+	}
+
+	public function verificarStatusEpec(string $uf = '', ?int $ambiente = null, bool $ignorarContigencia = true): string
+	{
+		$this->tools->model(65);
+
+		return $this->captureResponse($this->tools->sefazStatusEpecNfce($uf, $ambiente, $ignorarContigencia));
+	}
+
+	public function consultarCsc(int $indOperacao): string
+	{
+		$this->tools->model(65);
+
+		return $this->captureResponse($this->tools->sefazCsc($indOperacao));
+	}
+
+	public function validarXmlSchemaSefaz(string $xml): bool
+	{
+		$this->tools->model(65);
+
+		return $this->tools->sefazValidate($xml);
+	}
 
 	/**
 	 * Para NFC-e, a NFePHP gera a tag infNFeSupl no signNFe().
@@ -148,5 +270,43 @@ class NFCeAdapter implements NotaFiscalInterface
 		unset($dados['infoSuplementar']);
 
 		return $dados;
+	}
+
+	private function captureResponse(string $response): string
+	{
+		$this->lastResponseXml = $response;
+
+		return $response;
+	}
+
+	private function buildEventBatch(array|\stdClass $eventos): \stdClass
+	{
+		if ($eventos instanceof \stdClass) {
+			return $eventos;
+		}
+
+		$std = new \stdClass();
+		$std->evento = [];
+
+		foreach ($eventos as $evento) {
+			$item = $this->toStdClass($evento);
+			$evt = new \stdClass();
+			$evt->chave = (string) ($item->chave ?? $item->chNFe ?? '');
+			$evt->tpEvento = (int) ($item->tpEvento ?? $item->tipo_evento ?? $item->tipoEvento ?? 0);
+			$evt->nSeqEvento = (int) ($item->nSeqEvento ?? $item->sequencia ?? 1);
+			$evt->tagAdic = (string) ($item->tagAdic ?? $item->tagAdicional ?? $item->tag_adicional ?? '');
+			$std->evento[] = $evt;
+		}
+
+		return $std;
+	}
+
+	private function toStdClass(array|\stdClass $data): \stdClass
+	{
+		if ($data instanceof \stdClass) {
+			return $data;
+		}
+
+		return json_decode(json_encode($data, JSON_THROW_ON_ERROR), false, 512, JSON_THROW_ON_ERROR);
 	}
 }

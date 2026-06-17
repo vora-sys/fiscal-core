@@ -77,4 +77,153 @@ class NFCeFacadeResponseShapeTest extends TestCase
         $this->assertSame('321', $response->getData('documento')['protocolo']);
         $this->assertSame($xml, $response->getData('raw')['response_xml']);
     }
+
+    public function test_cancelar_por_substituicao_returns_canonical_event_shape(): void
+    {
+        $adapter = $this->createMock(NFCeAdapter::class);
+        $adapter->expects($this->once())
+            ->method('cancelarPorSubstituicao')
+            ->with(
+                '35123456789012345678901234567890123456789012',
+                'Cancelamento por erro operacional',
+                '123',
+                '35123456789012345678901234567890123456789013',
+                'FiscalCore',
+                null,
+                null
+            )
+            ->willReturn($this->eventResponseXml('128', '135'));
+
+        $facade = new NFCeFacade($adapter, $this->createMock(ImpressaoAdapter::class));
+        $response = $facade->cancelarPorSubstituicao(
+            '35123456789012345678901234567890123456789012',
+            'Cancelamento por erro operacional',
+            '123',
+            '35123456789012345678901234567890123456789013',
+            'FiscalCore'
+        );
+
+        $this->assertTrue($response->isSuccess());
+        $this->assertTrue($response->getData('cancelado'));
+        $this->assertSame('135', $response->getData('cstat'));
+        $this->assertSame('35123456789012345678901234567890123456789013', $response->getData('chave_substituta'));
+    }
+
+    public function test_registrar_evento_sefaz_returns_inner_event_status(): void
+    {
+        $adapter = $this->createMock(NFCeAdapter::class);
+        $adapter->expects($this->once())
+            ->method('registrarEventoSefaz')
+            ->with(
+                'SP',
+                '35123456789012345678901234567890123456789012',
+                110110,
+                1,
+                '<xCampo>valor</xCampo>',
+                null,
+                null
+            )
+            ->willReturn($this->eventResponseXml('128', '135'));
+
+        $facade = new NFCeFacade($adapter, $this->createMock(ImpressaoAdapter::class));
+        $response = $facade->registrarEventoSefaz(
+            'SP',
+            '35123456789012345678901234567890123456789012',
+            110110,
+            1,
+            '<xCampo>valor</xCampo>'
+        );
+
+        $this->assertTrue($response->isSuccess());
+        $this->assertSame('135', $response->getData('operacao')['cstat']);
+        $this->assertSame('128', $response->getData('raw')['parsed_response']['lote']['cstat']);
+    }
+
+    public function test_registrar_evento_avancado_rejects_nfe_only_rtc_event(): void
+    {
+        $adapter = $this->createMock(NFCeAdapter::class);
+        $adapter->expects($this->never())->method('registrarEventoAvancado');
+
+        $facade = new NFCeFacade($adapter, $this->createMock(ImpressaoAdapter::class));
+        $response = $facade->registrarEventoAvancado('sefazInfoPagtoIntegral', []);
+
+        $this->assertTrue($response->isError());
+        $this->assertSame('UNSUPPORTED_SEFAZ_METHOD', $response->getErrorCode());
+    }
+
+    public function test_registrar_epec_returns_event_and_adjusted_xml(): void
+    {
+        $adapter = $this->createMock(NFCeAdapter::class);
+        $adapter->expects($this->once())
+            ->method('registrarEpec')
+            ->with('<NFe />', 'FiscalCore')
+            ->willReturn([
+                'response_xml' => $this->eventResponseXml('128', '135'),
+                'xml' => '<NFe contingencia="1" />',
+            ]);
+
+        $facade = new NFCeFacade($adapter, $this->createMock(ImpressaoAdapter::class));
+        $response = $facade->registrarEpec('<NFe />', 'FiscalCore');
+
+        $this->assertTrue($response->isSuccess());
+        $this->assertSame('<NFe contingencia="1" />', $response->getData('xml_contingencia'));
+        $this->assertSame('135', $response->getData('cstat'));
+    }
+
+    public function test_verificar_status_epec_returns_status_shape(): void
+    {
+        $xml = '<retConsStatServ><cStat>107</cStat><xMotivo>Servico em operacao</xMotivo></retConsStatServ>';
+
+        $adapter = $this->createMock(NFCeAdapter::class);
+        $adapter->expects($this->once())
+            ->method('verificarStatusEpec')
+            ->with('SP', 2, true)
+            ->willReturn($xml);
+
+        $facade = new NFCeFacade($adapter, $this->createMock(ImpressaoAdapter::class));
+        $response = $facade->verificarStatusEpec('SP', 2);
+
+        $this->assertTrue($response->isSuccess());
+        $this->assertTrue($response->getData('operacao')['ok']);
+        $this->assertSame('107', $response->getData('cstat'));
+        $this->assertSame($xml, $response->getData('xml_response'));
+    }
+
+    public function test_consultar_csc_returns_common_sefaz_shape(): void
+    {
+        $xml = '<retCscNFCe><cStat>102</cStat><xMotivo>CSC consultado</xMotivo></retCscNFCe>';
+
+        $adapter = $this->createMock(NFCeAdapter::class);
+        $adapter->expects($this->once())
+            ->method('consultarCsc')
+            ->with(1)
+            ->willReturn($xml);
+
+        $facade = new NFCeFacade($adapter, $this->createMock(ImpressaoAdapter::class));
+        $response = $facade->consultarCsc(1);
+
+        $this->assertTrue($response->isSuccess());
+        $this->assertSame('102', $response->getData('cstat'));
+        $this->assertSame(1, $response->getData('ind_operacao'));
+    }
+
+    private function eventResponseXml(string $batchCstat, string $eventCstat): string
+    {
+        return <<<XML
+<retEnvEvento>
+    <cStat>{$batchCstat}</cStat>
+    <xMotivo>Lote de Evento Processado</xMotivo>
+    <retEvento>
+        <infEvento>
+            <cStat>{$eventCstat}</cStat>
+            <xMotivo>Evento registrado</xMotivo>
+            <chNFe>35123456789012345678901234567890123456789012</chNFe>
+            <tpEvento>110110</tpEvento>
+            <nSeqEvento>1</nSeqEvento>
+            <nProt>321</nProt>
+        </infEvento>
+    </retEvento>
+</retEnvEvento>
+XML;
+    }
 }

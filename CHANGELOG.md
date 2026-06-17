@@ -1,5 +1,25 @@
 # Changelog
 
+## v1.4.0 - 2026-06-17
+
+### Added
+- Suporte ampliado a eventos SEFAZ NFe/NFCe com wrappers para CC-e, eventos genéricos, lotes de eventos, EPEC, CSC e cancelamento NFC-e por substituição.
+- Bridge avançada allowlisted para métodos `sefaz*` especializados da NFePHP, incluindo eventos RTC/2025 sem congelar DTO público específico.
+- Parser compartilhado de respostas SEFAZ que prioriza `retEvento/infEvento` em respostas de lote e preserva `raw.request_xml`, `raw.response_xml`, `eventos`, `cstat`, `xmotivo`, `protocolo` e `chave_acesso`.
+
+### Changed
+- Dependência `nfephp-org/sped-nfe` ajustada para `^5.2.6`.
+- `NFeFacade`, `NFCeFacade`, `NFeAdapter`, `NFCeAdapter` e `FiscalFacade` expõem novas operações estáveis sem alterar assinaturas existentes.
+- Documentação pública das facades e status NFePHP atualizados para `sped-nfe v5.2.6`.
+
+### Tests
+- `vendor/bin/phpunit --filter SefazResponseParserTest`
+- `vendor/bin/phpunit --filter NFeFacade`
+- `vendor/bin/phpunit --filter NFCeFacade`
+- `vendor/bin/phpunit --filter NFeToolsAdapterV526Test`
+- `vendor/bin/phpunit --testsuite Unit`
+- `vendor/bin/phpstan analyse`
+
 ## v1.3.1 - 2026-05-29
 
 ### Changed
