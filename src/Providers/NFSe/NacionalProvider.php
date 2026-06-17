@@ -135,7 +135,6 @@ class NacionalProvider extends AbstractNFSeProvider implements NFSeNacionalCapab
             throw new \InvalidArgumentException('Chave da NFSe é obrigatória');
         }
 
-        // $xml = $this->buildConsultaXml($chave);
         $response = $this->enviarOperacao('consultar', null, ['id' => $chave]);
         $parsed = $this->processarResposta($response);
         $this->storeOperationState('consultar', null, $response, $parsed, ['chave_acesso' => $chave]);
