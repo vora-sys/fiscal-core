@@ -19,6 +19,9 @@ scripts/nfse/*
 !scripts/nfse/schema-overrides/**
 !scripts/nfse/scaffold-family.php
 !scripts/nfse/scaffold-municipio.php
+!scripts/nfse/provider-switch.php
+!scripts/nfse/reconcile-uninfe-providers.php
+!scripts/nfse/generate-providers-municipios-doc.php
 !scripts/nfse/templates/
 scripts/nfse/templates/*
 !scripts/nfse/templates/*.stub.php
@@ -35,6 +38,7 @@ files/*
 
 .vscode/settings.json
 .phpunit.cache/test-results
+.phpstan.cache/
 tests/.DS_Store
 tests/**/.DS_Store
 tests/logs/*

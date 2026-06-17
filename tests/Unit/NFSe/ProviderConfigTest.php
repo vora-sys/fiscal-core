@@ -106,6 +106,32 @@ final class ProviderConfigTest extends TestCase
         $this->assertSame(['servico.cTribMun'], $data['form_policy']['required_fields']);
     }
 
+    public function testFacadeMapsSouthPriorityCitiesToExpectedFamilies(): void
+    {
+        $expectedMappings = [
+            'curitiba' => ['provider_key' => 'nfse_nacional', 'ibge' => '4106902'],
+            'balneario-camboriu' => ['provider_key' => 'nfse_nacional', 'ibge' => '4202008'],
+            'balneario-barra-do-sul' => ['provider_key' => 'IPM', 'ibge' => '4202057'],
+            'itajai' => ['provider_key' => 'PUBLICA', 'ibge' => '4208203'],
+            'campo-alegre' => ['provider_key' => 'IPM', 'ibge' => '4203303'],
+            'sao-bento-do-sul' => ['provider_key' => 'IPM', 'ibge' => '4215802'],
+            'sao-francisco' => ['provider_key' => 'IPM', 'ibge' => '4216206'],
+            'garuva' => ['provider_key' => 'IPM', 'ibge' => '4205803'],
+            'itapoa' => ['provider_key' => 'IPM', 'ibge' => '4208450'],
+            'jaragua' => ['provider_key' => 'nfse_nacional', 'ibge' => '4208906'],
+        ];
+
+        foreach ($expectedMappings as $municipio => $expected) {
+            $facade = new NFSeFacade($municipio);
+            $response = $facade->getProviderInfo();
+
+            $this->assertTrue($response->isSuccess(), "Falha ao resolver {$municipio}");
+            $data = $response->getData();
+            $this->assertSame($expected['provider_key'], $data['provider_key'], "Provider inesperado para {$municipio}");
+            $this->assertSame($expected['ibge'], $data['codigo_municipio'], "IBGE inesperado para {$municipio}");
+        }
+    }
+
     public function testFacadeFallsBackToNationalForUnknownMunicipio(): void
     {
         $facade = new NFSeFacade('municipio-inexistente');
@@ -119,7 +145,7 @@ final class ProviderConfigTest extends TestCase
         $this->assertStringContainsString('NacionalProvider', $data['provider_class']);
     }
 
-    public function testFacadeMapsPresidenteFigueiredoToIssweb(): void
+    public function testFacadeMapsPresidenteFigueiredoToIsswebProvider(): void
     {
         $facade = new NFSeFacade('presidente-figueiredo');
         $response = $facade->getProviderInfo();
@@ -133,7 +159,7 @@ final class ProviderConfigTest extends TestCase
         $this->assertContains('consultar', $data['supported_operations']);
     }
 
-    public function testFacadeMapsRioPretoDaEvaToIssweb(): void
+    public function testFacadeMapsRioPretoDaEvaToIsswebProvider(): void
     {
         $facade = new NFSeFacade('rio-preto-da-eva');
         $response = $facade->getProviderInfo();
@@ -162,8 +188,8 @@ final class ProviderConfigTest extends TestCase
         $this->assertSame('nfse_nacional_policy', $data['form_policy']['policy_source']);
         $this->assertNotContains('servico.cTribMun', $data['form_policy']['required_fields']);
         $this->assertContains('servico.cNBS', $data['form_policy']['required_fields']);
-        $this->assertSame('1', $data['translation_policy']['field_translations']['service.iss_withheld']['codes']['true']);
-        $this->assertSame('2', $data['translation_policy']['field_translations']['service.iss_withheld']['codes']['false']);
+        $this->assertSame('2', $data['translation_policy']['field_translations']['service.iss_withheld']['codes']['true']);
+        $this->assertSame('1', $data['translation_policy']['field_translations']['service.iss_withheld']['codes']['false']);
     }
 
     public function testFacadeHomologationReadinessUsesNationalProviderConfigForManaus(): void
@@ -177,6 +203,123 @@ final class ProviderConfigTest extends TestCase
         $this->assertSame([], $response->getData('missing_requirements'));
         $this->assertTrue($response->getData('certificado_carregado'));
         $this->assertTrue($response->getData('certificado_valido'));
+    }
+
+    public function testFacadeMapsSaoLuisToNationalProvider(): void
+    {
+        $facade = new NFSeFacade('sao-luis');
+        $response = $facade->getProviderInfo();
+
+        $this->assertTrue($response->isSuccess());
+
+        $data = $response->getData();
+        $this->assertSame('nfse_nacional', $data['provider_key']);
+        $this->assertSame('2111300', $data['codigo_municipio']);
+        $this->assertStringContainsString('NacionalProvider', $data['provider_class']);
+    }
+
+    public function testFacadeMapsAnanindeuaToNationalProvider(): void
+    {
+        $facade = new NFSeFacade('ananindeua');
+        $response = $facade->getProviderInfo();
+
+        $this->assertTrue($response->isSuccess());
+
+        $data = $response->getData();
+        $this->assertSame('nfse_nacional', $data['provider_key']);
+        $this->assertSame('1500800', $data['codigo_municipio']);
+        $this->assertStringContainsString('NacionalProvider', $data['provider_class']);
+    }
+
+    public function testFacadeMapsMarabaToNationalProvider(): void
+    {
+        $facade = new NFSeFacade('maraba');
+        $response = $facade->getProviderInfo();
+
+        $this->assertTrue($response->isSuccess());
+
+        $data = $response->getData();
+        $this->assertSame('nfse_nacional', $data['provider_key']);
+        $this->assertSame('1504208', $data['codigo_municipio']);
+        $this->assertStringContainsString('NacionalProvider', $data['provider_class']);
+    }
+
+    public function testFacadeMapsCampoGrandeToAbrasfSharedProvider(): void
+    {
+        $facade = new NFSeFacade('campo-grande');
+        $response = $facade->getProviderInfo();
+
+        $this->assertTrue($response->isSuccess());
+
+        $data = $response->getData();
+        $this->assertSame('ABRASF_SHARED', $data['provider_key']);
+        $this->assertSame('5002704', $data['codigo_municipio']);
+        $this->assertStringContainsString('AbrasfSharedProvider', $data['provider_class']);
+    }
+
+    public function testFacadeMapsJoaoPessoaToAbrasfSharedProvider(): void
+    {
+        $facade = new NFSeFacade('joao-pessoa');
+        $response = $facade->getProviderInfo();
+
+        $this->assertTrue($response->isSuccess());
+
+        $data = $response->getData();
+        $this->assertSame('ABRASF_SHARED', $data['provider_key']);
+        $this->assertSame('2507507', $data['codigo_municipio']);
+        $this->assertStringContainsString('AbrasfSharedProvider', $data['provider_class']);
+    }
+
+    public function testFacadeMapsNatalToNationalProvider(): void
+    {
+        $facade = new NFSeFacade('natal');
+        $response = $facade->getProviderInfo();
+
+        $this->assertTrue($response->isSuccess());
+
+        $data = $response->getData();
+        $this->assertSame('nfse_nacional', $data['provider_key']);
+        $this->assertSame('2408102', $data['codigo_municipio']);
+        $this->assertStringContainsString('NacionalProvider', $data['provider_class']);
+    }
+
+    public function testFacadeMapsFortalezaAndMaceioToGinfesProvider(): void
+    {
+        $expected = [
+            'fortaleza' => '2304400',
+            'maceio' => '2704302',
+        ];
+
+        foreach ($expected as $slug => $ibge) {
+            $facade = new NFSeFacade($slug);
+            $response = $facade->getProviderInfo();
+
+            $this->assertTrue($response->isSuccess(), "Falha ao resolver {$slug}");
+            $data = $response->getData();
+            $this->assertSame('GINFES', $data['provider_key'], "Provider inesperado para {$slug}");
+            $this->assertSame($ibge, $data['codigo_municipio'], "IBGE inesperado para {$slug}");
+            $this->assertStringContainsString('GinfesProvider', $data['provider_class']);
+        }
+    }
+
+    public function testFacadeMapsBrasiliaGoianiaAndCuiabaToIssnetProvider(): void
+    {
+        $expected = [
+            'brasilia' => '5300108',
+            'goiania' => '5208707',
+            'cuiaba' => '5103403',
+        ];
+
+        foreach ($expected as $slug => $ibge) {
+            $facade = new NFSeFacade($slug);
+            $response = $facade->getProviderInfo();
+
+            $this->assertTrue($response->isSuccess(), "Falha ao resolver {$slug}");
+            $data = $response->getData();
+            $this->assertSame('ISSNET', $data['provider_key'], "Provider inesperado para {$slug}");
+            $this->assertSame($ibge, $data['codigo_municipio'], "IBGE inesperado para {$slug}");
+            $this->assertStringContainsString('IssnetProvider', $data['provider_class']);
+        }
     }
 
     private function bootstrapEnvironment(): void

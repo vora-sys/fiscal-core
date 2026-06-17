@@ -30,8 +30,14 @@ class FiscalResponse
         $this->operation = $operation;
         $this->metadata = array_merge([
             'timestamp' => date('Y-m-d H:i:s'),
-            'version' => '1.0'
+            'version' => '1.0',
+            'trace_id' => self::newTraceId(),
+            'operation' => $operation,
+            'category' => $success ? 'success' : 'runtime',
+            'severity' => $success ? 'info' : 'error',
+            'recoverable' => !$success,
         ], $metadata);
+        $this->metadata['operation'] = $this->metadata['operation'] ?? $operation;
     }
 
     /**
@@ -62,10 +68,14 @@ class FiscalResponse
         $metadata = [
             'file' => $exception->getFile(),
             'line' => $exception->getLine(),
-            'trace_id' => uniqid(),
+            'trace_id' => self::newTraceId(),
             'exception_type' => get_class($exception),
             'error_code' => $exception->getCode(),
-            'timestamp' => date('Y-m-d H:i:s')
+            'timestamp' => date('Y-m-d H:i:s'),
+            'operation' => $operation,
+            'category' => 'runtime',
+            'severity' => 'error',
+            'recoverable' => false,
         ];
 
         return new self(
@@ -185,5 +195,14 @@ class FiscalResponse
         $clone = clone $this;
         $clone->data[$key] = $value;
         return $clone;
+    }
+
+    private static function newTraceId(): string
+    {
+        try {
+            return 'fc_' . bin2hex(random_bytes(8));
+        } catch (\Throwable) {
+            return uniqid('fc_', true);
+        }
     }
 }

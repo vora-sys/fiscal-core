@@ -198,6 +198,9 @@ final class NFSeMunicipalCatalog
             'homologado' => (bool) ($m['homologado'] ?? false),
             'active' => (bool) ($m['active'] ?? true),
             'provider_note' => (string) ($m['provider_note'] ?? ''),
+            'national_migration_policy' => is_array($m['national_migration_policy'] ?? null)
+                ? $m['national_migration_policy']
+                : [],
             'provider_config_overrides' => is_array($m['provider_config_overrides'] ?? null)
                 ? $m['provider_config_overrides']
                 : [],

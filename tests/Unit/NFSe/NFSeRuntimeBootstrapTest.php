@@ -13,6 +13,7 @@ use sabbajohn\FiscalCore\Support\ConfigManager;
 use sabbajohn\FiscalCore\Support\NFSeProviderResolver;
 use sabbajohn\FiscalCore\Support\NFSeRuntimeBootstrap;
 use sabbajohn\FiscalCore\Support\ProviderRegistry;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 final class NFSeRuntimeBootstrapTest extends TestCase
 {
@@ -43,6 +44,46 @@ final class NFSeRuntimeBootstrapTest extends TestCase
         $this->assertSame('producao', $result['provider']->getAmbiente());
         $this->assertSame(32, $result['provider']->getTimeout());
         $this->assertSame('33061', $result['config']['prestador']['inscricao_municipal']);
+    }
+
+    #[DataProvider('wave4MunicipioProvider')]
+    public function test_make_provider_loads_wave4_catalog_defaults(string $municipio, string $providerKey, string $ibge): void
+    {
+        ProviderRegistry::getInstance()->reload();
+
+        $configManager = new FakeConfigManager([
+            'ambiente' => 2,
+            'nfse' => ['timeout' => 25],
+            'empresa' => [
+                'cnpj' => '83188342000104',
+                'razao_social' => 'Freeline Informatica LTDA',
+                'inscricao_municipal' => '33061',
+            ],
+        ]);
+
+        $bootstrap = new NFSeRuntimeBootstrap(
+            ProviderRegistry::getInstance(),
+            new NFSeProviderResolver(),
+            $configManager,
+            new FakeCertificateManager(),
+        );
+
+        $result = $bootstrap->makeProvider($municipio);
+
+        $this->assertSame($providerKey, $result['provider_key']);
+        $this->assertSame($ibge, $result['config']['codigo_municipio']);
+        $this->assertSame('homologacao', $result['config']['ambiente']);
+        $this->assertSame('123', (string) ($result['config']['payload_defaults']['rps']['numero'] ?? ''));
+    }
+
+    public static function wave4MunicipioProvider(): array
+    {
+        return [
+            'aracaju' => ['aracaju', 'WEBISS', '2800308'],
+            'feira-de-santana' => ['feira-de-santana', 'WEBISS', '2910800'],
+            'itabuna' => ['itabuna', 'WEBISS', '2914802'],
+            'vitoria-da-conquista' => ['vitoria-da-conquista', 'EL', '2933307'],
+        ];
     }
 }
 

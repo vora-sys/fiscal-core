@@ -16,6 +16,8 @@
 - [📚 Exemplos Práticos](#-exemplos-práticos)
 - [⚙️ Configuração](#️-configuração-opcional)
 - [🏗️ Arquitetura](#️-arquitetura)
+- [📖 API das Facades](docs/API-FACADES.md)
+- [🚢 Release Packagist](docs/RELEASE-PACKAGIST.md)
 - [📊 Casos de Uso](#-casos-de-uso)
 - [🔧 Requisitos](#-requisitos-técnicos)
 - [🚨 Troubleshooting](#-troubleshooting)
@@ -26,6 +28,8 @@
 ```bash
 composer require sabbajohn/fiscal-core
 ```
+
+> Nome canônico do pacote: `sabbajohn/fiscal-core`. Se ainda houver publicação antiga como `freeline/fiscal-core` no Packagist, trate como legado/desalinhado e publique a próxima release no nome canônico.
 
 **Desenvolvimento local:**
 
@@ -99,7 +103,7 @@ if ($resultado->sucesso) {
 
 - **IBPT** - Cálculo automático de tributos
 - **Múltiplos produtos** em lote
-- **Cache** inteligente
+- **Cache** parcial em fluxos específicos
 - **Fallbacks** por estado/federal
 
 ## 📚 Exemplos Práticos
@@ -189,6 +193,53 @@ export IBPT_UF="SP"
 - O playbook canônico para implementação municipal está em [docs/NFSE-MUNICIPAL-PROVIDER-PLAYBOOK.md](docs/NFSE-MUNICIPAL-PROVIDER-PLAYBOOK.md)
 - A migração de município municipal para nacional está em [docs/NFSE-MIGRACAO-MUNICIPAL-PARA-NACIONAL.md](docs/NFSE-MIGRACAO-MUNICIPAL-PARA-NACIONAL.md)
 - A matriz operacional de famílias e providers está em [docs/NFSE-PROVIDER-MATRIX.md](docs/NFSE-PROVIDER-MATRIX.md)
+
+#### Cidades-UF já compatíveis
+
+Status usados abaixo:
+
+- `HOMOLOGADO`: fluxo real já validado
+- `DISPENSADO_NACIONAL`: compatível via provider nacional; não exige homologação municipal individual
+- `PENDENTE_HOMOLOGACAO_REAL`: compatível em catálogo/runtime/testes, mas ainda depende de evidência real por município
+
+| Cidade/UF | Provider | Status |
+| --- | --- | --- |
+| Manaus/AM | `nfse_nacional` | `HOMOLOGADO` |
+| Belém/PA | `BELEM_MUNICIPAL_2025` | `HOMOLOGADO` |
+| Rio Branco/AC | `nfse_nacional` | `DISPENSADO_NACIONAL` |
+| Vitória/ES | `nfse_nacional` | `DISPENSADO_NACIONAL` |
+| São Luís/MA | `nfse_nacional` | `DISPENSADO_NACIONAL` |
+| Belo Horizonte/MG | `nfse_nacional` | `DISPENSADO_NACIONAL` |
+| Recife/PE | `nfse_nacional` | `DISPENSADO_NACIONAL` |
+| Curitiba/PR | `nfse_nacional` | `DISPENSADO_NACIONAL` |
+| Rio de Janeiro/RJ | `nfse_nacional` | `DISPENSADO_NACIONAL` |
+| Natal/RN | `nfse_nacional` | `DISPENSADO_NACIONAL` |
+| Porto Alegre/RS | `nfse_nacional` | `DISPENSADO_NACIONAL` |
+| Florianópolis/SC | `nfse_nacional` | `DISPENSADO_NACIONAL` |
+| Brasília/DF | `ISSNET` | `PENDENTE_HOMOLOGACAO_REAL` |
+| Goiânia/GO | `ISSNET` | `PENDENTE_HOMOLOGACAO_REAL` |
+| Cuiabá/MT | `ISSNET` | `PENDENTE_HOMOLOGACAO_REAL` |
+| Fortaleza/CE | `GINFES` | `PENDENTE_HOMOLOGACAO_REAL` |
+| Maceió/AL | `GINFES` | `PENDENTE_HOMOLOGACAO_REAL` |
+| São Paulo/SP | `PAULISTANA` | `PENDENTE_HOMOLOGACAO_REAL` |
+| Salvador/BA | `SALVADOR_BA` | `PENDENTE_HOMOLOGACAO_REAL` |
+| Porto Velho/RO | `EL` | `PENDENTE_HOMOLOGACAO_REAL` |
+| Aracaju/SE | `WEBISS` | `PENDENTE_HOMOLOGACAO_REAL` |
+| Palmas/TO | `WEBISS` | `PENDENTE_HOMOLOGACAO_REAL` |
+| Feira de Santana/BA | `WEBISS` | `PENDENTE_HOMOLOGACAO_REAL` |
+| Itabuna/BA | `WEBISS` | `PENDENTE_HOMOLOGACAO_REAL` |
+| Vitória da Conquista/BA | `EL` | `PENDENTE_HOMOLOGACAO_REAL` |
+| Presidente Figueiredo/AM | `ISSWEB_AM` | `PENDENTE_HOMOLOGACAO_REAL` |
+| Rio Preto da Eva/AM | `ISSWEB_AM` | `PENDENTE_HOMOLOGACAO_REAL` |
+| Joinville/SC | `PUBLICA` | `PENDENTE_HOMOLOGACAO_REAL` |
+| Itajaí/SC | `PUBLICA` | `PENDENTE_HOMOLOGACAO_REAL` |
+| São Bento do Sul/SC | `IPM` | `PENDENTE_HOMOLOGACAO_REAL` |
+
+Lista completa e status detalhado:
+
+- [docs/NFSE-MUNICIPIOS-SUPORTADOS-HOMOLOGACAO.md](docs/NFSE-MUNICIPIOS-SUPORTADOS-HOMOLOGACAO.md)
+- [docs/NFSE-CAPITAIS-HOMOLOGACAO-TRACKER.md](docs/NFSE-CAPITAIS-HOMOLOGACAO-TRACKER.md)
+- [docs/nfse-municipios-suportados.csv](docs/nfse-municipios-suportados.csv)
 
 ## Uso Detalhado
 
@@ -384,9 +435,9 @@ FiscalResponse {
 ### 🛡️ **Error Handling**
 
 - **Fallbacks** automáticos entre providers
-- **Cache** de resultados
-- **Logging** detalhado
-- **Retry** inteligente
+- **Cache** local em fluxos específicos, com política unificada ainda pendente
+- **Logging/diagnóstico** em evolução
+- **Retry** ainda não é uniforme entre adapters
 
 ## 📊 Casos de Uso
 
@@ -423,7 +474,7 @@ foreach ($clientes as $cliente) {
 
 ## 🔧 Requisitos Técnicos
 
-- **PHP** ^8.0
+- **PHP** >=8.1
 - **OpenSSL** (para certificados)
 - **cURL** (para APIs externas)  
 - **JSON** (manipulação de dados)
@@ -442,6 +493,15 @@ monolog/monolog            # Logging
 composer test
 # ou
 vendor/bin/phpunit
+
+# Suite critica para CI/release
+composer test:ci
+
+# NFSe focado
+composer test:nfse
+
+# Analise estatica inicial
+composer analyse
 ```
 
 // App\Providers\AppServiceProvider.php
@@ -515,34 +575,38 @@ php examples/GuiaCompletoDeUso.php
 
 ## 🗺️ Roadmap
 
-### ✅ **Concluído**
+O status consolidado e a lista priorizada de pendências estão em [docs/STATUS-E-PENDENCIAS.md](docs/STATUS-E-PENDENCIAS.md).
 
-- [x] Interface unificada (Facades)
-- [x] Sistema de respostas padronizado
-- [x] Error handling robusto
-- [x] Múltiplos providers NFSe
-- [x] Consultas públicas
-- [x] Tributação IBPT
+### ✅ **Concluído ou operacional**
 
-### 🔄 **Em Desenvolvimento**
+- [x] Facades principais: `FiscalFacade`, `NFeFacade`, `NFCeFacade`, `NFSeFacade`, `ImpressaoFacade`, `TributacaoFacade` e `UtilsFacade`
+- [x] Adapters principais para documentos fiscais, impressão, consultas públicas, IBPT e GTIN
+- [x] NFSe provider-based com catálogo municipal, families, resolver, registry, bootstrap e scripts operacionais
+- [x] Playbook municipal e matriz operacional NFSe
+- [x] Cache local em fluxos específicos, como catálogo nacional e instâncias NFSe por município
+- [x] Nome Composer canônico definido como `sabbajohn/fiscal-core`
+- [x] Scripts Composer, CI mínimo e PHPStan inicial preparados para release `v1.2.4`
 
-- [ ] Interface web de administração
-- [ ] Mais municípios NFSe  
-- [ ] Integração com bancos de dados
-- [ ] Dashboard de monitoramento
+### 🔄 **Pendente ou parcial**
 
-### 🎯 **Planejado**
-
-- [ ] API REST para microserviços
-- [ ] SDK JavaScript/Python
-- [ ] Plugins para principais ERPs
-- [ ] Certificação digital em nuvem
+- [ ] Publicar/atualizar o Packagist no pacote canônico `sabbajohn/fiscal-core`
+- [ ] Expandir homologação municipal real seguindo o playbook, sem contar roteamento em catálogo como homologação
+- [ ] Fechar contrato público uniforme das facades para respostas, erros, XML, impressão e eventos
+- [ ] Criar Service Provider Laravel com publish de config e bindings
+- [ ] Criar middleware de validação automática depois de estabilizar contrato/config Laravel
+- [ ] Consolidar política de cache para consultas remotas e configurações
+- [ ] Publicar/documentar GitHub Packages, se este canal for necessário
+- [x] Criar referência inicial por Facade
+- [ ] Criar referência detalhada por Adapter
+- [ ] Definir formatter
 
 ## 🛠️ Configuração Avançada
 
 Para informações detalhadas sobre configuração de certificados e providers, consulte:
 
 - 📄 [docs/providers-and-config.md](docs/providers-and-config.md)
+- 📄 [docs/API-FACADES.md](docs/API-FACADES.md)
+- 📄 [docs/RELEASE-PACKAGIST.md](docs/RELEASE-PACKAGIST.md)
 - 📄 [docs/NFSE-MUNICIPAL-PROVIDER-PLAYBOOK.md](docs/NFSE-MUNICIPAL-PROVIDER-PLAYBOOK.md)
 - 📄 [config/nfse/providers-catalog.json](config/nfse/providers-catalog.json)
 - 📄 [config/nfse/nfse-provider-families.json](config/nfse/nfse-provider-families.json)
@@ -632,8 +696,8 @@ Status do projeto
 - ✅ Documento Adapter: validação CPF/CNPJ
 - ✅ BrasilAPI Adapter: consultas públicas
 - ✅ Singletons: CertificateManager, ConfigManager, ToolsFactory
-- 🔄 NFSe: arquitetura provider-based (stubs implementados)
-- 🔄 Facades: orquestração de múltiplos adapters
+- ✅ NFSe: arquitetura provider-based ativa (catálogo municipal, families, resolver, registry, runtime bootstrap, facade e scripts operacionais)
+- ✅ Facades: orquestração de múltiplos adapters
 
 Roadmap
 
@@ -643,27 +707,42 @@ Roadmap
 
 - ✅ Catálogo municipal, families config, registry e runtime bootstrap implementados
 - ✅ Providers municipais reais para fluxos específicos já integrados
+- ✅ Hot swap operacional por município (`municipio-provider-overrides.json` + `provider-switch.php`)
+- ✅ Reconciliação contínua com base Uninfe (`reconcile-uninfe-providers.php`)
 - 📚 Playbook mestre: [docs/NFSE-MUNICIPAL-PROVIDER-PLAYBOOK.md](docs/NFSE-MUNICIPAL-PROVIDER-PLAYBOOK.md)
-- 📚 Ponte legada: [docs/PROVIDERS-RETOMADA.md](docs/PROVIDERS-RETOMADA.md)
+- 📚 Grid completa de municípios compatíveis: [docs/NFSE-MUNICIPIOS-COMPATIVEIS-GRID.md](docs/NFSE-MUNICIPIOS-COMPATIVEIS-GRID.md)
+- 📚 Tabela completa provider x municípios: [docs/NFSE-PROVIDERS-MUNICIPIOS.md](docs/NFSE-PROVIDERS-MUNICIPIOS.md)
+- 📚 Tracker de homologação por ondas: [docs/NFSE-CAPITAIS-HOMOLOGACAO-TRACKER.md](docs/NFSE-CAPITAIS-HOMOLOGACAO-TRACKER.md)
 
 **Próximas features:**
 
 - [ ] Expandir cobertura municipal seguindo o playbook ([ver guia](docs/NFSE-MUNICIPAL-PROVIDER-PLAYBOOK.md))
-- [ ] Facades com APIs coesas (NFe/NFCe/NFSe/Impressão/Tributação)
+- [ ] Consolidar contrato público coeso das Facades já existentes (NFe/NFCe/NFSe/Impressão/Tributação)
 - [ ] Service Provider para Laravel
 - [ ] Middleware para validação automática
-- [ ] Cache de consultas e configurações
-- [ ] Publicar pacote no Packagist/GitHub Packages
-- [ ] Documentação detalhada de cada Facade e Adapter
+- [ ] Política unificada de cache de consultas e configurações
+- [ ] Publicar/atualizar pacote no Packagist como `sabbajohn/fiscal-core`
+- [ ] Descontinuar ou documentar como legado qualquer publicação antiga em `freeline/fiscal-core`
+- [ ] Publicar/documentar GitHub Packages, se necessário
+- [x] Documentação inicial de cada Facade
+- [ ] Documentação detalhada de cada Adapter
+
+📋 **Status consolidado:** [docs/STATUS-E-PENDENCIAS.md](docs/STATUS-E-PENDENCIAS.md)
 
 **Quick start para retomar:**
 
 ```bash
-# Ver estrutura criada
-tree src/Providers config/
+# Ver estrutura de NFSe
+tree src/Providers/NFSe config/nfse docs/nfse-providers
 
-# Rodar exemplo funcional
-php scripts/exemplo-providers-nfse.php
+# Listar overrides operacionais
+php scripts/nfse/provider-switch.php --list
+
+# Gerar tabela de cobertura por provider
+php scripts/nfse/generate-providers-municipios-doc.php
+
+# Reconciliar catalogo local com base Uninfe
+php scripts/nfse/reconcile-uninfe-providers.php --fail-on-unexpected
 
 # Ler playbook municipal
 cat docs/NFSE-MUNICIPAL-PROVIDER-PLAYBOOK.md

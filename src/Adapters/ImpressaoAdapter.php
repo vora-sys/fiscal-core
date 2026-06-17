@@ -4,22 +4,28 @@ namespace sabbajohn\FiscalCore\Adapters;
 
 use sabbajohn\FiscalCore\Contracts\ImpressaoInterface;
 use NFePHP\DA\NFe\Danfe as DanfeNFe;
-use NFePHP\DA\NFe\Danfce as DanfeNFCe;
 use NFePHP\DA\MDFe\Damdfe as DanfeMdfe;
 use NFePHP\DA\CTe\Dacte as DanfeCte;
+use sabbajohn\FiscalCore\Renderers\NFCe\ThermalDanfceRenderer;
 
 class ImpressaoAdapter implements ImpressaoInterface
 {
+    public function __construct(
+        private readonly ?ThermalDanfceRenderer $thermalDanfceRenderer = null,
+    ) {
+    }
+
     public function gerarDanfe(string $xml): string
     {
         $danfe = new DanfeNFe($xml);
         return $danfe->render();
     }
 
-    public function gerarDanfce(string $xml): string
+    public function gerarDanfce(string $xml, array $context = []): string
     {
-        $danfe = new DanfeNFCe($xml);
-        return $danfe->render();
+        $renderer = $this->thermalDanfceRenderer ?? new ThermalDanfceRenderer();
+
+        return $renderer->render($xml, $context);
     }
 
     public function gerarMdfe(string $xml): string

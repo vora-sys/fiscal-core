@@ -6,6 +6,7 @@ use sabbajohn\FiscalCore\Adapters\NF\NFSeAdapter;
 use sabbajohn\FiscalCore\Contracts\NFSeConsultaResultInterface;
 use sabbajohn\FiscalCore\Contracts\NFSeImpressaoResultInterface;
 use sabbajohn\FiscalCore\Contracts\NFSeNacionalCapabilitiesInterface;
+use sabbajohn\FiscalCore\Contracts\NFSeOperationalIntrospectionInterface;
 use sabbajohn\FiscalCore\Contracts\NFSeProviderConfigInterface;
 use sabbajohn\FiscalCore\Facade\NFSeFacade;
 use sabbajohn\FiscalCore\Providers\NFSe\NacionalProvider;
@@ -487,6 +488,199 @@ class NFSeAdapterFacadeNacionalTest extends TestCase
         $this->assertStringContainsString('2026-01-01', (string) $response->getError());
     }
 
+    public function test_facade_bloqueia_emissao_pre_corte_generica_para_municipio_nacional(): void
+    {
+        $facade = new NFSeFacade('recife', new NFSeAdapter('recife', new FakeNfseProvider()));
+
+        $response = $facade->emitir([
+            'dCompet' => '2025-10-14',
+            'dhEmi' => '2025-10-14T10:00:00-03:00',
+        ]);
+
+        $this->assertTrue($response->isError());
+        $this->assertSame('NFSE_NATIONAL_MIGRATION_LEGACY_PERIOD', $response->getErrorCode());
+        $this->assertSame('2025-10-14', $response->getMetadata('reference_date'));
+        $this->assertSame('2025-10-15', $response->getMetadata('legacy_cutoff'));
+        $this->assertSame('2611606', $response->getMetadata('municipio_ibge'));
+        $this->assertStringContainsString('Recife', (string) $response->getError());
+    }
+
+    public function test_facade_permite_emissao_nacional_na_data_de_vigencia_da_migracao(): void
+    {
+        $facade = new NFSeFacade('recife', new NFSeAdapter('recife', new FakeNfseProvider()));
+
+        $response = $facade->emitir([
+            'dCompet' => '2025-10-15',
+            'dhEmi' => '2025-10-15T10:00:00-03:00',
+        ]);
+
+        $this->assertTrue($response->isSuccess());
+        $this->assertSame('nfse_xml', $response->getData('type'));
+    }
+
+    public function test_facade_baixar_danfse_nacional_faz_fallback_local_via_baixar_xml(): void
+    {
+        $xml = $this->nfseNacionalFixture('nfse_nacional_completa.xml');
+
+        $provider = new class ($xml) implements NFSeProviderConfigInterface, NFSeNacionalCapabilitiesInterface {
+            public function __construct(private readonly string $xml)
+            {
+            }
+
+            public function emitir(array $dados): string { return '<ok />'; }
+            public function consultar(string $chave): NFSeConsultaResultInterface
+            {
+                return (new NFSeResultNormalizer())->normalizeConsulta('consultar', [
+                    'status' => 'success',
+                    'numero' => '202600001234',
+                    'codigo_verificacao' => 'ABC',
+                    'raw_xml' => $this->xml,
+                ], [], ['chave_consulta' => $chave]);
+            }
+            public function cancelar(string $chave, string $motivo, ?string $protocolo = null): bool { return true; }
+            public function substituir(string $chave, array $dados): string { return '<ok />'; }
+            public function getWsdlUrl(): string { return 'https://example.test'; }
+            public function getVersao(): string { return '1.00'; }
+            public function getAliquotaFormat(): string { return 'decimal'; }
+            public function getCodigoMunicipio(): string { return '1302603'; }
+            public function getAmbiente(): string { return 'homologacao'; }
+            public function getTimeout(): int { return 30; }
+            public function getAuthConfig(): array { return []; }
+            public function getNationalApiBaseUrl(): string { return 'https://api.local'; }
+            public function validarDados(array $dados): bool { return true; }
+            public function consultarPorRps(array $identificacaoRps): NFSeConsultaResultInterface { return $this->consultar((string) ($identificacaoRps['numero'] ?? '')); }
+            public function consultarLote(string $protocolo): NFSeConsultaResultInterface { return $this->consultar($protocolo); }
+            public function baixarXml(string $chave): string
+            {
+                return json_encode([
+                    'status' => 'success',
+                    'numero' => '202600001234',
+                    'nfseXmlGZipB64' => base64_encode(gzencode($this->xml)),
+                ], JSON_THROW_ON_ERROR);
+            }
+            public function baixarDanfse(string $chave): NFSeImpressaoResultInterface
+            {
+                return (new NFSeResultNormalizer())->normalizeIndisponivel(
+                    ['source' => 'download_danfse'],
+                    ['parsed_response' => ['status' => 'success']]
+                );
+            }
+            public function listarMunicipiosNacionais(bool $forceRefresh = false): array { return ['data' => [], 'metadata' => []]; }
+            public function consultarAliquotasMunicipio(string $codigoMunicipio, ?string $codigoServico = null, ?string $competencia = null, bool $forceRefresh = false): array { return ['data' => [], 'metadata' => []]; }
+            public function consultarContribuinteCnc(string $cnc): array { return []; }
+            public function verificarHabilitacaoCnc(string $cnc): bool { return true; }
+            public function getConfig(): array { return []; }
+            public function consultarConvenioMunicipio(string $codigoMunicipio, bool $forceRefresh = false): array { return ['data' => [], 'metadata' => []]; }
+            public function validarLayoutDps(array $payload, bool $checkCatalog = true): array { return ['valid' => true, 'errors' => [], 'warnings' => []]; }
+            public function gerarXmlDpsPreview(array $payload): string { return '<preview/>'; }
+            public function validarXmlDps(array $payload): array { return ['valid' => true, 'errors' => []]; }
+        };
+
+        $facade = new NFSeFacade('nfse_nacional', new NFSeAdapter('nfse_nacional', $provider));
+
+        $response = $facade->baixarDanfse('NFS123');
+
+        $this->assertTrue($response->isSuccess(), (string) $response->getError());
+        $this->assertSame('render_local', $response->getData('impressao')['source']);
+        $this->assertSame('pdf_base64', $response->getData('impressao')['modo']);
+        $this->assertStringStartsWith('%PDF', base64_decode((string) $response->getData('impressao')['pdf_base64'], true) ?: '');
+        $this->assertStringContainsString('<CompNfse>', (string) $response->getData('documento')['xml']);
+    }
+
+    public function test_emitir_completo_nacional_prefere_render_local_quando_xml_final_esta_disponivel(): void
+    {
+        $xml = $this->nfseNacionalFixture('nfse_nacional_completa.xml');
+
+        $provider = new class ($xml) implements NFSeProviderConfigInterface, NFSeNacionalCapabilitiesInterface, NFSeOperationalIntrospectionInterface {
+            private array $lastResponseData = [];
+            private array $lastArtifacts = [];
+
+            public function __construct(private readonly string $xml)
+            {
+            }
+
+            public function emitir(array $dados): string
+            {
+                $this->lastResponseData = [
+                    'status' => 'success',
+                    'numero' => '202600001234',
+                    'protocolo' => 'PROTOCOLO-123',
+                    'nfseXmlGZipB64' => base64_encode(gzencode($this->xml)),
+                ];
+                $this->lastArtifacts = [
+                    'request_xml' => '<DPS />',
+                    'response_raw' => '<ok />',
+                    'response_xml' => null,
+                    'parsed_response' => $this->lastResponseData,
+                ];
+
+                return '<ok />';
+            }
+            public function consultar(string $chave): NFSeConsultaResultInterface
+            {
+                return (new NFSeResultNormalizer())->normalizeConsulta('consultar', [
+                    'status' => 'success',
+                    'numero' => '202600001234',
+                    'codigo_verificacao' => 'ABC',
+                    'raw_xml' => $this->xml,
+                ], [], ['chave_consulta' => $chave]);
+            }
+            public function cancelar(string $chave, string $motivo, ?string $protocolo = null): bool { return true; }
+            public function substituir(string $chave, array $dados): string { return '<ok />'; }
+            public function getWsdlUrl(): string { return 'https://example.test'; }
+            public function getVersao(): string { return '1.00'; }
+            public function getAliquotaFormat(): string { return 'decimal'; }
+            public function getCodigoMunicipio(): string { return '1302603'; }
+            public function getAmbiente(): string { return 'homologacao'; }
+            public function getTimeout(): int { return 30; }
+            public function getAuthConfig(): array { return []; }
+            public function getNationalApiBaseUrl(): string { return 'https://api.local'; }
+            public function validarDados(array $dados): bool { return true; }
+            public function consultarPorRps(array $identificacaoRps): NFSeConsultaResultInterface { return $this->consultar((string) ($identificacaoRps['numero'] ?? '')); }
+            public function consultarLote(string $protocolo): NFSeConsultaResultInterface { return $this->consultar($protocolo); }
+            public function baixarXml(string $chave): string { return json_encode(['status' => 'success', 'nfseXmlGZipB64' => base64_encode(gzencode($this->xml))], JSON_THROW_ON_ERROR); }
+            public function baixarDanfse(string $chave): NFSeImpressaoResultInterface { return (new NFSeResultNormalizer())->normalizeIndisponivel(); }
+            public function listarMunicipiosNacionais(bool $forceRefresh = false): array { return ['data' => [], 'metadata' => []]; }
+            public function consultarAliquotasMunicipio(string $codigoMunicipio, ?string $codigoServico = null, ?string $competencia = null, bool $forceRefresh = false): array { return ['data' => [], 'metadata' => []]; }
+            public function consultarContribuinteCnc(string $cnc): array { return []; }
+            public function verificarHabilitacaoCnc(string $cnc): bool { return true; }
+            public function getConfig(): array { return []; }
+            public function consultarConvenioMunicipio(string $codigoMunicipio, bool $forceRefresh = false): array { return ['data' => [], 'metadata' => []]; }
+            public function validarLayoutDps(array $payload, bool $checkCatalog = true): array { return ['valid' => true, 'errors' => [], 'warnings' => []]; }
+            public function gerarXmlDpsPreview(array $payload): string { return '<preview/>'; }
+            public function validarXmlDps(array $payload): array { return ['valid' => true, 'errors' => []]; }
+            public function getLastResponseData(): array { return $this->lastResponseData; }
+            public function getLastOperationArtifacts(): array { return $this->lastArtifacts; }
+            public function getSupportedOperations(): array { return ['emitir', 'consultar', 'baixar_xml', 'baixar_danfse']; }
+        };
+
+        $facade = new NFSeFacade('nfse_nacional', new NFSeAdapter('nfse_nacional', $provider));
+
+        $response = $facade->emitirCompleto($this->dadosNacionalValidos());
+
+        $this->assertTrue($response->isSuccess(), (string) $response->getError());
+        $this->assertSame('render_local', $response->getData('impressao')['source']);
+        $this->assertSame('completo', $response->getData('flow_status'));
+        $this->assertStringContainsString('<CompNfse>', (string) $response->getData('documento')['xml']);
+    }
+
+    public function test_facade_bloqueia_emissao_pre_corte_para_natal_migrado_nacional(): void
+    {
+        $facade = new NFSeFacade('natal', new NFSeAdapter('natal', new FakeNfseProvider()));
+
+        $response = $facade->emitir([
+            'dCompet' => '2025-12-31',
+            'dhEmi' => '2025-12-31T10:00:00-03:00',
+        ]);
+
+        $this->assertTrue($response->isError());
+        $this->assertSame('NFSE_NATIONAL_MIGRATION_LEGACY_PERIOD', $response->getErrorCode());
+        $this->assertSame('2025-12-31', $response->getMetadata('reference_date'));
+        $this->assertSame('2026-01-01', $response->getMetadata('legacy_cutoff'));
+        $this->assertSame('2408102', $response->getMetadata('municipio_ibge'));
+        $this->assertStringContainsString('Natal', (string) $response->getError());
+    }
+
     private function buildNacionalConfig(callable $httpClient): array
     {
         return [
@@ -538,5 +732,13 @@ class NFSeAdapterFacadeNacionalTest extends TestCase
             'rps_serie' => 'A1',
             'rps_tipo' => '1',
         ];
+    }
+
+    private function nfseNacionalFixture(string $name): string
+    {
+        $contents = file_get_contents(dirname(__DIR__, 2) . '/Fixtures/' . $name);
+        $this->assertNotFalse($contents);
+
+        return (string) $contents;
     }
 }

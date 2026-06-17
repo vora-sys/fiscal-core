@@ -155,6 +155,8 @@ export IBPT_UF="SP"
 - Emissão classificada como MEI usa sempre o provider nacional
 - Em Belém, o acesso ao DANFSe segue a URL oficial da prefeitura; a biblioteca expõe disponibilidade e metadados para polling externo
 - Para Manaus, use os scripts `04` e `05` em homologação com fatos geradores a partir de `2026-01-01`
+- No fluxo nacional, o DANFSe agora e gerado localmente por padrao; a API oficial de geracao sera suspensa em `2026-07-01`
+- No fluxo nacional, `baixarDanfse` depende de conseguir resolver o XML final da NFS-e quando o provider nao retorna PDF pronto
 - Para Presidente Figueiredo e Rio Preto da Eva, use `NFSE_ISSWEB_CHAVE` e confirme os endpoints reais antes de homologar com `--send`
 
 ## 🎯 Casos de Uso por Público

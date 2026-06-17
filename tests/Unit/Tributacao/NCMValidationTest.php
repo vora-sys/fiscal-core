@@ -133,4 +133,32 @@ class NCMValidationTest extends TestCase
         $this->assertEquals('847150', $dados['subposicao']);
         $this->assertEquals('84715010', $dados['item']);
     }
+
+    /** @test */
+    public function deve_expor_diagnostico_canonico_quando_ibpt_nao_esta_configurado(): void
+    {
+        $oldCnpj = $_ENV['IBPT_CNPJ'] ?? null;
+        $oldToken = $_ENV['IBPT_TOKEN'] ?? null;
+        unset($_ENV['IBPT_CNPJ'], $_ENV['IBPT_TOKEN']);
+
+        try {
+            $resultado = (new TributacaoFacade())->calcular([
+                'ncm' => '84715010',
+                'valor' => 100,
+            ]);
+        } finally {
+            if ($oldCnpj !== null) {
+                $_ENV['IBPT_CNPJ'] = $oldCnpj;
+            }
+            if ($oldToken !== null) {
+                $_ENV['IBPT_TOKEN'] = $oldToken;
+            }
+        }
+
+        $this->assertFalse($resultado->isSuccess());
+        $this->assertSame('IBPT_CONFIG_MISSING', $resultado->getErrorCode());
+        $this->assertSame('configuration', $resultado->getMetadata('category'));
+        $this->assertSame('tributacao_initialization', $resultado->getMetadata('operation'));
+        $this->assertNotEmpty($resultado->getMetadata('trace_id'));
+    }
 }

@@ -32,9 +32,11 @@ class ResponseHandler
      */
     public function handle($callbackOrException, string $operation = 'unknown'): FiscalResponse
     {
+        $start = microtime(true);
+
         // Se o primeiro parâmetro é uma exceção, processa diretamente
         if ($callbackOrException instanceof \Exception || $callbackOrException instanceof \Throwable) {
-            return $this->handleException($callbackOrException, $operation);
+            return $this->withDiagnostics($this->handleException($callbackOrException, $operation), $operation, $start);
         }
 
         // Caso contrário, trata como callable (comportamento original)
@@ -43,18 +45,18 @@ class ResponseHandler
             
             // Se callback já retornou FiscalResponse, usa ele
             if ($result instanceof FiscalResponse) {
-                return $result;
+                return $this->withDiagnostics($result, $operation, $start);
             }
             
             // Se retornou array ou dados, cria resposta de sucesso
-            return FiscalResponse::success(
+            return $this->withDiagnostics(FiscalResponse::success(
                 is_array($result) ? $result : ['result' => $result],
                 $operation,
-                ['execution_time' => $this->getExecutionTime()]
-            );
+                ['execution_time' => $this->elapsed($start)]
+            ), $operation, $start);
             
         } catch (\Exception|\Throwable $e) {
-            return $this->handleException($e, $operation);
+            return $this->withDiagnostics($this->handleException($e, $operation), $operation, $start);
         }
     }
 
@@ -63,9 +65,7 @@ class ResponseHandler
      */
     private function handleException(\Exception|\Throwable $e, string $operation): FiscalResponse
     {
-        if ($e instanceof FiscalException) {
-            return $this->handleFiscalException($e, $operation);
-        } elseif ($e instanceof CertificateException) {
+        if ($e instanceof CertificateException) {
             return $this->handleCertificateException($e, $operation);
         } elseif ($e instanceof SefazException) {
             return $this->handleSefazException($e, $operation);
@@ -73,6 +73,8 @@ class ResponseHandler
             return $this->handleValidationException($e, $operation);
         } elseif ($e instanceof XmlException) {
             return $this->handleXmlException($e, $operation);
+        } elseif ($e instanceof FiscalException) {
+            return $this->handleFiscalException($e, $operation);
         } elseif ($e instanceof \InvalidArgumentException) {
             return $this->handleValidationError($e, $operation);
         } elseif ($e instanceof \RuntimeException) {
@@ -96,6 +98,7 @@ class ResponseHandler
             array_merge([
                 'severity' => 'error',
                 'recoverable' => true,
+                'category' => 'runtime',
                 'exception_type' => get_class($e)
             ], $e->getContext())
         );
@@ -182,6 +185,7 @@ class ResponseHandler
             [
                 'severity' => 'warning',
                 'recoverable' => true,
+                'category' => 'validation',
                 'suggestions' => $this->getValidationSuggestions($e->getMessage())
             ]
         );
@@ -193,11 +197,12 @@ class ResponseHandler
     private function handleRuntimeError(\RuntimeException $e, string $operation): FiscalResponse
     {
         $errorCode = 'RUNTIME_ERROR';
-        $metadata = ['severity' => 'error', 'recoverable' => false];
+        $metadata = ['severity' => 'error', 'recoverable' => false, 'category' => 'runtime'];
 
         // Mapeia erros específicos
         if (str_contains($e->getMessage(), 'certificado')) {
             $errorCode = 'CERTIFICATE_ERROR';
+            $metadata['category'] = 'certificate';
             $metadata['suggestions'] = [
                 'Verifique se o certificado está carregado',
                 'Confirme se o certificado não expirou',
@@ -205,6 +210,7 @@ class ResponseHandler
             ];
         } elseif (str_contains($e->getMessage(), 'SEFAZ')) {
             $errorCode = 'SEFAZ_ERROR';
+            $metadata['category'] = 'sefaz';
             $metadata['suggestions'] = [
                 'Verifique conexão com internet',
                 'Confirme se SEFAZ está operacional',
@@ -212,6 +218,7 @@ class ResponseHandler
             ];
         } elseif (str_contains($e->getMessage(), 'XML')) {
             $errorCode = 'XML_ERROR';
+            $metadata['category'] = 'xml';
             $metadata['suggestions'] = [
                 'Verifique estrutura dos dados',
                 'Confirme campos obrigatórios',
@@ -239,6 +246,7 @@ class ResponseHandler
             [
                 'severity' => 'error',
                 'recoverable' => true,
+                'category' => 'runtime',
                 'suggestions' => [
                     'Verifique sequência de operações',
                     'Confirme estado dos objetos',
@@ -251,7 +259,7 @@ class ResponseHandler
     /**
      * Trata erros genéricos
      */
-    private function handleGenericError(\Exception $e, string $operation): FiscalResponse
+    private function handleGenericError(\Throwable $e, string $operation): FiscalResponse
     {
         return FiscalResponse::error(
             'Erro na operação: ' . $e->getMessage(),
@@ -260,6 +268,7 @@ class ResponseHandler
             [
                 'severity' => 'error',
                 'recoverable' => false,
+                'category' => 'runtime',
                 'exception_type' => get_class($e),
                 'trace_summary' => $this->getTraceSummary($e)
             ]
@@ -280,7 +289,8 @@ class ResponseHandler
                 'recoverable' => false,
                 'exception_type' => get_class($e),
                 'message' => $e->getMessage(),
-                'trace_id' => uniqid('critical_'),
+                'trace_id' => $this->newTraceId('critical_'),
+                'category' => 'runtime',
                 'support_info' => 'Entre em contato com o suporte técnico'
             ]
         );
@@ -339,6 +349,61 @@ class ResponseHandler
     private function getExecutionTime(): float
     {
         return microtime(true) - ($_SERVER['REQUEST_TIME_FLOAT'] ?? microtime(true));
+    }
+
+    private function withDiagnostics(FiscalResponse $response, string $operation, float $start): FiscalResponse
+    {
+        $response = $response
+            ->withMetadata('operation', $operation)
+            ->withMetadata('execution_time', $response->getMetadata('execution_time') ?? $this->elapsed($start))
+            ->withMetadata('trace_id', $response->getMetadata('trace_id') ?? $this->newTraceId());
+
+        if ($response->getMetadata('category') === null) {
+            $response = $response->withMetadata('category', $response->isSuccess() ? 'success' : 'runtime');
+        }
+        if ($response->getMetadata('severity') === null) {
+            $response = $response->withMetadata('severity', $response->isSuccess() ? 'info' : 'error');
+        }
+        if ($response->getMetadata('recoverable') === null) {
+            $response = $response->withMetadata('recoverable', $response->isError());
+        }
+
+        $this->logResponse($response);
+
+        return $response;
+    }
+
+    private function elapsed(float $start): float
+    {
+        return microtime(true) - $start;
+    }
+
+    private function newTraceId(string $prefix = 'fc_'): string
+    {
+        try {
+            return $prefix . bin2hex(random_bytes(8));
+        } catch (\Throwable) {
+            return uniqid($prefix, true);
+        }
+    }
+
+    private function logResponse(FiscalResponse $response): void
+    {
+        $enabled = $_ENV['FISCAL_CORE_LOG_DIAGNOSTICS'] ?? getenv('FISCAL_CORE_LOG_DIAGNOSTICS') ?: '0';
+        if (!in_array(strtolower((string) $enabled), ['1', 'true', 'yes', 'on'], true)) {
+            return;
+        }
+
+        error_log(json_encode([
+            'trace_id' => $response->getMetadata('trace_id'),
+            'operation' => $response->getOperation(),
+            'success' => $response->isSuccess(),
+            'category' => $response->getMetadata('category'),
+            'severity' => $response->getMetadata('severity'),
+            'error_code' => $response->getErrorCode(),
+            'error' => $response->getError(),
+            'execution_time' => $response->getMetadata('execution_time'),
+        ], JSON_UNESCAPED_UNICODE));
     }
 
     /**

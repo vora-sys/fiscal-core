@@ -67,12 +67,22 @@ final class NFSeProviderTranslationPolicy
     private static function defaultIssWithheldRule(string $providerKey, string $layoutFamily): array
     {
         $isBelem = str_contains($providerKey, 'belem');
+        $isNacional = $layoutFamily === 'nacional'
+            || $providerKey === ProviderRegistry::NFSE_NATIONAL_KEY
+            || $providerKey === 'manaus';
+
+        if ($isNacional) {
+            return [
+                'semantic_field' => 'service.iss_withheld',
+                'payload_path' => 'servico.tpRetISSQN',
+                'codes' => ['true' => '2', 'false' => '1'],
+                'description' => 'NFSe Nacional usa 1 para ISS nao retido, 2 para ISS retido pelo tomador e 3 para ISS retido pelo intermediario.',
+            ];
+        }
 
         return [
             'semantic_field' => 'service.iss_withheld',
-            'payload_path' => $layoutFamily === 'nacional' || $providerKey === ProviderRegistry::NFSE_NATIONAL_KEY
-                ? 'servico.tpRetISSQN'
-                : ($isBelem ? 'servico.tpRetISSQN' : 'servico.iss_retido'),
+            'payload_path' => $isBelem ? 'servico.tpRetISSQN' : 'servico.iss_retido',
             'codes' => ['true' => '1', 'false' => '2'],
             'description' => $isBelem
                 ? 'Belém usa 1 para ISS retido e 2 para ISS não retido.'

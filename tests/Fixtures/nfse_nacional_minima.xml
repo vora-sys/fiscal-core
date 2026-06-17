@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CompNfse>
+  <Nfse>
+    <infNFSe Id="NFS00000000000000000000000000000000000000000000000000">
+      <xLocEmi>Manaus</xLocEmi>
+      <UF>AM</UF>
+      <ambGer>SEFIN Nacional</ambGer>
+      <nNFSe>1</nNFSe>
+      <dhProc>2026-06-08T08:00:00-03:00</dhProc>
+      <emit>
+        <CNPJ>12345678000190</CNPJ>
+        <xNome>Prestador Minimo LTDA</xNome>
+      </emit>
+      <DPS>
+        <infDPS>
+          <tpAmb>1</tpAmb>
+          <dCompet>2026-06-08</dCompet>
+          <nDPS>1</nDPS>
+          <serie>A</serie>
+          <dhEmi>2026-06-08T07:59:59-03:00</dhEmi>
+          <emit>
+            <xNome>Prestador Minimo LTDA</xNome>
+          </emit>
+          <toma>
+            <CPF>12345678909</CPF>
+            <xNome>Tomador Minimo</xNome>
+          </toma>
+          <cTribNac>010101</cTribNac>
+          <cNBS>010101000</cNBS>
+          <xServ>Servico minimo.</xServ>
+          <vServPrest>
+            <vServ>100.00</vServ>
+          </vServPrest>
+          <vLiq>100.00</vLiq>
+        </infDPS>
+      </DPS>
+    </infNFSe>
+  </Nfse>
+</CompNfse>

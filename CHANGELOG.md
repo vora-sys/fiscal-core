@@ -23,14 +23,22 @@
 
 ## v1.2.4 - 2026-05-25
 
+### Added
+- Variaveis de ambiente `FISCAL_NFCE_CSC`, `FISCAL_NFCE_CSC_ID` e `FISCAL_NFCE_QRCODE_VERSION`.
+- Testes cobrindo QR Code NFC-e com CSC/hash, geracao automatica sem `infoSuplementar` e mapeamento de configuracao/env.
+- Scripts Composer para testes (`test`, `test:unit`, `test:nfse`, `test:ci`) e analise estatica (`analyse`).
+- Workflow GitHub Actions com matriz PHP 8.1/8.2, instalacao de extensoes, suite CI e PHPStan inicial.
+- Configuracao inicial do PHPStan em `phpstan.neon`.
+- Documentacao publica das Facades em `docs/API-FACADES.md`.
+- Checklist de release Packagist em `docs/RELEASE-PACKAGIST.md`.
+
 ### Changed
 - NFC-e passa a alimentar `CSC`/`CSCid` na configuração da NFePHP a partir das chaves publicas `csc` e `csc_id`.
 - `ToolsFactory::createNFCeTools()` agora inicializa o modelo 65 e aceita `nfce_qrcode_version` para forcar QR Code versao `200` ou `300` quando necessario.
 - `NFCeAdapter` deixa a NFePHP gerar a tag `<infNFeSupl>` automaticamente no `signNFe()`, evitando QR Code/hash legado ou incompleto informado no payload.
-
-### Added
-- Variaveis de ambiente `FISCAL_NFCE_CSC`, `FISCAL_NFCE_CSC_ID` e `FISCAL_NFCE_QRCODE_VERSION`.
-- Testes cobrindo QR Code NFC-e com CSC/hash, geracao automatica sem `infoSuplementar` e mapeamento de configuracao/env.
+- Roadmap e status do release Composer alinhados ao pacote canonico `sabbajohn/fiscal-core`.
+- Contrato publico das facades documentado em torno de `FiscalResponse`, sem breaking changes.
+- GitHub Packages, Laravel Service Provider, middleware e cache unificado permanecem explicitamente como pos-release.
 
 ### Tests
 - `vendor/bin/phpunit tests/SingletonManagersTest.php tests/Unit/NFCeQRCodeTest.php`

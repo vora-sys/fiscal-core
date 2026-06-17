@@ -6,6 +6,7 @@
 - Transporte: SOAP
 - Layout: ABRASF 2.03
 - Município atual: Belém/PA
+- Observação: não usar DSF para Belém; DSF está mantido apenas como alias legado temporário para compatibilidade.
 
 ## Requisitos
 

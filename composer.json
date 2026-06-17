@@ -29,6 +29,13 @@
     "phpunit/phpunit": "^10.0",
     "phpstan/phpstan-phpunit": "^2.0"
   },
+  "scripts": {
+    "test": "vendor/bin/phpunit",
+    "test:unit": "vendor/bin/phpunit --testsuite Unit",
+    "test:nfse": "vendor/bin/phpunit --testsuite NFSe",
+    "test:ci": "ENABLE_EXTERNAL_TESTS=false vendor/bin/phpunit --testsuite Unit",
+    "analyse": "vendor/bin/phpstan analyse"
+  },
   "suggest": {
     "nfephp-org/sped-nfse": "Driver NFSe baseado no ecossistema nfephp-org (instale se for usar NFSe com este provider)",
     "lucas-simoes/php-nfse": "Driver NFSe alternativo com suporte a múltiplos provedores (instale se for usar NFSe com este provider)",

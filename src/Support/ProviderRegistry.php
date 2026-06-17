@@ -82,7 +82,7 @@ class ProviderRegistry
             return $this->getNfseNacional();
         }
 
-        if ($providerKey === self::NFSE_NATIONAL_KEY || !is_array($metadata['municipio_resolved'] ?? null)) {
+        if (!is_array($metadata['municipio_resolved'] ?? null)) {
             return $this->get($providerKey);
         }
 

@@ -14,7 +14,7 @@ use sabbajohn\FiscalCore\Support\NFSeSchemaValidator;
 use sabbajohn\FiscalCore\Support\NFSeSoapCurlTransport;
 use sabbajohn\FiscalCore\Support\NFSeSoapTransportInterface;
 
-final class IsswebProvider extends AbstractNFSeProvider implements NFSeOperationalIntrospectionInterface
+class IsswebProvider extends AbstractNFSeProvider implements NFSeOperationalIntrospectionInterface
 {
     private ?string $lastRequestXml = null;
     private ?string $lastSoapEnvelope = null;

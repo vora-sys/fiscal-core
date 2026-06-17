@@ -6,6 +6,7 @@ use sabbajohn\FiscalCore\Adapters\IBPTAdapter;
 use sabbajohn\FiscalCore\Adapters\BrasilAPIAdapter;
 use sabbajohn\FiscalCore\Support\ResponseHandler;
 use sabbajohn\FiscalCore\Support\FiscalResponse;
+use sabbajohn\FiscalCore\Support\FiscalResponseNormalizer;
 
 /**
  * Facade para operações de tributação
@@ -16,11 +17,13 @@ class TributacaoFacade
     private ?IBPTAdapter $ibpt = null;
     private BrasilAPIAdapter $brasilApi;
     private ResponseHandler $responseHandler;
+    private FiscalResponseNormalizer $normalizer;
     private ?FiscalResponse $initializationError = null;
 
     public function __construct(?IBPTAdapter $ibpt = null)
     {
         $this->responseHandler = new ResponseHandler();
+        $this->normalizer = new FiscalResponseNormalizer();
         $this->brasilApi = new BrasilAPIAdapter();
         
         if ($ibpt !== null) {
@@ -34,10 +37,11 @@ class TributacaoFacade
                 
                 if (empty($cnpj) || empty($token)) {
                     $this->initializationError = FiscalResponse::error(
-                        'IBPT_CONFIG_MISSING',
                         'Configuração IBPT não encontrada',
+                        'IBPT_CONFIG_MISSING',
                         'tributacao_initialization',
                         [
+                            'category' => 'configuration',
                             'required_env_vars' => ['IBPT_CNPJ', 'IBPT_TOKEN'],
                             'optional_env_vars' => ['IBPT_UF'],
                             'suggestions' => [
@@ -78,7 +82,11 @@ class TributacaoFacade
 
         try {
             $resultado = $this->ibpt->calcularImpostos($produto);
-            return FiscalResponse::success($resultado, 'tributacao_calculo', [
+            return FiscalResponse::success($this->normalizer->normalizeTributacao('tributacao_calculo', $resultado, [
+                'ncm' => $produto['ncm'] ?? null,
+                'valor' => $produto['valor'] ?? null,
+                'request_payload' => $produto,
+            ]), 'tributacao_calculo', [
                 'ncm' => $produto['ncm'] ?? null,
                 'valor' => $produto['valor'] ?? null
             ]);
@@ -98,7 +106,9 @@ class TributacaoFacade
                 $resultado['codigo'] = preg_replace('/\D/', '', (string) $resultado['codigo']);
             }
 
-            return FiscalResponse::success($resultado, 'tributacao_consulta_ncm', [
+            return FiscalResponse::success($this->normalizer->normalizeTributacao('tributacao_consulta_ncm', $resultado, [
+                'ncm' => $ncm
+            ]), 'tributacao_consulta_ncm', [
                 'ncm' => $ncm
             ]);
         } catch (\Exception $e) {
@@ -113,7 +123,10 @@ class TributacaoFacade
     {
         try {
             $resultado = $this->brasilApi->pesquisarNcm($descricao);
-            return FiscalResponse::success($resultado, 'tributacao_pesquisa_ncm', [
+            return FiscalResponse::success($this->normalizer->normalizeTributacao('tributacao_pesquisa_ncm', is_array($resultado) ? $resultado : ['resultado' => $resultado], [
+                'descricao' => $descricao,
+                'total_results' => count($resultado)
+            ]), 'tributacao_pesquisa_ncm', [
                 'descricao' => $descricao,
                 'total_results' => count($resultado)
             ]);
@@ -302,10 +315,11 @@ class TributacaoFacade
             
             if (!empty($missing)) {
                 return FiscalResponse::error(
-                    'PRODUCT_VALIDATION_FAILED',
                     'Campos obrigatórios não informados: ' . implode(', ', $missing),
+                    'PRODUCT_VALIDATION_FAILED',
                     'tributacao_validacao_produto',
                     [
+                        'category' => 'validation',
                         'missing_fields' => $missing,
                         'required_fields' => $required,
                         'optional_fields' => ['uf', 'extarif', 'descricao', 'unidade', 'gtin', 'codigoInterno'],

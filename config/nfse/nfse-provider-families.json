@@ -3,43 +3,177 @@
         "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\AbacoProvider",
         "layout_family": "ABACO",
         "schema_root": "resources/nfse/schemas/ABACO",
-        "xsd_entrypoints": {},
-        "transport": "soap"
+        "xsd_entrypoints": [],
+        "transport": "soap",
+        "supported_operations": [
+            "emitir",
+            "consultar_lote",
+            "consultar_nfse_numero",
+            "consultar_nfse_rps",
+            "cancelar_nfse",
+            "substituir_nfse"
+        ],
+        "soap_operations": {
+            "emitir": "RecepcionarLoteRpsSincrono",
+            "consultar_lote": "ConsultarLoteRps",
+            "consultar_nfse_numero": "ConsultarNfseServicoPrestado",
+            "consultar_nfse_rps": "ConsultarNfsePorRps",
+            "cancelar_nfse": "CancelarNfse",
+            "substituir_nfse": "SubstituirNfse"
+        }
     },
     "ABASE": {
         "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\AbaseProvider",
         "layout_family": "ABASE",
         "schema_root": "resources/nfse/schemas/ABASE",
-        "xsd_entrypoints": {},
-        "transport": "soap"
+        "xsd_entrypoints": [],
+        "transport": "soap",
+        "supported_operations": [
+            "emitir",
+            "consultar_lote",
+            "consultar_nfse_numero",
+            "consultar_nfse_rps",
+            "cancelar_nfse",
+            "substituir_nfse"
+        ],
+        "soap_operations": {
+            "emitir": "RecepcionarLoteRpsSincrono",
+            "consultar_lote": "ConsultarLoteRps",
+            "consultar_nfse_numero": "ConsultarNfseServicoPrestado",
+            "consultar_nfse_rps": "ConsultarNfsePorRps",
+            "cancelar_nfse": "CancelarNfse",
+            "substituir_nfse": "SubstituirNfse"
+        }
+    },
+    "ABRASF_SHARED": {
+        "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\AbrasfSharedProvider",
+        "layout_family": "ABRASF_203",
+        "schema_root": "resources/nfse/schemas/ABRASF_SHARED",
+        "xsd_entrypoints": {
+            "emitir": "enviar_lote_rps_sincrono_envio.xsd",
+            "enviar_lote_rps": "enviar_lote_rps_sincrono_envio.xsd",
+            "consultar_lote": "consultar_lote_rps_envio.xsd",
+            "consultar_nfse_rps": "consultar_nfse_rps_envio.xsd",
+            "consultar_nfse_numero": "consultar_nfse_servico_prestado_envio.xsd",
+            "cancelar_nfse": "cancelar_nfse_envio.xsd"
+        },
+        "aliquota_format": "decimal",
+        "transport": "soap",
+        "versao": "2.03",
+        "wsdl_homologacao": "https://municipio-homologacao.example.test/nfse?wsdl",
+        "wsdl_producao": "https://municipio-producao.example.test/nfse?wsdl",
+        "signature_mode": "optional",
+        "soap_operation": "RecepcionarLoteRpsSincrono",
+        "supported_operations": [
+            "emitir",
+            "emitir_sincrono",
+            "consultar_lote",
+            "consultar_nfse_rps",
+            "consultar_nfse_numero",
+            "cancelar_nfse",
+            "substituir_nfse"
+        ],
+        "source": "shared_abrasf_base",
+        "soap_operations": {
+            "emitir": "RecepcionarLoteRpsSincrono",
+            "consultar_lote": "ConsultarLoteRps",
+            "consultar_nfse_numero": "ConsultarNfseServicoPrestado",
+            "consultar_nfse_rps": "ConsultarNfsePorRps",
+            "cancelar_nfse": "CancelarNfse",
+            "substituir_nfse": "SubstituirNfse"
+        }
     },
     "ADM_SISTEMAS": {
         "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\AdmSistemasProvider",
         "layout_family": "ADM_SISTEMAS",
         "schema_root": "resources/nfse/schemas/ADM_SISTEMAS",
-        "xsd_entrypoints": {},
-        "transport": "soap"
+        "xsd_entrypoints": [],
+        "transport": "soap",
+        "supported_operations": [
+            "emitir",
+            "consultar_lote",
+            "consultar_nfse_numero",
+            "consultar_nfse_rps",
+            "cancelar_nfse",
+            "substituir_nfse"
+        ],
+        "soap_operations": {
+            "emitir": "RecepcionarLoteRpsSincrono",
+            "consultar_lote": "ConsultarLoteRps",
+            "consultar_nfse_numero": "ConsultarNfseServicoPrestado",
+            "consultar_nfse_rps": "ConsultarNfsePorRps",
+            "cancelar_nfse": "CancelarNfse",
+            "substituir_nfse": "SubstituirNfse"
+        }
     },
     "AGILI": {
         "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\AgiliProvider",
         "layout_family": "AGILI",
         "schema_root": "resources/nfse/schemas/AGILI",
-        "xsd_entrypoints": {},
-        "transport": "soap"
+        "xsd_entrypoints": [],
+        "transport": "soap",
+        "supported_operations": [
+            "emitir",
+            "consultar_lote",
+            "consultar_nfse_numero",
+            "consultar_nfse_rps",
+            "cancelar_nfse",
+            "substituir_nfse"
+        ],
+        "soap_operations": {
+            "emitir": "RecepcionarLoteRpsSincrono",
+            "consultar_lote": "ConsultarLoteRps",
+            "consultar_nfse_numero": "ConsultarNfseServicoPrestado",
+            "consultar_nfse_rps": "ConsultarNfsePorRps",
+            "cancelar_nfse": "CancelarNfse",
+            "substituir_nfse": "SubstituirNfse"
+        }
     },
     "AVMB_ASTEN": {
         "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\AvmbAstenProvider",
         "layout_family": "AVMB_ASTEN",
         "schema_root": "resources/nfse/schemas/AVMB_ASTEN",
-        "xsd_entrypoints": {},
-        "transport": "soap"
+        "xsd_entrypoints": [],
+        "transport": "soap",
+        "supported_operations": [
+            "emitir",
+            "consultar_lote",
+            "consultar_nfse_numero",
+            "consultar_nfse_rps",
+            "cancelar_nfse",
+            "substituir_nfse"
+        ],
+        "soap_operations": {
+            "emitir": "RecepcionarLoteRpsSincrono",
+            "consultar_lote": "ConsultarLoteRps",
+            "consultar_nfse_numero": "ConsultarNfseServicoPrestado",
+            "consultar_nfse_rps": "ConsultarNfsePorRps",
+            "cancelar_nfse": "CancelarNfse",
+            "substituir_nfse": "SubstituirNfse"
+        }
     },
     "BAUHAUS": {
         "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\BauhausProvider",
         "layout_family": "BAUHAUS",
         "schema_root": "resources/nfse/schemas/BAUHAUS",
-        "xsd_entrypoints": {},
-        "transport": "soap"
+        "xsd_entrypoints": [],
+        "transport": "soap",
+        "supported_operations": [
+            "emitir",
+            "consultar_lote",
+            "consultar_nfse_numero",
+            "consultar_nfse_rps",
+            "cancelar_nfse",
+            "substituir_nfse"
+        ],
+        "soap_operations": {
+            "emitir": "RecepcionarLoteRpsSincrono",
+            "consultar_lote": "ConsultarLoteRps",
+            "consultar_nfse_numero": "ConsultarNfseServicoPrestado",
+            "consultar_nfse_rps": "ConsultarNfsePorRps",
+            "cancelar_nfse": "CancelarNfse",
+            "substituir_nfse": "SubstituirNfse"
+        }
     },
     "BELEM_MUNICIPAL_2025": {
         "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\BelemMunicipalProvider",
@@ -69,6 +203,7 @@
         ],
         "soap_operation": "RecepcionarLoteRpsSincrono",
         "supported_operations": [
+            "emitir",
             "emitir_sincrono",
             "consultar_lote",
             "consultar_nfse_rps",
@@ -104,98 +239,289 @@
                 },
                 "description": "Belém usa 1 para ISS retido e 2 para ISS não retido."
             }
+        },
+        "soap_operations": {
+            "emitir": "RecepcionarLoteRpsSincrono",
+            "consultar_lote": "ConsultarLoteRps",
+            "consultar_nfse_numero": "ConsultarNfseServicoPrestado",
+            "consultar_nfse_rps": "ConsultarNfsePorRps",
+            "cancelar_nfse": "CancelarNfse",
+            "substituir_nfse": "SubstituirNfse"
         }
     },
     "BETHA": {
         "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\BethaProvider",
         "layout_family": "BETHA",
         "schema_root": "resources/nfse/schemas/BETHA",
-        "xsd_entrypoints": {},
-        "transport": "soap"
+        "xsd_entrypoints": [],
+        "transport": "soap",
+        "supported_operations": [
+            "emitir",
+            "consultar_lote",
+            "consultar_nfse_numero",
+            "consultar_nfse_rps",
+            "cancelar_nfse",
+            "substituir_nfse"
+        ],
+        "soap_operations": {
+            "emitir": "RecepcionarLoteRpsSincrono",
+            "consultar_lote": "ConsultarLoteRps",
+            "consultar_nfse_numero": "ConsultarNfseServicoPrestado",
+            "consultar_nfse_rps": "ConsultarNfsePorRps",
+            "cancelar_nfse": "CancelarNfse",
+            "substituir_nfse": "SubstituirNfse"
+        }
     },
     "BETHA_CLOUD": {
         "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\BethaCloudProvider",
         "layout_family": "BETHA_CLOUD",
         "schema_root": "resources/nfse/schemas/BETHA_CLOUD",
-        "xsd_entrypoints": {},
-        "transport": "soap"
+        "xsd_entrypoints": [],
+        "transport": "soap",
+        "supported_operations": [
+            "emitir",
+            "consultar_lote",
+            "consultar_nfse_numero",
+            "consultar_nfse_rps",
+            "cancelar_nfse",
+            "substituir_nfse"
+        ],
+        "soap_operations": {
+            "emitir": "RecepcionarLoteRpsSincrono",
+            "consultar_lote": "ConsultarLoteRps",
+            "consultar_nfse_numero": "ConsultarNfseServicoPrestado",
+            "consultar_nfse_rps": "ConsultarNfsePorRps",
+            "cancelar_nfse": "CancelarNfse",
+            "substituir_nfse": "SubstituirNfse"
+        }
     },
     "BHISS": {
         "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\BhissProvider",
         "layout_family": "BHISS",
         "schema_root": "resources/nfse/schemas/BHISS",
-        "xsd_entrypoints": {},
-        "transport": "soap"
+        "xsd_entrypoints": [],
+        "transport": "soap",
+        "supported_operations": [
+            "emitir",
+            "consultar_lote",
+            "consultar_nfse_numero",
+            "consultar_nfse_rps",
+            "cancelar_nfse",
+            "substituir_nfse"
+        ],
+        "soap_operations": {
+            "emitir": "RecepcionarLoteRpsSincrono",
+            "consultar_lote": "ConsultarLoteRps",
+            "consultar_nfse_numero": "ConsultarNfseServicoPrestado",
+            "consultar_nfse_rps": "ConsultarNfsePorRps",
+            "cancelar_nfse": "CancelarNfse",
+            "substituir_nfse": "SubstituirNfse"
+        }
     },
     "BSITBR": {
         "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\BsitbrProvider",
         "layout_family": "BSITBR",
         "schema_root": "resources/nfse/schemas/BSITBR",
-        "xsd_entrypoints": {},
-        "transport": "soap"
+        "xsd_entrypoints": [],
+        "transport": "soap",
+        "supported_operations": [
+            "emitir",
+            "consultar_lote",
+            "consultar_nfse_numero",
+            "consultar_nfse_rps",
+            "cancelar_nfse",
+            "substituir_nfse"
+        ],
+        "soap_operations": {
+            "emitir": "RecepcionarLoteRpsSincrono",
+            "consultar_lote": "ConsultarLoteRps",
+            "consultar_nfse_numero": "ConsultarNfseServicoPrestado",
+            "consultar_nfse_rps": "ConsultarNfsePorRps",
+            "cancelar_nfse": "CancelarNfse",
+            "substituir_nfse": "SubstituirNfse"
+        }
     },
     "CARIOCA": {
         "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\CariocaProvider",
         "layout_family": "CARIOCA",
         "schema_root": "resources/nfse/schemas/CARIOCA",
-        "xsd_entrypoints": {},
-        "transport": "soap"
+        "xsd_entrypoints": [],
+        "transport": "soap",
+        "supported_operations": [
+            "emitir",
+            "consultar_lote",
+            "consultar_nfse_numero",
+            "consultar_nfse_rps",
+            "cancelar_nfse",
+            "substituir_nfse"
+        ],
+        "soap_operations": {
+            "emitir": "RecepcionarLoteRpsSincrono",
+            "consultar_lote": "ConsultarLoteRps",
+            "consultar_nfse_numero": "ConsultarNfseServicoPrestado",
+            "consultar_nfse_rps": "ConsultarNfsePorRps",
+            "cancelar_nfse": "CancelarNfse",
+            "substituir_nfse": "SubstituirNfse"
+        }
     },
     "CECAM": {
         "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\CecamProvider",
         "layout_family": "CECAM",
         "schema_root": "resources/nfse/schemas/CECAM",
-        "xsd_entrypoints": {},
-        "transport": "soap"
+        "xsd_entrypoints": [],
+        "transport": "soap",
+        "supported_operations": [
+            "emitir",
+            "consultar",
+            "cancelar",
+            "baixar_danfse"
+        ]
     },
     "CENTI": {
         "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\CentiProvider",
         "layout_family": "CENTI",
         "schema_root": "resources/nfse/schemas/CENTI",
-        "xsd_entrypoints": {},
-        "transport": "soap"
+        "xsd_entrypoints": [],
+        "transport": "soap",
+        "supported_operations": [
+            "emitir",
+            "consultar_lote",
+            "consultar_nfse_numero",
+            "consultar_nfse_rps",
+            "cancelar_nfse",
+            "substituir_nfse"
+        ],
+        "soap_operations": {
+            "emitir": "RecepcionarLoteRpsSincrono",
+            "consultar_lote": "ConsultarLoteRps",
+            "consultar_nfse_numero": "ConsultarNfseServicoPrestado",
+            "consultar_nfse_rps": "ConsultarNfsePorRps",
+            "cancelar_nfse": "CancelarNfse",
+            "substituir_nfse": "SubstituirNfse"
+        }
     },
     "CONAM": {
         "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\ConamProvider",
         "layout_family": "CONAM",
         "schema_root": "resources/nfse/schemas/CONAM",
-        "xsd_entrypoints": {},
-        "transport": "soap"
+        "xsd_entrypoints": [],
+        "transport": "soap",
+        "supported_operations": [
+            "emitir",
+            "consultar_lote",
+            "consultar_nfse_numero",
+            "consultar_nfse_rps",
+            "cancelar_nfse",
+            "substituir_nfse"
+        ],
+        "soap_operations": {
+            "emitir": "RecepcionarLoteRpsSincrono",
+            "consultar_lote": "ConsultarLoteRps",
+            "consultar_nfse_numero": "ConsultarNfseServicoPrestado",
+            "consultar_nfse_rps": "ConsultarNfsePorRps",
+            "cancelar_nfse": "CancelarNfse",
+            "substituir_nfse": "SubstituirNfse"
+        }
     },
     "COPLAN": {
         "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\CoplanProvider",
         "layout_family": "COPLAN",
         "schema_root": "resources/nfse/schemas/COPLAN",
-        "xsd_entrypoints": {},
-        "transport": "soap"
+        "xsd_entrypoints": [],
+        "transport": "soap",
+        "supported_operations": [
+            "emitir",
+            "consultar_lote",
+            "consultar_nfse_numero",
+            "consultar_nfse_rps",
+            "cancelar_nfse",
+            "substituir_nfse"
+        ],
+        "soap_operations": {
+            "emitir": "RecepcionarLoteRpsSincrono",
+            "consultar_lote": "ConsultarLoteRps",
+            "consultar_nfse_numero": "ConsultarNfseServicoPrestado",
+            "consultar_nfse_rps": "ConsultarNfsePorRps",
+            "cancelar_nfse": "CancelarNfse",
+            "substituir_nfse": "SubstituirNfse"
+        }
     },
     "DBSELLER": {
         "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\DbsellerProvider",
         "layout_family": "DBSELLER",
         "schema_root": "resources/nfse/schemas/DBSELLER",
-        "xsd_entrypoints": {},
-        "transport": "soap"
+        "xsd_entrypoints": [],
+        "transport": "soap",
+        "supported_operations": [
+            "emitir",
+            "consultar_lote",
+            "consultar_nfse_numero",
+            "consultar_nfse_rps",
+            "cancelar_nfse",
+            "substituir_nfse"
+        ],
+        "soap_operations": {
+            "emitir": "RecepcionarLoteRpsSincrono",
+            "consultar_lote": "ConsultarLoteRps",
+            "consultar_nfse_numero": "ConsultarNfseServicoPrestado",
+            "consultar_nfse_rps": "ConsultarNfsePorRps",
+            "cancelar_nfse": "CancelarNfse",
+            "substituir_nfse": "SubstituirNfse"
+        }
     },
     "DESENVOLVECIDADE": {
         "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\DesenvolvecidadeProvider",
         "layout_family": "DESENVOLVECIDADE",
         "schema_root": "resources/nfse/schemas/DESENVOLVECIDADE",
-        "xsd_entrypoints": {},
-        "transport": "soap"
+        "xsd_entrypoints": [],
+        "transport": "soap",
+        "supported_operations": [
+            "emitir",
+            "consultar_lote",
+            "consultar_nfse_numero",
+            "consultar_nfse_rps",
+            "cancelar_nfse",
+            "substituir_nfse"
+        ],
+        "soap_operations": {
+            "emitir": "RecepcionarLoteRpsSincrono",
+            "consultar_lote": "ConsultarLoteRps",
+            "consultar_nfse_numero": "ConsultarNfseServicoPrestado",
+            "consultar_nfse_rps": "ConsultarNfsePorRps",
+            "cancelar_nfse": "CancelarNfse",
+            "substituir_nfse": "SubstituirNfse"
+        }
     },
     "DIGIFRED": {
         "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\DigifredProvider",
         "layout_family": "DIGIFRED",
         "schema_root": "resources/nfse/schemas/DIGIFRED",
-        "xsd_entrypoints": {},
-        "transport": "soap"
+        "xsd_entrypoints": [],
+        "transport": "soap",
+        "supported_operations": [
+            "emitir",
+            "consultar_lote",
+            "consultar_nfse_numero",
+            "consultar_nfse_rps",
+            "cancelar_nfse",
+            "substituir_nfse"
+        ],
+        "soap_operations": {
+            "emitir": "RecepcionarLoteRpsSincrono",
+            "consultar_lote": "ConsultarLoteRps",
+            "consultar_nfse_numero": "ConsultarNfseServicoPrestado",
+            "consultar_nfse_rps": "ConsultarNfsePorRps",
+            "cancelar_nfse": "CancelarNfse",
+            "substituir_nfse": "SubstituirNfse"
+        }
     },
     "DSF": {
         "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\DsfProvider",
         "layout_family": "LEGACY_ALIAS",
-        "schema_root": "resources/nfse/schemas/BELEM_MUNICIPAL_2025",
+        "schema_root": "resources/nfse/schemas/ABRASF_SHARED",
         "xsd_entrypoints": {
             "emitir": "enviar_lote_rps_sincrono_envio.xsd",
+            "enviar_lote_rps": "enviar_lote_rps_sincrono_envio.xsd",
             "consultar_lote": "consultar_lote_rps_envio.xsd",
             "consultar_nfse_rps": "consultar_nfse_rps_envio.xsd",
             "consultar_nfse_numero": "consultar_nfse_servico_prestado_envio.xsd",
@@ -204,167 +530,514 @@
         "aliquota_format": "decimal",
         "transport": "soap",
         "versao": "2.03",
-        "codigo_municipio": "1501402",
-        "wsdl_homologacao": "https://sefin-hml.belem.pa.gov.br/notafiscal-abrasfv203-ws/NotaFiscalSoap?wsdl",
-        "wsdl_producao": "https://notafiscal.belem.pa.gov.br/notafiscal-abrasfv203-ws/NotaFiscalSoap?wsdl",
-        "signature_mode": "required",
-        "cancelamento_codigo": "9",
-        "cancelamento_codigos": [
-            "9",
-            "2",
-            "3",
-            "1"
-        ],
+        "wsdl_homologacao": "https://municipio-homologacao.example.test/nfse?wsdl",
+        "wsdl_producao": "https://municipio-producao.example.test/nfse?wsdl",
+        "signature_mode": "optional",
         "soap_operation": "RecepcionarLoteRpsSincrono",
         "supported_operations": [
+            "emitir",
             "emitir_sincrono",
             "consultar_lote",
             "consultar_nfse_rps",
             "consultar_nfse_numero",
-            "cancelar_nfse"
+            "cancelar_nfse",
+            "substituir_nfse"
         ],
-        "municipio_nome": "Belem",
-        "source": "legacy_alias"
+        "source": "legacy_alias",
+        "deprecated_alias_of": "ABRASF_SHARED",
+        "deprecation_notice": "DSF permanece apenas como alias legado temporario. Use ABRASF_SHARED para novos municipios e migracoes.",
+        "provider_note": "Alias legado temporário: migrar municípios DSF para ABRASF_SHARED.",
+        "soap_operations": {
+            "emitir": "RecepcionarLoteRpsSincrono",
+            "consultar_lote": "ConsultarLoteRps",
+            "consultar_nfse_numero": "ConsultarNfseServicoPrestado",
+            "consultar_nfse_rps": "ConsultarNfsePorRps",
+            "cancelar_nfse": "CancelarNfse",
+            "substituir_nfse": "SubstituirNfse"
+        }
     },
     "EGOVERNE": {
         "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\EgoverneProvider",
         "layout_family": "EGOVERNE",
         "schema_root": "resources/nfse/schemas/EGOVERNE",
-        "xsd_entrypoints": {},
-        "transport": "soap"
+        "xsd_entrypoints": [],
+        "transport": "soap",
+        "supported_operations": [
+            "emitir",
+            "consultar_lote",
+            "consultar_nfse_numero",
+            "consultar_nfse_rps",
+            "cancelar_nfse",
+            "substituir_nfse"
+        ],
+        "soap_operations": {
+            "emitir": "RecepcionarLoteRpsSincrono",
+            "consultar_lote": "ConsultarLoteRps",
+            "consultar_nfse_numero": "ConsultarNfseServicoPrestado",
+            "consultar_nfse_rps": "ConsultarNfsePorRps",
+            "cancelar_nfse": "CancelarNfse",
+            "substituir_nfse": "SubstituirNfse"
+        }
     },
     "EGOVERNEISS": {
         "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\EgoverneissProvider",
         "layout_family": "EGOVERNEISS",
         "schema_root": "resources/nfse/schemas/EGOVERNEISS",
-        "xsd_entrypoints": {},
-        "transport": "soap"
+        "xsd_entrypoints": [],
+        "transport": "soap",
+        "supported_operations": [
+            "emitir",
+            "consultar_lote",
+            "consultar_nfse_numero",
+            "consultar_nfse_rps",
+            "cancelar_nfse",
+            "substituir_nfse"
+        ],
+        "soap_operations": {
+            "emitir": "RecepcionarLoteRpsSincrono",
+            "consultar_lote": "ConsultarLoteRps",
+            "consultar_nfse_numero": "ConsultarNfseServicoPrestado",
+            "consultar_nfse_rps": "ConsultarNfsePorRps",
+            "cancelar_nfse": "CancelarNfse",
+            "substituir_nfse": "SubstituirNfse"
+        }
     },
     "EL": {
         "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\ElProvider",
         "layout_family": "EL",
         "schema_root": "resources/nfse/schemas/EL",
-        "xsd_entrypoints": {},
-        "transport": "soap"
+        "xsd_entrypoints": [],
+        "transport": "soap",
+        "supported_operations": [
+            "emitir",
+            "consultar_lote",
+            "consultar_nfse_numero",
+            "consultar_nfse_rps",
+            "cancelar_nfse",
+            "substituir_nfse"
+        ],
+        "soap_operations": {
+            "emitir": "RecepcionarLoteRpsSincrono",
+            "consultar_lote": "ConsultarLoteRps",
+            "consultar_nfse_numero": "ConsultarNfseServicoPrestado",
+            "consultar_nfse_rps": "ConsultarNfsePorRps",
+            "cancelar_nfse": "CancelarNfse",
+            "substituir_nfse": "SubstituirNfse"
+        }
     },
     "ELOTECH": {
         "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\ElotechProvider",
         "layout_family": "ELOTECH",
         "schema_root": "resources/nfse/schemas/ELOTECH",
-        "xsd_entrypoints": {},
-        "transport": "soap"
+        "xsd_entrypoints": [],
+        "transport": "soap",
+        "supported_operations": [
+            "emitir",
+            "consultar_lote",
+            "consultar_nfse_numero",
+            "consultar_nfse_rps",
+            "cancelar_nfse",
+            "substituir_nfse"
+        ],
+        "soap_operations": {
+            "emitir": "RecepcionarLoteRpsSincrono",
+            "consultar_lote": "ConsultarLoteRps",
+            "consultar_nfse_numero": "ConsultarNfseServicoPrestado",
+            "consultar_nfse_rps": "ConsultarNfsePorRps",
+            "cancelar_nfse": "CancelarNfse",
+            "substituir_nfse": "SubstituirNfse"
+        }
     },
     "EMBRAS": {
         "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\EmbrasProvider",
         "layout_family": "EMBRAS",
         "schema_root": "resources/nfse/schemas/EMBRAS",
-        "xsd_entrypoints": {},
-        "transport": "soap"
+        "xsd_entrypoints": [],
+        "transport": "soap",
+        "supported_operations": [
+            "emitir",
+            "consultar_lote",
+            "consultar_nfse_numero",
+            "consultar_nfse_rps",
+            "cancelar_nfse",
+            "substituir_nfse"
+        ],
+        "soap_operations": {
+            "emitir": "RecepcionarLoteRpsSincrono",
+            "consultar_lote": "ConsultarLoteRps",
+            "consultar_nfse_numero": "ConsultarNfseServicoPrestado",
+            "consultar_nfse_rps": "ConsultarNfsePorRps",
+            "cancelar_nfse": "CancelarNfse",
+            "substituir_nfse": "SubstituirNfse"
+        }
     },
     "EQUIPLANO": {
         "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\EquiplanoProvider",
         "layout_family": "EQUIPLANO",
         "schema_root": "resources/nfse/schemas/EQUIPLANO",
-        "xsd_entrypoints": {},
-        "transport": "soap"
+        "xsd_entrypoints": [],
+        "transport": "soap",
+        "supported_operations": [
+            "emitir",
+            "consultar_lote",
+            "consultar_nfse_numero",
+            "consultar_nfse_rps",
+            "cancelar_nfse",
+            "substituir_nfse"
+        ],
+        "soap_operations": {
+            "emitir": "RecepcionarLoteRpsSincrono",
+            "consultar_lote": "ConsultarLoteRps",
+            "consultar_nfse_numero": "ConsultarNfseServicoPrestado",
+            "consultar_nfse_rps": "ConsultarNfsePorRps",
+            "cancelar_nfse": "CancelarNfse",
+            "substituir_nfse": "SubstituirNfse"
+        }
     },
     "E_RECEITA": {
         "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\EReceitaProvider",
         "layout_family": "E_RECEITA",
         "schema_root": "resources/nfse/schemas/E_RECEITA",
-        "xsd_entrypoints": {},
-        "transport": "soap"
+        "xsd_entrypoints": [],
+        "transport": "soap",
+        "supported_operations": [
+            "emitir",
+            "consultar_lote",
+            "consultar_nfse_numero",
+            "consultar_nfse_rps",
+            "cancelar_nfse",
+            "substituir_nfse"
+        ],
+        "soap_operations": {
+            "emitir": "RecepcionarLoteRpsSincrono",
+            "consultar_lote": "ConsultarLoteRps",
+            "consultar_nfse_numero": "ConsultarNfseServicoPrestado",
+            "consultar_nfse_rps": "ConsultarNfsePorRps",
+            "cancelar_nfse": "CancelarNfse",
+            "substituir_nfse": "SubstituirNfse"
+        }
     },
     "FINTEL": {
         "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\FintelProvider",
         "layout_family": "FINTEL",
         "schema_root": "resources/nfse/schemas/FINTEL",
-        "xsd_entrypoints": {},
-        "transport": "soap"
+        "xsd_entrypoints": [],
+        "transport": "soap",
+        "supported_operations": [
+            "emitir",
+            "consultar_lote",
+            "consultar_nfse_numero",
+            "consultar_nfse_rps",
+            "cancelar_nfse",
+            "substituir_nfse"
+        ],
+        "soap_operations": {
+            "emitir": "RecepcionarLoteRpsSincrono",
+            "consultar_lote": "ConsultarLoteRps",
+            "consultar_nfse_numero": "ConsultarNfseServicoPrestado",
+            "consultar_nfse_rps": "ConsultarNfsePorRps",
+            "cancelar_nfse": "CancelarNfse",
+            "substituir_nfse": "SubstituirNfse"
+        }
     },
     "FIORILLI": {
         "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\FiorilliProvider",
         "layout_family": "FIORILLI",
         "schema_root": "resources/nfse/schemas/FIORILLI",
-        "xsd_entrypoints": {},
-        "transport": "soap"
+        "xsd_entrypoints": [],
+        "transport": "soap",
+        "supported_operations": [
+            "emitir",
+            "consultar_lote",
+            "consultar_nfse_numero",
+            "consultar_nfse_rps",
+            "cancelar_nfse",
+            "substituir_nfse"
+        ],
+        "soap_operations": {
+            "emitir": "RecepcionarLoteRpsSincrono",
+            "consultar_lote": "ConsultarLoteRps",
+            "consultar_nfse_numero": "ConsultarNfseServicoPrestado",
+            "consultar_nfse_rps": "ConsultarNfsePorRps",
+            "cancelar_nfse": "CancelarNfse",
+            "substituir_nfse": "SubstituirNfse"
+        }
     },
     "FISCO": {
         "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\FiscoProvider",
         "layout_family": "FISCO",
         "schema_root": "resources/nfse/schemas/FISCO",
-        "xsd_entrypoints": {},
-        "transport": "soap"
+        "xsd_entrypoints": [],
+        "transport": "soap",
+        "supported_operations": [
+            "emitir",
+            "consultar_lote",
+            "consultar_nfse_numero",
+            "consultar_nfse_rps",
+            "cancelar_nfse",
+            "substituir_nfse"
+        ],
+        "soap_operations": {
+            "emitir": "RecepcionarLoteRpsSincrono",
+            "consultar_lote": "ConsultarLoteRps",
+            "consultar_nfse_numero": "ConsultarNfseServicoPrestado",
+            "consultar_nfse_rps": "ConsultarNfsePorRps",
+            "cancelar_nfse": "CancelarNfse",
+            "substituir_nfse": "SubstituirNfse"
+        }
     },
     "GIAP": {
         "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\GiapProvider",
         "layout_family": "GIAP",
         "schema_root": "resources/nfse/schemas/GIAP",
-        "xsd_entrypoints": {},
-        "transport": "soap"
+        "xsd_entrypoints": [],
+        "transport": "soap",
+        "supported_operations": [
+            "emitir",
+            "consultar_lote",
+            "consultar_nfse_numero",
+            "consultar_nfse_rps",
+            "cancelar_nfse",
+            "substituir_nfse"
+        ],
+        "soap_operations": {
+            "emitir": "RecepcionarLoteRpsSincrono",
+            "consultar_lote": "ConsultarLoteRps",
+            "consultar_nfse_numero": "ConsultarNfseServicoPrestado",
+            "consultar_nfse_rps": "ConsultarNfsePorRps",
+            "cancelar_nfse": "CancelarNfse",
+            "substituir_nfse": "SubstituirNfse"
+        }
     },
     "GIF": {
         "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\GifProvider",
         "layout_family": "GIF",
         "schema_root": "resources/nfse/schemas/GIF",
-        "xsd_entrypoints": {},
-        "transport": "soap"
+        "xsd_entrypoints": [],
+        "transport": "soap",
+        "supported_operations": [
+            "emitir",
+            "consultar_lote",
+            "consultar_nfse_numero",
+            "consultar_nfse_rps",
+            "cancelar_nfse",
+            "substituir_nfse"
+        ],
+        "soap_operations": {
+            "emitir": "RecepcionarLoteRpsSincrono",
+            "consultar_lote": "ConsultarLoteRps",
+            "consultar_nfse_numero": "ConsultarNfseServicoPrestado",
+            "consultar_nfse_rps": "ConsultarNfsePorRps",
+            "cancelar_nfse": "CancelarNfse",
+            "substituir_nfse": "SubstituirNfse"
+        }
     },
     "GINFES": {
         "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\GinfesProvider",
         "layout_family": "GINFES",
         "schema_root": "resources/nfse/schemas/GINFES",
-        "xsd_entrypoints": {},
-        "transport": "soap"
+        "xsd_entrypoints": [],
+        "transport": "soap",
+        "supported_operations": [
+            "emitir",
+            "consultar_lote",
+            "consultar_nfse_numero",
+            "consultar_nfse_rps",
+            "cancelar_nfse",
+            "substituir_nfse"
+        ],
+        "soap_operations": {
+            "emitir": "RecepcionarLoteRpsSincrono",
+            "consultar_lote": "ConsultarLoteRps",
+            "consultar_nfse_numero": "ConsultarNfseServicoPrestado",
+            "consultar_nfse_rps": "ConsultarNfsePorRps",
+            "cancelar_nfse": "CancelarNfse",
+            "substituir_nfse": "SubstituirNfse"
+        }
     },
     "GISSONLINE": {
         "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\GissonlineProvider",
         "layout_family": "GISSONLINE",
         "schema_root": "resources/nfse/schemas/GISSONLINE",
-        "xsd_entrypoints": {},
-        "transport": "soap"
+        "xsd_entrypoints": [],
+        "transport": "soap",
+        "supported_operations": [
+            "emitir",
+            "consultar_lote",
+            "consultar_nfse_numero",
+            "consultar_nfse_rps",
+            "cancelar_nfse",
+            "substituir_nfse"
+        ],
+        "soap_operations": {
+            "emitir": "RecepcionarLoteRpsSincrono",
+            "consultar_lote": "ConsultarLoteRps",
+            "consultar_nfse_numero": "ConsultarNfseServicoPrestado",
+            "consultar_nfse_rps": "ConsultarNfsePorRps",
+            "cancelar_nfse": "CancelarNfse",
+            "substituir_nfse": "SubstituirNfse"
+        }
     },
     "HM2SOLUCOES": {
         "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\Hm2solucoesProvider",
         "layout_family": "HM2SOLUCOES",
         "schema_root": "resources/nfse/schemas/HM2SOLUCOES",
-        "xsd_entrypoints": {},
-        "transport": "soap"
+        "xsd_entrypoints": [],
+        "transport": "soap",
+        "supported_operations": [
+            "emitir",
+            "consultar_lote",
+            "consultar_nfse_numero",
+            "consultar_nfse_rps",
+            "cancelar_nfse",
+            "substituir_nfse"
+        ],
+        "soap_operations": {
+            "emitir": "RecepcionarLoteRpsSincrono",
+            "consultar_lote": "ConsultarLoteRps",
+            "consultar_nfse_numero": "ConsultarNfseServicoPrestado",
+            "consultar_nfse_rps": "ConsultarNfsePorRps",
+            "cancelar_nfse": "CancelarNfse",
+            "substituir_nfse": "SubstituirNfse"
+        }
     },
     "IIBRASIL": {
         "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\IibrasilProvider",
         "layout_family": "IIBRASIL",
         "schema_root": "resources/nfse/schemas/IIBRASIL",
-        "xsd_entrypoints": {},
-        "transport": "soap"
+        "xsd_entrypoints": [],
+        "transport": "soap",
+        "supported_operations": [
+            "emitir",
+            "consultar_lote",
+            "consultar_nfse_numero",
+            "consultar_nfse_rps",
+            "cancelar_nfse",
+            "substituir_nfse"
+        ],
+        "soap_operations": {
+            "emitir": "RecepcionarLoteRpsSincrono",
+            "consultar_lote": "ConsultarLoteRps",
+            "consultar_nfse_numero": "ConsultarNfseServicoPrestado",
+            "consultar_nfse_rps": "ConsultarNfsePorRps",
+            "cancelar_nfse": "CancelarNfse",
+            "substituir_nfse": "SubstituirNfse"
+        }
     },
     "INDAIATUBA_SP": {
         "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\IndaiatubaSpProvider",
         "layout_family": "INDAIATUBA_SP",
         "schema_root": "resources/nfse/schemas/INDAIATUBA_SP",
-        "xsd_entrypoints": {},
-        "transport": "soap"
+        "xsd_entrypoints": [],
+        "transport": "soap",
+        "supported_operations": [
+            "emitir",
+            "consultar_lote",
+            "consultar_nfse_numero",
+            "consultar_nfse_rps",
+            "cancelar_nfse",
+            "substituir_nfse"
+        ],
+        "soap_operations": {
+            "emitir": "RecepcionarLoteRpsSincrono",
+            "consultar_lote": "ConsultarLoteRps",
+            "consultar_nfse_numero": "ConsultarNfseServicoPrestado",
+            "consultar_nfse_rps": "ConsultarNfsePorRps",
+            "cancelar_nfse": "CancelarNfse",
+            "substituir_nfse": "SubstituirNfse"
+        }
     },
     "INTERSOL": {
         "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\IntersolProvider",
         "layout_family": "INTERSOL",
         "schema_root": "resources/nfse/schemas/INTERSOL",
-        "xsd_entrypoints": {},
-        "transport": "soap"
+        "xsd_entrypoints": [],
+        "transport": "soap",
+        "supported_operations": [
+            "emitir",
+            "consultar_lote",
+            "consultar_nfse_numero",
+            "consultar_nfse_rps",
+            "cancelar_nfse",
+            "substituir_nfse"
+        ],
+        "soap_operations": {
+            "emitir": "RecepcionarLoteRpsSincrono",
+            "consultar_lote": "ConsultarLoteRps",
+            "consultar_nfse_numero": "ConsultarNfseServicoPrestado",
+            "consultar_nfse_rps": "ConsultarNfsePorRps",
+            "cancelar_nfse": "CancelarNfse",
+            "substituir_nfse": "SubstituirNfse"
+        }
     },
     "IPM": {
         "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\IpmProvider",
         "layout_family": "IPM",
         "schema_root": "resources/nfse/schemas/IPM",
-        "xsd_entrypoints": {},
-        "transport": "soap"
+        "xsd_entrypoints": [],
+        "transport": "soap",
+        "supported_operations": [
+            "emitir",
+            "consultar_lote",
+            "consultar_nfse_numero",
+            "consultar_nfse_rps",
+            "cancelar_nfse",
+            "substituir_nfse"
+        ],
+        "soap_operations": {
+            "emitir": "RecepcionarLoteRpsSincrono",
+            "consultar_lote": "ConsultarLoteRps",
+            "consultar_nfse_numero": "ConsultarNfseServicoPrestado",
+            "consultar_nfse_rps": "ConsultarNfsePorRps",
+            "cancelar_nfse": "CancelarNfse",
+            "substituir_nfse": "SubstituirNfse"
+        }
     },
     "ISSNET": {
         "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\IssnetProvider",
         "layout_family": "ISSNET",
         "schema_root": "resources/nfse/schemas/ISSNET",
-        "xsd_entrypoints": {},
-        "transport": "soap"
+        "xsd_entrypoints": [],
+        "transport": "soap",
+        "supported_operations": [
+            "emitir",
+            "consultar_lote",
+            "consultar_nfse_numero",
+            "consultar_nfse_rps",
+            "cancelar_nfse",
+            "substituir_nfse"
+        ],
+        "soap_operations": {
+            "emitir": "RecepcionarLoteRpsSincrono",
+            "consultar_lote": "ConsultarLoteRps",
+            "consultar_nfse_numero": "ConsultarNfseServicoPrestado",
+            "consultar_nfse_rps": "ConsultarNfsePorRps",
+            "cancelar_nfse": "CancelarNfse",
+            "substituir_nfse": "SubstituirNfse"
+        }
+    },
+    "ISSONLINE_ASSESSORPUBLICO": {
+        "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\IssonlineAssessorpublicoProvider",
+        "layout_family": "ISSONLINE_ASSESSORPUBLICO",
+        "schema_root": "resources/nfse/schemas/ISSONLINE_ASSESSORPUBLICO",
+        "xsd_entrypoints": [],
+        "transport": "soap",
+        "supported_operations": [
+            "emitir",
+            "consultar_lote",
+            "consultar_nfse_numero",
+            "consultar_nfse_rps",
+            "cancelar_nfse",
+            "substituir_nfse"
+        ],
+        "soap_operations": {
+            "emitir": "RecepcionarLoteRpsSincrono",
+            "consultar_lote": "ConsultarLoteRps",
+            "consultar_nfse_numero": "ConsultarNfseServicoPrestado",
+            "consultar_nfse_rps": "ConsultarNfsePorRps",
+            "cancelar_nfse": "CancelarNfse",
+            "substituir_nfse": "SubstituirNfse"
+        }
     },
     "ISSWEB_AM": {
         "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\IsswebProvider",
@@ -396,133 +1069,414 @@
         },
         "auth": {
             "chave": ""
-        }
-    },
-    "ISSONLINE_ASSESSORPUBLICO": {
-        "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\IssonlineAssessorpublicoProvider",
-        "layout_family": "ISSONLINE_ASSESSORPUBLICO",
-        "schema_root": "resources/nfse/schemas/ISSONLINE_ASSESSORPUBLICO",
-        "xsd_entrypoints": {},
-        "transport": "soap"
+        },
+        "supported_operations": [
+            "emitir",
+            "consultar",
+            "cancelar",
+            "baixar_danfse"
+        ]
     },
     "JLSOFT": {
         "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\JlsoftProvider",
         "layout_family": "JLSOFT",
         "schema_root": "resources/nfse/schemas/JLSOFT",
-        "xsd_entrypoints": {},
-        "transport": "soap"
+        "xsd_entrypoints": [],
+        "transport": "soap",
+        "supported_operations": [
+            "emitir",
+            "consultar_lote",
+            "consultar_nfse_numero",
+            "consultar_nfse_rps",
+            "cancelar_nfse",
+            "substituir_nfse"
+        ],
+        "soap_operations": {
+            "emitir": "RecepcionarLoteRpsSincrono",
+            "consultar_lote": "ConsultarLoteRps",
+            "consultar_nfse_numero": "ConsultarNfseServicoPrestado",
+            "consultar_nfse_rps": "ConsultarNfsePorRps",
+            "cancelar_nfse": "CancelarNfse",
+            "substituir_nfse": "SubstituirNfse"
+        }
     },
     "LIBRE": {
         "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\LibreProvider",
         "layout_family": "LIBRE",
         "schema_root": "resources/nfse/schemas/LIBRE",
-        "xsd_entrypoints": {},
-        "transport": "soap"
+        "xsd_entrypoints": [],
+        "transport": "soap",
+        "supported_operations": [
+            "emitir",
+            "consultar_lote",
+            "consultar_nfse_numero",
+            "consultar_nfse_rps",
+            "cancelar_nfse",
+            "substituir_nfse"
+        ],
+        "soap_operations": {
+            "emitir": "RecepcionarLoteRpsSincrono",
+            "consultar_lote": "ConsultarLoteRps",
+            "consultar_nfse_numero": "ConsultarNfseServicoPrestado",
+            "consultar_nfse_rps": "ConsultarNfsePorRps",
+            "cancelar_nfse": "CancelarNfse",
+            "substituir_nfse": "SubstituirNfse"
+        }
+    },
+    "MANAUS_AM": {
+        "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\ManausAmProvider",
+        "layout_family": "MANAUS_AM",
+        "schema_root": "resources/nfse/schemas/MANAUS_AM",
+        "xsd_entrypoints": [],
+        "transport": "soap",
+        "source": "uninfe_legacy_provider_catalog",
+        "deprecation": {
+            "status": "legacy",
+            "canonical_provider_family": "nfse_nacional",
+            "notes": "Manaus migrou para fluxo nacional; manter familia legada para compatibilidade documental com Uninfe."
+        },
+        "supported_operations": [
+            "emitir"
+        ]
     },
     "MEGASOFT": {
         "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\MegasoftProvider",
         "layout_family": "MEGASOFT",
         "schema_root": "resources/nfse/schemas/MEGASOFT",
-        "xsd_entrypoints": {},
-        "transport": "soap"
+        "xsd_entrypoints": [],
+        "transport": "soap",
+        "supported_operations": [
+            "emitir",
+            "consultar_lote",
+            "consultar_nfse_numero",
+            "consultar_nfse_rps",
+            "cancelar_nfse",
+            "substituir_nfse"
+        ],
+        "soap_operations": {
+            "emitir": "RecepcionarLoteRpsSincrono",
+            "consultar_lote": "ConsultarLoteRps",
+            "consultar_nfse_numero": "ConsultarNfseServicoPrestado",
+            "consultar_nfse_rps": "ConsultarNfsePorRps",
+            "cancelar_nfse": "CancelarNfse",
+            "substituir_nfse": "SubstituirNfse"
+        }
     },
     "MEMORY": {
         "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\MemoryProvider",
         "layout_family": "MEMORY",
         "schema_root": "resources/nfse/schemas/MEMORY",
-        "xsd_entrypoints": {},
-        "transport": "soap"
+        "xsd_entrypoints": [],
+        "transport": "soap",
+        "supported_operations": [
+            "emitir",
+            "consultar_lote",
+            "consultar_nfse_numero",
+            "consultar_nfse_rps",
+            "cancelar_nfse",
+            "substituir_nfse"
+        ],
+        "soap_operations": {
+            "emitir": "RecepcionarLoteRpsSincrono",
+            "consultar_lote": "ConsultarLoteRps",
+            "consultar_nfse_numero": "ConsultarNfseServicoPrestado",
+            "consultar_nfse_rps": "ConsultarNfsePorRps",
+            "cancelar_nfse": "CancelarNfse",
+            "substituir_nfse": "SubstituirNfse"
+        }
     },
     "METROPOLIS": {
         "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\MetropolisProvider",
         "layout_family": "METROPOLIS",
         "schema_root": "resources/nfse/schemas/METROPOLIS",
-        "xsd_entrypoints": {},
-        "transport": "soap"
+        "xsd_entrypoints": [],
+        "transport": "soap",
+        "supported_operations": [
+            "emitir",
+            "consultar_lote",
+            "consultar_nfse_numero",
+            "consultar_nfse_rps",
+            "cancelar_nfse",
+            "substituir_nfse"
+        ],
+        "soap_operations": {
+            "emitir": "RecepcionarLoteRpsSincrono",
+            "consultar_lote": "ConsultarLoteRps",
+            "consultar_nfse_numero": "ConsultarNfseServicoPrestado",
+            "consultar_nfse_rps": "ConsultarNfsePorRps",
+            "cancelar_nfse": "CancelarNfse",
+            "substituir_nfse": "SubstituirNfse"
+        }
     },
     "MODERNIZACAO_PUBLICA": {
         "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\ModernizacaoPublicaProvider",
         "layout_family": "MODERNIZACAO_PUBLICA",
         "schema_root": "resources/nfse/schemas/MODERNIZACAO_PUBLICA",
-        "xsd_entrypoints": {},
-        "transport": "soap"
+        "xsd_entrypoints": [],
+        "transport": "soap",
+        "supported_operations": [
+            "emitir",
+            "consultar_lote",
+            "consultar_nfse_numero",
+            "consultar_nfse_rps",
+            "cancelar_nfse",
+            "substituir_nfse"
+        ],
+        "soap_operations": {
+            "emitir": "RecepcionarLoteRpsSincrono",
+            "consultar_lote": "ConsultarLoteRps",
+            "consultar_nfse_numero": "ConsultarNfseServicoPrestado",
+            "consultar_nfse_rps": "ConsultarNfsePorRps",
+            "cancelar_nfse": "CancelarNfse",
+            "substituir_nfse": "SubstituirNfse"
+        }
     },
     "NACIONAL": {
         "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\NacionalProvider",
         "layout_family": "NACIONAL",
         "schema_root": "resources/nfse/schemas/NACIONAL",
-        "xsd_entrypoints": {},
-        "transport": "soap"
+        "xsd_entrypoints": [],
+        "transport": "soap",
+        "supported_operations": [
+            "emitir",
+            "consultar",
+            "cancelar",
+            "substituir",
+            "consultar_nfse_rps",
+            "consultar_lote",
+            "baixar_xml",
+            "baixar_danfse"
+        ]
     },
     "NATALENSE": {
         "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\NatalenseProvider",
         "layout_family": "NATALENSE",
         "schema_root": "resources/nfse/schemas/NATALENSE",
-        "xsd_entrypoints": {},
-        "transport": "soap"
+        "xsd_entrypoints": [],
+        "transport": "soap",
+        "supported_operations": [
+            "emitir",
+            "consultar_lote",
+            "consultar_nfse_numero",
+            "consultar_nfse_rps",
+            "cancelar_nfse",
+            "substituir_nfse"
+        ],
+        "soap_operations": {
+            "emitir": "RecepcionarLoteRpsSincrono",
+            "consultar_lote": "ConsultarLoteRps",
+            "consultar_nfse_numero": "ConsultarNfseServicoPrestado",
+            "consultar_nfse_rps": "ConsultarNfsePorRps",
+            "cancelar_nfse": "CancelarNfse",
+            "substituir_nfse": "SubstituirNfse"
+        }
     },
     "NOBESISTEMAS": {
         "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\NobesistemasProvider",
         "layout_family": "NOBESISTEMAS",
         "schema_root": "resources/nfse/schemas/NOBESISTEMAS",
-        "xsd_entrypoints": {},
-        "transport": "soap"
+        "xsd_entrypoints": [],
+        "transport": "soap",
+        "supported_operations": [
+            "emitir",
+            "consultar_lote",
+            "consultar_nfse_numero",
+            "consultar_nfse_rps",
+            "cancelar_nfse",
+            "substituir_nfse"
+        ],
+        "soap_operations": {
+            "emitir": "RecepcionarLoteRpsSincrono",
+            "consultar_lote": "ConsultarLoteRps",
+            "consultar_nfse_numero": "ConsultarNfseServicoPrestado",
+            "consultar_nfse_rps": "ConsultarNfsePorRps",
+            "cancelar_nfse": "CancelarNfse",
+            "substituir_nfse": "SubstituirNfse"
+        }
     },
     "NOTAINTELIGENTE": {
         "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\NotainteligenteProvider",
         "layout_family": "NOTAINTELIGENTE",
         "schema_root": "resources/nfse/schemas/NOTAINTELIGENTE",
-        "xsd_entrypoints": {},
-        "transport": "soap"
+        "xsd_entrypoints": [],
+        "transport": "soap",
+        "supported_operations": [
+            "emitir",
+            "consultar_lote",
+            "consultar_nfse_numero",
+            "consultar_nfse_rps",
+            "cancelar_nfse",
+            "substituir_nfse"
+        ],
+        "soap_operations": {
+            "emitir": "RecepcionarLoteRpsSincrono",
+            "consultar_lote": "ConsultarLoteRps",
+            "consultar_nfse_numero": "ConsultarNfseServicoPrestado",
+            "consultar_nfse_rps": "ConsultarNfsePorRps",
+            "cancelar_nfse": "CancelarNfse",
+            "substituir_nfse": "SubstituirNfse"
+        }
     },
     "PAULISTANA": {
         "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\PaulistanaProvider",
         "layout_family": "PAULISTANA",
         "schema_root": "resources/nfse/schemas/PAULISTANA",
-        "xsd_entrypoints": {},
-        "transport": "soap"
+        "xsd_entrypoints": [],
+        "transport": "soap",
+        "supported_operations": [
+            "emitir",
+            "consultar_lote",
+            "consultar_nfse_numero",
+            "consultar_nfse_rps",
+            "cancelar_nfse",
+            "substituir_nfse"
+        ],
+        "soap_operations": {
+            "emitir": "RecepcionarLoteRpsSincrono",
+            "consultar_lote": "ConsultarLoteRps",
+            "consultar_nfse_numero": "ConsultarNfseServicoPrestado",
+            "consultar_nfse_rps": "ConsultarNfsePorRps",
+            "cancelar_nfse": "CancelarNfse",
+            "substituir_nfse": "SubstituirNfse"
+        }
     },
     "PORTAL_FACIL": {
         "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\PortalFacilProvider",
         "layout_family": "PORTAL_FACIL",
         "schema_root": "resources/nfse/schemas/PORTAL_FACIL",
-        "xsd_entrypoints": {},
-        "transport": "soap"
+        "xsd_entrypoints": [],
+        "transport": "soap",
+        "supported_operations": [
+            "emitir",
+            "consultar_lote",
+            "consultar_nfse_numero",
+            "consultar_nfse_rps",
+            "cancelar_nfse",
+            "substituir_nfse"
+        ],
+        "soap_operations": {
+            "emitir": "RecepcionarLoteRpsSincrono",
+            "consultar_lote": "ConsultarLoteRps",
+            "consultar_nfse_numero": "ConsultarNfseServicoPrestado",
+            "consultar_nfse_rps": "ConsultarNfsePorRps",
+            "cancelar_nfse": "CancelarNfse",
+            "substituir_nfse": "SubstituirNfse"
+        }
     },
     "PRIMAX": {
         "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\PrimaxProvider",
         "layout_family": "PRIMAX",
         "schema_root": "resources/nfse/schemas/PRIMAX",
-        "xsd_entrypoints": {},
-        "transport": "soap"
+        "xsd_entrypoints": [],
+        "transport": "soap",
+        "supported_operations": [
+            "emitir",
+            "consultar_lote",
+            "consultar_nfse_numero",
+            "consultar_nfse_rps",
+            "cancelar_nfse",
+            "substituir_nfse"
+        ],
+        "soap_operations": {
+            "emitir": "RecepcionarLoteRpsSincrono",
+            "consultar_lote": "ConsultarLoteRps",
+            "consultar_nfse_numero": "ConsultarNfseServicoPrestado",
+            "consultar_nfse_rps": "ConsultarNfsePorRps",
+            "cancelar_nfse": "CancelarNfse",
+            "substituir_nfse": "SubstituirNfse"
+        }
     },
     "PRODATA": {
         "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\ProdataProvider",
         "layout_family": "PRODATA",
         "schema_root": "resources/nfse/schemas/PRODATA",
-        "xsd_entrypoints": {},
-        "transport": "soap"
+        "xsd_entrypoints": [],
+        "transport": "soap",
+        "supported_operations": [
+            "emitir",
+            "consultar_lote",
+            "consultar_nfse_numero",
+            "consultar_nfse_rps",
+            "cancelar_nfse",
+            "substituir_nfse"
+        ],
+        "soap_operations": {
+            "emitir": "RecepcionarLoteRpsSincrono",
+            "consultar_lote": "ConsultarLoteRps",
+            "consultar_nfse_numero": "ConsultarNfseServicoPrestado",
+            "consultar_nfse_rps": "ConsultarNfsePorRps",
+            "cancelar_nfse": "CancelarNfse",
+            "substituir_nfse": "SubstituirNfse"
+        }
     },
     "PRODEB": {
         "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\ProdebProvider",
         "layout_family": "PRODEB",
         "schema_root": "resources/nfse/schemas/PRODEB",
-        "xsd_entrypoints": {},
-        "transport": "soap"
+        "xsd_entrypoints": [],
+        "transport": "soap",
+        "supported_operations": [
+            "emitir",
+            "consultar_lote",
+            "consultar_nfse_numero",
+            "consultar_nfse_rps",
+            "cancelar_nfse",
+            "substituir_nfse"
+        ],
+        "soap_operations": {
+            "emitir": "RecepcionarLoteRpsSincrono",
+            "consultar_lote": "ConsultarLoteRps",
+            "consultar_nfse_numero": "ConsultarNfseServicoPrestado",
+            "consultar_nfse_rps": "ConsultarNfsePorRps",
+            "cancelar_nfse": "CancelarNfse",
+            "substituir_nfse": "SubstituirNfse"
+        }
     },
     "PRONIN": {
         "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\ProninProvider",
         "layout_family": "PRONIN",
         "schema_root": "resources/nfse/schemas/PRONIN",
-        "xsd_entrypoints": {},
-        "transport": "soap"
+        "xsd_entrypoints": [],
+        "transport": "soap",
+        "supported_operations": [
+            "emitir",
+            "consultar_lote",
+            "consultar_nfse_numero",
+            "consultar_nfse_rps",
+            "cancelar_nfse",
+            "substituir_nfse"
+        ],
+        "soap_operations": {
+            "emitir": "RecepcionarLoteRpsSincrono",
+            "consultar_lote": "ConsultarLoteRps",
+            "consultar_nfse_numero": "ConsultarNfseServicoPrestado",
+            "consultar_nfse_rps": "ConsultarNfsePorRps",
+            "cancelar_nfse": "CancelarNfse",
+            "substituir_nfse": "SubstituirNfse"
+        }
     },
     "PROPRIOBARUERISP": {
         "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\PropriobaruerispProvider",
         "layout_family": "PROPRIOBARUERISP",
         "schema_root": "resources/nfse/schemas/PROPRIOBARUERISP",
-        "xsd_entrypoints": {},
-        "transport": "soap"
+        "xsd_entrypoints": [],
+        "transport": "soap",
+        "supported_operations": [
+            "emitir",
+            "consultar_lote",
+            "consultar_nfse_numero",
+            "consultar_nfse_rps",
+            "cancelar_nfse",
+            "substituir_nfse"
+        ],
+        "soap_operations": {
+            "emitir": "RecepcionarLoteRpsSincrono",
+            "consultar_lote": "ConsultarLoteRps",
+            "consultar_nfse_numero": "ConsultarNfseServicoPrestado",
+            "consultar_nfse_rps": "ConsultarNfsePorRps",
+            "cancelar_nfse": "CancelarNfse",
+            "substituir_nfse": "SubstituirNfse"
+        }
     },
     "PUBLICA": {
         "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\PublicaProvider",
@@ -564,189 +1518,613 @@
             "visible_fields": [
                 "servico.cTribMun"
             ]
+        },
+        "soap_operations": {
+            "emitir": "RecepcionarLoteRpsSincrono",
+            "consultar_lote": "ConsultarLoteRps",
+            "consultar_nfse_numero": "ConsultarNfseServicoPrestado",
+            "consultar_nfse_rps": "ConsultarNfsePorRps",
+            "cancelar_nfse": "CancelarNfse",
+            "substituir_nfse": "SubstituirNfse"
         }
     },
     "PUBLICENTER": {
         "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\PublicenterProvider",
         "layout_family": "PUBLICENTER",
         "schema_root": "resources/nfse/schemas/PUBLICENTER",
-        "xsd_entrypoints": {},
-        "transport": "soap"
+        "xsd_entrypoints": [],
+        "transport": "soap",
+        "supported_operations": [
+            "emitir",
+            "consultar_lote",
+            "consultar_nfse_numero",
+            "consultar_nfse_rps",
+            "cancelar_nfse",
+            "substituir_nfse"
+        ],
+        "soap_operations": {
+            "emitir": "RecepcionarLoteRpsSincrono",
+            "consultar_lote": "ConsultarLoteRps",
+            "consultar_nfse_numero": "ConsultarNfseServicoPrestado",
+            "consultar_nfse_rps": "ConsultarNfsePorRps",
+            "cancelar_nfse": "CancelarNfse",
+            "substituir_nfse": "SubstituirNfse"
+        }
     },
     "PUBLIC_SOFT": {
         "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\PublicSoftProvider",
         "layout_family": "PUBLIC_SOFT",
         "schema_root": "resources/nfse/schemas/PUBLIC_SOFT",
-        "xsd_entrypoints": {},
-        "transport": "soap"
+        "xsd_entrypoints": [],
+        "transport": "soap",
+        "supported_operations": [
+            "emitir",
+            "consultar_lote",
+            "consultar_nfse_numero",
+            "consultar_nfse_rps",
+            "cancelar_nfse",
+            "substituir_nfse"
+        ],
+        "soap_operations": {
+            "emitir": "RecepcionarLoteRpsSincrono",
+            "consultar_lote": "ConsultarLoteRps",
+            "consultar_nfse_numero": "ConsultarNfseServicoPrestado",
+            "consultar_nfse_rps": "ConsultarNfsePorRps",
+            "cancelar_nfse": "CancelarNfse",
+            "substituir_nfse": "SubstituirNfse"
+        }
     },
     "QUASAR": {
         "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\QuasarProvider",
         "layout_family": "QUASAR",
         "schema_root": "resources/nfse/schemas/QUASAR",
-        "xsd_entrypoints": {},
-        "transport": "soap"
+        "xsd_entrypoints": [],
+        "transport": "soap",
+        "supported_operations": [
+            "emitir",
+            "consultar_lote",
+            "consultar_nfse_numero",
+            "consultar_nfse_rps",
+            "cancelar_nfse",
+            "substituir_nfse"
+        ],
+        "soap_operations": {
+            "emitir": "RecepcionarLoteRpsSincrono",
+            "consultar_lote": "ConsultarLoteRps",
+            "consultar_nfse_numero": "ConsultarNfseServicoPrestado",
+            "consultar_nfse_rps": "ConsultarNfsePorRps",
+            "cancelar_nfse": "CancelarNfse",
+            "substituir_nfse": "SubstituirNfse"
+        }
     },
     "RLZ_INFORMATICA": {
         "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\RlzInformaticaProvider",
         "layout_family": "RLZ_INFORMATICA",
         "schema_root": "resources/nfse/schemas/RLZ_INFORMATICA",
-        "xsd_entrypoints": {},
-        "transport": "soap"
+        "xsd_entrypoints": [],
+        "transport": "soap",
+        "supported_operations": [
+            "emitir",
+            "consultar_lote",
+            "consultar_nfse_numero",
+            "consultar_nfse_rps",
+            "cancelar_nfse",
+            "substituir_nfse"
+        ],
+        "soap_operations": {
+            "emitir": "RecepcionarLoteRpsSincrono",
+            "consultar_lote": "ConsultarLoteRps",
+            "consultar_nfse_numero": "ConsultarNfseServicoPrestado",
+            "consultar_nfse_rps": "ConsultarNfsePorRps",
+            "cancelar_nfse": "CancelarNfse",
+            "substituir_nfse": "SubstituirNfse"
+        }
     },
     "SALVADOR_BA": {
         "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\SalvadorBaProvider",
         "layout_family": "SALVADOR_BA",
         "schema_root": "resources/nfse/schemas/SALVADOR_BA",
-        "xsd_entrypoints": {},
-        "transport": "soap"
+        "xsd_entrypoints": [],
+        "transport": "soap",
+        "supported_operations": [
+            "emitir",
+            "consultar_lote",
+            "consultar_nfse_numero",
+            "consultar_nfse_rps",
+            "cancelar_nfse",
+            "substituir_nfse"
+        ],
+        "soap_operations": {
+            "emitir": "RecepcionarLoteRpsSincrono",
+            "consultar_lote": "ConsultarLoteRps",
+            "consultar_nfse_numero": "ConsultarNfseServicoPrestado",
+            "consultar_nfse_rps": "ConsultarNfsePorRps",
+            "cancelar_nfse": "CancelarNfse",
+            "substituir_nfse": "SubstituirNfse"
+        }
     },
     "SH3": {
         "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\Sh3Provider",
         "layout_family": "SH3",
         "schema_root": "resources/nfse/schemas/SH3",
-        "xsd_entrypoints": {},
-        "transport": "soap"
+        "xsd_entrypoints": [],
+        "transport": "soap",
+        "supported_operations": [
+            "emitir",
+            "consultar_lote",
+            "consultar_nfse_numero",
+            "consultar_nfse_rps",
+            "cancelar_nfse",
+            "substituir_nfse"
+        ],
+        "soap_operations": {
+            "emitir": "RecepcionarLoteRpsSincrono",
+            "consultar_lote": "ConsultarLoteRps",
+            "consultar_nfse_numero": "ConsultarNfseServicoPrestado",
+            "consultar_nfse_rps": "ConsultarNfsePorRps",
+            "cancelar_nfse": "CancelarNfse",
+            "substituir_nfse": "SubstituirNfse"
+        }
     },
     "SIGCORP_SIGISS": {
         "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\SigcorpSigissProvider",
         "layout_family": "SIGCORP_SIGISS",
         "schema_root": "resources/nfse/schemas/SIGCORP_SIGISS",
-        "xsd_entrypoints": {},
-        "transport": "soap"
+        "xsd_entrypoints": [],
+        "transport": "soap",
+        "supported_operations": [
+            "emitir",
+            "consultar_lote",
+            "consultar_nfse_numero",
+            "consultar_nfse_rps",
+            "cancelar_nfse",
+            "substituir_nfse"
+        ],
+        "soap_operations": {
+            "emitir": "RecepcionarLoteRpsSincrono",
+            "consultar_lote": "ConsultarLoteRps",
+            "consultar_nfse_numero": "ConsultarNfseServicoPrestado",
+            "consultar_nfse_rps": "ConsultarNfsePorRps",
+            "cancelar_nfse": "CancelarNfse",
+            "substituir_nfse": "SubstituirNfse"
+        }
     },
     "SIGISSWEB": {
         "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\SigisswebProvider",
         "layout_family": "SIGISSWEB",
         "schema_root": "resources/nfse/schemas/SIGISSWEB",
-        "xsd_entrypoints": {},
-        "transport": "soap"
+        "xsd_entrypoints": [],
+        "transport": "soap",
+        "supported_operations": [
+            "emitir",
+            "consultar_lote",
+            "consultar_nfse_numero",
+            "consultar_nfse_rps",
+            "cancelar_nfse",
+            "substituir_nfse"
+        ],
+        "soap_operations": {
+            "emitir": "RecepcionarLoteRpsSincrono",
+            "consultar_lote": "ConsultarLoteRps",
+            "consultar_nfse_numero": "ConsultarNfseServicoPrestado",
+            "consultar_nfse_rps": "ConsultarNfsePorRps",
+            "cancelar_nfse": "CancelarNfse",
+            "substituir_nfse": "SubstituirNfse"
+        }
     },
     "SIMPLE": {
         "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\SimpleProvider",
         "layout_family": "SIMPLE",
         "schema_root": "resources/nfse/schemas/SIMPLE",
-        "xsd_entrypoints": {},
-        "transport": "soap"
+        "xsd_entrypoints": [],
+        "transport": "soap",
+        "supported_operations": [
+            "emitir",
+            "consultar_lote",
+            "consultar_nfse_numero",
+            "consultar_nfse_rps",
+            "cancelar_nfse",
+            "substituir_nfse"
+        ],
+        "soap_operations": {
+            "emitir": "RecepcionarLoteRpsSincrono",
+            "consultar_lote": "ConsultarLoteRps",
+            "consultar_nfse_numero": "ConsultarNfseServicoPrestado",
+            "consultar_nfse_rps": "ConsultarNfsePorRps",
+            "cancelar_nfse": "CancelarNfse",
+            "substituir_nfse": "SubstituirNfse"
+        }
     },
     "SIMPLISS": {
         "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\SimplissProvider",
         "layout_family": "SIMPLISS",
         "schema_root": "resources/nfse/schemas/SIMPLISS",
-        "xsd_entrypoints": {},
-        "transport": "soap"
+        "xsd_entrypoints": [],
+        "transport": "soap",
+        "supported_operations": [
+            "emitir",
+            "consultar_lote",
+            "consultar_nfse_numero",
+            "consultar_nfse_rps",
+            "cancelar_nfse",
+            "substituir_nfse"
+        ],
+        "soap_operations": {
+            "emitir": "RecepcionarLoteRpsSincrono",
+            "consultar_lote": "ConsultarLoteRps",
+            "consultar_nfse_numero": "ConsultarNfseServicoPrestado",
+            "consultar_nfse_rps": "ConsultarNfsePorRps",
+            "cancelar_nfse": "CancelarNfse",
+            "substituir_nfse": "SubstituirNfse"
+        }
     },
     "SINSOFT": {
         "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\SinsoftProvider",
         "layout_family": "SINSOFT",
         "schema_root": "resources/nfse/schemas/SINSOFT",
-        "xsd_entrypoints": {},
-        "transport": "soap"
+        "xsd_entrypoints": [],
+        "transport": "soap",
+        "supported_operations": [
+            "emitir",
+            "consultar_lote",
+            "consultar_nfse_numero",
+            "consultar_nfse_rps",
+            "cancelar_nfse",
+            "substituir_nfse"
+        ],
+        "soap_operations": {
+            "emitir": "RecepcionarLoteRpsSincrono",
+            "consultar_lote": "ConsultarLoteRps",
+            "consultar_nfse_numero": "ConsultarNfseServicoPrestado",
+            "consultar_nfse_rps": "ConsultarNfsePorRps",
+            "cancelar_nfse": "CancelarNfse",
+            "substituir_nfse": "SubstituirNfse"
+        }
     },
     "SMARAPD": {
         "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\SmarapdProvider",
         "layout_family": "SMARAPD",
         "schema_root": "resources/nfse/schemas/SMARAPD",
-        "xsd_entrypoints": {},
-        "transport": "soap"
+        "xsd_entrypoints": [],
+        "transport": "soap",
+        "supported_operations": [
+            "emitir",
+            "consultar_lote",
+            "consultar_nfse_numero",
+            "consultar_nfse_rps",
+            "cancelar_nfse",
+            "substituir_nfse"
+        ],
+        "soap_operations": {
+            "emitir": "RecepcionarLoteRpsSincrono",
+            "consultar_lote": "ConsultarLoteRps",
+            "consultar_nfse_numero": "ConsultarNfseServicoPrestado",
+            "consultar_nfse_rps": "ConsultarNfsePorRps",
+            "cancelar_nfse": "CancelarNfse",
+            "substituir_nfse": "SubstituirNfse"
+        }
     },
     "SOFTPLAN": {
         "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\SoftplanProvider",
         "layout_family": "SOFTPLAN",
         "schema_root": "resources/nfse/schemas/SOFTPLAN",
-        "xsd_entrypoints": {},
-        "transport": "soap"
+        "xsd_entrypoints": [],
+        "transport": "soap",
+        "supported_operations": [
+            "emitir",
+            "consultar_lote",
+            "consultar_nfse_numero",
+            "consultar_nfse_rps",
+            "cancelar_nfse",
+            "substituir_nfse"
+        ],
+        "soap_operations": {
+            "emitir": "RecepcionarLoteRpsSincrono",
+            "consultar_lote": "ConsultarLoteRps",
+            "consultar_nfse_numero": "ConsultarNfseServicoPrestado",
+            "consultar_nfse_rps": "ConsultarNfsePorRps",
+            "cancelar_nfse": "CancelarNfse",
+            "substituir_nfse": "SubstituirNfse"
+        }
     },
     "SONNER": {
         "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\SonnerProvider",
         "layout_family": "SONNER",
         "schema_root": "resources/nfse/schemas/SONNER",
-        "xsd_entrypoints": {},
-        "transport": "soap"
+        "xsd_entrypoints": [],
+        "transport": "soap",
+        "supported_operations": [
+            "emitir",
+            "consultar_lote",
+            "consultar_nfse_numero",
+            "consultar_nfse_rps",
+            "cancelar_nfse",
+            "substituir_nfse"
+        ],
+        "soap_operations": {
+            "emitir": "RecepcionarLoteRpsSincrono",
+            "consultar_lote": "ConsultarLoteRps",
+            "consultar_nfse_numero": "ConsultarNfseServicoPrestado",
+            "consultar_nfse_rps": "ConsultarNfsePorRps",
+            "cancelar_nfse": "CancelarNfse",
+            "substituir_nfse": "SubstituirNfse"
+        }
     },
     "SUPERNOVA": {
         "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\SupernovaProvider",
         "layout_family": "SUPERNOVA",
         "schema_root": "resources/nfse/schemas/SUPERNOVA",
-        "xsd_entrypoints": {},
-        "transport": "soap"
+        "xsd_entrypoints": [],
+        "transport": "soap",
+        "supported_operations": [
+            "emitir",
+            "consultar_lote",
+            "consultar_nfse_numero",
+            "consultar_nfse_rps",
+            "cancelar_nfse",
+            "substituir_nfse"
+        ],
+        "soap_operations": {
+            "emitir": "RecepcionarLoteRpsSincrono",
+            "consultar_lote": "ConsultarLoteRps",
+            "consultar_nfse_numero": "ConsultarNfseServicoPrestado",
+            "consultar_nfse_rps": "ConsultarNfsePorRps",
+            "cancelar_nfse": "CancelarNfse",
+            "substituir_nfse": "SubstituirNfse"
+        }
     },
     "SYSTEMPRO": {
         "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\SystemproProvider",
         "layout_family": "SYSTEMPRO",
         "schema_root": "resources/nfse/schemas/SYSTEMPRO",
-        "xsd_entrypoints": {},
-        "transport": "soap"
+        "xsd_entrypoints": [],
+        "transport": "soap",
+        "supported_operations": [
+            "emitir",
+            "consultar_lote",
+            "consultar_nfse_numero",
+            "consultar_nfse_rps",
+            "cancelar_nfse",
+            "substituir_nfse"
+        ],
+        "soap_operations": {
+            "emitir": "RecepcionarLoteRpsSincrono",
+            "consultar_lote": "ConsultarLoteRps",
+            "consultar_nfse_numero": "ConsultarNfseServicoPrestado",
+            "consultar_nfse_rps": "ConsultarNfsePorRps",
+            "cancelar_nfse": "CancelarNfse",
+            "substituir_nfse": "SubstituirNfse"
+        }
     },
     "TECNOSISTEMAS": {
         "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\TecnosistemasProvider",
         "layout_family": "TECNOSISTEMAS",
         "schema_root": "resources/nfse/schemas/TECNOSISTEMAS",
-        "xsd_entrypoints": {},
-        "transport": "soap"
+        "xsd_entrypoints": [],
+        "transport": "soap",
+        "supported_operations": [
+            "emitir",
+            "consultar_lote",
+            "consultar_nfse_numero",
+            "consultar_nfse_rps",
+            "cancelar_nfse",
+            "substituir_nfse"
+        ],
+        "soap_operations": {
+            "emitir": "RecepcionarLoteRpsSincrono",
+            "consultar_lote": "ConsultarLoteRps",
+            "consultar_nfse_numero": "ConsultarNfseServicoPrestado",
+            "consultar_nfse_rps": "ConsultarNfsePorRps",
+            "cancelar_nfse": "CancelarNfse",
+            "substituir_nfse": "SubstituirNfse"
+        }
     },
     "THEMA": {
         "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\ThemaProvider",
         "layout_family": "THEMA",
         "schema_root": "resources/nfse/schemas/THEMA",
-        "xsd_entrypoints": {},
-        "transport": "soap"
+        "xsd_entrypoints": [],
+        "transport": "soap",
+        "supported_operations": [
+            "emitir",
+            "consultar_lote",
+            "consultar_nfse_numero",
+            "consultar_nfse_rps",
+            "cancelar_nfse",
+            "substituir_nfse"
+        ],
+        "soap_operations": {
+            "emitir": "RecepcionarLoteRpsSincrono",
+            "consultar_lote": "ConsultarLoteRps",
+            "consultar_nfse_numero": "ConsultarNfseServicoPrestado",
+            "consultar_nfse_rps": "ConsultarNfsePorRps",
+            "cancelar_nfse": "CancelarNfse",
+            "substituir_nfse": "SubstituirNfse"
+        }
     },
     "TINUS": {
         "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\TinusProvider",
         "layout_family": "TINUS",
         "schema_root": "resources/nfse/schemas/TINUS",
-        "xsd_entrypoints": {},
-        "transport": "soap"
+        "xsd_entrypoints": [],
+        "transport": "soap",
+        "supported_operations": [
+            "emitir",
+            "consultar_lote",
+            "consultar_nfse_numero",
+            "consultar_nfse_rps",
+            "cancelar_nfse",
+            "substituir_nfse"
+        ],
+        "soap_operations": {
+            "emitir": "RecepcionarLoteRpsSincrono",
+            "consultar_lote": "ConsultarLoteRps",
+            "consultar_nfse_numero": "ConsultarNfseServicoPrestado",
+            "consultar_nfse_rps": "ConsultarNfsePorRps",
+            "cancelar_nfse": "CancelarNfse",
+            "substituir_nfse": "SubstituirNfse"
+        }
     },
     "TIPLAN": {
         "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\TiplanProvider",
         "layout_family": "TIPLAN",
         "schema_root": "resources/nfse/schemas/TIPLAN",
-        "xsd_entrypoints": {},
-        "transport": "soap"
+        "xsd_entrypoints": [],
+        "transport": "soap",
+        "supported_operations": [
+            "emitir",
+            "consultar_lote",
+            "consultar_nfse_numero",
+            "consultar_nfse_rps",
+            "cancelar_nfse",
+            "substituir_nfse"
+        ],
+        "soap_operations": {
+            "emitir": "RecepcionarLoteRpsSincrono",
+            "consultar_lote": "ConsultarLoteRps",
+            "consultar_nfse_numero": "ConsultarNfseServicoPrestado",
+            "consultar_nfse_rps": "ConsultarNfsePorRps",
+            "cancelar_nfse": "CancelarNfse",
+            "substituir_nfse": "SubstituirNfse"
+        }
     },
     "TRIBUTUS": {
         "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\TributusProvider",
         "layout_family": "TRIBUTUS",
         "schema_root": "resources/nfse/schemas/TRIBUTUS",
-        "xsd_entrypoints": {},
-        "transport": "soap"
+        "xsd_entrypoints": [],
+        "transport": "soap",
+        "supported_operations": [
+            "emitir",
+            "consultar_lote",
+            "consultar_nfse_numero",
+            "consultar_nfse_rps",
+            "cancelar_nfse",
+            "substituir_nfse"
+        ],
+        "soap_operations": {
+            "emitir": "RecepcionarLoteRpsSincrono",
+            "consultar_lote": "ConsultarLoteRps",
+            "consultar_nfse_numero": "ConsultarNfseServicoPrestado",
+            "consultar_nfse_rps": "ConsultarNfsePorRps",
+            "cancelar_nfse": "CancelarNfse",
+            "substituir_nfse": "SubstituirNfse"
+        }
     },
     "VERSATEC": {
         "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\VersatecProvider",
         "layout_family": "VERSATEC",
         "schema_root": "resources/nfse/schemas/VERSATEC",
-        "xsd_entrypoints": {},
-        "transport": "soap"
+        "xsd_entrypoints": [],
+        "transport": "soap",
+        "supported_operations": [
+            "emitir",
+            "consultar_lote",
+            "consultar_nfse_numero",
+            "consultar_nfse_rps",
+            "cancelar_nfse",
+            "substituir_nfse"
+        ],
+        "soap_operations": {
+            "emitir": "RecepcionarLoteRpsSincrono",
+            "consultar_lote": "ConsultarLoteRps",
+            "consultar_nfse_numero": "ConsultarNfseServicoPrestado",
+            "consultar_nfse_rps": "ConsultarNfsePorRps",
+            "cancelar_nfse": "CancelarNfse",
+            "substituir_nfse": "SubstituirNfse"
+        }
     },
     "VITORIA_ES": {
         "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\VitoriaEsProvider",
         "layout_family": "VITORIA_ES",
         "schema_root": "resources/nfse/schemas/VITORIA_ES",
-        "xsd_entrypoints": {},
-        "transport": "soap"
+        "xsd_entrypoints": [],
+        "transport": "soap",
+        "supported_operations": [
+            "emitir",
+            "consultar_lote",
+            "consultar_nfse_numero",
+            "consultar_nfse_rps",
+            "cancelar_nfse",
+            "substituir_nfse"
+        ],
+        "soap_operations": {
+            "emitir": "RecepcionarLoteRpsSincrono",
+            "consultar_lote": "ConsultarLoteRps",
+            "consultar_nfse_numero": "ConsultarNfseServicoPrestado",
+            "consultar_nfse_rps": "ConsultarNfsePorRps",
+            "cancelar_nfse": "CancelarNfse",
+            "substituir_nfse": "SubstituirNfse"
+        }
     },
     "WEBFISCO": {
         "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\WebfiscoProvider",
         "layout_family": "WEBFISCO",
         "schema_root": "resources/nfse/schemas/WEBFISCO",
-        "xsd_entrypoints": {},
-        "transport": "soap"
+        "xsd_entrypoints": [],
+        "transport": "soap",
+        "supported_operations": [
+            "emitir",
+            "consultar_lote",
+            "consultar_nfse_numero",
+            "consultar_nfse_rps",
+            "cancelar_nfse",
+            "substituir_nfse"
+        ],
+        "soap_operations": {
+            "emitir": "RecepcionarLoteRpsSincrono",
+            "consultar_lote": "ConsultarLoteRps",
+            "consultar_nfse_numero": "ConsultarNfseServicoPrestado",
+            "consultar_nfse_rps": "ConsultarNfsePorRps",
+            "cancelar_nfse": "CancelarNfse",
+            "substituir_nfse": "SubstituirNfse"
+        }
     },
     "WEBFISCO_TECNOLOGIA": {
         "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\WebfiscoTecnologiaProvider",
         "layout_family": "WEBFISCO_TECNOLOGIA",
         "schema_root": "resources/nfse/schemas/WEBFISCO_TECNOLOGIA",
-        "xsd_entrypoints": {},
-        "transport": "soap"
+        "xsd_entrypoints": [],
+        "transport": "soap",
+        "supported_operations": [
+            "emitir",
+            "consultar_lote",
+            "consultar_nfse_numero",
+            "consultar_nfse_rps",
+            "cancelar_nfse",
+            "substituir_nfse"
+        ],
+        "soap_operations": {
+            "emitir": "RecepcionarLoteRpsSincrono",
+            "consultar_lote": "ConsultarLoteRps",
+            "consultar_nfse_numero": "ConsultarNfseServicoPrestado",
+            "consultar_nfse_rps": "ConsultarNfsePorRps",
+            "cancelar_nfse": "CancelarNfse",
+            "substituir_nfse": "SubstituirNfse"
+        }
     },
     "WEBISS": {
         "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\WebissProvider",
         "layout_family": "WEBISS",
         "schema_root": "resources/nfse/schemas/WEBISS",
-        "xsd_entrypoints": {},
-        "transport": "soap"
+        "xsd_entrypoints": [],
+        "transport": "soap",
+        "supported_operations": [
+            "emitir",
+            "consultar_lote",
+            "consultar_nfse_numero",
+            "consultar_nfse_rps",
+            "cancelar_nfse",
+            "substituir_nfse"
+        ],
+        "soap_operations": {
+            "emitir": "RecepcionarLoteRpsSincrono",
+            "consultar_lote": "ConsultarLoteRps",
+            "consultar_nfse_numero": "ConsultarNfseServicoPrestado",
+            "consultar_nfse_rps": "ConsultarNfsePorRps",
+            "cancelar_nfse": "CancelarNfse",
+            "substituir_nfse": "SubstituirNfse"
+        }
     },
     "nfse_nacional": {
         "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\NacionalProvider",
@@ -773,10 +2151,10 @@
             "service.iss_withheld": {
                 "payload_path": "servico.tpRetISSQN",
                 "codes": {
-                    "true": "1",
-                    "false": "2"
+                    "true": "2",
+                    "false": "1"
                 },
-                "description": "NFSe Nacional usa 1 para ISS retido e 2 para ISS não retido."
+                "description": "NFSe Nacional usa 1 para ISS não retido, 2 para ISS retido pelo tomador e 3 para ISS retido pelo intermediário."
             }
         },
         "services": {
@@ -875,6 +2253,16 @@
                 "servico.cNBS",
                 "prestador.opSimpNac"
             ]
-        }
+        },
+        "supported_operations": [
+            "emitir",
+            "consultar",
+            "cancelar",
+            "substituir",
+            "consultar_nfse_rps",
+            "consultar_lote",
+            "baixar_xml",
+            "baixar_danfse"
+        ]
     }
 }

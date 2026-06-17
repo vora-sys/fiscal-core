@@ -8,7 +8,7 @@ O objetivo e evitar implementacoes ad hoc por municipio. A regra passa a ser: pr
 
 Hoje o roteamento municipal nao acontece por "copiar um provider generico". Ele acontece pela cadeia:
 
-`config/nfse/providers-catalog.json` -> `config/nfse/nfse-provider-families.json` -> `NFSeProviderResolver` -> `ProviderRegistry` -> `NFSeRuntimeBootstrap` -> provider concreto
+`config/nfse/providers-catalog.json` + `config/nfse/municipio-provider-overrides.json` -> `config/nfse/nfse-provider-families.json` -> `NFSeProviderResolver` -> `ProviderRegistry` -> `NFSeRuntimeBootstrap` -> provider concreto
 
 Isso implica duas distincões obrigatorias:
 
@@ -19,6 +19,8 @@ Isso implica duas distincões obrigatorias:
 
 - `config/nfse/providers-catalog.json`
   Registra municipios ativos, aliases, `provider_family`, `schema_package` e status de homologacao.
+- `config/nfse/municipio-provider-overrides.json`
+  Registra hot swaps operacionais temporarios por municipio para troca rapida de provider sem alterar o catalogo base.
 - `config/nfse/nfse-provider-families.json`
   Registra a familia tecnica: `provider_class`, transporte, WSDLs, schemas, assinatura e operacoes suportadas.
 - `src/Support/NFSeProviderResolver.php`
@@ -37,6 +39,8 @@ Isso implica duas distincões obrigatorias:
   Gera scaffold base de nova familia/provider sem editar o catalogo automaticamente.
 - `scripts/nfse/scaffold-municipio.php`
   Gera snippets e checklist base para onboarding de municipio.
+- `scripts/nfse/provider-switch.php`
+  Aplica ou remove override operacional (`set/remove/list`) para troca rapida de provider por municipio.
 
 ### 1.2 Contratos base
 
@@ -242,6 +246,25 @@ Nao use `payload_defaults` para:
 - XML de cancelamento
 - URL ou artefato final do documento, quando houver
 
+### 3.10 Reconciliacao com base Uninfe
+
+Antes de abrir nova onda municipal, sincronize o checkout local do `Uninfe` e rode reconciliacao:
+
+- `git -C Uninfe fetch origin`
+- `git -C Uninfe checkout main`
+- `git -C Uninfe pull --ff-only`
+- `php scripts/nfse/reconcile-uninfe-providers.php --fail-on-unexpected`
+
+Criticos:
+
+- nao pode haver municipio ausente no catalogo local (`missing_in_catalog = 0`);
+- divergencias inesperadas devem ser zero;
+- divergencias esperadas atuais sao migracoes para `nfse_nacional` e convergencia DSF legado para ABRASF.
+
+Relatorio versionado:
+
+- `php scripts/nfse/reconcile-uninfe-providers.php --format=md --output=docs/NFSE-UNINFE-RECONCILIACAO.md`
+
 ## 4. Passo a passo obrigatorio de implementacao
 
 Siga sempre esta ordem.
@@ -403,6 +426,8 @@ Ao concluir a implementacao:
 
 - atualizar este playbook se houver regra nova reutilizavel
 - atualizar docs especificos do municipio, quando existirem
+- atualizar `docs/NFSE-PROVIDERS-MUNICIPIOS.md` via `php scripts/nfse/generate-providers-municipios-doc.php`
+- quando houver migracao para nacional, revisar `docs/NFSE-MIGRACAO-MUNICIPAL-PARA-NACIONAL.md`
 - atualizar `README.md`
 - atualizar changelog/release notes
 

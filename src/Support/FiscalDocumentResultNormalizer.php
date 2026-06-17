@@ -29,6 +29,15 @@ class FiscalDocumentResultNormalizer
             ], $raw);
 
         return array_merge([
+            'operacao' => [
+                'tipo' => $operation,
+                'status' => $normalizedDocumento['situacao'],
+                'ok' => null,
+                'cstat' => null,
+                'xmotivo' => $normalizedDocumento['situacao'],
+                'mensagens' => [],
+                'protocolo' => $normalizedDocumento['protocolo'],
+            ],
             'documento' => $normalizedDocumento,
             'impressao' => array_merge($this->emptyImpressao(), $impressao),
             'provider' => array_merge([
@@ -112,6 +121,9 @@ class FiscalDocumentResultNormalizer
         string $filename,
         array $extra = []
     ): array {
+        $printSource = is_string($extra['print_source'] ?? null) ? $extra['print_source'] : 'local_render';
+        unset($extra['print_source']);
+
         return $this->normalizeDocumentoFiscal(
             $modelo,
             $operation,
@@ -125,7 +137,7 @@ class FiscalDocumentResultNormalizer
                 'pdf_base64' => $pdfBase64,
                 'content_type' => 'application/pdf',
                 'filename' => $filename,
-                'source' => 'local_render',
+                'source' => $printSource,
             ],
             [],
             [

@@ -94,6 +94,10 @@ class ResponseHandlingTest extends TestCase
         $this->assertFalse($response->isSuccess());
         $this->assertStringContainsString('Parâmetro inválido', $response->getError());
         $this->assertEquals('warning', $response->getMetadata()['severity']);
+        $this->assertEquals('validation', $response->getMetadata()['category']);
+        $this->assertArrayHasKey('trace_id', $response->getMetadata());
+        $this->assertArrayHasKey('recoverable', $response->getMetadata());
+        $this->assertSame('unknown', $response->getMetadata()['operation']);
     }
 
     /** @test */

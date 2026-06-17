@@ -1,6 +1,7 @@
 # NFSe Rio Preto da Eva - ISSWEB
 
-Este guia cobre a preparacao do municipio de Rio Preto da Eva/AM no `fiscal-core` via familia municipal compartilhada `ISSWEB_AM`.
+Este guia registra o fluxo ativo ISSWEB de Rio Preto da Eva/AM.
+No catalogo atual, o municipio usa `provider_family = ISSWEB_AM`.
 
 ## Status
 
@@ -11,7 +12,6 @@ Este guia cobre a preparacao do municipio de Rio Preto da Eva/AM no `fiscal-core
   - `XSDISSEConsultaNota.xsd`
   - `XSDISSECancelaNFe.xsd`
   - `XSDRetorno.xsd`
-- premissa atual: Rio Preto da Eva usa ISSWEB, mas isso ainda precisa de confirmacao oficial
 - homologacao real ainda depende de credenciais e endpoints oficiais
 
 ## Variaveis obrigatorias
@@ -60,7 +60,6 @@ Quando `official_validation_url_template` estiver configurado e a resposta do IS
 
 Antes de homologar de verdade, confirmar com a prefeitura ou fornecedor:
 
-- se Rio Preto da Eva realmente usa ISSWEB
 - endpoint de homologacao
 - endpoint de producao
 - host oficial do webservice
@@ -70,8 +69,6 @@ Antes de homologar de verdade, confirmar com a prefeitura ou fornecedor:
 - se a mesma `NFSE_ISSWEB_CHAVE` pode ser reutilizada entre municipios ou se a credencial e exclusiva
 - se o certificado cliente TLS e obrigatorio no transporte
 - se existe URL oficial deterministica para impressao/validacao
-
-Se a confirmacao futura apontar ambiente nacional, o catalogo deste municipio deve migrar para `nfse_nacional`.
 
 ## Exemplo
 

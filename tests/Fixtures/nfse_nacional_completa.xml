@@ -1,0 +1,203 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CompNfse>
+  <Nfse>
+    <infNFSe Id="NFS35123456789012345678901234567890123456789012345678">
+      <xLocEmi>Manaus</xLocEmi>
+      <UF>AM</UF>
+      <ambGer>SEFIN Nacional</ambGer>
+      <nNFSe>202600001234</nNFSe>
+      <dhProc>2026-06-08T14:30:45-03:00</dhProc>
+      <xSitNFSe>Autorizada</xSitNFSe>
+      <emit>
+        <CNPJ>12345678000190</CNPJ>
+        <IM>998877</IM>
+        <fone>9233334444</fone>
+        <xNome>Prestador Nacional de Servicos LTDA</xNome>
+        <CRT>1</CRT>
+        <regApTribSN>Caixa</regApTribSN>
+        <end>
+          <xLgr>Rua das Flores</xLgr>
+          <nro>100</nro>
+          <xCpl>Sala 501</xCpl>
+          <xBairro>Centro</xBairro>
+          <xMun>Manaus</xMun>
+          <UF>AM</UF>
+        </end>
+        <endNac>
+          <cMun>1302603</cMun>
+          <CEP>69010010</CEP>
+        </endNac>
+        <email>prestador@example.test</email>
+      </emit>
+      <DPS>
+        <infDPS>
+          <tpAmb>2</tpAmb>
+          <dCompet>2026-06-08</dCompet>
+          <nDPS>55667788</nDPS>
+          <serie>A1</serie>
+          <dhEmi>2026-06-08T14:00:00-03:00</dhEmi>
+          <finNFSe>1</finNFSe>
+          <emit>
+            <xNome>Prestador Nacional de Servicos LTDA</xNome>
+            <CRT>1</CRT>
+            <regApTribSN>Caixa</regApTribSN>
+          </emit>
+          <toma>
+            <CNPJ>99887766000155</CNPJ>
+            <IM>445566</IM>
+            <fone>1130304040</fone>
+            <xNome>Tomador Exemplo SA</xNome>
+            <end>
+              <xLgr>Avenida Paulista</xLgr>
+              <nro>1000</nro>
+              <xCpl>10 andar</xCpl>
+              <xBairro>Bela Vista</xBairro>
+              <xMun>Sao Paulo</xMun>
+              <UF>SP</UF>
+            </end>
+            <endNac>
+              <cMun>3550308</cMun>
+              <CEP>01310930</CEP>
+            </endNac>
+            <email>tomador@example.test</email>
+          </toma>
+          <dest>
+            <CPF>12345678909</CPF>
+            <fone>21999990000</fone>
+            <xNome>Destinatario Final</xNome>
+            <end>
+              <xLgr>Rua do Destino</xLgr>
+              <nro>50</nro>
+              <xBairro>Centro</xBairro>
+              <xMun>Rio de Janeiro</xMun>
+              <UF>RJ</UF>
+            </end>
+            <endNac>
+              <cMun>3304557</cMun>
+              <CEP>20040002</CEP>
+            </endNac>
+            <email>destinatario@example.test</email>
+          </dest>
+          <interm>
+            <CNPJ>55443322000111</CNPJ>
+            <IM>112233</IM>
+            <fone>6130303030</fone>
+            <xNome>Intermediadora Digital LTDA</xNome>
+            <end>
+              <xLgr>Setor Bancario Sul</xLgr>
+              <nro>1</nro>
+              <xBairro>Asa Sul</xBairro>
+              <xMun>Brasilia</xMun>
+              <UF>DF</UF>
+            </end>
+            <endNac>
+              <cMun>5300108</cMun>
+              <CEP>70070912</CEP>
+            </endNac>
+            <email>intermediario@example.test</email>
+          </interm>
+          <xLocPrestacao>Manaus</xLocPrestacao>
+          <UFPrest>AM</UFPrest>
+          <xPaisPrestacao>Brasil</xPaisPrestacao>
+          <xServ>Consultoria tributaria com entrega de relatorios e acompanhamento operacional.</xServ>
+          <xInfComp>Totais aproximados dos tributos: R$ 135,00.</xInfComp>
+          <cTribNac>010101</cTribNac>
+          <cTribMun>1701</cTribMun>
+          <cNBS>010101000</cNBS>
+          <xTribNac>Consultoria em tecnologia</xTribNac>
+          <xTribMun>Analise e desenvolvimento de sistemas</xTribMun>
+          <vServPrest>
+            <vServ>1500.00</vServ>
+          </vServPrest>
+          <vDescIncond>50.00</vDescIncond>
+          <vDescCond>25.00</vDescCond>
+          <vLiq>1425.00</vLiq>
+          <tribISSQN>
+            <tpTrib>1</tpTrib>
+            <xMunInc>Manaus</xMunInc>
+            <UF>AM</UF>
+            <xPais>Brasil</xPais>
+            <regEspTrib>Microempresa</regEspTrib>
+            <tpImunidade>Sem imunidade</tpImunidade>
+            <suspExig>0</suspExig>
+            <nProcSusp>PROC-2026-ISS-01</nProcSusp>
+            <vDeducao>100.00</vDeducao>
+            <vBC>1400.00</vBC>
+            <pAliq>2.00</pAliq>
+            <tpRetISSQN>2</tpRetISSQN>
+            <vISSQN>28.00</vISSQN>
+            <vRetISSQN>28.00</vRetISSQN>
+          </tribISSQN>
+          <BM>
+            <nBM>13026030000099</nBM>
+            <pRedBCBM>10.00</pRedBCBM>
+          </BM>
+          <tribFed>
+            <vBC>1500.00</vBC>
+            <pTotTrib>6.50</pTotTrib>
+            <vTotTrib>97.50</vTotTrib>
+            <vRetPIS>10.00</vRetPIS>
+            <vRetCOFINS>20.00</vRetCOFINS>
+            <vRetCSLL>15.00</vRetCSLL>
+            <vRetIRRF>30.00</vRetIRRF>
+            <vRetINSS>5.00</vRetINSS>
+          </tribFed>
+          <IBSCBS>
+            <CST>101</CST>
+            <cClassTrib>9001</cClassTrib>
+            <indOper>1</indOper>
+            <cMunInc>1302603</cMunInc>
+            <xMunInc>Manaus</xMunInc>
+            <UF>AM</UF>
+            <vRedBC>20.00</vRedBC>
+            <vBC>1480.00</vBC>
+            <pRedAliqIBSMun>1.00</pRedAliqIBSMun>
+            <pRedAliqCBS>0.50</pRedAliqCBS>
+            <mun>
+              <pIBS>0.90</pIBS>
+              <pAliqEfet>0.80</pAliqEfet>
+            </mun>
+            <uf>
+              <pIBS>0.60</pIBS>
+              <pAliqEfet>0.50</pAliqEfet>
+            </uf>
+            <fed>
+              <pCBS>1.50</pCBS>
+              <pAliqEfet>1.40</pAliqEfet>
+            </fed>
+            <totCIBS>
+              <gIBS>
+                <gIBSMunTot>
+                  <vIBSMun>11.84</vIBSMun>
+                </gIBSMunTot>
+                <gIBSUFTot>
+                  <vIBSUF>7.40</vIBSUF>
+                </gIBSUFTot>
+                <vIBSTot>19.24</vIBSTot>
+              </gIBS>
+              <gCBS>
+                <vCBS>20.72</vCBS>
+              </gCBS>
+            </totCIBS>
+          </IBSCBS>
+          <obra>
+            <cObra>OBRA-2026-001</cObra>
+            <ART>ART-778899</ART>
+          </obra>
+          <evento>
+            <descEvento>Servico vinculado a contrato continuado</descEvento>
+          </evento>
+          <imovel>
+            <inscricaoImob>IMOV-12345</inscricaoImob>
+            <end>
+              <xLgr>Rua do Imovel</xLgr>
+            </end>
+          </imovel>
+          <infAdFisco>Informacao de uso restrito da administracao municipal.</infAdFisco>
+          <infCpl>Observacao adicional do contribuinte.</infCpl>
+          <xTotTrib>Tributos aproximados: R$ 135,00.</xTotTrib>
+        </infDPS>
+      </DPS>
+    </infNFSe>
+  </Nfse>
+</CompNfse>
