@@ -69,6 +69,31 @@ class FiscalFacadeRoutingByChaveTest extends TestCase
         $this->assertSame('nfce', $response->getData('documento')['modelo']);
     }
 
+    public function test_consultar_csc_nfce_delegates_to_nfce_facade(): void
+    {
+        $nfce = $this->createMock(NFCeFacade::class);
+        $nfce->expects($this->once())
+            ->method('consultarCsc')
+            ->with(1)
+            ->willReturn(FiscalResponse::success([
+                'cstat' => '102',
+                'xmotivo' => 'CSC consultado',
+            ]));
+
+        $facade = new FiscalFacade(
+            $this->createMock(NFeFacade::class),
+            $nfce,
+            $this->createMock(NFSeFacade::class),
+            $this->createMock(ImpressaoFacade::class),
+            $this->createMock(TributacaoFacade::class)
+        );
+
+        $response = $facade->consultarCscNFCe();
+
+        $this->assertTrue($response->isSuccess());
+        $this->assertSame('102', $response->getData('cstat'));
+    }
+
     public function test_detect_document_model_from_chave_returns_embedded_model(): void
     {
         $facade = new FiscalFacade(

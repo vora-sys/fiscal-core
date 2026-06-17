@@ -54,6 +54,7 @@ Principais metodos estaveis:
 - `consultarNFCe(string $chave)`
 - `baixarXmlNFCe(string $chave)`
 - `cancelarNFCe(string $chave, string $motivo, string $protocolo)`
+- `consultarCscNFCe(int $indOperacao = 1)`
 - `emitirNFSe(array $dados, string $municipio = 'nacional')`
 - `emitirNFSeCompleto(array $dados, string $municipio = 'nacional', array $options = [])`
 - `consultarNFSe(string $chave, string $municipio = 'nacional')`
@@ -113,6 +114,7 @@ QRCode e CSC:
 - Configure `FISCAL_NFCE_CSC` e `FISCAL_NFCE_CSC_ID` para QRCode versao 2, que gera `p=chave|2|ambiente|idCSC|hash`.
 - Use `FISCAL_NFCE_QRCODE_VERSION=200` quando precisar forcar QRCode com CSC/hash. Sem essa variavel, a versao segue a tabela de UF/ambiente da NFePHP.
 - Em Santa Catarina, a tabela da dependencia gera QRCode v2 em producao e v3 em homologacao. O v3 online nao inclui CSC/hash.
+- Para consultar CSCs ativos via webservice, use `FiscalFacade::consultarCscNFCe()` ou `NFCeFacade::consultarCsc(1)`. Operacoes `2` e `3` solicitam/revogam CSC e devem ser usadas com cuidado.
 
 Eventos SEFAZ retornam o mesmo shape canônico de operação, com `operacao`, `documento`, `provider`, `raw`, `eventos`, `cstat`, `xmotivo`, `protocolo`, `chave_acesso` e `xml_response`. Em respostas de lote, o parser prioriza o `retEvento/infEvento` efetivo em vez do `cStat` externo do envelope.
 

@@ -1,5 +1,17 @@
 # Changelog
 
+## v1.4.2 - 2026-06-17
+
+### Added
+- Wrapper `FiscalFacade::consultarCscNFCe()` para consultar/gerenciar CSC NFC-e via `NFCeFacade::consultarCsc()`.
+
+### Tests
+- `composer validate --strict`
+- `vendor/bin/phpunit tests/Unit/FiscalFacadeRoutingByChaveTest.php tests/Unit/NFCeFacadeResponseShapeTest.php`
+- `vendor/bin/phpunit --filter "FiscalFacadeRoutingByChaveTest|NFCeQRCodeTest"`
+- `composer test:ci`
+- `composer analyse`
+
 ## v1.4.1 - 2026-06-17
 
 ### Added

@@ -180,6 +180,17 @@ class FiscalFacade
         return $this->nfce->registrarEventoSefazLote($uf, $eventos, $opcoes);
     }
 
+    /**
+     * Consulta/gerencia CSC NFCe via SEFAZ quando a UF expõe o serviço CscNFCe.
+     *
+     * Operações da NFePHP:
+     * 1 - consulta CSCs ativos; 2 - solicita novo CSC; 3 - revoga CSC ativo.
+     */
+    public function consultarCscNFCe(int $indOperacao = 1): FiscalResponse
+    {
+        return $this->nfce->consultarCsc($indOperacao);
+    }
+
     // ===== OPERAÇÕES NFSe =====
 
     /**
