@@ -74,7 +74,7 @@ class XmlException extends FiscalException
         );
     }
 
-    public static function parsingFailed(string $content = '', \Throwable $previous = null): self
+    public static function parsingFailed(string $content = '', ?\Throwable $previous = null): self
     {
         return new self(
             'Falha ao processar XML',

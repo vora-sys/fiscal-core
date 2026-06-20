@@ -1,5 +1,19 @@
 # Changelog
 
+## v1.4.5 - 2026-06-20
+
+### Changed
+- `XmlException::parsingFailed()` declara `?\Throwable` explicitamente, eliminando o aviso de nulabilidade implícita no PHP 8.4+.
+- Removido ignore frágil do PHPStan que quebrava o CI em PHP 8.1/8.2 quando o aviso não era emitido.
+
+### Tests
+- `composer validate --strict`
+- `composer test:ci`
+- `composer test:nfse`
+- `php -d memory_limit=512M vendor/bin/phpunit --testsuite NFe`
+- `php -d memory_limit=512M vendor/bin/phpunit --testsuite Tributacao`
+- `composer analyse`
+
 ## v1.4.4 - 2026-06-20
 
 ### Changed

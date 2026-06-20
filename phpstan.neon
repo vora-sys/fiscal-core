@@ -17,6 +17,3 @@ parameters:
                 - src/Adapters/NF/NFeAdapter.php
                 - src/Facade/NFCeFacade.php
                 - src/Facade/NFeFacade.php
-        -
-            message: '#Deprecated in PHP 8\.4: Parameter \#2 \$previous \(Throwable\) is implicitly nullable via default value null#'
-            path: src/Exceptions/XmlException.php
