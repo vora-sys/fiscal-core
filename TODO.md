@@ -178,13 +178,12 @@ Status: parcialmente iniciado.
 
 - [x] GitHub Actions com matriz PHP 8.1/8.2 para release MVP.
 - [x] PHPStan inicial.
-- [ ] PHP-CS-Fixer ou Pint equivalente.
+- [X] PHP-CS-Fixer ou Pint equivalente.
 - [ ] Relatorio de coverage.
-- [x] Changelog preparado para `v1.2.4`.
-- [ ] Tag `v1.2.4` publicada.
+- [x] Changelog preparado para `v1.4.5`.
+- [X] Tag `v1.4.5` publicada.
 - [x] Nome canonico local definido como `sabbajohn/fiscal-core`.
-- [ ] Publicar/atualizar Packagist como `sabbajohn/fiscal-core` (acao externa).
-- [ ] Descontinuar ou documentar publicacao antiga `freeline/fiscal-core`, se ela continuar existindo.
+- [x] Publicar/atualizar Packagist como `sabbajohn/fiscal-core` (acao externa).
 - [ ] Preparar GitHub Packages, se for canal de distribuicao necessario.
 
 ## Bugs conhecidos
@@ -200,7 +199,7 @@ Status: parcialmente iniciado.
 ## Proxima sequencia recomendada
 
 1. Rodar `composer validate --strict`, `composer test:ci`, `composer test:nfse` e `composer analyse`.
-2. Publicar/atualizar Packagist com o nome canonico `sabbajohn/fiscal-core` e tag `v1.2.4`.
+2. Publicar/atualizar Packagist com o nome canonico `sabbajohn/fiscal-core` e tag `v1.4.5`.
 3. Decidir contrato publico futuro para retorno de emissao, cancelamento e substituicao sem quebrar compatibilidade.
 4. Criar Service Provider Laravel depois que o contrato/config estiverem estabilizados.
 5. Especializar substituicao por municipio/provider quando o contrato municipal divergir da base ABRASF.

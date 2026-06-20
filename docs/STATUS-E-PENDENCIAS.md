@@ -31,7 +31,6 @@ Este documento consolida o estado atual do pacote e substitui a lista antiga de 
 - Manter `sabbajohn/fiscal-core` como nome canonico do pacote.
 - Publicar/submeter `sabbajohn/fiscal-core` no Packagist usando o checklist em `docs/RELEASE-PACKAGIST.md`.
 - Garantir que README, tags e instalacao apontem para `sabbajohn/fiscal-core`.
-- Descontinuar ou documentar como legado qualquer publicacao antiga em `freeline/fiscal-core`.
 
 ### 2. Expandir cobertura municipal com homologacao real
 

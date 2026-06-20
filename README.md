@@ -28,9 +28,6 @@
 ```bash
 composer require sabbajohn/fiscal-core
 ```
-
-> Nome canônico do pacote: `sabbajohn/fiscal-core`. Se ainda houver publicação antiga como `freeline/fiscal-core` no Packagist, trate como legado/desalinhado e publique a próxima release no nome canônico.
-
 **Desenvolvimento local:**
 
 ```json
@@ -722,8 +719,7 @@ Roadmap
 - [ ] Service Provider para Laravel
 - [ ] Middleware para validação automática
 - [ ] Política unificada de cache de consultas e configurações
-- [ ] Publicar/atualizar pacote no Packagist como `sabbajohn/fiscal-core`
-- [ ] Descontinuar ou documentar como legado qualquer publicação antiga em `freeline/fiscal-core`
+- [X] Publicar/atualizar pacote no Packagist como `sabbajohn/fiscal-core`
 - [ ] Publicar/documentar GitHub Packages, se necessário
 - [x] Documentação inicial de cada Facade
 - [ ] Documentação detalhada de cada Adapter

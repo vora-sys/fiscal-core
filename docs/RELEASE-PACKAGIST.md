@@ -4,7 +4,6 @@ Data de referencia: 2026-06-17
 
 Nome canonico do pacote: `sabbajohn/fiscal-core`.
 
-Publicacoes com outro vendor, como `freeline/fiscal-core`, devem ser tratadas como legado/desalinhamento e nao devem aparecer como instalacao principal.
 
 ## Checklist de release v1.4.0
 
