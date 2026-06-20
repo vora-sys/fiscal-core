@@ -141,6 +141,7 @@ final class NFSeMunicipalPayloadFactoryTest extends TestCase
     {
         return [
             'campo-grande' => ['campo-grande', '5002704', 'Servico de homologacao NFSe para Campo Grande.'],
+            'castanhal' => ['castanhal', '1502400', 'Servico de homologacao NFSe para Castanhal.'],
             'joao-pessoa' => ['joao-pessoa', '2507507', 'Servico de homologacao NFSe para Joao Pessoa.'],
             'teresina' => ['teresina', '2211001', 'Servico de homologacao NFSe para Teresina.'],
             'brasilia' => ['brasilia', '5300108', 'Servico de homologacao NFSe para Brasilia.'],

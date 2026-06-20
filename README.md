@@ -206,6 +206,7 @@ Status usados abaixo:
 | --- | --- | --- |
 | Manaus/AM | `nfse_nacional` | `HOMOLOGADO` |
 | Belém/PA | `BELEM_MUNICIPAL_2025` | `HOMOLOGADO` |
+| Castanhal/PA | `ABRASF_SHARED` | `PENDENTE_HOMOLOGACAO_REAL` |
 | Rio Branco/AC | `nfse_nacional` | `DISPENSADO_NACIONAL` |
 | Vitória/ES | `nfse_nacional` | `DISPENSADO_NACIONAL` |
 | São Luís/MA | `nfse_nacional` | `DISPENSADO_NACIONAL` |

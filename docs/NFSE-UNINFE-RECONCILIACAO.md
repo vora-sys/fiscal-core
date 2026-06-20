@@ -2,9 +2,9 @@
 
 ## Resumo
 
-- Gerado em: `2026-05-25T11:13:38+00:00`
+- Gerado em: `2026-06-20T15:26:50+00:00`
 - Registros Uninfe (IBGE unico): `573`
-- Municipios ativos no catalogo: `632`
+- Municipios ativos no catalogo: `633`
 - Match exato provider: `365`
 - Ausentes no catalogo: `0`
 - Divergencias totais: `208`
@@ -46,4 +46,3 @@
 - `3106200` Belo Horizonte/MG: catalogo `nfse_nacional`, uninfe `BHISS` (`municipio_migrado_para_fluxo_nacional`)
 - `3106705` Betim/MG: catalogo `nfse_nacional`, uninfe `GINFES` (`municipio_migrado_para_fluxo_nacional`)
 - `3118601` Contagem/MG: catalogo `nfse_nacional`, uninfe `GINFES` (`municipio_migrado_para_fluxo_nacional`)
-

@@ -19,7 +19,7 @@ Base: `docs/nfse-municipios-suportados.csv`. Considera somente municípios reais
 | MG | 71 | 0 | 0 | 37 | 34 |
 | MS | 18 | 0 | 0 | 3 | 15 |
 | MT | 21 | 0 | 0 | 5 | 16 |
-| PA | 7 | 1 | 0 | 4 | 2 |
+| PA | 8 | 1 | 0 | 4 | 3 |
 | PB | 3 | 0 | 0 | 0 | 3 |
 | PE | 14 | 0 | 0 | 1 | 13 |
 | PI | 2 | 0 | 0 | 0 | 2 |
@@ -221,6 +221,7 @@ Base: `docs/nfse-municipios-suportados.csv`. Considera somente municípios reais
 | PA | Ananindeua | `1500800` | `nfse_nacional` | `NACIONAL` | `DISPENSADO_NACIONAL` | Dispensado de homologacao municipal individual pela regra nacional 100%. |
 | PA | Belem | `1501402` | `BELEM_MUNICIPAL_2025` | `MUNICIPAL` | `HOMOLOGADO_MUNICIPAL` | Belem homologado no provider municipal ABRASF. |
 | PA | Canaã dos Carajás | `1502152` | `FIORILLI` | `MUNICIPAL` | `PENDENTE_HOMOLOGACAO_MUNICIPAL` | - |
+| PA | Castanhal | `1502400` | `ABRASF_SHARED` | `MUNICIPAL` | `PENDENTE_HOMOLOGACAO_MUNICIPAL` | ABRASF compartilhado semelhante a Belem; homologacao real pendente. |
 | PA | Itaituba | `1503606` | `FIORILLI` | `MUNICIPAL` | `PENDENTE_HOMOLOGACAO_MUNICIPAL` | - |
 | PA | Marabá | `1504208` | `nfse_nacional` | `NACIONAL` | `DISPENSADO_NACIONAL` | Dispensado de homologacao municipal individual pela regra nacional 100%. |
 | PA | Paragominas | `1505502` | `nfse_nacional` | `NACIONAL` | `DISPENSADO_NACIONAL` | Dispensado de homologacao municipal individual pela regra nacional 100%. |

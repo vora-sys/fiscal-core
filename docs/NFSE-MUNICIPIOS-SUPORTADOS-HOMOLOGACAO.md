@@ -1,6 +1,6 @@
 # NFSe - Municipios suportados, homologados e pendentes
 
-Base: `config/nfse/providers-catalog.json` (snapshot em `2026-05-25`).
+Base: `config/nfse/providers-catalog.json` (snapshot em `2026-06-20`).
 
 ## Regra vigente para homologacao
 
@@ -10,11 +10,11 @@ Base: `config/nfse/providers-catalog.json` (snapshot em `2026-05-25`).
 
 ## Resumo consolidado
 
-- Entradas ativas no catalogo: `632`
+- Entradas ativas no catalogo: `633`
 - `DISPENSADO_NACIONAL`: `210`
 - `HOMOLOGADO_REFERENCIA_NACIONAL`: `1` (Manaus/AM)
 - `HOMOLOGADO_MUNICIPAL`: `1` (Belem/PA)
-- `PENDENTE_HOMOLOGACAO_MUNICIPAL`: `420`
+- `PENDENTE_HOMOLOGACAO_MUNICIPAL`: `421`
 
 ## Municipios ja homologados
 
@@ -56,6 +56,10 @@ Base: `config/nfse/providers-catalog.json` (snapshot em `2026-05-25`).
 
 - Presidente Figueiredo/AM (`1303536`) - `ISSWEB_AM`
 - Rio Preto da Eva/AM (`1303569`) - `ISSWEB_AM`
+
+## Municipios PA adicionados como ABRASF compartilhado
+
+- Castanhal/PA (`1502400`) - `ABRASF_SHARED` (pendente de homologacao municipal real)
 
 ## Artefatos de apoio
 

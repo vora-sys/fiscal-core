@@ -124,6 +124,15 @@ final class NFSeProviderResolverTest extends TestCase
         $this->assertSame('ABRASF_SHARED', $resolver->resolveKey('joao-pessoa'));
     }
 
+    public function testResolveCastanhalToAbrasfShared(): void
+    {
+        $resolver = $this->makeResolver();
+
+        $this->assertSame('ABRASF_SHARED', $resolver->resolveKey('castanhal'));
+        $this->assertSame('ABRASF_SHARED', $resolver->resolveKey('Castanhal/PA'));
+        $this->assertSame('ABRASF_SHARED', $resolver->resolveKey('1502400'));
+    }
+
     public function testResolveNatalToNational(): void
     {
         $resolver = $this->makeResolver();

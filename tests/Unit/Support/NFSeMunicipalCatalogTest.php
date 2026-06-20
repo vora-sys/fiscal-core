@@ -101,6 +101,21 @@ final class NFSeMunicipalCatalogTest extends TestCase
         $this->assertSame('ABRASF_SHARED', $result['provider_family_key']);
     }
 
+    public function testResolveCastanhalByNameAndIbge(): void
+    {
+        $catalog = new NFSeMunicipalCatalog($this->fixturePath());
+
+        $byName = $catalog->resolveMunicipio('Castanhal/PA');
+        $byIbge = $catalog->resolveMunicipio('1502400');
+
+        $this->assertNotNull($byName);
+        $this->assertNotNull($byIbge);
+        $this->assertSame('1502400', $byName['ibge']);
+        $this->assertSame('1502400', $byIbge['ibge']);
+        $this->assertSame('ABRASF_SHARED', $byName['provider_family_key']);
+        $this->assertSame('ABRASF_SHARED', $byIbge['provider_family_key']);
+    }
+
     public function testResolveNatalBySlug(): void
     {
         $catalog = new NFSeMunicipalCatalog($this->fixturePath());

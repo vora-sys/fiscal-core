@@ -1,6 +1,6 @@
 # Status e pendencias do fiscal-core
 
-Data de referencia: 2026-05-25
+Data de referencia: 2026-06-20
 
 Este documento consolida o estado atual do pacote e substitui a lista antiga de "proximas features" que ainda tratava itens ja implementados como pendentes.
 
@@ -8,7 +8,7 @@ Este documento consolida o estado atual do pacote e substitui a lista antiga de 
 
 | Frente | Status | Evidencia |
 | --- | --- | --- |
-| Cobertura municipal NFSe | Em progresso | Catalogo ativo em `config/nfse/providers-catalog.json` com 632 entradas; homologacao real segue por municipio |
+| Cobertura municipal NFSe | Em progresso | Catalogo ativo em `config/nfse/providers-catalog.json` com 633 entradas; homologacao real segue por municipio |
 | Playbook municipal | Concluido | `docs/NFSE-MUNICIPAL-PROVIDER-PLAYBOOK.md` |
 | Facades principais | Implementado | `FiscalFacade`, `NFeFacade`, `NFCeFacade`, `NFSeFacade`, `ImpressaoFacade`, `TributacaoFacade`, `UtilsFacade` |
 | APIs coesas das facades | Parcial | Facades existem e possuem testes de shape, mas ainda falta fechar contrato semantico uniforme entre modulos |

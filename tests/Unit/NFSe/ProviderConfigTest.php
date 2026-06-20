@@ -82,6 +82,7 @@ final class ProviderConfigTest extends TestCase
 
         $this->assertIsArray($municipios);
         $this->assertContains('belem', $municipios);
+        $this->assertContains('castanhal', $municipios);
         $this->assertContains('joinville', $municipios);
         $this->assertContains('manaus', $municipios);
         $this->assertContains('nacional', $municipios);
@@ -267,6 +268,19 @@ final class ProviderConfigTest extends TestCase
         $data = $response->getData();
         $this->assertSame('ABRASF_SHARED', $data['provider_key']);
         $this->assertSame('2507507', $data['codigo_municipio']);
+        $this->assertStringContainsString('AbrasfSharedProvider', $data['provider_class']);
+    }
+
+    public function testFacadeMapsCastanhalToAbrasfSharedProvider(): void
+    {
+        $facade = new NFSeFacade('castanhal');
+        $response = $facade->getProviderInfo();
+
+        $this->assertTrue($response->isSuccess());
+
+        $data = $response->getData();
+        $this->assertSame('ABRASF_SHARED', $data['provider_key']);
+        $this->assertSame('1502400', $data['codigo_municipio']);
         $this->assertStringContainsString('AbrasfSharedProvider', $data['provider_class']);
     }
 

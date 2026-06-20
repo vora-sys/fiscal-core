@@ -181,6 +181,42 @@
                 "requires_explicit_mei_classification": true
             }
         },
+        "1502400": {
+            "provider_family": "ABRASF_SHARED",
+            "schema_package": "ABRASF_SHARED",
+            "slug": "castanhal",
+            "nome": "Castanhal",
+            "uf": "PA",
+            "provider_note": "Castanhal/PA roteado para ABRASF_SHARED por compatibilidade declarada com o modelo ABRASF semelhante a Belem; homologacao municipal real permanece obrigatoria.",
+            "payload_defaults": {
+                "rps": {
+                    "numero": "123"
+                },
+                "tomador": {
+                    "razao_social": "Cliente Castanhal Ltda",
+                    "email": "financeiro@example.com",
+                    "endereco": {
+                        "logradouro": "Avenida Presidente Vargas",
+                        "bairro": "Centro",
+                        "codigo_municipio": "1502400",
+                        "uf": "PA",
+                        "cep": "68740-000",
+                        "municipio": "Castanhal"
+                    }
+                },
+                "servico": {
+                    "codigo": "101",
+                    "descricao": "Servico de homologacao NFSe para Castanhal.",
+                    "discriminacao": "Servico de homologacao NFSe para Castanhal.",
+                    "local_prestacao": {
+                        "tipo": "1",
+                        "uf": "PA",
+                        "codigo_municipio": "1502400",
+                        "cep": "68740-000"
+                    }
+                }
+            }
+        },
         "1504208": {
             "provider_family": "nfse_nacional",
             "schema_package": "NACIONAL",

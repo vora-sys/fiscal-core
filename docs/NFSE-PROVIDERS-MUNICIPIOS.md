@@ -1,7 +1,7 @@
 # NFSe - Provedores Implementados e Municipios Atendidos
 
 Base: `config/nfse/nfse-provider-families.json` + `config/nfse/providers-catalog.json`.
-Gerado em: `2026-05-25 11:13:38 UTC`.
+Gerado em: `2026-06-20 15:26:50 UTC`.
 
 Legenda: considera somente municipios `active=true`; entradas tecnicas (`UF=AN/XX`) sao separadas na contagem.
 
@@ -9,7 +9,7 @@ Legenda: considera somente municipios `active=true`; entradas tecnicas (`UF=AN/X
 | --- | --- | ---: | ---: | --- |
 | `ABACO` | `sabbajohn\FiscalCore\Providers\NFSe\Municipal\AbacoProvider` | 0 | 0 | - |
 | `ABASE` | `sabbajohn\FiscalCore\Providers\NFSe\Municipal\AbaseProvider` | 9 | 1 | Caibaté/RS (`4303301`)<br>Giruá/RS (`4309001`)<br>Mauricio Cardoso/RS (`4306734`)<br>Porto Xavier/RS (`4315107`)<br>Santo Antônio das Missões/RS (`4317707`)<br>Santo Cristo/RS (`4317905`)<br>Santo Ângelo/RS (`4317509`)<br>São Luiz Gonzaga/RS (`4318903`)<br>Três de Maio/RS (`4321808`) |
-| `ABRASF_SHARED` | `sabbajohn\FiscalCore\Providers\NFSe\Municipal\AbrasfSharedProvider` | 8 | 0 | Macapá/AP (`1600303`)<br>Campo Grande/MS (`5002704`)<br>João Pessoa/PB (`2507507`)<br>Teresina/PI (`2211001`)<br>Nova Iguaçu/RJ (`3303500`)<br>Campinas/SP (`3509502`)<br>Sorocaba/SP (`3552205`)<br>São José dos Campos/SP (`3549904`) |
+| `ABRASF_SHARED` | `sabbajohn\FiscalCore\Providers\NFSe\Municipal\AbrasfSharedProvider` | 9 | 0 | Macapá/AP (`1600303`)<br>Campo Grande/MS (`5002704`)<br>Castanhal/PA (`1502400`)<br>João Pessoa/PB (`2507507`)<br>Teresina/PI (`2211001`)<br>Nova Iguaçu/RJ (`3303500`)<br>Campinas/SP (`3509502`)<br>Sorocaba/SP (`3552205`)<br>São José dos Campos/SP (`3549904`) |
 | `ADM_SISTEMAS` | `sabbajohn\FiscalCore\Providers\NFSe\Municipal\AdmSistemasProvider` | 2 | 0 | Itaberaba/BA (`2914703`)<br>Jacobina/BA (`2917508`) |
 | `AGILI` | `sabbajohn\FiscalCore\Providers\NFSe\Municipal\AgiliProvider` | 1 | 0 | Rondonópolis/MT (`5107602`) |
 | `AVMB_ASTEN` | `sabbajohn\FiscalCore\Providers\NFSe\Municipal\AvmbAstenProvider` | 1 | 0 | Pelotas/RS (`4314407`) |

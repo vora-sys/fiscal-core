@@ -88,6 +88,18 @@ final class NFSeAdapterTest extends TestCase
         $this->assertContains('substituir_nfse', $info['supported_operations']);
     }
 
+    public function testCastanhalUsesAbrasfSharedProvider(): void
+    {
+        $adapter = new NFSeAdapter('castanhal');
+
+        $info = $adapter->getProviderInfo();
+
+        $this->assertSame('ABRASF_SHARED', $info['provider_key']);
+        $this->assertSame('1502400', $info['codigo_municipio']);
+        $this->assertStringContainsString('AbrasfSharedProvider', $info['provider_class']);
+        $this->assertContains('substituir_nfse', $info['supported_operations']);
+    }
+
     public function testNatalUsesNacionalProviderAfterMigration(): void
     {
         $adapter = new NFSeAdapter('natal');
