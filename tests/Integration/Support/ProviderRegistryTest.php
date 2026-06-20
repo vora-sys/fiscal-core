@@ -61,6 +61,16 @@ final class ProviderRegistryTest extends TestCase
         $this->assertSame('5002704', $provider->getCodigoMunicipio());
     }
 
+    public function testGetByMunicipioCastanhalReturnsAbrasfSharedProvider(): void
+    {
+        $registry = ProviderRegistry::getInstance();
+
+        $provider = $registry->getByMunicipio('castanhal');
+
+        $this->assertInstanceOf(AbrasfSharedProvider::class, $provider);
+        $this->assertSame('1502400', $provider->getCodigoMunicipio());
+    }
+
     public function testGetByMunicipioPresidenteFigueiredoReturnsIsswebProvider(): void
     {
         $registry = ProviderRegistry::getInstance();

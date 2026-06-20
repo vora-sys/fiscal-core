@@ -19,10 +19,10 @@ Cada arquivo desta pasta resume uma família/provider operacional:
 
 Resumo atual da grid completa:
 
-- `621` municípios reais compatíveis
+- `622` municípios reais compatíveis
 - `2` com fluxo já homologado
-- `210` cobertos por `nfse_nacional` com homologação municipal individual dispensada
-- `409` municipais ainda pendentes de homologação real
+- `209` cobertos por `nfse_nacional` com homologação municipal individual dispensada
+- `411` municipais ainda pendentes de homologação real
 
 Estas visões substituem a ponte histórica antiga de retomada. O fluxo canônico atual fica distribuído entre:
 

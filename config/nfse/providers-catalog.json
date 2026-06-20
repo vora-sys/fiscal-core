@@ -287,6 +287,45 @@
             "homologado": false,
             "active": true
         },
+        "1502400": {
+            "slug": "castanhal",
+            "nome": "Castanhal",
+            "uf": "PA",
+            "provider_family": "ABRASF_SHARED",
+            "schema_package": "ABRASF_SHARED",
+            "ibge": "1502400",
+            "homologado": false,
+            "active": true,
+            "provider_note": "Castanhal/PA roteado para ABRASF_SHARED por compatibilidade declarada com o modelo ABRASF semelhante a Belem; homologacao municipal real permanece obrigatoria.",
+            "payload_defaults": {
+                "rps": {
+                    "numero": "123"
+                },
+                "tomador": {
+                    "razao_social": "Cliente Castanhal Ltda",
+                    "email": "financeiro@example.com",
+                    "endereco": {
+                        "logradouro": "Avenida Presidente Vargas",
+                        "bairro": "Centro",
+                        "codigo_municipio": "1502400",
+                        "uf": "PA",
+                        "cep": "68740-000",
+                        "municipio": "Castanhal"
+                    }
+                },
+                "servico": {
+                    "codigo": "101",
+                    "descricao": "Servico de homologacao NFSe para Castanhal.",
+                    "discriminacao": "Servico de homologacao NFSe para Castanhal.",
+                    "local_prestacao": {
+                        "tipo": "1",
+                        "uf": "PA",
+                        "codigo_municipio": "1502400",
+                        "cep": "68740-000"
+                    }
+                }
+            }
+        },
         "1503606": {
             "slug": "itaituba",
             "nome": "Itaituba",
@@ -10489,6 +10528,10 @@
         "canaa-dos-carajas pa": "1502152",
         "canaa-dos-carajas-pa": "1502152",
         "canaa-dos-carajas/pa": "1502152",
+        "castanhal": "1502400",
+        "castanhal pa": "1502400",
+        "castanhal-pa": "1502400",
+        "castanhal/pa": "1502400",
         "candeias": "2906501",
         "candeias ba": "2906501",
         "candeias-ba": "2906501",
