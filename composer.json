@@ -30,11 +30,11 @@
     "phpstan/phpstan-phpunit": "^2.0"
   },
   "scripts": {
-    "test": "vendor/bin/phpunit",
-    "test:unit": "vendor/bin/phpunit --testsuite Unit",
-    "test:nfse": "vendor/bin/phpunit --testsuite NFSe",
-    "test:ci": "ENABLE_EXTERNAL_TESTS=false vendor/bin/phpunit --testsuite Unit",
-    "analyse": "vendor/bin/phpstan analyse"
+    "test": "php -d memory_limit=512M vendor/bin/phpunit",
+    "test:unit": "php -d memory_limit=512M vendor/bin/phpunit --testsuite Unit",
+    "test:nfse": "php -d memory_limit=512M vendor/bin/phpunit --testsuite NFSe",
+    "test:ci": "ENABLE_EXTERNAL_TESTS=false php -d memory_limit=512M vendor/bin/phpunit --testsuite Unit",
+    "analyse": "php -d memory_limit=512M vendor/bin/phpstan analyse"
   },
   "suggest": {
     "nfephp-org/sped-nfse": "Driver NFSe baseado no ecossistema nfephp-org (instale se for usar NFSe com este provider)",

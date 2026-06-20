@@ -1,5 +1,21 @@
 # Changelog
 
+## v1.4.3 - 2026-06-20
+
+### Added
+- Suporte ao município de Castanhal/PA (`1502400`) no fluxo NFSe municipal via `ABRASF_SHARED`, incluindo aliases de resolução, defaults de payload de homologação e documentação de cobertura.
+
+### Changed
+- Scripts Composer de teste e análise passam a executar PHPUnit/PHPStan com `memory_limit=512M`, evitando falha local de release por limite padrão de 128 MB durante renderização DANFSe/Dompdf.
+
+### Tests
+- `composer validate --strict`
+- `composer test:ci`
+- `composer test:nfse`
+- `php -d memory_limit=512M vendor/bin/phpunit --testsuite NFe`
+- `php -d memory_limit=512M vendor/bin/phpunit --testsuite Tributacao`
+- `composer analyse`
+
 ## v1.4.2 - 2026-06-17
 
 ### Added
