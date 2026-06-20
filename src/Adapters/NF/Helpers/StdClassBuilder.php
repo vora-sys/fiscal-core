@@ -97,84 +97,100 @@ class StdClassBuilder
      */
     public static function props(...$values): \stdClass
     {
-        // Obter código fonte da linha que chamou este método
-        $backtrace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 1);
-        $file = $backtrace[0]['file'] ?? null;
-        $line = $backtrace[0]['line'] ?? null;
-        
-        if (!$file || !$line) {
-            throw new \RuntimeException('Não foi possível determinar o contexto da chamada');
-        }
-        
-        // Ler múltiplas linhas (suportar chamadas multi-linha)
-        $lines = file($file);
-        $startLine = $line - 1;
-        
-        // Encontrar a linha que contém "::props("
-        $callingLine = '';
-        $foundStart = false;
-        $openParens = 0;
-        
-        for ($i = $startLine; $i < min($startLine + 10, count($lines)); $i++) {
-            $currentLine = $lines[$i];
-            $callingLine .= ' ' . trim($currentLine);
-            
-            // Contar parênteses para saber quando a chamada termina
-            if (!$foundStart && strpos($currentLine, '::props(') !== false) {
-                $foundStart = true;
+        // Obter código fonte da linha que chamou este método. A posição do
+        // frame varia entre versões de PHP, então procuramos a chamada real.
+        foreach (debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 5) as $frame) {
+            $file = $frame['file'] ?? null;
+            $line = $frame['line'] ?? null;
+
+            if (!$file || !$line) {
+                continue;
             }
-            
-            if ($foundStart) {
-                $openParens += substr_count($currentLine, '(') - substr_count($currentLine, ')');
-                if ($openParens <= 0) {
-                    break;
-                }
+
+            $callingLine = self::readPropsCall((string) $file, (int) $line);
+            if ($callingLine === null) {
+                continue;
             }
-        }
-        
-        // Extrair nomes das variáveis da chamada (suporta multi-linha)
-        // Padrão: StdClassBuilder::props($var1, $var2, $obj->prop, etc)
-        if (preg_match('/::props\s*\((.*?)\)\s*[;,\)]/', $callingLine, $matches)) {
-            $argsString = $matches[1];
-            
-            // Dividir por vírgula, mas respeitar parênteses e colchetes
-            $args = self::splitArguments($argsString);
-            
-            // Extrair nomes de variáveis
-            $names = array_map(function($arg) {
-                $arg = trim($arg);
-                
-                // Variável simples: $vBC
-                if (preg_match('/^\$(\w+)$/', $arg, $m)) {
-                    return $m[1];
+
+            // Extrair nomes das variáveis da chamada (suporta multi-linha)
+            // Padrão: StdClassBuilder::props($var1, $var2, $obj->prop, etc)
+            if (preg_match('/::props\s*\((.*?)\)\s*[;,\)]/', $callingLine, $matches)) {
+                $argsString = $matches[1];
+
+                // Dividir por vírgula, mas respeitar parênteses e colchetes
+                $args = self::splitArguments($argsString);
+
+                // Extrair nomes de variáveis
+                $names = array_map(function($arg) {
+                    $arg = trim($arg);
+
+                    // Variável simples: $vBC
+                    if (preg_match('/^\$(\w+)$/', $arg, $m)) {
+                        return $m[1];
+                    }
+
+                    // Propriedade de objeto: $this->totais->vBC
+                    if (preg_match('/->(\w+)$/', $arg, $m)) {
+                        return $m[1];
+                    }
+
+                    // Array access: $array['key']
+                    if (preg_match('/\[[\'"](.*?)[\'"]\]$/', $arg, $m)) {
+                        return $m[1];
+                    }
+
+                    // Fallback: usar o próprio argumento sem $
+                    return str_replace('$', '', $arg);
+                }, $args);
+
+                // Combinar nomes com valores
+                $data = [];
+                foreach ($names as $i => $name) {
+                    if (isset($values[$i])) {
+                        $data[$name] = $values[$i];
+                    }
                 }
-                
-                // Propriedade de objeto: $this->totais->vBC
-                if (preg_match('/->(\w+)$/', $arg, $m)) {
-                    return $m[1];
-                }
-                
-                // Array access: $array['key']
-                if (preg_match('/\[[\'"](.*?)[\'"]\]$/', $arg, $m)) {
-                    return $m[1];
-                }
-                
-                // Fallback: usar o próprio argumento sem $
-                return str_replace('$', '', $arg);
-            }, $args);
-            
-            // Combinar nomes com valores
-            $data = [];
-            foreach ($names as $i => $name) {
-                if (isset($values[$i])) {
-                    $data[$name] = $values[$i];
-                }
+
+                return self::create($data);
             }
-            
-            return self::create($data);
         }
         
         throw new \RuntimeException('Não foi possível extrair nomes das variáveis da chamada');
+    }
+
+    private static function readPropsCall(string $file, int $line): ?string
+    {
+        if (!is_file($file)) {
+            return null;
+        }
+
+        $lines = file($file);
+        if ($lines === false) {
+            return null;
+        }
+
+        $startLine = max(0, $line - 1);
+        $callingLine = '';
+        $foundStart = false;
+        $openParens = 0;
+
+        for ($i = $startLine; $i < min($startLine + 10, count($lines)); $i++) {
+            $currentLine = $lines[$i];
+            $callingLine .= ' ' . trim($currentLine);
+
+            if (!$foundStart && strpos($currentLine, '::props(') !== false) {
+                $foundStart = true;
+            }
+
+            if ($foundStart) {
+                $openParens += substr_count($currentLine, '(') - substr_count($currentLine, ')');
+                if ($openParens <= 0) {
+                    return $callingLine;
+                }
+            }
+        }
+
+        return null;
     }
     
     /**

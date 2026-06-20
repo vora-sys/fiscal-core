@@ -1,5 +1,19 @@
 # Changelog
 
+## v1.4.4 - 2026-06-20
+
+### Changed
+- `TransporteNode` passa a montar objetos NFePHP com nomes explícitos em vez de depender de introspecção de variáveis, corrigindo falhas no PHP 8.1.
+- Teste de cobertura Uninfe agora é ignorado quando a base externa `Uninfe/` não está presente no checkout de CI.
+
+### Tests
+- `composer validate --strict`
+- `composer test:ci`
+- `composer test:nfse`
+- `php -d memory_limit=512M vendor/bin/phpunit --testsuite NFe`
+- `php -d memory_limit=512M vendor/bin/phpunit --testsuite Tributacao`
+- `composer analyse`
+
 ## v1.4.3 - 2026-06-20
 
 ### Added
