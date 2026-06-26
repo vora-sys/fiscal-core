@@ -3,6 +3,7 @@
 namespace Tests\Unit\NFSe;
 
 use sabbajohn\FiscalCore\Providers\NFSe\NacionalProvider;
+use sabbajohn\FiscalCore\Support\NFSeSchemaResolver;
 use PHPUnit\Framework\TestCase;
 
 class NacionalProviderTest extends TestCase
@@ -26,6 +27,7 @@ class NacionalProviderTest extends TestCase
         $xml = gzdecode((string) base64_decode((string) $payload['dpsXmlGZipB64']));
         $this->assertIsString($xml);
         $this->assertStringContainsString('<DPS', $xml);
+        $this->assertStringContainsString('versao="1.01"', $xml);
         $this->assertStringContainsString('infDPS', $xml);
         $this->assertStringNotContainsString('<vRetIRRF>', $xml);
     }
@@ -100,7 +102,8 @@ class NacionalProviderTest extends TestCase
         $xml = $provider->gerarXmlDpsPreview($dados);
 
         $this->assertIsString($xml);
-        $this->assertStringContainsString('<BM><tpBM>2</tpBM><nBM>15014020000001</nBM><pRedBCBM>50.00</pRedBCBM></BM>', $xml);
+        $this->assertStringContainsString('<BM><nBM>15014020000001</nBM><pRedBCBM>50.00</pRedBCBM></BM>', $xml);
+        $this->assertStringNotContainsString('<tpBM>', $xml);
         $this->assertLessThan(
             strpos($xml, '<BM>'),
             strpos($xml, '<tribISSQN>'),
@@ -111,6 +114,111 @@ class NacionalProviderTest extends TestCase
             strpos($xml, '<BM>'),
             'BM must be emitted before tpRetISSQN in the national DPS schema order.'
         );
+    }
+
+    public function test_dps_nacional_inclui_tributacao_federal_completa_na_ordem_do_schema(): void
+    {
+        $provider = new NacionalProvider($this->buildConfig(function () {
+            return '<Resposta><Sucesso>true</Sucesso></Resposta>';
+        }));
+
+        $dados = $this->dadosValidos();
+        $dados['tributacao']['federal'] = [
+            'piscofins' => [
+                'CST' => '01',
+                'vBCPisCofins' => 1000,
+                'pAliqPis' => 1.65,
+                'pAliqCofins' => 7.6,
+                'vPis' => 16.50,
+                'vCofins' => 76.00,
+                'tpRetPisCofins' => '3',
+            ],
+            'vRetCP' => 11.00,
+            'vRetIRRF' => 15.00,
+            'vRetCSLL' => 9.00,
+        ];
+
+        $xml = $provider->gerarXmlDpsPreview($dados);
+
+        $this->assertIsString($xml);
+        $this->assertStringContainsString(
+            '<tribFed><piscofins><CST>01</CST><vBCPisCofins>1000.00</vBCPisCofins><pAliqPis>1.65</pAliqPis><pAliqCofins>7.60</pAliqCofins><vPis>16.50</vPis><vCofins>76.00</vCofins><tpRetPisCofins>3</tpRetPisCofins></piscofins><vRetCP>11.00</vRetCP><vRetIRRF>15.00</vRetIRRF><vRetCSLL>9.00</vRetCSLL></tribFed>',
+            $xml
+        );
+        $this->assertStringNotContainsString('<vRetPIS>', $xml);
+        $this->assertStringNotContainsString('<vRetCOFINS>', $xml);
+        $this->assertLessThan(strpos($xml, '<tribFed>'), strpos($xml, '<tribMun>'));
+        $this->assertLessThan(strpos($xml, '<totTrib>'), strpos($xml, '<tribFed>'));
+    }
+
+    public function test_dps_nacional_inclui_descontos_deducao_e_total_de_tributos_por_escolha(): void
+    {
+        $provider = new NacionalProvider($this->buildConfig(function () {
+            return '<Resposta><Sucesso>true</Sucesso></Resposta>';
+        }));
+
+        $dados = $this->dadosValidos();
+        $dados['valores'] = [
+            'vReceb' => 950.00,
+            'vDescIncond' => 25.00,
+            'vDescCond' => 10.00,
+            'deducao_reducao' => [
+                'vDR' => 100.00,
+            ],
+        ];
+        $dados['tributacao']['total'] = [
+            'pTotTribSN' => 4.25,
+        ];
+
+        $xml = $provider->gerarXmlDpsPreview($dados);
+
+        $this->assertIsString($xml);
+        $this->assertStringContainsString('<vServPrest><vReceb>950.00</vReceb><vServ>1000.00</vServ></vServPrest>', $xml);
+        $this->assertStringContainsString('<vDescCondIncond><vDescIncond>25.00</vDescIncond><vDescCond>10.00</vDescCond></vDescCondIncond>', $xml);
+        $this->assertStringContainsString('<vDedRed><vDR>100.00</vDR></vDedRed>', $xml);
+        $this->assertStringContainsString('<totTrib><pTotTribSN>4.25</pTotTribSN></totTrib>', $xml);
+        $this->assertStringNotContainsString('<vTotTribFed>0.00</vTotTribFed>', $xml);
+    }
+
+    public function test_dps_nacional_inclui_ibscbs_minimo_com_tributacao_regular_e_diferimento(): void
+    {
+        $provider = new NacionalProvider($this->buildConfig(function () {
+            return '<Resposta><Sucesso>true</Sucesso></Resposta>';
+        }));
+
+        $dados = $this->dadosValidos();
+        $dados['ibscbs'] = [
+            'finNFSe' => '0',
+            'indFinal' => '0',
+            'cIndOp' => '000001',
+            'indDest' => '0',
+            'valores' => [
+                'trib' => [
+                    'gIBSCBS' => [
+                        'CST' => '000',
+                        'cClassTrib' => '000001',
+                        'gTribRegular' => [
+                            'CSTReg' => '000',
+                            'cClassTribReg' => '000001',
+                        ],
+                        'gDif' => [
+                            'pDifUF' => 1,
+                            'pDifMun' => 2,
+                            'pDifCBS' => 3,
+                        ],
+                    ],
+                ],
+            ],
+        ];
+
+        $xml = $provider->gerarXmlDpsPreview($dados);
+
+        $this->assertIsString($xml);
+        $this->assertStringContainsString(
+            '<IBSCBS><finNFSe>0</finNFSe><indFinal>0</indFinal><cIndOp>000001</cIndOp><indDest>0</indDest><valores><trib><gIBSCBS><CST>000</CST><cClassTrib>000001</cClassTrib><gTribRegular><CSTReg>000</CSTReg><cClassTribReg>000001</cClassTribReg></gTribRegular><gDif><pDifUF>1.00</pDifUF><pDifMun>2.00</pDifMun><pDifCBS>3.00</pDifCBS></gDif></gIBSCBS></trib></valores></IBSCBS>',
+            $xml
+        );
+        $this->assertLessThan(strpos($xml, '<IBSCBS>'), strpos($xml, '</valores>'));
     }
 
     public function test_emitir_normaliza_iss_retido_booleano_para_codigo_sefin(): void
@@ -362,11 +470,21 @@ class NacionalProviderTest extends TestCase
         $this->assertSame('/contribuintes/11222333000181/habilitacao?codigoMunicipio=4106902', $calls[1]['path']);
     }
 
+    public function test_schema_resolver_resolve_layout_nacional_para_xsd_101(): void
+    {
+        $schemaPath = (new NFSeSchemaResolver())->resolve('NACIONAL', 'emitir');
+
+        $this->assertStringEndsWith('src/Providers/NFSe/Xsd/1.01/DPS_v1.01.xsd', $schemaPath);
+        $this->assertFileExists($schemaPath);
+    }
+
     private function buildConfig(callable $httpClient): array
     {
         return [
             'codigo_municipio' => '3550308',
-            'versao' => '1.00',
+            'versao' => '1.01',
+            'dps_versao' => '1.01',
+            'dps_xsd_path' => 'src/Providers/NFSe/Xsd/1.01/DPS_v1.01.xsd',
             'ambiente' => 'homologacao',
             'api_base_url' => 'https://api.local',
             'timeout' => 10,

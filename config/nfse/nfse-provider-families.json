@@ -2129,6 +2129,10 @@
     "nfse_nacional": {
         "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\NacionalProvider",
         "layout_family": "NACIONAL",
+        "schema_root": "src/Providers/NFSe/Xsd/1.01",
+        "xsd_entrypoints": {
+            "emitir": "DPS_v1.01.xsd"
+        },
         "transport": "rest",
         "codigo_municipio": "1001058",
         "municipio_nome": "NACIONAL",
@@ -2236,7 +2240,9 @@
         },
         "aliquota_format": "decimal",
         "dps_send_paliq": false,
-        "versao": "1.00",
+        "versao": "1.01",
+        "dps_versao": "1.01",
+        "dps_xsd_path": "src/Providers/NFSe/Xsd/1.01/DPS_v1.01.xsd",
         "dps_root": "dps",
         "backend": "http",
         "ambiente": "homologacao",

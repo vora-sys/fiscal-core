@@ -87,7 +87,9 @@
       "aliquotas_municipio": "cnc_consulta:/municipios/{codigo_municipio}/aliquotas"
     },
     "aliquota_format": "decimal",
-    "versao": "1.00",
+    "versao": "1.01",
+    "dps_versao": "1.01",
+    "dps_xsd_path": "src/Providers/NFSe/Xsd/1.01/DPS_v1.01.xsd",
     "backend": "http",
     "ambiente": "homologacao"
   },

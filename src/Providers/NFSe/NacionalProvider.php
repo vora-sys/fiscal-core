@@ -610,7 +610,7 @@ class NacionalProvider extends AbstractNFSeProvider implements NFSeNacionalCapab
         $verAplic = (string)($dados['verAplic'] ?? $this->config['ver_aplic'] ?? 'invoiceflow-1.0');
         $tpEmit = (string)($dados['tpEmit'] ?? '1');
 
-        $versao = (string)($this->config['dps_versao'] ?? '1.00');
+        $versao = (string)($this->config['dps_versao'] ?? $this->config['versao'] ?? '1.01');
         $dpsId = $this->buildDpsId($dados, $serie, $nDpsId);
         $wrapInNfse = $this->shouldWrapDpsInNfse();
 
@@ -651,115 +651,667 @@ class NacionalProvider extends AbstractNFSeProvider implements NFSeNacionalCapab
         $cLocEmi = str_pad(substr($this->onlyDigits($cLocEmiInput), 0, 7), 7, '0', STR_PAD_LEFT);
         $this->appendNodeDps($dom, $inf, 'cLocEmi', $cLocEmi);
 
+        $this->appendPrestadorDps($dom, $inf, (array) ($dados['prestador'] ?? []), $tpEmit);
+        $this->appendTomadorDps($dom, $inf, (array) ($dados['tomador'] ?? []));
+        $this->appendServicoDps($dom, $inf, $dados, $cLocEmi);
+        $this->appendValoresDps($dom, $inf, $dados);
+        $this->appendIbscbsDps($dom, $inf, $dados);
+
+        return $dom->saveXML() ?: '';
+    }
+
+    /**
+     * @param array<string,mixed> $prestador
+     */
+    private function appendPrestadorDps(\DOMDocument $dom, \DOMElement $inf, array $prestador, string $tpEmit): void
+    {
+        $ns = $this->getDpsNamespace();
         $prest = $dom->createElementNS($ns, 'prest');
         $inf->appendChild($prest);
-        $prestDoc = $this->onlyDigits((string)($dados['prestador']['cnpj'] ?? ''));
+
+        $prestDoc = $this->onlyDigits((string)($prestador['cnpj'] ?? $prestador['cpf'] ?? $prestador['documento'] ?? ''));
         if (strlen($prestDoc) === 14) {
             $this->appendNodeDps($dom, $prest, 'CNPJ', $prestDoc);
         } else {
             $this->appendNodeDps($dom, $prest, 'CPF', str_pad(substr($prestDoc, 0, 11), 11, '0', STR_PAD_LEFT));
         }
-        $prestIm = $this->normalizeMunicipalRegistration((string)($dados['prestador']['inscricaoMunicipal'] ?? ''));
+
+        $caepf = $this->onlyDigits((string)($prestador['CAEPF'] ?? $prestador['caepf'] ?? ''));
+        if ($caepf !== '') {
+            $this->appendNodeDps($dom, $prest, 'CAEPF', $caepf);
+        }
+
+        $prestIm = $this->normalizeMunicipalRegistration((string)($prestador['inscricaoMunicipal'] ?? $prestador['IM'] ?? ''));
         if ($prestIm !== '') {
             $this->appendNodeDps($dom, $prest, 'IM', $prestIm);
         }
-        $prestNome = trim((string)($dados['prestador']['razaoSocial'] ?? ''));
+
+        $prestNome = trim((string)($prestador['razaoSocial'] ?? $prestador['razao_social'] ?? $prestador['nome'] ?? ''));
         if ($prestNome !== '' && $tpEmit !== '1') {
             $this->appendNodeDps($dom, $prest, 'xNome', $prestNome);
         }
 
-        $regTrib = $dom->createElementNS($ns, 'regTrib');
-        $prest->appendChild($regTrib);
-        $this->appendNodeDps($dom, $regTrib, 'opSimpNac', (string)($dados['prestador']['opSimpNac'] ?? '1'));
-        $this->appendNodeDps($dom, $regTrib, 'regEspTrib', (string)($dados['prestador']['regEspTrib'] ?? '0'));
-
-        $tomadorDoc = $this->onlyDigits((string)($dados['tomador']['documento'] ?? ''));
-        $tomadorNome = trim((string)($dados['tomador']['razaoSocial'] ?? $dados['tomador']['nome'] ?? ''));
-        if ($tomadorDoc !== '' && $tomadorNome !== '') {
-            $toma = $dom->createElementNS($ns, 'toma');
-            $inf->appendChild($toma);
-            if (strlen($tomadorDoc) === 14) {
-                $this->appendNodeDps($dom, $toma, 'CNPJ', $tomadorDoc);
-            } else {
-                $this->appendNodeDps($dom, $toma, 'CPF', str_pad(substr($tomadorDoc, 0, 11), 11, '0', STR_PAD_LEFT));
-            }
-            $this->appendNodeDps($dom, $toma, 'xNome', $tomadorNome);
-            $this->appendTomadorEnderecoDps($dom, $toma, (array) ($dados['tomador'] ?? []));
+        $telefone = $this->onlyDigits((string)($prestador['telefone'] ?? $prestador['fone'] ?? ''));
+        if ($telefone !== '') {
+            $this->appendNodeDps($dom, $prest, 'fone', $telefone);
+        }
+        $email = trim((string)($prestador['email'] ?? ''));
+        if ($email !== '') {
+            $this->appendNodeDps($dom, $prest, 'email', $email);
         }
 
+        $regTrib = $dom->createElementNS($ns, 'regTrib');
+        $prest->appendChild($regTrib);
+        $this->appendNodeDps($dom, $regTrib, 'opSimpNac', (string)($prestador['opSimpNac'] ?? '1'));
+        $regApTribSn = trim((string)($prestador['regApTribSN'] ?? $prestador['regime_apuracao_sn'] ?? ''));
+        if ($regApTribSn !== '') {
+            $this->appendNodeDps($dom, $regTrib, 'regApTribSN', $regApTribSn);
+        }
+        $this->appendNodeDps($dom, $regTrib, 'regEspTrib', (string)($prestador['regEspTrib'] ?? '0'));
+    }
+
+    /**
+     * @param array<string,mixed> $tomador
+     */
+    private function appendTomadorDps(\DOMDocument $dom, \DOMElement $inf, array $tomador): void
+    {
+        $tomadorDoc = $this->onlyDigits((string)($tomador['documento'] ?? $tomador['cnpj'] ?? $tomador['cpf'] ?? ''));
+        $tomadorNome = trim((string)($tomador['razaoSocial'] ?? $tomador['razao_social'] ?? $tomador['nome'] ?? ''));
+        if ($tomadorDoc === '' || $tomadorNome === '') {
+            return;
+        }
+
+        $ns = $this->getDpsNamespace();
+        $toma = $dom->createElementNS($ns, 'toma');
+        $inf->appendChild($toma);
+        if (strlen($tomadorDoc) === 14) {
+            $this->appendNodeDps($dom, $toma, 'CNPJ', $tomadorDoc);
+        } else {
+            $this->appendNodeDps($dom, $toma, 'CPF', str_pad(substr($tomadorDoc, 0, 11), 11, '0', STR_PAD_LEFT));
+        }
+        $this->appendNodeDps($dom, $toma, 'xNome', $tomadorNome);
+        $this->appendTomadorEnderecoDps($dom, $toma, $tomador);
+
+        $telefone = $this->onlyDigits((string)($tomador['telefone'] ?? $tomador['fone'] ?? ''));
+        if ($telefone !== '') {
+            $this->appendNodeDps($dom, $toma, 'fone', $telefone);
+        }
+        $email = trim((string)($tomador['email'] ?? ''));
+        if ($email !== '') {
+            $this->appendNodeDps($dom, $toma, 'email', $email);
+        }
+    }
+
+    /**
+     * @param array<string,mixed> $dados
+     */
+    private function appendServicoDps(\DOMDocument $dom, \DOMElement $inf, array $dados, string $cLocEmi): void
+    {
+        $ns = $this->getDpsNamespace();
+        $servico = (array)($dados['servico'] ?? []);
         $serv = $dom->createElementNS($ns, 'serv');
         $inf->appendChild($serv);
 
         $locPrest = $dom->createElementNS($ns, 'locPrest');
         $serv->appendChild($locPrest);
-        $cLocPrestInput = (string)($dados['servico']['cLocPrestacao'] ?? $dados['servico']['codigo_municipio'] ?? $cLocEmi);
+        $cLocPrestInput = (string)($servico['cLocPrestacao'] ?? $servico['codigo_municipio'] ?? $cLocEmi);
         $cLocPrest = str_pad(substr($this->onlyDigits($cLocPrestInput), 0, 7), 7, '0', STR_PAD_LEFT);
         $this->appendNodeDps($dom, $locPrest, 'cLocPrestacao', $cLocPrest);
 
         $cServ = $dom->createElementNS($ns, 'cServ');
         $serv->appendChild($cServ);
-        $cTribNac = $this->normalizeCTribNac((string)($dados['servico']['cTribNac'] ?? $dados['servico']['codigoServicoNacional'] ?? $dados['servico']['codigo'] ?? ''));
+        $cTribNac = $this->normalizeCTribNac((string)($servico['cTribNac'] ?? $servico['codigoServicoNacional'] ?? $servico['codigo'] ?? ''));
         if ($cTribNac === '') {
             $cTribNac = '010101';
         }
-        $cTribMun = $this->normalizeCTribMun((string)($dados['servico']['cTribMun'] ?? $dados['servico']['codigoMunicipal'] ?? ''));
-        $cNbs = preg_replace('/\D+/', '', (string)($dados['servico']['cNBS'] ?? $dados['servico']['nbs'] ?? '')) ?? '';
+        $cTribMun = $this->normalizeCTribMun((string)($servico['cTribMun'] ?? $servico['codigoMunicipal'] ?? ''));
+        $cNbs = preg_replace('/\D+/', '', (string)($servico['cNBS'] ?? $servico['nbs'] ?? '')) ?? '';
         $this->appendNodeDps($dom, $cServ, 'cTribNac', $cTribNac);
         if ($cTribMun !== '') {
             $this->appendNodeDps($dom, $cServ, 'cTribMun', $cTribMun);
         }
-        $this->appendNodeDps($dom, $cServ, 'xDescServ', (string)($dados['servico']['descricao'] ?? $dados['servico']['discriminacao'] ?? 'Servico'));
+        $this->appendNodeDps($dom, $cServ, 'xDescServ', (string)($servico['descricao'] ?? $servico['discriminacao'] ?? 'Servico'));
         if ($cNbs !== '') {
             $this->appendNodeDps($dom, $cServ, 'cNBS', $cNbs);
         }
-        $this->appendObraGroup($dom, $serv, (array) ($dados['servico']['obra'] ?? []));
 
+        $this->appendObraGroup($dom, $serv, (array)($servico['obra'] ?? []));
+        $this->appendInfoComplGroup($dom, $serv, $servico);
+    }
+
+    /**
+     * @param array<string,mixed> $dados
+     */
+    private function appendValoresDps(\DOMDocument $dom, \DOMElement $inf, array $dados): void
+    {
+        $ns = $this->getDpsNamespace();
+        $valoresPayload = is_array($dados['valores'] ?? null) ? $dados['valores'] : [];
         $valores = $dom->createElementNS($ns, 'valores');
         $inf->appendChild($valores);
 
         $vServPrest = $dom->createElementNS($ns, 'vServPrest');
         $valores->appendChild($vServPrest);
-        $valorServicos = (float)($dados['valor_servicos'] ?? 0);
+        $vReceb = $this->firstDecimal([
+            $valoresPayload['vReceb'] ?? null,
+            $valoresPayload['valor_recebido'] ?? null,
+        ]);
+        if ($vReceb !== null) {
+            $this->appendNodeDps($dom, $vServPrest, 'vReceb', $this->formatDecimal($vReceb, 2));
+        }
+        $valorServicos = (float)($dados['valor_servicos'] ?? $valoresPayload['vServ'] ?? 0);
         $this->appendNodeDps($dom, $vServPrest, 'vServ', $this->formatDecimal($valorServicos, 2));
+
+        $this->appendDescontosDps($dom, $valores, $dados);
+        $this->appendDeducaoReducaoDps($dom, $valores, $dados);
 
         $trib = $dom->createElementNS($ns, 'trib');
         $valores->appendChild($trib);
-        $tribMun = $dom->createElementNS($ns, 'tribMun');
-        $trib->appendChild($tribMun);
-        $tribIssqn = (string)($dados['servico']['tribISSQN'] ?? '1');
-        $this->appendNodeDps($dom, $tribMun, 'tribISSQN', $tribIssqn);
-        $this->appendBeneficioMunicipalGroup($dom, $tribMun, (array)($dados['servico'] ?? []));
-        $aliquota = $this->normalizeDpsAliquotaPercent((float)($dados['servico']['aliquota'] ?? 0));
-        $sendPAliq = (bool)($this->config['dps_send_paliq'] ?? ($tribIssqn === '1'));
-        if (array_key_exists('enviarPAliq', (array)($dados['servico'] ?? []))) {
-            $sendPAliq = (bool)$dados['servico']['enviarPAliq'];
-        }
-        $this->appendNodeDps($dom, $tribMun, 'tpRetISSQN', $this->resolveDpsIssRetentionCode((array)($dados['servico'] ?? [])));
-        if ($sendPAliq && $aliquota > 0) {
-            $this->appendNodeDps($dom, $tribMun, 'pAliq', $this->formatDecimal($aliquota, 2));
+        $this->appendTributacaoMunicipalDps($dom, $trib, $dados);
+        $this->appendTributacaoFederalDps($dom, $trib, $dados);
+        $this->appendTotalTributosDps($dom, $trib, $dados);
+    }
+
+    /**
+     * @param array<string,mixed> $servico
+     */
+    private function appendInfoComplGroup(\DOMDocument $dom, \DOMElement $serv, array $servico): void
+    {
+        $info = is_array($servico['infoCompl'] ?? null) ? $servico['infoCompl'] : [];
+        $values = [
+            'idDocTec' => $this->firstString([$info['idDocTec'] ?? null, $servico['idDocTec'] ?? null]),
+            'docRef' => $this->firstString([$info['docRef'] ?? null, $servico['docRef'] ?? null]),
+            'xPed' => $this->firstString([$info['xPed'] ?? null, $servico['xPed'] ?? null]),
+            'xInfComp' => $this->firstString([
+                $info['xInfComp'] ?? null,
+                $servico['xInfComp'] ?? null,
+                $servico['informacoes_complementares'] ?? null,
+            ]),
+        ];
+
+        $items = $info['gItemPed']['xItemPed'] ?? $servico['xItemPed'] ?? null;
+        $hasInfo = $items !== null || array_filter($values, static fn ($value) => $value !== null) !== [];
+        if (!$hasInfo) {
+            return;
         }
 
-        $valorIrrf = $this->firstPositiveDecimal([
-            $dados['servico']['valor_irrf'] ?? null,
-            $dados['servico']['valor_ir'] ?? null,
+        $ns = $this->getDpsNamespace();
+        $infoCompl = $dom->createElementNS($ns, 'infoCompl');
+        foreach (['idDocTec', 'docRef', 'xPed'] as $tag) {
+            if ($values[$tag] !== null) {
+                $this->appendNodeDps($dom, $infoCompl, $tag, $values[$tag]);
+            }
+        }
+
+        $itemList = is_array($items) ? $items : ($items !== null ? [$items] : []);
+        if ($itemList !== []) {
+            $gItemPed = $dom->createElementNS($ns, 'gItemPed');
+            foreach ($itemList as $item) {
+                if (is_scalar($item) && trim((string)$item) !== '') {
+                    $this->appendNodeDps($dom, $gItemPed, 'xItemPed', trim((string)$item));
+                }
+            }
+            if ($gItemPed->childNodes->length > 0) {
+                $infoCompl->appendChild($gItemPed);
+            }
+        }
+
+        if ($values['xInfComp'] !== null) {
+            $this->appendNodeDps($dom, $infoCompl, 'xInfComp', $values['xInfComp']);
+        }
+
+        if ($infoCompl->childNodes->length > 0) {
+            $serv->appendChild($infoCompl);
+        }
+    }
+
+    /**
+     * @param array<string,mixed> $dados
+     */
+    private function appendDescontosDps(\DOMDocument $dom, \DOMElement $valores, array $dados): void
+    {
+        $valoresPayload = is_array($dados['valores'] ?? null) ? $dados['valores'] : [];
+        $servico = (array)($dados['servico'] ?? []);
+        $vDescIncond = $this->firstDecimal([
+            $valoresPayload['vDescIncond'] ?? null,
+            $valoresPayload['desconto_incondicionado'] ?? null,
+            $servico['desconto_incondicionado'] ?? null,
+            $servico['vDescIncond'] ?? null,
+        ]);
+        $vDescCond = $this->firstDecimal([
+            $valoresPayload['vDescCond'] ?? null,
+            $valoresPayload['desconto_condicionado'] ?? null,
+            $servico['desconto_condicionado'] ?? null,
+            $servico['vDescCond'] ?? null,
+        ]);
+        if ($vDescIncond === null && $vDescCond === null) {
+            return;
+        }
+
+        $node = $dom->createElementNS($this->getDpsNamespace(), 'vDescCondIncond');
+        $valores->appendChild($node);
+        if ($vDescIncond !== null) {
+            $this->appendNodeDps($dom, $node, 'vDescIncond', $this->formatDecimal($vDescIncond, 2));
+        }
+        if ($vDescCond !== null) {
+            $this->appendNodeDps($dom, $node, 'vDescCond', $this->formatDecimal($vDescCond, 2));
+        }
+    }
+
+    /**
+     * @param array<string,mixed> $dados
+     */
+    private function appendDeducaoReducaoDps(\DOMDocument $dom, \DOMElement $valores, array $dados): void
+    {
+        $valoresPayload = is_array($dados['valores'] ?? null) ? $dados['valores'] : [];
+        $deducao = is_array($valoresPayload['deducao_reducao'] ?? null)
+            ? $valoresPayload['deducao_reducao']
+            : (is_array($valoresPayload['vDedRed'] ?? null) ? $valoresPayload['vDedRed'] : []);
+        $servico = (array)($dados['servico'] ?? []);
+
+        $pDr = $this->firstDecimal([
+            $deducao['pDR'] ?? null,
+            $deducao['percentual'] ?? null,
+            $servico['pDR'] ?? null,
+        ]);
+        $vDr = $this->firstDecimal([
+            $deducao['vDR'] ?? null,
+            $deducao['valor'] ?? null,
+            $servico['vDR'] ?? null,
+            $servico['valor_deducoes'] ?? null,
+        ]);
+        if ($pDr === null && $vDr === null) {
+            return;
+        }
+
+        $node = $dom->createElementNS($this->getDpsNamespace(), 'vDedRed');
+        $valores->appendChild($node);
+        if ($pDr !== null) {
+            $this->appendNodeDps($dom, $node, 'pDR', $this->formatDecimal($pDr, 2));
+            return;
+        }
+
+        $this->appendNodeDps($dom, $node, 'vDR', $this->formatDecimal((float)$vDr, 2));
+    }
+
+    /**
+     * @param array<string,mixed> $dados
+     */
+    private function appendTributacaoMunicipalDps(\DOMDocument $dom, \DOMElement $trib, array $dados): void
+    {
+        $ns = $this->getDpsNamespace();
+        $servico = (array)($dados['servico'] ?? []);
+        $tributacao = is_array($dados['tributacao'] ?? null) ? $dados['tributacao'] : [];
+        $municipal = is_array($tributacao['municipal'] ?? null) ? $tributacao['municipal'] : [];
+        $merged = $municipal + $servico;
+
+        $tribMun = $dom->createElementNS($ns, 'tribMun');
+        $trib->appendChild($tribMun);
+        $tribIssqn = (string)($merged['tribISSQN'] ?? '1');
+        $this->appendNodeDps($dom, $tribMun, 'tribISSQN', $tribIssqn);
+
+        $cPaisResult = $this->firstString([$merged['cPaisResult'] ?? null, $merged['codigo_pais_resultado'] ?? null]);
+        if ($cPaisResult !== null) {
+            $this->appendNodeDps($dom, $tribMun, 'cPaisResult', $cPaisResult);
+        }
+        $tpImunidade = $this->firstString([$merged['tpImunidade'] ?? null, $merged['tipo_imunidade'] ?? null]);
+        if ($tpImunidade !== null) {
+            $this->appendNodeDps($dom, $tribMun, 'tpImunidade', $tpImunidade);
+        }
+        $this->appendExigSuspDps($dom, $tribMun, $merged);
+        $this->appendBeneficioMunicipalGroup($dom, $tribMun, $merged);
+
+        $retentionPayload = $municipal + $servico;
+        $this->appendNodeDps($dom, $tribMun, 'tpRetISSQN', $this->resolveDpsIssRetentionCode($retentionPayload));
+
+        $aliquota = $this->firstDecimal([
+            $municipal['pAliq'] ?? null,
+            $municipal['aliquota'] ?? null,
+            $servico['pAliq'] ?? null,
+            $servico['aliquota'] ?? null,
+        ]);
+        $aliquotaPercent = $aliquota !== null ? $this->normalizeDpsAliquotaPercent((float)$aliquota) : 0.0;
+        $sendPAliq = (bool)($this->config['dps_send_paliq'] ?? ($tribIssqn === '1'));
+        if (array_key_exists('enviarPAliq', $servico)) {
+            $sendPAliq = (bool)$servico['enviarPAliq'];
+        }
+        if (array_key_exists('enviarPAliq', $municipal)) {
+            $sendPAliq = (bool)$municipal['enviarPAliq'];
+        }
+        if ($sendPAliq && $aliquotaPercent > 0) {
+            $this->appendNodeDps($dom, $tribMun, 'pAliq', $this->formatDecimal($aliquotaPercent, 2));
+        }
+    }
+
+    /**
+     * @param array<string,mixed> $data
+     */
+    private function appendExigSuspDps(\DOMDocument $dom, \DOMElement $tribMun, array $data): void
+    {
+        $exigSusp = is_array($data['exigSusp'] ?? null) ? $data['exigSusp'] : [];
+        $tpSusp = $this->firstString([$exigSusp['tpSusp'] ?? null, $data['tpSusp'] ?? null]);
+        $nProcesso = $this->firstString([$exigSusp['nProcesso'] ?? null, $data['nProcesso'] ?? null]);
+        if ($tpSusp === null || $nProcesso === null) {
+            return;
+        }
+
+        $node = $dom->createElementNS($this->getDpsNamespace(), 'exigSusp');
+        $tribMun->appendChild($node);
+        $this->appendNodeDps($dom, $node, 'tpSusp', $tpSusp);
+        $this->appendNodeDps($dom, $node, 'nProcesso', $nProcesso);
+    }
+
+    /**
+     * @param array<string,mixed> $dados
+     */
+    private function appendTributacaoFederalDps(\DOMDocument $dom, \DOMElement $trib, array $dados): void
+    {
+        $tributacao = is_array($dados['tributacao'] ?? null) ? $dados['tributacao'] : [];
+        $federal = is_array($tributacao['federal'] ?? null) ? $tributacao['federal'] : [];
+        $servico = (array)($dados['servico'] ?? []);
+
+        $piscofins = $this->resolvePisCofinsPayload($dados, $federal, $servico);
+        $vRetCp = $this->firstDecimal([
+            $federal['vRetCP'] ?? null,
+            $federal['valor_cp'] ?? null,
+            $servico['vRetCP'] ?? null,
+            $servico['valor_cp'] ?? null,
+            $dados['vRetCP'] ?? null,
+            $dados['valor_cp'] ?? null,
+        ]);
+        $vRetIrrf = $this->firstDecimal([
+            $federal['vRetIRRF'] ?? null,
+            $federal['valor_irrf'] ?? null,
+            $federal['valor_ir'] ?? null,
+            $servico['vRetIRRF'] ?? null,
+            $servico['valor_irrf'] ?? null,
+            $servico['valor_ir'] ?? null,
+            $dados['vRetIRRF'] ?? null,
             $dados['valor_irrf'] ?? null,
             $dados['valor_ir'] ?? null,
         ]);
-        if ($valorIrrf !== null) {
-            $tribFed = $dom->createElementNS($ns, 'tribFed');
-            $trib->appendChild($tribFed);
-            $this->appendNodeDps($dom, $tribFed, 'vRetIRRF', $this->formatDecimal($valorIrrf, 2));
+        $vRetCsll = $this->firstDecimal([
+            $federal['vRetCSLL'] ?? null,
+            $federal['valor_csll'] ?? null,
+            $servico['vRetCSLL'] ?? null,
+            $servico['valor_csll'] ?? null,
+            $dados['vRetCSLL'] ?? null,
+            $dados['valor_csll'] ?? null,
+        ]);
+
+        if ($piscofins === [] && $vRetCp === null && $vRetIrrf === null && $vRetCsll === null) {
+            return;
         }
 
-        $totTrib = $dom->createElementNS($ns, 'totTrib');
-        $trib->appendChild($totTrib);
-        $vTotTrib = $dom->createElementNS($ns, 'vTotTrib');
-        $totTrib->appendChild($vTotTrib);
-        $this->appendNodeDps($dom, $vTotTrib, 'vTotTribFed', '0.00');
-        $this->appendNodeDps($dom, $vTotTrib, 'vTotTribEst', '0.00');
-        $this->appendNodeDps($dom, $vTotTrib, 'vTotTribMun', '0.00');
+        $ns = $this->getDpsNamespace();
+        $tribFed = $dom->createElementNS($ns, 'tribFed');
+        $trib->appendChild($tribFed);
+        if ($piscofins !== []) {
+            $pisCofinsNode = $dom->createElementNS($ns, 'piscofins');
+            $tribFed->appendChild($pisCofinsNode);
+            $this->appendNodeDps($dom, $pisCofinsNode, 'CST', (string)($piscofins['CST'] ?? '00'));
+            foreach (['vBCPisCofins', 'pAliqPis', 'pAliqCofins', 'vPis', 'vCofins'] as $tag) {
+                if (array_key_exists($tag, $piscofins) && is_numeric($piscofins[$tag])) {
+                    $this->appendNodeDps($dom, $pisCofinsNode, $tag, $this->formatDecimal((float)$piscofins[$tag], 2));
+                }
+            }
+            if (isset($piscofins['tpRetPisCofins']) && is_scalar($piscofins['tpRetPisCofins'])) {
+                $this->appendNodeDps($dom, $pisCofinsNode, 'tpRetPisCofins', trim((string)$piscofins['tpRetPisCofins']));
+            }
+        }
+        if ($vRetCp !== null) {
+            $this->appendNodeDps($dom, $tribFed, 'vRetCP', $this->formatDecimal($vRetCp, 2));
+        }
+        if ($vRetIrrf !== null) {
+            $this->appendNodeDps($dom, $tribFed, 'vRetIRRF', $this->formatDecimal($vRetIrrf, 2));
+        }
+        if ($vRetCsll !== null) {
+            $this->appendNodeDps($dom, $tribFed, 'vRetCSLL', $this->formatDecimal($vRetCsll, 2));
+        }
+    }
 
-        return $dom->saveXML() ?: '';
+    /**
+     * @param array<string,mixed> $dados
+     * @param array<string,mixed> $federal
+     * @param array<string,mixed> $servico
+     * @return array<string,mixed>
+     */
+    private function resolvePisCofinsPayload(array $dados, array $federal, array $servico): array
+    {
+        $piscofins = is_array($federal['piscofins'] ?? null) ? $federal['piscofins'] : [];
+        $cst = $this->firstString([
+            $piscofins['CST'] ?? null,
+            $piscofins['cst'] ?? null,
+            $federal['CST'] ?? null,
+            $federal['cst_pis_cofins'] ?? null,
+            $servico['CST'] ?? null,
+            $servico['cst_pis_cofins'] ?? null,
+            $dados['cst_pis_cofins'] ?? null,
+        ]);
+        $resolved = [];
+        if ($cst !== null) {
+            $resolved['CST'] = str_pad(substr($this->onlyDigits($cst), 0, 2), 2, '0', STR_PAD_LEFT);
+        }
+
+        $fieldMap = [
+            'vBCPisCofins' => [$piscofins['vBCPisCofins'] ?? null, $piscofins['vBC'] ?? null, $federal['vBCPisCofins'] ?? null, $servico['vBCPisCofins'] ?? null],
+            'pAliqPis' => [$piscofins['pAliqPis'] ?? null, $federal['pAliqPis'] ?? null, $servico['pAliqPis'] ?? null],
+            'pAliqCofins' => [$piscofins['pAliqCofins'] ?? null, $federal['pAliqCofins'] ?? null, $servico['pAliqCofins'] ?? null],
+            'vPis' => [$piscofins['vPis'] ?? null, $federal['vPis'] ?? null, $servico['vPis'] ?? null, $servico['valor_pis'] ?? null, $dados['valor_pis'] ?? null],
+            'vCofins' => [$piscofins['vCofins'] ?? null, $federal['vCofins'] ?? null, $servico['vCofins'] ?? null, $servico['valor_cofins'] ?? null, $dados['valor_cofins'] ?? null],
+        ];
+        foreach ($fieldMap as $tag => $values) {
+            $value = $this->firstDecimal($values);
+            if ($value !== null) {
+                $resolved[$tag] = $value;
+            }
+        }
+
+        $tpRet = $this->firstString([
+            $piscofins['tpRetPisCofins'] ?? null,
+            $federal['tpRetPisCofins'] ?? null,
+            $servico['tpRetPisCofins'] ?? null,
+        ]);
+        if ($tpRet !== null) {
+            $resolved['tpRetPisCofins'] = $tpRet;
+        }
+        if ($resolved !== [] && !isset($resolved['CST'])) {
+            $resolved['CST'] = '00';
+        }
+
+        return $resolved;
+    }
+
+    /**
+     * @param array<string,mixed> $dados
+     */
+    private function appendTotalTributosDps(\DOMDocument $dom, \DOMElement $trib, array $dados): void
+    {
+        $tributacao = is_array($dados['tributacao'] ?? null) ? $dados['tributacao'] : [];
+        $total = is_array($tributacao['total'] ?? null)
+            ? $tributacao['total']
+            : (is_array($dados['totTrib'] ?? null) ? $dados['totTrib'] : []);
+
+        $totTrib = $dom->createElementNS($this->getDpsNamespace(), 'totTrib');
+        $trib->appendChild($totTrib);
+
+        if (isset($total['indTotTrib'])) {
+            $this->appendNodeDps($dom, $totTrib, 'indTotTrib', (string)$total['indTotTrib']);
+            return;
+        }
+        if (isset($total['pTotTribSN']) && is_numeric($total['pTotTribSN'])) {
+            $this->appendNodeDps($dom, $totTrib, 'pTotTribSN', $this->formatDecimal((float)$total['pTotTribSN'], 2));
+            return;
+        }
+        if (isset($total['pTotTrib']) && is_array($total['pTotTrib'])) {
+            $node = $dom->createElementNS($this->getDpsNamespace(), 'pTotTrib');
+            $totTrib->appendChild($node);
+            $this->appendNodeDps($dom, $node, 'pTotTribFed', $this->formatDecimal((float)($total['pTotTrib']['pTotTribFed'] ?? 0), 2));
+            $this->appendNodeDps($dom, $node, 'pTotTribEst', $this->formatDecimal((float)($total['pTotTrib']['pTotTribEst'] ?? 0), 2));
+            $this->appendNodeDps($dom, $node, 'pTotTribMun', $this->formatDecimal((float)($total['pTotTrib']['pTotTribMun'] ?? 0), 2));
+            return;
+        }
+
+        $values = is_array($total['vTotTrib'] ?? null) ? $total['vTotTrib'] : $total;
+        $node = $dom->createElementNS($this->getDpsNamespace(), 'vTotTrib');
+        $totTrib->appendChild($node);
+        $this->appendNodeDps($dom, $node, 'vTotTribFed', $this->formatDecimal((float)($values['vTotTribFed'] ?? 0), 2));
+        $this->appendNodeDps($dom, $node, 'vTotTribEst', $this->formatDecimal((float)($values['vTotTribEst'] ?? 0), 2));
+        $this->appendNodeDps($dom, $node, 'vTotTribMun', $this->formatDecimal((float)($values['vTotTribMun'] ?? 0), 2));
+    }
+
+    /**
+     * @param array<string,mixed> $dados
+     */
+    private function appendIbscbsDps(\DOMDocument $dom, \DOMElement $inf, array $dados): void
+    {
+        $ibscbs = is_array($dados['ibscbs'] ?? null)
+            ? $dados['ibscbs']
+            : (is_array($dados['IBSCBS'] ?? null) ? $dados['IBSCBS'] : []);
+        if ($ibscbs === []) {
+            return;
+        }
+
+        $gIbscbs = $this->resolveIbscbsTributosSitClas($ibscbs);
+        $finNfse = $this->firstString([$ibscbs['finNFSe'] ?? null]);
+        $cIndOp = $this->firstString([$ibscbs['cIndOp'] ?? null]);
+        $indDest = $this->firstString([$ibscbs['indDest'] ?? null]);
+        if ($gIbscbs === [] || $finNfse === null || $cIndOp === null || $indDest === null) {
+            return;
+        }
+
+        $ns = $this->getDpsNamespace();
+        $node = $dom->createElementNS($ns, 'IBSCBS');
+        $inf->appendChild($node);
+        $this->appendNodeDps($dom, $node, 'finNFSe', $finNfse);
+        if (isset($ibscbs['indFinal'])) {
+            $this->appendNodeDps($dom, $node, 'indFinal', (string)$ibscbs['indFinal']);
+        }
+        $this->appendNodeDps($dom, $node, 'cIndOp', $cIndOp);
+        if (isset($ibscbs['tpOper'])) {
+            $this->appendNodeDps($dom, $node, 'tpOper', (string)$ibscbs['tpOper']);
+        }
+        $this->appendIbscbsRefNfseDps($dom, $node, $ibscbs);
+        if (isset($ibscbs['tpEnteGov'])) {
+            $this->appendNodeDps($dom, $node, 'tpEnteGov', (string)$ibscbs['tpEnteGov']);
+        }
+        $this->appendNodeDps($dom, $node, 'indDest', $indDest);
+        $this->appendIbscbsDestDps($dom, $node, $ibscbs);
+
+        $valores = $dom->createElementNS($ns, 'valores');
+        $node->appendChild($valores);
+        $trib = $dom->createElementNS($ns, 'trib');
+        $valores->appendChild($trib);
+        $gNode = $dom->createElementNS($ns, 'gIBSCBS');
+        $trib->appendChild($gNode);
+        $this->appendNodeDps($dom, $gNode, 'CST', (string)$gIbscbs['CST']);
+        $this->appendNodeDps($dom, $gNode, 'cClassTrib', (string)$gIbscbs['cClassTrib']);
+        if (isset($gIbscbs['cCredPres'])) {
+            $this->appendNodeDps($dom, $gNode, 'cCredPres', (string)$gIbscbs['cCredPres']);
+        }
+        if (isset($gIbscbs['gTribRegular']) && is_array($gIbscbs['gTribRegular'])) {
+            $regular = $gIbscbs['gTribRegular'];
+            if (isset($regular['CSTReg'], $regular['cClassTribReg'])) {
+                $regularNode = $dom->createElementNS($ns, 'gTribRegular');
+                $gNode->appendChild($regularNode);
+                $this->appendNodeDps($dom, $regularNode, 'CSTReg', (string)$regular['CSTReg']);
+                $this->appendNodeDps($dom, $regularNode, 'cClassTribReg', (string)$regular['cClassTribReg']);
+            }
+        }
+        if (isset($gIbscbs['gDif']) && is_array($gIbscbs['gDif'])) {
+            $dif = $gIbscbs['gDif'];
+            if (isset($dif['pDifUF'], $dif['pDifMun'], $dif['pDifCBS'])) {
+                $difNode = $dom->createElementNS($ns, 'gDif');
+                $gNode->appendChild($difNode);
+                $this->appendNodeDps($dom, $difNode, 'pDifUF', $this->formatDecimal((float)$dif['pDifUF'], 2));
+                $this->appendNodeDps($dom, $difNode, 'pDifMun', $this->formatDecimal((float)$dif['pDifMun'], 2));
+                $this->appendNodeDps($dom, $difNode, 'pDifCBS', $this->formatDecimal((float)$dif['pDifCBS'], 2));
+            }
+        }
+    }
+
+    /**
+     * @param array<string,mixed> $ibscbs
+     * @return array<string,mixed>
+     */
+    private function resolveIbscbsTributosSitClas(array $ibscbs): array
+    {
+        $valores = is_array($ibscbs['valores'] ?? null) ? $ibscbs['valores'] : [];
+        $trib = is_array($valores['trib'] ?? null) ? $valores['trib'] : [];
+        $gIbscbs = is_array($trib['gIBSCBS'] ?? null)
+            ? $trib['gIBSCBS']
+            : (is_array($ibscbs['gIBSCBS'] ?? null) ? $ibscbs['gIBSCBS'] : []);
+
+        $cst = $this->firstString([$gIbscbs['CST'] ?? null, $gIbscbs['cst'] ?? null]);
+        $cClassTrib = $this->firstString([$gIbscbs['cClassTrib'] ?? null, $gIbscbs['classificacao'] ?? null]);
+        if ($cst === null || $cClassTrib === null) {
+            return [];
+        }
+
+        $gIbscbs['CST'] = str_pad(substr($this->onlyDigits($cst), 0, 3), 3, '0', STR_PAD_LEFT);
+        $gIbscbs['cClassTrib'] = str_pad(substr($this->onlyDigits($cClassTrib), 0, 6), 6, '0', STR_PAD_LEFT);
+
+        return $gIbscbs;
+    }
+
+    /**
+     * @param array<string,mixed> $ibscbs
+     */
+    private function appendIbscbsRefNfseDps(\DOMDocument $dom, \DOMElement $ibscbsNode, array $ibscbs): void
+    {
+        $refs = $ibscbs['gRefNFSe']['refNFSe'] ?? $ibscbs['refNFSe'] ?? null;
+        if ($refs === null) {
+            return;
+        }
+
+        $refList = is_array($refs) ? $refs : [$refs];
+        $node = $dom->createElementNS($this->getDpsNamespace(), 'gRefNFSe');
+        foreach ($refList as $ref) {
+            if (is_scalar($ref) && trim((string)$ref) !== '') {
+                $this->appendNodeDps($dom, $node, 'refNFSe', trim((string)$ref));
+            }
+        }
+        if ($node->childNodes->length > 0) {
+            $ibscbsNode->appendChild($node);
+        }
+    }
+
+    /**
+     * @param array<string,mixed> $ibscbs
+     */
+    private function appendIbscbsDestDps(\DOMDocument $dom, \DOMElement $ibscbsNode, array $ibscbs): void
+    {
+        $dest = is_array($ibscbs['dest'] ?? null) ? $ibscbs['dest'] : [];
+        $doc = $this->onlyDigits((string)($dest['documento'] ?? $dest['cnpj'] ?? $dest['cpf'] ?? ''));
+        $nome = trim((string)($dest['xNome'] ?? $dest['razaoSocial'] ?? $dest['nome'] ?? ''));
+        if ($doc === '' || $nome === '') {
+            return;
+        }
+
+        $ns = $this->getDpsNamespace();
+        $node = $dom->createElementNS($ns, 'dest');
+        $ibscbsNode->appendChild($node);
+        if (strlen($doc) === 14) {
+            $this->appendNodeDps($dom, $node, 'CNPJ', $doc);
+        } else {
+            $this->appendNodeDps($dom, $node, 'CPF', str_pad(substr($doc, 0, 11), 11, '0', STR_PAD_LEFT));
+        }
+        $this->appendNodeDps($dom, $node, 'xNome', $nome);
+    }
+
+    /**
+     * @param list<mixed> $values
+     */
+    private function firstDecimal(array $values): ?float
+    {
+        foreach ($values as $value) {
+            if ($value === null || $value === '' || !is_numeric($value)) {
+                continue;
+            }
+
+            return round((float)$value, 2);
+        }
+
+        return null;
     }
 
     /**
@@ -965,16 +1517,6 @@ class NacionalProvider extends AbstractNFSeProvider implements NFSeNacionalCapab
     private function appendBeneficioMunicipalGroup(\DOMDocument $dom, \DOMElement $tribMun, array $servico): void
     {
         $beneficio = is_array($servico['BM'] ?? null) ? $servico['BM'] : [];
-        $tpBm = $this->firstString([
-            $beneficio['tpBM'] ?? null,
-            $servico['tpBM'] ?? null,
-            $servico['tipo_beneficio_municipal'] ?? null,
-            $servico['benefit_type'] ?? null,
-        ]);
-        if (!in_array($tpBm, ['1', '2', '3'], true)) {
-            return;
-        }
-
         $nBm = $this->onlyDigits((string) ($this->firstString([
             $beneficio['nBM'] ?? null,
             $servico['nBM'] ?? null,
@@ -1004,7 +1546,6 @@ class NacionalProvider extends AbstractNFSeProvider implements NFSeNacionalCapab
         $ns = $this->getDpsNamespace();
         $bm = $dom->createElementNS($ns, 'BM');
         $tribMun->appendChild($bm);
-        $this->appendNodeDps($dom, $bm, 'tpBM', $tpBm);
         $this->appendNodeDps($dom, $bm, 'nBM', $nBm);
         if ($percentualReducao !== null) {
             $this->appendNodeDps($dom, $bm, 'pRedBCBM', $this->formatDecimal($percentualReducao, 2));
@@ -1250,7 +1791,7 @@ class NacionalProvider extends AbstractNFSeProvider implements NFSeNacionalCapab
         }
 
         $desc = trim((string)($dados['servico']['descricao'] ?? $dados['servico']['discriminacao'] ?? ''));
-        if ($desc === '' || strlen($desc) > 1000) {
+        if ($desc === '' || strlen($desc) > 2000) {
             $errors[] = 'xDescServ é obrigatório.';
         }
 
@@ -1259,12 +1800,15 @@ class NacionalProvider extends AbstractNFSeProvider implements NFSeNacionalCapab
             $errors[] = 'vServ deve ser maior que zero.';
         }
 
-        $tribIssqn = (string)($dados['servico']['tribISSQN'] ?? '1');
+        $tributacao = is_array($dados['tributacao'] ?? null) ? $dados['tributacao'] : [];
+        $municipal = is_array($tributacao['municipal'] ?? null) ? $tributacao['municipal'] : [];
+        $servico = (array)($dados['servico'] ?? []);
+        $tribIssqn = (string)($municipal['tribISSQN'] ?? $servico['tribISSQN'] ?? '1');
         if (!in_array($tribIssqn, ['1', '2', '3', '4'], true)) {
             $errors[] = 'tribISSQN deve ser 1, 2, 3 ou 4.';
         }
 
-        $tpRetIssqn = $this->resolveDpsIssRetentionCode((array)($dados['servico'] ?? []));
+        $tpRetIssqn = $this->resolveDpsIssRetentionCode($municipal + $servico);
         if (!in_array($tpRetIssqn, ['1', '2', '3'], true)) {
             $errors[] = 'tpRetISSQN deve ser 1, 2 ou 3.';
         }
@@ -1280,7 +1824,7 @@ class NacionalProvider extends AbstractNFSeProvider implements NFSeNacionalCapab
             }
         }
 
-        $aliquota = (float)($dados['servico']['aliquota'] ?? 0);
+        $aliquota = (float)($municipal['pAliq'] ?? $municipal['aliquota'] ?? $servico['pAliq'] ?? $servico['aliquota'] ?? 0);
         if ($tribIssqn === '1' && $aliquota <= 0) {
             $errors[] = 'pAliq (servico.aliquota) deve ser informado e maior que zero quando tribISSQN=1.';
         }
@@ -2477,7 +3021,7 @@ class NacionalProvider extends AbstractNFSeProvider implements NFSeNacionalCapab
 
     public function validarDpsXml(string $xml): array
     {
-        $xsdPath = (string)($this->config['dps_xsd_path'] ?? (__DIR__ . '/Xsd/DPS_v1.00.xsd'));
+        $xsdPath = $this->resolveDpsXsdPath();
         libxml_use_internal_errors(true);
         libxml_clear_errors();
 
@@ -2531,6 +3075,20 @@ class NacionalProvider extends AbstractNFSeProvider implements NFSeNacionalCapab
         libxml_clear_errors();
         return ['ok' => false, 'errors' => $errs];
 
+    }
+
+    private function resolveDpsXsdPath(): string
+    {
+        $configured = trim((string)($this->config['dps_xsd_path'] ?? ''));
+        if ($configured === '') {
+            return __DIR__ . '/Xsd/1.01/DPS_v1.01.xsd';
+        }
+
+        if (str_starts_with($configured, DIRECTORY_SEPARATOR) || preg_match('/^[A-Za-z]:[\\\\\\/]/', $configured) === 1) {
+            return $configured;
+        }
+
+        return dirname(__DIR__, 3) . DIRECTORY_SEPARATOR . $configured;
     }
 
     public function consultarContribuinteCnc(string $cnc): array

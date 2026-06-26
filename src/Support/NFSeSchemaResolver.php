@@ -25,13 +25,27 @@ final class NFSeSchemaResolver
         );
 
         $family = $families[$providerFamily] ?? null;
+        $entry = is_array($family ?? null) ? ($family['xsd_entrypoints'][$operation] ?? null) : null;
+        if (!$family || !$entry) {
+            foreach ($families as $candidate) {
+                if (($candidate['layout_family'] ?? null) !== $providerFamily) {
+                    continue;
+                }
+                $candidateEntry = $candidate['xsd_entrypoints'][$operation] ?? null;
+                if (!$candidateEntry) {
+                    continue;
+                }
+                $family = $candidate;
+                $entry = $candidateEntry;
+                break;
+            }
+        }
 
         if (!$family) {
             throw new \RuntimeException("Família '{$providerFamily}' não configurada.");
         }
 
         $root = dirname(__DIR__, 2) . '/' . $family['schema_root'];
-        $entry = $family['xsd_entrypoints'][$operation] ?? null;
 
         if (!$entry) {
             throw new \RuntimeException("Operação '{$operation}' sem schema mapeado.");
