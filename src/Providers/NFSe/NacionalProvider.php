@@ -2,6 +2,7 @@
 
 namespace sabbajohn\FiscalCore\Providers\NFSe;
 
+use sabbajohn\FiscalCore\Adapters\NFSe\DTO\Nacional\DpsDTO;
 use sabbajohn\FiscalCore\Contracts\NFSeConsultaResultInterface;
 use sabbajohn\FiscalCore\Contracts\NFSeImpressaoResultInterface;
 use sabbajohn\FiscalCore\Contracts\NFSeOperationalIntrospectionInterface;
@@ -69,6 +70,7 @@ class NacionalProvider extends AbstractNFSeProvider implements NFSeNacionalCapab
 
     public function emitir(array $dados): string
     {
+        $dados = $this->normalizeDpsPayload($dados, false);
         $this->validarDados($dados);
         $this->validarDadosDpsNacional($dados);
         // $this->assertCatalogCompatibilityBeforeEmission($dados);
@@ -321,6 +323,7 @@ class NacionalProvider extends AbstractNFSeProvider implements NFSeNacionalCapab
 
     public function validarLayoutDps(array $payload, bool $checkCatalog = true): array
     {
+        $payload = $this->normalizeDpsPayload($payload, false);
         $errors = [];
         $warnings = [];
 
@@ -342,8 +345,8 @@ class NacionalProvider extends AbstractNFSeProvider implements NFSeNacionalCapab
             'serv.cTribNac' => (string)($payload['servico']['cTribNac'] ?? ''),
             'serv.xDescServ' => (string)($payload['servico']['descricao'] ?? ''),
             'valores.vServPrest.vServ' => (string)($payload['valor_servicos'] ?? ''),
-            'valores.trib.tribMun.tribISSQN' => (string)($payload['servico']['tribISSQN'] ?? ''),
-            'valores.trib.tribMun.tpRetISSQN' => (string)($payload['servico']['tpRetISSQN'] ?? ''),
+            'valores.trib.tribMun.tribISSQN' => (string)($payload['tributacao']['municipal']['tribISSQN'] ?? $payload['servico']['tribISSQN'] ?? ''),
+            'valores.trib.tribMun.tpRetISSQN' => (string)($payload['tributacao']['municipal']['tpRetISSQN'] ?? $payload['servico']['tpRetISSQN'] ?? ''),
         ];
 
         foreach ($required as $path => $value) {
@@ -367,8 +370,8 @@ class NacionalProvider extends AbstractNFSeProvider implements NFSeNacionalCapab
             $errors[] = 'cLocEmi deve conter 7 dígitos (código IBGE).';
         }
 
-        $aliqPayload = (float)($payload['servico']['aliquota'] ?? 0);
-        $tribIssqnPayload = (string)($payload['servico']['tribISSQN'] ?? '');
+        $aliqPayload = (float)($payload['tributacao']['municipal']['pAliq'] ?? $payload['servico']['aliquota'] ?? 0);
+        $tribIssqnPayload = (string)($payload['tributacao']['municipal']['tribISSQN'] ?? $payload['servico']['tribISSQN'] ?? '');
         if ($tribIssqnPayload === '1' && $aliqPayload <= 0) {
             $errors[] = 'Para tribISSQN=1, informe alíquota ISS > 0 (campo servico.aliquota) para gerar pAliq.';
         }
@@ -594,6 +597,7 @@ class NacionalProvider extends AbstractNFSeProvider implements NFSeNacionalCapab
 
     protected function montarXmlDpsNacional(array $dados): string
     {
+        $dados = $this->normalizeDpsPayload($dados, true);
         $dom = new \DOMDocument('1.0', 'UTF-8');
         $dom->formatOutput = false;
         $ns = $this->getDpsNamespace();
@@ -658,6 +662,35 @@ class NacionalProvider extends AbstractNFSeProvider implements NFSeNacionalCapab
         $this->appendIbscbsDps($dom, $inf, $dados);
 
         return $dom->saveXML() ?: '';
+    }
+
+    /**
+     * @param array<string,mixed> $dados
+     * @return array<string,mixed>
+     */
+    private function normalizeDpsPayload(array $dados, bool $validate): array
+    {
+        $dto = DpsDTO::fromArray($dados, $this->buildDpsDtoContext());
+        if ($validate) {
+            $errors = $dto->validate();
+            if ($errors !== []) {
+                throw new \InvalidArgumentException('Layout DPS inválido: ' . implode(' | ', $errors));
+            }
+        }
+
+        return $dto->toArray();
+    }
+
+    /**
+     * @return array<string,mixed>
+     */
+    private function buildDpsDtoContext(): array
+    {
+        return [
+            'codigo_municipio' => $this->getCodigoMunicipio(),
+            'ambiente' => $this->getAmbiente(),
+            'ver_aplic' => $this->config['ver_aplic'] ?? 'invoiceflow-1.0',
+        ];
     }
 
     /**
@@ -1172,9 +1205,13 @@ class NacionalProvider extends AbstractNFSeProvider implements NFSeNacionalCapab
         }
 
         $gIbscbs = $this->resolveIbscbsTributosSitClas($ibscbs);
-        $finNfse = $this->firstString([$ibscbs['finNFSe'] ?? null]);
-        $cIndOp = $this->firstString([$ibscbs['cIndOp'] ?? null]);
-        $indDest = $this->firstString([$ibscbs['indDest'] ?? null]);
+        $finNfse = $this->firstString([$ibscbs['finNFSe'] ?? null, $ibscbs['finalidade'] ?? null]);
+        $cIndOpRaw = $this->firstString([$ibscbs['cIndOp'] ?? null, $ibscbs['codigo_indicador_operacao'] ?? null]);
+        $cIndOpDigits = $cIndOpRaw !== null ? $this->onlyDigits($cIndOpRaw) : '';
+        $cIndOp = $cIndOpDigits !== ''
+            ? str_pad(substr($cIndOpDigits, 0, 6), 6, '0', STR_PAD_LEFT)
+            : null;
+        $indDest = $this->firstString([$ibscbs['indDest'] ?? null, $ibscbs['indicador_destinatario'] ?? null]);
         if ($gIbscbs === [] || $finNfse === null || $cIndOp === null || $indDest === null) {
             return;
         }
@@ -1183,24 +1220,38 @@ class NacionalProvider extends AbstractNFSeProvider implements NFSeNacionalCapab
         $node = $dom->createElementNS($ns, 'IBSCBS');
         $inf->appendChild($node);
         $this->appendNodeDps($dom, $node, 'finNFSe', $finNfse);
-        if (isset($ibscbs['indFinal'])) {
-            $this->appendNodeDps($dom, $node, 'indFinal', (string)$ibscbs['indFinal']);
+        $indFinal = $this->firstString([$ibscbs['indFinal'] ?? null, $ibscbs['indicador_final'] ?? null]);
+        if ($indFinal !== null) {
+            $this->appendNodeDps($dom, $node, 'indFinal', $indFinal);
         }
         $this->appendNodeDps($dom, $node, 'cIndOp', $cIndOp);
-        if (isset($ibscbs['tpOper'])) {
-            $this->appendNodeDps($dom, $node, 'tpOper', (string)$ibscbs['tpOper']);
+        $tpOper = $this->firstString([$ibscbs['tpOper'] ?? null, $ibscbs['tipo_operacao'] ?? null]);
+        if ($tpOper !== null) {
+            $this->appendNodeDps($dom, $node, 'tpOper', $tpOper);
         }
         $this->appendIbscbsRefNfseDps($dom, $node, $ibscbs);
-        if (isset($ibscbs['tpEnteGov'])) {
-            $this->appendNodeDps($dom, $node, 'tpEnteGov', (string)$ibscbs['tpEnteGov']);
+        $tpEnteGov = $this->firstString([$ibscbs['tpEnteGov'] ?? null, $ibscbs['tipo_ente_governamental'] ?? null]);
+        if ($tpEnteGov !== null) {
+            $this->appendNodeDps($dom, $node, 'tpEnteGov', $tpEnteGov);
         }
         $this->appendNodeDps($dom, $node, 'indDest', $indDest);
         $this->appendIbscbsDestDps($dom, $node, $ibscbs);
+        $this->appendIbscbsImovelDps($dom, $node, $ibscbs);
 
         $valores = $dom->createElementNS($ns, 'valores');
         $node->appendChild($valores);
+        $this->appendIbscbsReeRepResDps($dom, $valores, $ibscbs);
         $trib = $dom->createElementNS($ns, 'trib');
         $valores->appendChild($trib);
+        $this->appendIbscbsTributosSitClasDps($dom, $trib, $gIbscbs);
+    }
+
+    /**
+     * @param array<string,mixed> $gIbscbs
+     */
+    private function appendIbscbsTributosSitClasDps(\DOMDocument $dom, \DOMElement $trib, array $gIbscbs): void
+    {
+        $ns = $this->getDpsNamespace();
         $gNode = $dom->createElementNS($ns, 'gIBSCBS');
         $trib->appendChild($gNode);
         $this->appendNodeDps($dom, $gNode, 'CST', (string)$gIbscbs['CST']);
@@ -1242,13 +1293,37 @@ class NacionalProvider extends AbstractNFSeProvider implements NFSeNacionalCapab
             : (is_array($ibscbs['gIBSCBS'] ?? null) ? $ibscbs['gIBSCBS'] : []);
 
         $cst = $this->firstString([$gIbscbs['CST'] ?? null, $gIbscbs['cst'] ?? null]);
-        $cClassTrib = $this->firstString([$gIbscbs['cClassTrib'] ?? null, $gIbscbs['classificacao'] ?? null]);
+        $cClassTrib = $this->firstString([
+            $gIbscbs['cClassTrib'] ?? null,
+            $gIbscbs['cClass'] ?? null,
+            $gIbscbs['classificacao'] ?? null,
+            $gIbscbs['codigo_classificacao'] ?? null,
+        ]);
         if ($cst === null || $cClassTrib === null) {
             return [];
         }
 
         $gIbscbs['CST'] = str_pad(substr($this->onlyDigits($cst), 0, 3), 3, '0', STR_PAD_LEFT);
         $gIbscbs['cClassTrib'] = str_pad(substr($this->onlyDigits($cClassTrib), 0, 6), 6, '0', STR_PAD_LEFT);
+        $cCredPres = $this->firstString([$gIbscbs['cCredPres'] ?? null, $gIbscbs['codigo_credito_presumido'] ?? null]);
+        if ($cCredPres !== null && $this->onlyDigits($cCredPres) !== '') {
+            $gIbscbs['cCredPres'] = str_pad(substr($this->onlyDigits($cCredPres), 0, 2), 2, '0', STR_PAD_LEFT);
+        }
+
+        if (isset($gIbscbs['gTribRegular']) && is_array($gIbscbs['gTribRegular'])) {
+            $regular = $gIbscbs['gTribRegular'];
+            $cstReg = $this->firstString([$regular['CSTReg'] ?? null, $regular['cstReg'] ?? null, $regular['CST'] ?? null]);
+            $cClassReg = $this->firstString([
+                $regular['cClassTribReg'] ?? null,
+                $regular['cClassReg'] ?? null,
+                $regular['cClassTrib'] ?? null,
+                $regular['classificacao'] ?? null,
+            ]);
+            if ($cstReg !== null && $cClassReg !== null) {
+                $gIbscbs['gTribRegular']['CSTReg'] = str_pad(substr($this->onlyDigits($cstReg), 0, 3), 3, '0', STR_PAD_LEFT);
+                $gIbscbs['gTribRegular']['cClassTribReg'] = str_pad(substr($this->onlyDigits($cClassReg), 0, 6), 6, '0', STR_PAD_LEFT);
+            }
+        }
 
         return $gIbscbs;
     }
@@ -1281,21 +1356,453 @@ class NacionalProvider extends AbstractNFSeProvider implements NFSeNacionalCapab
     private function appendIbscbsDestDps(\DOMDocument $dom, \DOMElement $ibscbsNode, array $ibscbs): void
     {
         $dest = is_array($ibscbs['dest'] ?? null) ? $ibscbs['dest'] : [];
-        $doc = $this->onlyDigits((string)($dest['documento'] ?? $dest['cnpj'] ?? $dest['cpf'] ?? ''));
-        $nome = trim((string)($dest['xNome'] ?? $dest['razaoSocial'] ?? $dest['nome'] ?? ''));
-        if ($doc === '' || $nome === '') {
+        $nome = trim((string)($dest['xNome'] ?? $dest['razaoSocial'] ?? $dest['razao_social'] ?? $dest['nome'] ?? ''));
+        if ($dest === [] || $nome === '') {
             return;
         }
 
         $ns = $this->getDpsNamespace();
         $node = $dom->createElementNS($ns, 'dest');
-        $ibscbsNode->appendChild($node);
-        if (strlen($doc) === 14) {
-            $this->appendNodeDps($dom, $node, 'CNPJ', $doc);
-        } else {
-            $this->appendNodeDps($dom, $node, 'CPF', str_pad(substr($doc, 0, 11), 11, '0', STR_PAD_LEFT));
+        if (!$this->appendIbscbsIdentityChoiceDps($dom, $node, $dest, true)) {
+            return;
         }
         $this->appendNodeDps($dom, $node, 'xNome', $nome);
+        $endereco = $this->firstArray([$dest['end'] ?? null, $dest['endereco'] ?? null, $dest['address'] ?? null]);
+        if ($endereco !== []) {
+            $this->appendEnderecoDps($dom, $node, $endereco);
+        }
+        $fone = $this->firstString([$dest['fone'] ?? null, $dest['telefone'] ?? null, $dest['phone'] ?? null]);
+        $foneDigits = $fone !== null ? $this->onlyDigits($fone) : '';
+        if ($foneDigits !== '') {
+            $this->appendNodeDps($dom, $node, 'fone', $foneDigits);
+        }
+        $email = $this->firstString([$dest['email'] ?? null]);
+        if ($email !== null) {
+            $this->appendNodeDps($dom, $node, 'email', $email);
+        }
+
+        $ibscbsNode->appendChild($node);
+    }
+
+    /**
+     * @param array<string,mixed> $ibscbs
+     */
+    private function appendIbscbsImovelDps(\DOMDocument $dom, \DOMElement $ibscbsNode, array $ibscbs): void
+    {
+        $imovel = $this->firstArray([$ibscbs['imovel'] ?? null, $ibscbs['bem_imovel'] ?? null]);
+        if ($imovel === []) {
+            return;
+        }
+
+        $ns = $this->getDpsNamespace();
+        $node = $dom->createElementNS($ns, 'imovel');
+        $inscImobFisc = $this->firstString([$imovel['inscImobFisc'] ?? null, $imovel['inscricao_imobiliaria'] ?? null]);
+        if ($inscImobFisc !== null) {
+            $this->appendNodeDps($dom, $node, 'inscImobFisc', $inscImobFisc);
+        }
+
+        $cCib = $this->firstString([$imovel['cCIB'] ?? null, $imovel['cib'] ?? null]);
+        if ($cCib !== null) {
+            $this->appendNodeDps($dom, $node, 'cCIB', $cCib);
+        } else {
+            $endereco = $this->firstArray([$imovel['end'] ?? null, $imovel['endereco'] ?? null, $imovel['address'] ?? null]);
+            if ($endereco === [] || !$this->appendEnderecoObraEventoDps($dom, $node, $endereco)) {
+                return;
+            }
+        }
+
+        $ibscbsNode->appendChild($node);
+    }
+
+    /**
+     * @param array<string,mixed> $ibscbs
+     */
+    private function appendIbscbsReeRepResDps(\DOMDocument $dom, \DOMElement $valores, array $ibscbs): void
+    {
+        $valoresPayload = is_array($ibscbs['valores'] ?? null) ? $ibscbs['valores'] : [];
+        $reeRepRes = $this->firstArray([
+            $valoresPayload['gReeRepRes'] ?? null,
+            $valoresPayload['reeRepRes'] ?? null,
+            $valoresPayload['reembolso_repasse_ressarcimento'] ?? null,
+            $ibscbs['gReeRepRes'] ?? null,
+            $ibscbs['reeRepRes'] ?? null,
+            $ibscbs['reembolso_repasse_ressarcimento'] ?? null,
+        ]);
+        if ($reeRepRes === []) {
+            return;
+        }
+
+        $documentosPayload = $reeRepRes['documentos']
+            ?? $reeRepRes['documentos_referenciados']
+            ?? $reeRepRes['docs']
+            ?? null;
+        if ($documentosPayload === null) {
+            $documentosPayload = $reeRepRes;
+        }
+
+        $node = $dom->createElementNS($this->getDpsNamespace(), 'gReeRepRes');
+        foreach ($this->normalizeArrayList($documentosPayload) as $documentoPayload) {
+            if (!is_array($documentoPayload)) {
+                continue;
+            }
+            $documento = $this->buildIbscbsReeRepResDocumentoDps($dom, $documentoPayload);
+            if ($documento !== null) {
+                $node->appendChild($documento);
+            }
+        }
+
+        if ($node->childNodes->length > 0) {
+            $valores->appendChild($node);
+        }
+    }
+
+    /**
+     * @param array<string,mixed> $documentoPayload
+     */
+    private function buildIbscbsReeRepResDocumentoDps(\DOMDocument $dom, array $documentoPayload): ?\DOMElement
+    {
+        $choice = $this->buildIbscbsDocumentoChoiceDps($dom, $documentoPayload);
+        if ($choice === null) {
+            return null;
+        }
+
+        $dtEmiDoc = $this->firstString([
+            $documentoPayload['dtEmiDoc'] ?? null,
+            $documentoPayload['data_emissao'] ?? null,
+        ]);
+        $dtCompDoc = $this->firstString([
+            $documentoPayload['dtCompDoc'] ?? null,
+            $documentoPayload['data_competencia'] ?? null,
+        ]);
+        $tpReeRepRes = $this->firstString([
+            $documentoPayload['tpReeRepRes'] ?? null,
+            $documentoPayload['tipo'] ?? null,
+            $documentoPayload['tipo_reembolso_repasse_ressarcimento'] ?? null,
+        ]);
+        $vlrReeRepRes = $this->firstDecimal([
+            $documentoPayload['vlrReeRepRes'] ?? null,
+            $documentoPayload['valor'] ?? null,
+            $documentoPayload['valor_reembolso_repasse_ressarcimento'] ?? null,
+        ]);
+        if ($dtEmiDoc === null || $dtCompDoc === null || $tpReeRepRes === null || $vlrReeRepRes === null) {
+            return null;
+        }
+
+        $node = $dom->createElementNS($this->getDpsNamespace(), 'documentos');
+        $node->appendChild($choice);
+
+        $fornecedor = $this->firstArray([$documentoPayload['fornec'] ?? null, $documentoPayload['fornecedor'] ?? null]);
+        if ($fornecedor !== []) {
+            $this->appendIbscbsFornecedorDps($dom, $node, $fornecedor);
+        }
+
+        $this->appendNodeDps($dom, $node, 'dtEmiDoc', $this->normalizeDpsDate($dtEmiDoc));
+        $this->appendNodeDps($dom, $node, 'dtCompDoc', $this->normalizeDpsDate($dtCompDoc));
+        $this->appendNodeDps($dom, $node, 'tpReeRepRes', $tpReeRepRes);
+        $xTpReeRepRes = $this->firstString([
+            $documentoPayload['xTpReeRepRes'] ?? null,
+            $documentoPayload['descricao_tipo'] ?? null,
+        ]);
+        if ($xTpReeRepRes !== null) {
+            $this->appendNodeDps($dom, $node, 'xTpReeRepRes', $xTpReeRepRes);
+        }
+        $this->appendNodeDps($dom, $node, 'vlrReeRepRes', $this->formatDecimal($vlrReeRepRes, 2));
+
+        return $node;
+    }
+
+    /**
+     * @param array<string,mixed> $documentoPayload
+     */
+    private function buildIbscbsDocumentoChoiceDps(\DOMDocument $dom, array $documentoPayload): ?\DOMElement
+    {
+        $dfe = $this->firstArray([
+            $documentoPayload['dFeNacional'] ?? null,
+            $documentoPayload['dfeNacional'] ?? null,
+            $documentoPayload['dfe_nacional'] ?? null,
+        ]);
+        if ($dfe === [] && ($documentoPayload['tipoChaveDFe'] ?? $documentoPayload['chaveDFe'] ?? null) !== null) {
+            $dfe = $documentoPayload;
+        }
+        if ($dfe !== []) {
+            $tipoChave = $this->firstString([$dfe['tipoChaveDFe'] ?? null, $dfe['tipo'] ?? null]);
+            $chave = $this->firstString([$dfe['chaveDFe'] ?? null, $dfe['chave'] ?? null]);
+            if ($tipoChave !== null && $chave !== null) {
+                $node = $dom->createElementNS($this->getDpsNamespace(), 'dFeNacional');
+                $this->appendNodeDps($dom, $node, 'tipoChaveDFe', $tipoChave);
+                $xTipo = $this->firstString([$dfe['xTipoChaveDFe'] ?? null, $dfe['descricao_tipo'] ?? null]);
+                if ($xTipo !== null) {
+                    $this->appendNodeDps($dom, $node, 'xTipoChaveDFe', $xTipo);
+                }
+                $this->appendNodeDps($dom, $node, 'chaveDFe', $chave);
+                return $node;
+            }
+        }
+
+        $docFiscalOutro = $this->firstArray([
+            $documentoPayload['docFiscalOutro'] ?? null,
+            $documentoPayload['doc_fiscal_outro'] ?? null,
+        ]);
+        if ($docFiscalOutro === [] && ($documentoPayload['cMunDocFiscal'] ?? $documentoPayload['nDocFiscal'] ?? null) !== null) {
+            $docFiscalOutro = $documentoPayload;
+        }
+        if ($docFiscalOutro !== []) {
+            $cMun = $this->firstString([$docFiscalOutro['cMunDocFiscal'] ?? null, $docFiscalOutro['codigo_municipio'] ?? null]);
+            $nDoc = $this->firstString([$docFiscalOutro['nDocFiscal'] ?? null, $docFiscalOutro['numero'] ?? null]);
+            $xDoc = $this->firstString([$docFiscalOutro['xDocFiscal'] ?? null, $docFiscalOutro['descricao'] ?? null]);
+            if ($cMun !== null && $nDoc !== null && $xDoc !== null) {
+                $node = $dom->createElementNS($this->getDpsNamespace(), 'docFiscalOutro');
+                $this->appendNodeDps($dom, $node, 'cMunDocFiscal', str_pad(substr($this->onlyDigits($cMun), 0, 7), 7, '0', STR_PAD_LEFT));
+                $this->appendNodeDps($dom, $node, 'nDocFiscal', $nDoc);
+                $this->appendNodeDps($dom, $node, 'xDocFiscal', $xDoc);
+                return $node;
+            }
+        }
+
+        $docOutro = $this->firstArray([
+            $documentoPayload['docOutro'] ?? null,
+            $documentoPayload['doc_outro'] ?? null,
+        ]);
+        if ($docOutro === [] && ($documentoPayload['nDoc'] ?? $documentoPayload['xDoc'] ?? null) !== null) {
+            $docOutro = $documentoPayload;
+        }
+        if ($docOutro !== []) {
+            $nDoc = $this->firstString([$docOutro['nDoc'] ?? null, $docOutro['numero'] ?? null]);
+            $xDoc = $this->firstString([$docOutro['xDoc'] ?? null, $docOutro['descricao'] ?? null]);
+            if ($nDoc !== null && $xDoc !== null) {
+                $node = $dom->createElementNS($this->getDpsNamespace(), 'docOutro');
+                $this->appendNodeDps($dom, $node, 'nDoc', $nDoc);
+                $this->appendNodeDps($dom, $node, 'xDoc', $xDoc);
+                return $node;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * @param array<string,mixed> $fornecedor
+     */
+    private function appendIbscbsFornecedorDps(\DOMDocument $dom, \DOMElement $documentos, array $fornecedor): void
+    {
+        $nome = $this->firstString([
+            $fornecedor['xNome'] ?? null,
+            $fornecedor['razaoSocial'] ?? null,
+            $fornecedor['razao_social'] ?? null,
+            $fornecedor['nome'] ?? null,
+        ]);
+        if ($nome === null) {
+            return;
+        }
+
+        $node = $dom->createElementNS($this->getDpsNamespace(), 'fornec');
+        if (!$this->appendIbscbsIdentityChoiceDps($dom, $node, $fornecedor, true)) {
+            return;
+        }
+
+        $this->appendNodeDps($dom, $node, 'xNome', $nome);
+        $documentos->appendChild($node);
+    }
+
+    /**
+     * @param array<string,mixed> $data
+     */
+    private function appendIbscbsIdentityChoiceDps(\DOMDocument $dom, \DOMElement $parent, array $data, bool $padCpf): bool
+    {
+        $nif = $this->firstString([$data['NIF'] ?? null, $data['nif'] ?? null]);
+        if ($nif !== null) {
+            $this->appendNodeDps($dom, $parent, 'NIF', $nif);
+            return true;
+        }
+
+        $cNaoNif = $this->firstString([
+            $data['cNaoNIF'] ?? null,
+            $data['codigo_nao_nif'] ?? null,
+            $data['motivo_nao_nif'] ?? null,
+        ]);
+        if ($cNaoNif !== null) {
+            $this->appendNodeDps($dom, $parent, 'cNaoNIF', $cNaoNif);
+            return true;
+        }
+
+        $documento = $this->onlyDigits((string)($this->firstString([
+            $data['CNPJ'] ?? null,
+            $data['cnpj'] ?? null,
+            $data['CPF'] ?? null,
+            $data['cpf'] ?? null,
+            $data['documento'] ?? null,
+        ]) ?? ''));
+        if (strlen($documento) === 14) {
+            $this->appendNodeDps($dom, $parent, 'CNPJ', $documento);
+            return true;
+        }
+        if ($documento !== '') {
+            $cpf = $padCpf ? str_pad(substr($documento, 0, 11), 11, '0', STR_PAD_LEFT) : $documento;
+            $this->appendNodeDps($dom, $parent, 'CPF', $cpf);
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * @param array<string,mixed> $endereco
+     */
+    private function appendEnderecoDps(\DOMDocument $dom, \DOMElement $parent, array $endereco): bool
+    {
+        $logradouro = $this->firstString([$endereco['xLgr'] ?? null, $endereco['logradouro'] ?? null, $endereco['street'] ?? null]);
+        $numero = $this->firstString([$endereco['nro'] ?? null, $endereco['numero'] ?? null, $endereco['number'] ?? null]);
+        $bairro = $this->firstString([$endereco['xBairro'] ?? null, $endereco['bairro'] ?? null, $endereco['district'] ?? null]);
+        if ($logradouro === null || $numero === null || $bairro === null) {
+            return false;
+        }
+
+        $end = $dom->createElementNS($this->getDpsNamespace(), 'end');
+        if (!$this->appendEnderecoChoiceDps($dom, $end, $endereco)) {
+            return false;
+        }
+
+        $this->appendNodeDps($dom, $end, 'xLgr', $logradouro);
+        $this->appendNodeDps($dom, $end, 'nro', $numero);
+        $complemento = $this->firstString([$endereco['xCpl'] ?? null, $endereco['complemento'] ?? null, $endereco['complement'] ?? null]);
+        if ($complemento !== null) {
+            $this->appendNodeDps($dom, $end, 'xCpl', $complemento);
+        }
+        $this->appendNodeDps($dom, $end, 'xBairro', $bairro);
+        $parent->appendChild($end);
+
+        return true;
+    }
+
+    /**
+     * @param array<string,mixed> $endereco
+     */
+    private function appendEnderecoChoiceDps(\DOMDocument $dom, \DOMElement $end, array $endereco): bool
+    {
+        $endExt = $this->firstArray([$endereco['endExt'] ?? null, $endereco['end_ext'] ?? null, $endereco['exterior'] ?? null]);
+        $cPais = $this->firstString([$endExt['cPais'] ?? null, $endereco['cPais'] ?? null, $endereco['codigo_pais'] ?? null]);
+        $cEndPost = $this->firstString([$endExt['cEndPost'] ?? null, $endereco['cEndPost'] ?? null, $endereco['codigo_postal'] ?? null]);
+        $xCidade = $this->firstString([$endExt['xCidade'] ?? null, $endereco['xCidade'] ?? null, $endereco['cidade'] ?? null]);
+        $xEstProvReg = $this->firstString([$endExt['xEstProvReg'] ?? null, $endereco['xEstProvReg'] ?? null, $endereco['estado_provincia'] ?? null]);
+        if ($cPais !== null && $cEndPost !== null && $xCidade !== null && $xEstProvReg !== null) {
+            $node = $dom->createElementNS($this->getDpsNamespace(), 'endExt');
+            $this->appendNodeDps($dom, $node, 'cPais', $cPais);
+            $this->appendNodeDps($dom, $node, 'cEndPost', $cEndPost);
+            $this->appendNodeDps($dom, $node, 'xCidade', $xCidade);
+            $this->appendNodeDps($dom, $node, 'xEstProvReg', $xEstProvReg);
+            $end->appendChild($node);
+            return true;
+        }
+
+        $endNac = $this->firstArray([$endereco['endNac'] ?? null, $endereco['end_nac'] ?? null, $endereco['nacional'] ?? null]);
+        $cMun = $this->onlyDigits((string)($this->firstString([
+            $endNac['cMun'] ?? null,
+            $endereco['cMun'] ?? null,
+            $endereco['codigo_municipio'] ?? null,
+            $endereco['codigoMunicipio'] ?? null,
+        ]) ?? ''));
+        $cep = $this->onlyDigits((string)($this->firstString([
+            $endNac['CEP'] ?? null,
+            $endereco['CEP'] ?? null,
+            $endereco['cep'] ?? null,
+            $endereco['postal_code'] ?? null,
+        ]) ?? ''));
+        if (strlen($cMun) !== 7 || strlen($cep) !== 8) {
+            return false;
+        }
+
+        $node = $dom->createElementNS($this->getDpsNamespace(), 'endNac');
+        $this->appendNodeDps($dom, $node, 'cMun', $cMun);
+        $this->appendNodeDps($dom, $node, 'CEP', $cep);
+        $end->appendChild($node);
+
+        return true;
+    }
+
+    /**
+     * @param array<string,mixed> $endereco
+     */
+    private function appendEnderecoObraEventoDps(\DOMDocument $dom, \DOMElement $parent, array $endereco): bool
+    {
+        $logradouro = $this->firstString([$endereco['xLgr'] ?? null, $endereco['logradouro'] ?? null, $endereco['street'] ?? null]);
+        $numero = $this->firstString([$endereco['nro'] ?? null, $endereco['numero'] ?? null, $endereco['number'] ?? null]);
+        $bairro = $this->firstString([$endereco['xBairro'] ?? null, $endereco['bairro'] ?? null, $endereco['district'] ?? null]);
+        if ($logradouro === null || $numero === null || $bairro === null) {
+            return false;
+        }
+
+        $end = $dom->createElementNS($this->getDpsNamespace(), 'end');
+        if (!$this->appendEnderecoObraEventoChoiceDps($dom, $end, $endereco)) {
+            return false;
+        }
+
+        $this->appendNodeDps($dom, $end, 'xLgr', $logradouro);
+        $this->appendNodeDps($dom, $end, 'nro', $numero);
+        $complemento = $this->firstString([$endereco['xCpl'] ?? null, $endereco['complemento'] ?? null, $endereco['complement'] ?? null]);
+        if ($complemento !== null) {
+            $this->appendNodeDps($dom, $end, 'xCpl', $complemento);
+        }
+        $this->appendNodeDps($dom, $end, 'xBairro', $bairro);
+        $parent->appendChild($end);
+
+        return true;
+    }
+
+    /**
+     * @param array<string,mixed> $endereco
+     */
+    private function appendEnderecoObraEventoChoiceDps(\DOMDocument $dom, \DOMElement $end, array $endereco): bool
+    {
+        $endExt = $this->firstArray([$endereco['endExt'] ?? null, $endereco['end_ext'] ?? null, $endereco['exterior'] ?? null]);
+        $cEndPost = $this->firstString([$endExt['cEndPost'] ?? null, $endereco['cEndPost'] ?? null, $endereco['codigo_postal'] ?? null]);
+        $xCidade = $this->firstString([$endExt['xCidade'] ?? null, $endereco['xCidade'] ?? null, $endereco['cidade'] ?? null]);
+        $xEstProvReg = $this->firstString([$endExt['xEstProvReg'] ?? null, $endereco['xEstProvReg'] ?? null, $endereco['estado_provincia'] ?? null]);
+        if ($cEndPost !== null && $xCidade !== null && $xEstProvReg !== null) {
+            $node = $dom->createElementNS($this->getDpsNamespace(), 'endExt');
+            $this->appendNodeDps($dom, $node, 'cEndPost', $cEndPost);
+            $this->appendNodeDps($dom, $node, 'xCidade', $xCidade);
+            $this->appendNodeDps($dom, $node, 'xEstProvReg', $xEstProvReg);
+            $end->appendChild($node);
+            return true;
+        }
+
+        $cep = $this->onlyDigits((string)($this->firstString([
+            $endereco['CEP'] ?? null,
+            $endereco['cep'] ?? null,
+            $endereco['postal_code'] ?? null,
+        ]) ?? ''));
+        if (strlen($cep) !== 8) {
+            return false;
+        }
+
+        $this->appendNodeDps($dom, $end, 'CEP', $cep);
+        return true;
+    }
+
+    /**
+     * @param list<mixed> $values
+     */
+    private function firstArray(array $values): array
+    {
+        foreach ($values as $value) {
+            if (is_array($value) && $value !== []) {
+                return $value;
+            }
+        }
+
+        return [];
+    }
+
+    /**
+     * @return list<mixed>
+     */
+    private function normalizeArrayList(mixed $value): array
+    {
+        if (!is_array($value)) {
+            return [];
+        }
+
+        return array_is_list($value) ? $value : [$value];
     }
 
     /**
@@ -1686,6 +2193,7 @@ class NacionalProvider extends AbstractNFSeProvider implements NFSeNacionalCapab
 
     public function validarDados(array $dados): bool
     {
+        $dados = $this->normalizeDpsPayload($dados, false);
         parent::validarDados($dados);
 
         if (empty($dados['prestador']['cnpj']) || strlen($this->onlyDigits((string) $dados['prestador']['cnpj'])) !== 14) {
@@ -1735,6 +2243,7 @@ class NacionalProvider extends AbstractNFSeProvider implements NFSeNacionalCapab
 
     private function validarDadosDpsNacional(array $dados): void
     {
+        $dados = $this->normalizeDpsPayload($dados, false);
         $errors = [];
 
         $dCompet = (string)($dados['dCompet'] ?? date('Y-m-d'));

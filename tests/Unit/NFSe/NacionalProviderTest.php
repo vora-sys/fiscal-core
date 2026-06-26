@@ -221,6 +221,109 @@ class NacionalProviderTest extends TestCase
         $this->assertLessThan(strpos($xml, '<IBSCBS>'), strpos($xml, '</valores>'));
     }
 
+    public function test_dps_nacional_serializa_ibscbs_declarativo_com_destino_imovel_e_reembolso(): void
+    {
+        $provider = new NacionalProvider($this->buildConfig(function () {
+            return '<Resposta><Sucesso>true</Sucesso></Resposta>';
+        }));
+
+        $dados = $this->dadosValidos();
+        $dados['ibscbs'] = [
+            'finNFSe' => '0',
+            'indFinal' => '1',
+            'cIndOp' => '1',
+            'tpOper' => '5',
+            'refNFSe' => ['NFSE-REFERENCIADA-1'],
+            'tpEnteGov' => '4',
+            'indDest' => '1',
+            'dest' => [
+                'NIF' => 'EXT123456',
+                'xNome' => 'Destinatario Exterior',
+                'endereco' => [
+                    'cPais' => 'US',
+                    'cEndPost' => '10001',
+                    'xCidade' => 'New York',
+                    'xEstProvReg' => 'NY',
+                    'xLgr' => '5th Avenue',
+                    'nro' => '1',
+                    'xBairro' => 'Manhattan',
+                ],
+                'fone' => '+1 212 555 0100',
+                'email' => 'dest@example.com',
+            ],
+            'imovel' => [
+                'inscImobFisc' => 'IMOVEL123',
+                'endereco' => [
+                    'CEP' => '01310930',
+                    'xLgr' => 'Rua Imovel',
+                    'nro' => '200',
+                    'xBairro' => 'Centro',
+                ],
+            ],
+            'valores' => [
+                'gReeRepRes' => [
+                    'documentos' => [
+                        [
+                            'dFeNacional' => [
+                                'tipoChaveDFe' => '2',
+                                'xTipoChaveDFe' => 'NF-e',
+                                'chaveDFe' => 'NFE123456789',
+                            ],
+                            'fornecedor' => [
+                                'cnpj' => '11.222.333/0001-81',
+                                'xNome' => 'Fornecedor Teste',
+                            ],
+                            'dtEmiDoc' => '2026-01-10',
+                            'dtCompDoc' => '2026-01-11',
+                            'tpReeRepRes' => '99',
+                            'xTpReeRepRes' => 'Outros',
+                            'vlrReeRepRes' => 150.25,
+                        ],
+                    ],
+                ],
+                'trib' => [
+                    'gIBSCBS' => [
+                        'cst' => '0',
+                        'classificacao' => '1',
+                        'codigo_credito_presumido' => '3',
+                        'gTribRegular' => [
+                            'CST' => '0',
+                            'classificacao' => '1',
+                        ],
+                        'gDif' => [
+                            'pDifUF' => 1.5,
+                            'pDifMun' => 2.5,
+                            'pDifCBS' => 3.5,
+                        ],
+                    ],
+                ],
+            ],
+        ];
+
+        $xml = $provider->gerarXmlDpsPreview($dados);
+
+        $this->assertIsString($xml);
+        $this->assertStringContainsString('<finNFSe>0</finNFSe><indFinal>1</indFinal><cIndOp>000001</cIndOp><tpOper>5</tpOper>', $xml);
+        $this->assertStringContainsString('<gRefNFSe><refNFSe>NFSE-REFERENCIADA-1</refNFSe></gRefNFSe><tpEnteGov>4</tpEnteGov><indDest>1</indDest>', $xml);
+        $this->assertStringContainsString(
+            '<dest><NIF>EXT123456</NIF><xNome>Destinatario Exterior</xNome><end><endExt><cPais>US</cPais><cEndPost>10001</cEndPost><xCidade>New York</xCidade><xEstProvReg>NY</xEstProvReg></endExt><xLgr>5th Avenue</xLgr><nro>1</nro><xBairro>Manhattan</xBairro></end><fone>12125550100</fone><email>dest@example.com</email></dest>',
+            $xml
+        );
+        $this->assertStringContainsString(
+            '<imovel><inscImobFisc>IMOVEL123</inscImobFisc><end><CEP>01310930</CEP><xLgr>Rua Imovel</xLgr><nro>200</nro><xBairro>Centro</xBairro></end></imovel>',
+            $xml
+        );
+        $this->assertStringContainsString(
+            '<gReeRepRes><documentos><dFeNacional><tipoChaveDFe>2</tipoChaveDFe><xTipoChaveDFe>NF-e</xTipoChaveDFe><chaveDFe>NFE123456789</chaveDFe></dFeNacional><fornec><CNPJ>11222333000181</CNPJ><xNome>Fornecedor Teste</xNome></fornec><dtEmiDoc>2026-01-10</dtEmiDoc><dtCompDoc>2026-01-11</dtCompDoc><tpReeRepRes>99</tpReeRepRes><xTpReeRepRes>Outros</xTpReeRepRes><vlrReeRepRes>150.25</vlrReeRepRes></documentos></gReeRepRes>',
+            $xml
+        );
+        $this->assertStringContainsString(
+            '<trib><gIBSCBS><CST>000</CST><cClassTrib>000001</cClassTrib><cCredPres>03</cCredPres><gTribRegular><CSTReg>000</CSTReg><cClassTribReg>000001</cClassTribReg></gTribRegular><gDif><pDifUF>1.50</pDifUF><pDifMun>2.50</pDifMun><pDifCBS>3.50</pDifCBS></gDif></gIBSCBS></trib>',
+            $xml
+        );
+        $this->assertLessThan(strpos($xml, '<trib><gIBSCBS>'), strpos($xml, '<gReeRepRes>'));
+    }
+
     public function test_emitir_normaliza_iss_retido_booleano_para_codigo_sefin(): void
     {
         $calls = [];
