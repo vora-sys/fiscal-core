@@ -6,7 +6,6 @@ use sabbajohn\FiscalCore\Providers\NFSe\Municipal\BelemMunicipalProvider;
 use sabbajohn\FiscalCore\Providers\NFSe\Municipal\AbrasfSharedProvider;
 use sabbajohn\FiscalCore\Providers\NFSe\Municipal\ElProvider;
 use sabbajohn\FiscalCore\Providers\NFSe\Municipal\IsswebProvider;
-use sabbajohn\FiscalCore\Providers\NFSe\Municipal\PublicaProvider;
 use sabbajohn\FiscalCore\Providers\NFSe\Municipal\WebissProvider;
 use sabbajohn\FiscalCore\Providers\NFSe\NacionalProvider;
 use sabbajohn\FiscalCore\Support\ProviderRegistry;
@@ -14,14 +13,14 @@ use PHPUnit\Framework\TestCase;
 
 final class ProviderRegistryTest extends TestCase
 {
-    public function testGetByMunicipioJoinvilleReturnsPublicaProvider(): void
+    public function testGetByMunicipioJoinvilleReturnsNacionalProvider(): void
     {
         $registry = ProviderRegistry::getInstance();
 
         $provider = $registry->getByMunicipio('joinville');
 
-        $this->assertInstanceOf(PublicaProvider::class, $provider);
-        $this->assertSame('async_lote', $provider->getConfig()['emission_mode'] ?? null);
+        $this->assertInstanceOf(NacionalProvider::class, $provider);
+        $this->assertSame('4209102', $provider->getCodigoMunicipio());
     }
 
     public function testGetByMunicipioBelemReturnsCurrentMunicipalProvider(): void

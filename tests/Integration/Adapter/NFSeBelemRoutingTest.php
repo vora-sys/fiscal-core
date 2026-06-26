@@ -77,7 +77,7 @@ final class NFSeBelemRoutingTest extends TestCase
             'ambiente' => 'homologacao',
         ]);
 
-        $adapter = new NFSeAdapter('joinville');
+        $adapter = new NFSeAdapter('itajai');
         $payload = NFSeBelemMunicipalFixtures::payload();
         $payload['prestador']['mei'] = true;
         $payload['prestador']['regime_tributario'] = 'mei';

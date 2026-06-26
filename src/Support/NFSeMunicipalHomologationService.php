@@ -109,6 +109,11 @@ final class NFSeMunicipalHomologationService
     {
         $factory = $this->payloadFactory ?? new NFSeMunicipalPayloadFactory();
         $meta = $factory->providerMeta($municipio);
+        if ($meta['provider_key'] === ProviderRegistry::NFSE_NATIONAL_KEY) {
+            throw new RuntimeException(
+                "Município '{$meta['slug']}' utiliza o fluxo NFSe nacional; use NFSeFacade/NacionalProvider para homologação."
+            );
+        }
 
         $bootstrap = $this->bootstrapEnvironment(
             $options['env_path'] ?? null,

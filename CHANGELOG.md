@@ -1,5 +1,21 @@
 # Changelog
 
+## v1.4.6 - 2026-06-26
+
+### Changed
+- Joinville/SC (`4209102`) passa a resolver para `nfse_nacional` com vigência em `2026-07-20`, mantendo `PUBLICA` apenas como família histórica/retroativa.
+- Exemplo de homologação de Joinville passa a montar DPS no fluxo nacional.
+- Helpers municipais agora recusam municípios migrados para o provider nacional com erro explícito.
+
+### Tests
+- `composer validate --strict`
+- `php -d memory_limit=512M vendor/bin/phpunit tests/Integration/Support/ProviderRegistryTest.php tests/Integration/Adapter/NFSeAdapterTest.php tests/Unit/Support/NFSeMunicipalCatalogTest.php tests/Unit/Support/NFSeProviderResolverTest.php tests/Unit/NFSe/ProviderConfigTest.php tests/Unit/NFSe/NFSeAdapterFacadeNacionalTest.php tests/Unit/Support/NFSeMunicipalPayloadFactoryTest.php tests/Unit/Support/NFSeMunicipalHomologationServiceTest.php tests/Unit/NFSe/NFSeFacadeBootstrapTest.php`
+- `composer test:ci`
+- `composer test:nfse`
+- `php -d memory_limit=512M vendor/bin/phpunit --testsuite NFe`
+- `php -d memory_limit=512M vendor/bin/phpunit --testsuite Tributacao`
+- `composer analyse`
+
 ## v1.4.5 - 2026-06-20
 
 ### Changed

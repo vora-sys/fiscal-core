@@ -71,7 +71,7 @@ final class NFSeFacadeBootstrapTest extends TestCase
             'FISCAL_CERT_PASSWORD="' . $this->certificateFile['password'] . '"',
         ]);
 
-        $facade = new NFSeFacade('joinville');
+        $facade = new NFSeFacade('itajai');
         $response = $facade->getProviderInfo();
 
         $this->assertTrue($response->isSuccess(), (string) $response->getError());
@@ -92,7 +92,7 @@ final class NFSeFacadeBootstrapTest extends TestCase
             'FISCAL_CERT_PASSWORD="' . $this->certificateFile['password'] . '"',
         ]);
 
-        $facade = new NFSeFacade('joinville');
+        $facade = new NFSeFacade('itajai');
         $response = $facade->getProviderInfo();
 
         $this->assertTrue($response->isError());
@@ -111,7 +111,7 @@ final class NFSeFacadeBootstrapTest extends TestCase
             'FISCAL_CERT_PASSWORD="' . $this->certificateFile['password'] . '"',
         ]);
 
-        $facade = new NFSeFacade('joinville');
+        $facade = new NFSeFacade('itajai');
         $response = $facade->getProviderInfo();
 
         $this->assertTrue($response->isError());

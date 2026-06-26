@@ -681,6 +681,23 @@ class NFSeAdapterFacadeNacionalTest extends TestCase
         $this->assertStringContainsString('Natal', (string) $response->getError());
     }
 
+    public function test_facade_bloqueia_emissao_pre_corte_para_joinville_migrado_nacional(): void
+    {
+        $facade = new NFSeFacade('joinville', new NFSeAdapter('joinville', new FakeNfseProvider()));
+
+        $response = $facade->emitir([
+            'dCompet' => '2026-07-19',
+            'dhEmi' => '2026-07-19T10:00:00-03:00',
+        ]);
+
+        $this->assertTrue($response->isError());
+        $this->assertSame('NFSE_NATIONAL_MIGRATION_LEGACY_PERIOD', $response->getErrorCode());
+        $this->assertSame('2026-07-19', $response->getMetadata('reference_date'));
+        $this->assertSame('2026-07-20', $response->getMetadata('legacy_cutoff'));
+        $this->assertSame('4209102', $response->getMetadata('municipio_ibge'));
+        $this->assertStringContainsString('Joinville', (string) $response->getError());
+    }
+
     private function buildNacionalConfig(callable $httpClient): array
     {
         return [

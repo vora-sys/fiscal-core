@@ -2,13 +2,13 @@
 
 ## Resumo
 
-- Gerado em: `2026-06-20T15:26:50+00:00`
+- Gerado em: `2026-06-26T01:01:27+00:00`
 - Registros Uninfe (IBGE unico): `573`
 - Municipios ativos no catalogo: `633`
-- Match exato provider: `365`
+- Match exato provider: `364`
 - Ausentes no catalogo: `0`
-- Divergencias totais: `208`
-- Divergencias esperadas: `208`
+- Divergencias totais: `209`
+- Divergencias esperadas: `209`
 - Divergencias inesperadas: `0`
 
 ## Ausentes no Catalogo

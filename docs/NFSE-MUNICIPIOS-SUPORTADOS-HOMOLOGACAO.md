@@ -1,6 +1,6 @@
 # NFSe - Municipios suportados, homologados e pendentes
 
-Base: `config/nfse/providers-catalog.json` (snapshot em `2026-06-20`).
+Base: `config/nfse/providers-catalog.json` (snapshot em `2026-06-26`).
 
 ## Regra vigente para homologacao
 
@@ -11,10 +11,10 @@ Base: `config/nfse/providers-catalog.json` (snapshot em `2026-06-20`).
 ## Resumo consolidado
 
 - Entradas ativas no catalogo: `633`
-- `DISPENSADO_NACIONAL`: `210`
+- `DISPENSADO_NACIONAL`: `211`
 - `HOMOLOGADO_REFERENCIA_NACIONAL`: `1` (Manaus/AM)
 - `HOMOLOGADO_MUNICIPAL`: `1` (Belem/PA)
-- `PENDENTE_HOMOLOGACAO_MUNICIPAL`: `421`
+- `PENDENTE_HOMOLOGACAO_MUNICIPAL`: `420`
 
 ## Municipios ja homologados
 

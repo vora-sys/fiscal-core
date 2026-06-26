@@ -48,11 +48,11 @@ final class NFSeProviderResolverTest extends TestCase
         return new NFSeProviderResolver($catalog, new NFSeMunicipalProviderOverrides($tmp));
     }
 
-    public function testResolveJoinvilleToPublica(): void
+    public function testResolveJoinvilleToNational(): void
     {
         $resolver = $this->makeResolver();
 
-        $this->assertSame('PUBLICA', $resolver->resolveKey('joinville'));
+        $this->assertSame(NFSeProviderResolver::NATIONAL_KEY, $resolver->resolveKey('joinville'));
     }
 
     public function testResolveBelemToCurrentMunicipalFamily(): void

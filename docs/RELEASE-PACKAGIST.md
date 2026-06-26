@@ -1,11 +1,11 @@
 # Release Packagist
 
-Data de referencia: 2026-06-17
+Data de referencia: 2026-06-26
 
 Nome canonico do pacote: `sabbajohn/fiscal-core`.
 
 
-## Checklist de release v1.4.0
+## Checklist de release v1.4.6
 
 1. Validar metadados do Composer:
 
@@ -40,13 +40,13 @@ Nome canonico do pacote: `sabbajohn/fiscal-core`.
    ENABLE_EXTERNAL_TESTS=false composer test:ci
    ```
 
-6. Atualizar `CHANGELOG.md` com a versao `v1.4.0`.
+6. Atualizar `CHANGELOG.md` com a versao `v1.4.6`.
 
 7. Criar tag:
 
    ```bash
-   git tag v1.4.0
-   git push origin v1.4.0
+   git tag v1.4.6
+   git push origin v1.4.6
    ```
 
 8. Publicar/submeter no Packagist usando o repositorio GitHub deste pacote e o nome `sabbajohn/fiscal-core`.

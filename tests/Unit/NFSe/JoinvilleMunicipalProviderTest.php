@@ -403,7 +403,7 @@ final class JoinvilleMunicipalProviderTest extends TestCase
         };
 
         $provider = $this->makeProvider($transport);
-        $facade = new NFSeFacade('joinville', new NFSeAdapter('joinville', $provider));
+        $facade = new NFSeFacade('PUBLICA', new NFSeAdapter('PUBLICA', $provider));
 
         $response = $facade->emitir(NFSeJoinvilleMunicipalFixtures::payload());
 
@@ -441,7 +441,7 @@ final class JoinvilleMunicipalProviderTest extends TestCase
         };
 
         $provider = $this->makeProvider($transport);
-        $facade = new NFSeFacade('joinville', new NFSeAdapter('joinville', $provider));
+        $facade = new NFSeFacade('PUBLICA', new NFSeAdapter('PUBLICA', $provider));
 
         $response = $facade->emitir(NFSeJoinvilleMunicipalFixtures::payload());
 
@@ -553,7 +553,7 @@ final class JoinvilleMunicipalProviderTest extends TestCase
         };
 
         $provider = $this->makeProvider($transport);
-        $facade = new NFSeFacade('joinville', new NFSeAdapter('joinville', $provider));
+        $facade = new NFSeFacade('PUBLICA', new NFSeAdapter('PUBLICA', $provider));
 
         $response = $facade->emitirCompleto(NFSeJoinvilleMunicipalFixtures::payload());
 

@@ -58,7 +58,7 @@ final class NFSeMunicipalPayloadFactoryTest extends TestCase
         $this->expectExceptionMessage('FISCAL_IM');
 
         $factory->buildPrestador(
-            'joinville',
+            'belem',
             NFSeMunicipalPreviewSupport::makeCertificate(),
             [
                 'cnpj' => '83188342000104',
@@ -68,40 +68,14 @@ final class NFSeMunicipalPayloadFactoryTest extends TestCase
         );
     }
 
-    public function testRealJoinvillePayloadUsesTwoPercentAliquota(): void
+    public function testRejectsJoinvilleAfterNationalMigration(): void
     {
         $factory = new NFSeMunicipalPayloadFactory();
-        $payload = $factory->real(
-            'joinville',
-            [
-                'cnpj' => '83188342000104',
-                'inscricaoMunicipal' => '123456',
-                'razao_social' => 'Freeline Informatica Ltda',
-                'codigo_municipio' => '4209102',
-                'simples_nacional' => true,
-            ],
-            [
-                'documento' => '11222333000181',
-                'razao_social' => 'Tomador Joinville Ltda',
-                'endereco' => [
-                    'logradouro' => 'Rua 1',
-                    'numero' => '100',
-                    'bairro' => 'Centro',
-                    'codigo_municipio' => '4209102',
-                    'uf' => 'SC',
-                    'cep' => '89201001',
-                    'municipio' => 'Joinville',
-                ],
-            ]
-        );
 
-        $this->assertSame(0.02, $payload['servico']['aliquota']);
-        $this->assertSame('4209102', $payload['servico']['codigo_municipio']);
-        $this->assertSame('11.01', $payload['servico']['item_lista_servico']);
-        $this->assertSame(
-            'Desenvolvimento e licenciamento de software para homologacao de Joinville.',
-            $payload['servico']['descricao']
-        );
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('fluxo NFSe nacional');
+
+        $factory->demo('joinville');
     }
 
     public function testDemoPayloadCanBeResolvedFromCatalogPayloadDefaultsForIsswebMunicipio(): void
@@ -133,7 +107,6 @@ final class NFSeMunicipalPayloadFactoryTest extends TestCase
     {
         return [
             'belem' => ['belem'],
-            'joinville' => ['joinville'],
         ];
     }
 

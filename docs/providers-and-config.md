@@ -84,7 +84,7 @@ Comportamento:
 - `nfse_nacional`: provider REST canonico do ambiente nacional
 - `BELEM_MUNICIPAL_2025`: override municipal especifico
 - `ISSWEB_AM`: familia compartilhada ativa para Presidente Figueiredo/AM e Rio Preto da Eva/AM
-- `PUBLICA`: familia compartilhada com defaults municipais leves em Joinville
+- `PUBLICA`: familia municipal compartilhada preservada para municipios ativos e retroativos de Joinville
 
 ## Politica global de MEI
 

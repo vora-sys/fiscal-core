@@ -468,7 +468,7 @@ ibge,uf,nome,slug,provider_family,schema_package,tipo_suporte,status_homologacao
 4208609,SC,Jaborá,jabora,BETHA,BETHA,MUNICIPAL,PENDENTE_HOMOLOGACAO_MUNICIPAL,
 4208906,SC,"Jaragua do Sul",jaragua-do-sul,nfse_nacional,NACIONAL,NACIONAL,DISPENSADO_NACIONAL,"Dispensado de homologacao municipal individual pela regra nacional 100%."
 4209003,SC,Joaçaba,joacaba,nfse_nacional,NACIONAL,NACIONAL,DISPENSADO_NACIONAL,"Dispensado de homologacao municipal individual pela regra nacional 100%."
-4209102,SC,Joinville,joinville,PUBLICA,PUBLICA,MUNICIPAL,PENDENTE_HOMOLOGACAO_MUNICIPAL,
+4209102,SC,Joinville,joinville,nfse_nacional,NACIONAL,NACIONAL,DISPENSADO_NACIONAL,"Dispensado de homologacao municipal individual pela regra nacional 100%."
 4209300,SC,Lages,lages,BETHA,BETHA,MUNICIPAL,PENDENTE_HOMOLOGACAO_MUNICIPAL,
 4209904,SC,Lontras,lontras,IPM,IPM,MUNICIPAL,PENDENTE_HOMOLOGACAO_MUNICIPAL,
 4210035,SC,Luzerna,luzerna,nfse_nacional,NACIONAL,NACIONAL,DISPENSADO_NACIONAL,"Dispensado de homologacao municipal individual pela regra nacional 100%."

@@ -79,7 +79,7 @@ Este tracker formaliza o criterio de aceite por capital sem bloquear a onda quan
 | Rio Preto da Eva/AM | 1303569 | `ISSWEB_AM` | - | PENDENTE | Municipio municipal ISSWEB; homologacao real obrigatoria por municipio. |
 | Ananindeua/PA | 1500800 | `nfse_nacional` | 2026-01-01 | DISPENSADO_NACIONAL | Coberto por homologacao de referencia nacional (Manaus). |
 | Maraba/PA | 1504208 | `nfse_nacional` | 2023-01-23 | DISPENSADO_NACIONAL | Coberto por homologacao de referencia nacional (Manaus). |
-| Joinville/SC | 4209102 | `PUBLICA` | - | EM_ANDAMENTO | Roteamento PUBLICA validado em testes automatizados; pendente homologacao real. |
+| Joinville/SC | 4209102 | `nfse_nacional` | 2026-07-20 | DISPENSADO_NACIONAL | Coberto por homologacao de referencia nacional (Manaus); PUBLICA preservado apenas para retroativos. |
 | Balneario Camboriu/SC | 4202008 | `nfse_nacional` | 2025-10-01 | DISPENSADO_NACIONAL | Coberto por homologacao de referencia nacional (Manaus). |
 | Itajai/SC | 4208203 | `PUBLICA` | - | EM_ANDAMENTO | Roteamento PUBLICA validado em testes automatizados; pendente homologacao real. |
 | Campo Alegre/SC | 4203303 | `IPM` | - | PENDENTE | Catalogado em familia municipal; aguardando homologacao real. |

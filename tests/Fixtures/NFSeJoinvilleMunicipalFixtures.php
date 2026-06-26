@@ -104,7 +104,8 @@ final class NFSeJoinvilleMunicipalFixtures
 
     public static function joinvilleConfig(array $overrides = []): array
     {
-        $config = \sabbajohn\FiscalCore\Support\ProviderRegistry::getInstance()->getConfigForMunicipio('joinville');
+        $config = \sabbajohn\FiscalCore\Support\ProviderRegistry::getInstance()->getConfig('PUBLICA');
+        $config['emission_mode'] = 'async_lote';
         $config['prestador'] = [
             'cnpj' => self::payload()['prestador']['cnpj'],
             'inscricaoMunicipal' => self::payload()['prestador']['inscricaoMunicipal'],

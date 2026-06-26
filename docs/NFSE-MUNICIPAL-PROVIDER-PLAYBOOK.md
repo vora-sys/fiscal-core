@@ -481,12 +481,13 @@ Arquivos de referencia:
 
 ### Joinville
 
-Use Joinville como referencia de:
+Use Joinville como referencia historica de:
 
 - familia `PUBLICA`
 - SOAP com WSDL principal e de consultas
 - assinatura configurada por familia
 - regras especificas de operacao e consulta
+- rota ativa atual migrada para `nfse_nacional` em `2026-07-20`
 
 Arquivos de referencia:
 

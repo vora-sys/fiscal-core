@@ -91,7 +91,7 @@ final class ProviderConfigTest extends TestCase
         $this->assertGreaterThan(100, count($municipios));
     }
 
-    public function testFacadeMapsJoinvilleToPublica(): void
+    public function testFacadeMapsJoinvilleToNational(): void
     {
         $facade = new NFSeFacade('joinville');
         $response = $facade->getProviderInfo();
@@ -99,12 +99,11 @@ final class ProviderConfigTest extends TestCase
         $this->assertTrue($response->isSuccess());
 
         $data = $response->getData();
-        $this->assertSame('PUBLICA', $data['provider_key']);
+        $this->assertSame('nfse_nacional', $data['provider_key']);
         $this->assertSame('4209102', $data['codigo_municipio']);
-        $this->assertStringContainsString('PublicaProvider', $data['provider_class']);
-        $this->assertContains('consultar_nfse_rps', $data['supported_operations']);
-        $this->assertSame('publica_policy', $data['form_policy']['policy_source']);
-        $this->assertSame(['servico.cTribMun'], $data['form_policy']['required_fields']);
+        $this->assertStringContainsString('NacionalProvider', $data['provider_class']);
+        $this->assertContains('baixar_danfse', $data['supported_operations']);
+        $this->assertTrue($data['supports_nacional']);
     }
 
     public function testFacadeMapsSouthPriorityCitiesToExpectedFamilies(): void
@@ -113,6 +112,7 @@ final class ProviderConfigTest extends TestCase
             'curitiba' => ['provider_key' => 'nfse_nacional', 'ibge' => '4106902'],
             'balneario-camboriu' => ['provider_key' => 'nfse_nacional', 'ibge' => '4202008'],
             'balneario-barra-do-sul' => ['provider_key' => 'IPM', 'ibge' => '4202057'],
+            'joinville' => ['provider_key' => 'nfse_nacional', 'ibge' => '4209102'],
             'itajai' => ['provider_key' => 'PUBLICA', 'ibge' => '4208203'],
             'campo-alegre' => ['provider_key' => 'IPM', 'ibge' => '4203303'],
             'sao-bento-do-sul' => ['provider_key' => 'IPM', 'ibge' => '4215802'],

@@ -142,9 +142,9 @@ php examples/homologacao/consulta.php
 php examples/producao/01-emitir-belem-real.php
 php examples/producao/02-consultar-e-imprimir-belem.php --protocolo=059138577 --rps-numero=164344
 
-# Ou sobrescrevendo documento/CEP do tomador
+# Ou sobrescrevendo dados do tomador
 php examples/homologacao/01-emitir-belem-real.php --tomador-doc=00980556236 --tomador-cep=66065112
-php examples/homologacao/02-emitir-joinville-real.php --tomador-doc=00980556236 --tomador-cep=89220650
+php examples/homologacao/02-emitir-joinville-real.php --tomador-doc=00980556236 --tomador-nome="TOMADOR TESTE"
 ```
 
 ### 📖 **Guia Completo**
@@ -214,6 +214,7 @@ Status usados abaixo:
 | Natal/RN | `nfse_nacional` | `DISPENSADO_NACIONAL` |
 | Porto Alegre/RS | `nfse_nacional` | `DISPENSADO_NACIONAL` |
 | Florianópolis/SC | `nfse_nacional` | `DISPENSADO_NACIONAL` |
+| Joinville/SC | `nfse_nacional` | `DISPENSADO_NACIONAL` |
 | Brasília/DF | `ISSNET` | `PENDENTE_HOMOLOGACAO_REAL` |
 | Goiânia/GO | `ISSNET` | `PENDENTE_HOMOLOGACAO_REAL` |
 | Cuiabá/MT | `ISSNET` | `PENDENTE_HOMOLOGACAO_REAL` |
@@ -229,7 +230,6 @@ Status usados abaixo:
 | Vitória da Conquista/BA | `EL` | `PENDENTE_HOMOLOGACAO_REAL` |
 | Presidente Figueiredo/AM | `ISSWEB_AM` | `PENDENTE_HOMOLOGACAO_REAL` |
 | Rio Preto da Eva/AM | `ISSWEB_AM` | `PENDENTE_HOMOLOGACAO_REAL` |
-| Joinville/SC | `PUBLICA` | `PENDENTE_HOMOLOGACAO_REAL` |
 | Itajaí/SC | `PUBLICA` | `PENDENTE_HOMOLOGACAO_REAL` |
 | São Bento do Sul/SC | `IPM` | `PENDENTE_HOMOLOGACAO_REAL` |
 

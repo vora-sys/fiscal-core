@@ -7,16 +7,17 @@ use PHPUnit\Framework\TestCase;
 
 final class NFSeAdapterTest extends TestCase
 {
-    public function testJoinvilleUsesPublicaProvider(): void
+    public function testJoinvilleUsesNacionalProvider(): void
     {
         $adapter = new NFSeAdapter('joinville');
 
         $info = $adapter->getProviderInfo();
 
-        $this->assertSame('PUBLICA', $info['provider_key']);
-        $this->assertStringContainsString('PublicaProvider', $info['provider_class']);
+        $this->assertSame('nfse_nacional', $info['provider_key']);
+        $this->assertSame('4209102', $info['codigo_municipio']);
+        $this->assertStringContainsString('NacionalProvider', $info['provider_class']);
         $this->assertContains('consultar_lote', $info['supported_operations']);
-        $this->assertContains('cancelar_nfse', $info['supported_operations']);
+        $this->assertContains('baixar_danfse', $info['supported_operations']);
     }
 
     public function testBelemUsesCurrentMunicipalProvider(): void
@@ -114,7 +115,7 @@ final class NFSeAdapterTest extends TestCase
     public function testSouthPriorityCitiesUseExpectedFamilies(): void
     {
         $expectedMappings = [
-            'joinville' => ['provider_key' => 'PUBLICA', 'ibge' => '4209102'],
+            'joinville' => ['provider_key' => 'nfse_nacional', 'ibge' => '4209102'],
             'curitiba' => ['provider_key' => 'nfse_nacional', 'ibge' => '4106902'],
             'balneario-camboriu' => ['provider_key' => 'nfse_nacional', 'ibge' => '4202008'],
             'balneario-barra-do-sul' => ['provider_key' => 'IPM', 'ibge' => '4202057'],

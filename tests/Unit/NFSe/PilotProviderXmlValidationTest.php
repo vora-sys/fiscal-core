@@ -143,7 +143,7 @@ final class PilotProviderXmlValidationTest extends TestCase
         return [
             'belem' => ['belem', $belem, 'tomador.endereco.logradouro'],
             'manaus' => ['manaus', $manaus, 'prestador.inscricaoMunicipal'],
-            'joinville' => ['joinville', $joinville, 'servico.codigo'],
+            'joinville' => ['joinville', $joinville, 'Código de serviço é obrigatório'],
         ];
     }
 

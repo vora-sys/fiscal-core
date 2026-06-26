@@ -20,7 +20,8 @@ final class NFSeMunicipalCatalogTest extends TestCase
 
         $this->assertNotNull($result);
         $this->assertSame('4209102', $result['ibge']);
-        $this->assertSame('PUBLICA', $result['provider_family_key']);
+        $this->assertSame('nfse_nacional', $result['provider_family_key']);
+        $this->assertSame('2026-07-20', $result['national_migration_policy']['effective_from'] ?? null);
     }
 
     public function testResolveBelemByAccentedName(): void

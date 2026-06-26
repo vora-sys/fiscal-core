@@ -6305,19 +6305,23 @@
             "slug": "joinville",
             "nome": "Joinville",
             "uf": "SC",
-            "provider_family": "PUBLICA",
-            "schema_package": "PUBLICA",
+            "provider_family": "nfse_nacional",
+            "schema_package": "NACIONAL",
             "ibge": "4209102",
             "homologado": false,
             "active": true,
-            "provider_config_overrides": {
-                "emission_mode": "async_lote"
-            },
-            "payload_defaults": {
-                "servico": {
-                    "descricao": "Desenvolvimento e licenciamento de software para homologacao de Joinville.",
-                    "discriminacao": "Desenvolvimento e licenciamento de software para homologacao de Joinville."
-                }
+            "provider_note": "Joinville migrado para fluxo NFSe nacional em 2026-07-20; família municipal histórica (PUBLICA) preservada apenas para referência/retroativos.",
+            "national_migration_policy": {
+                "enforce_emission_block_before_effective_date": true,
+                "effective_from": "2026-07-20",
+                "legacy_system": "NF-em municipal Joinville/PUBLICA",
+                "error_code": "NFSE_NATIONAL_MIGRATION_LEGACY_PERIOD",
+                "official_reference_source": "prefeitura_joinville_nfem_and_gov_br_nfse_monitoramento_2026_06_09",
+                "official_reference_urls": [
+                    "https://nfem.joinville.sc.gov.br/",
+                    "https://www.gov.br/nfse/pt-br/municipios/monitoramento-adesoes",
+                    "https://www.gov.br/nfse/pt-br/municipios/monitoramento-adesoes/municipiosaderentes20260609.xlsx"
+                ]
             }
         },
         "4209300": {

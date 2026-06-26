@@ -273,6 +273,11 @@ final class NFSeMunicipalPayloadFactory
         if ($resolved === null) {
             throw new InvalidArgumentException("Município '{$municipio}' não suportado.");
         }
+        if ((string) ($resolved['provider_family_key'] ?? '') === ProviderRegistry::NFSE_NATIONAL_KEY) {
+            throw new InvalidArgumentException(
+                "Município '{$municipio}' utiliza o fluxo NFSe nacional; use o payload nacional."
+            );
+        }
 
         return [
             'slug' => (string) $resolved['slug'],

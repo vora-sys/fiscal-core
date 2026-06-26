@@ -20,7 +20,7 @@ examples/
 │   └── 03-emissao-municipal-funcional.php # Preview funcional de emissão municipal
 ├── 📁 homologacao/                   # Scripts seguros para prefeitura
 │   ├── 01-emitir-belem-real.php      # Belém com certificado Faives
-│   ├── 02-emitir-joinville-real.php  # Joinville com certificado Freeline
+│   ├── 02-emitir-joinville-real.php  # Joinville no fluxo NFSe nacional
 │   ├── 03-emitir-belem-completo.php  # Fluxo facade: emissão + disponibilidade + URL oficial
 │   ├── 04-manaus-emitir-nacional.php # Wrapper de compatibilidade para o fluxo principal de Manaus
 │   ├── 05-manaus-operacoes-nacionais.php # CLI principal de Manaus: preview, emissão e operações nacionais
@@ -56,7 +56,7 @@ php examples/avancado/01-multiplos-municipios.php
 php examples/avancado/02-error-handling.php
 php examples/avancado/03-emissao-municipal-funcional.php
 
-# Scripts de homologação municipal
+# Scripts de homologação municipal/nacional
 php scripts/nfse/scaffold-family.php --family=MINHA_FAMILIA --dry-run
 php scripts/nfse/scaffold-municipio.php --ibge=1303536 --dry-run
 php examples/homologacao/01-emitir-belem-real.php
@@ -80,9 +80,9 @@ php examples/homologacao/consulta.php
 php examples/producao/01-emitir-belem-real.php
 php examples/producao/02-consultar-e-imprimir-belem.php --protocolo=SEU_PROTOCOLO --rps-numero=SEU_RPS
 
-# Ou sobrescrevendo o documento/CEP do tomador
+# Ou sobrescrevendo dados do tomador
 php examples/homologacao/01-emitir-belem-real.php --tomador-doc=12345678909 --tomador-cep=66065112
-php examples/homologacao/02-emitir-joinville-real.php --tomador-doc=12345678909 --tomador-cep=89220650
+php examples/homologacao/02-emitir-joinville-real.php --tomador-doc=12345678909 --tomador-nome="TOMADOR TESTE"
 ```
 
 ## 📋 Funcionalidades por Exemplo
@@ -98,6 +98,7 @@ php examples/homologacao/02-emitir-joinville-real.php --tomador-doc=12345678909 
 | **02-error-handling** | Tratamento robusto de erros | Ambos |
 | **03-emissao-municipal-funcional** | Preview local de emissão municipal | Providers municipais |
 | **homologacao/** | Scripts reais com preview seguro e `--send` explícito | NFSeMunicipalHomologationService |
+| **02-emitir-joinville-real** | Preview DPS e envio nacional de Joinville a partir de 2026-07-20 | FiscalFacade + NFSeFacade |
 | **03-emitir-belem-completo** | Facade pronta com emissão, disponibilidade e URL oficial | FiscalFacade + NFSeFacade |
 | **04-manaus-emitir-nacional** | Wrapper compatível para o CLI principal de Manaus | FiscalFacade + NFSeFacade |
 | **05-manaus-operacoes-nacionais** | CLI principal de Manaus: preview DPS, emissão e operações nacionais | FiscalFacade + NFSeFacade |
@@ -155,6 +156,7 @@ export IBPT_UF="SP"
 - Emissão classificada como MEI usa sempre o provider nacional
 - Em Belém, o acesso ao DANFSe segue a URL oficial da prefeitura; a biblioteca expõe disponibilidade e metadados para polling externo
 - Para Manaus, use os scripts `04` e `05` em homologação com fatos geradores a partir de `2026-01-01`
+- Para Joinville, use o script `02` em homologação com fatos geradores a partir de `2026-07-20`
 - No fluxo nacional, o DANFSe agora e gerado localmente por padrao; a API oficial de geracao sera suspensa em `2026-07-01`
 - No fluxo nacional, `baixarDanfse` depende de conseguir resolver o XML final da NFS-e quando o provider nao retorna PDF pronto
 - Para Presidente Figueiredo e Rio Preto da Eva, use `NFSE_ISSWEB_CHAVE` e confirme os endpoints reais antes de homologar com `--send`

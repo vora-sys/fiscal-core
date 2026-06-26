@@ -3,7 +3,6 @@
 declare(strict_types=1);
 
 require_once dirname(__DIR__, 2) . '/Fixtures/NFSeBelemMunicipalFixtures.php';
-require_once dirname(__DIR__, 2) . '/Fixtures/NFSeJoinvilleMunicipalFixtures.php';
 require_once dirname(__DIR__, 2) . '/Support/TestCertificateFile.php';
 
 use sabbajohn\FiscalCore\Support\CertificateManager;
@@ -60,7 +59,7 @@ final class NFSeMunicipalHomologationServiceTest extends TestCase
         CertificateManager::reload();
     }
 
-    public function testPreviewBuildsJoinvilleRequestFromEnvAndMockedTomadorLookup(): void
+    public function testPreviewRejectsJoinvilleAfterNationalMigration(): void
     {
         $envPath = $this->makeEnvFile(<<<ENV
 FISCAL_ENVIRONMENT=homologacao
@@ -68,39 +67,18 @@ FISCAL_IM=123456
 FISCAL_RAZAO_SOCIAL="Freeline Informatica Ltda"
 ENV);
 
-        $service = new NFSeMunicipalHomologationService(
-            $this->projectRoot,
-            fn (string $cnpj): array => [
-                'cnpj' => $cnpj,
-                'razao_social' => 'Tomador Mock Joinville Ltda',
-                'telefone' => '(47) 99999-1234',
-                'email' => 'financeiro@example.com',
-                'endereco' => [
-                    'logradouro' => 'Rua do Comercio',
-                    'numero' => '100',
-                    'bairro' => 'Centro',
-                    'cep' => '89201001',
-                    'municipio' => 'Joinville',
-                    'uf' => 'SC',
-                ],
-            ]
-        );
+        $service = new NFSeMunicipalHomologationService($this->projectRoot);
 
-        $result = $service->preview('joinville', '11222333000181', [
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('fluxo NFSe nacional');
+
+        $service->preview('joinville', '11222333000181', [
             'env_path' => $envPath,
             'env_overrides' => [
                 'FISCAL_CERT_PATH' => $this->joinvilleCertificateFile['path'],
                 'FISCAL_CERT_PASSWORD' => $this->joinvilleCertificateFile['password'],
             ],
         ]);
-
-        $this->assertSame('preview', $result['mode']);
-        $this->assertSame('joinville', $result['provider']['municipio']);
-        $this->assertStringContainsString('PublicaProvider', $result['provider']['class']);
-        $this->assertSame('success', $result['parsed_response']['status']);
-        $this->assertSame('Tomador Mock Joinville Ltda', $result['tomador']['razao_social']);
-        $this->assertStringContainsString('<GerarNfseEnvio', (string) $result['request_xml']);
-        $this->assertNotEmpty($result['resolved_paths']['FISCAL_CERT_PATH'] ?? null);
     }
 
     public function testPreviewFailsWhenFiscalImIsMissing(): void
@@ -129,11 +107,12 @@ ENV);
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('FISCAL_IM');
 
-        $service->preview('joinville', '000000000000000', [
+        $service->preview('belem', '000000000000000', [
             'env_path' => $envPath,
             'env_overrides' => [
-                'FISCAL_CERT_PATH' => $this->joinvilleCertificateFile['path'],
-                'FISCAL_CERT_PASSWORD' => $this->joinvilleCertificateFile['password'],
+                'FISCAL_CERT_PATH' => $this->belemCertificateFile['path'],
+                'FISCAL_CERT_PASSWORD' => $this->belemCertificateFile['password'],
+                'OPENSSL_CONF' => $this->projectRoot . '/openssl.cnf',
             ],
         ]);
     }
@@ -199,19 +178,20 @@ ENV);
                     'logradouro' => 'Rua Homologacao',
                     'numero' => 'S/N',
                     'bairro' => 'Centro',
-                    'cep' => '89220650',
-                    'municipio' => 'Joinville',
-                    'uf' => 'SC',
-                    'codigo_municipio' => '4209102',
+                    'cep' => '66065112',
+                    'municipio' => 'Belem',
+                    'uf' => 'PA',
+                    'codigo_municipio' => '1501402',
                 ],
             ]
         );
 
-        $result = $service->preview('joinville', '12345678909', [
+        $result = $service->preview('belem', '12345678909', [
             'env_path' => $envPath,
             'env_overrides' => [
-                'FISCAL_CERT_PATH' => $this->joinvilleCertificateFile['path'],
-                'FISCAL_CERT_PASSWORD' => $this->joinvilleCertificateFile['password'],
+                'FISCAL_CERT_PATH' => $this->belemCertificateFile['path'],
+                'FISCAL_CERT_PASSWORD' => $this->belemCertificateFile['password'],
+                'OPENSSL_CONF' => $this->projectRoot . '/openssl.cnf',
             ],
         ]);
 
@@ -316,7 +296,7 @@ ENV);
         );
     }
 
-    public function testSendBuildsJoinvilleRequestAndDispatchesThroughSoapTransport(): void
+    public function testSendRejectsJoinvilleAfterNationalMigration(): void
     {
         $envPath = $this->makeEnvFile(<<<ENV
 FISCAL_ENVIRONMENT=homologacao
@@ -326,35 +306,12 @@ FISCAL_CNPJ="83188342000104"
 FISCAL_UF="SC"
 ENV);
 
-        $transport = new class implements NFSeSoapTransportInterface {
-            public array $calls = [];
+        $service = new NFSeMunicipalHomologationService($this->projectRoot);
 
-            public function send(string $endpoint, string $envelope, array $options = []): array
-            {
-                $this->calls[] = compact('endpoint', 'envelope', 'options');
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('fluxo NFSe nacional');
 
-                return [
-                    'request_xml' => $envelope,
-                    'response_xml' => NFSeJoinvilleMunicipalFixtures::successSoapResponse(),
-                    'status_code' => 200,
-                    'headers' => ['Content-Type: text/xml'],
-                ];
-            }
-        };
-
-        $service = new NFSeMunicipalHomologationService(
-            $this->projectRoot,
-            fn (string $documento): array => [
-                'documento' => $documento,
-                'razao_social' => 'TOMADOR DE EXEMPLO',
-                'endereco' => [
-                    'numero' => 'S/N',
-                    'cep' => '89220650',
-                ],
-            ]
-        );
-
-        $result = $service->send('joinville', '12345678909', [
+        $service->send('joinville', '12345678909', [
             'env_path' => $envPath,
             'env_overrides' => [
                 'FISCAL_CERT_PATH' => $this->joinvilleCertificateFile['path'],
@@ -363,31 +320,7 @@ ENV);
                 'FISCAL_RAZAO_SOCIAL' => 'FREELINE INFORMATICA LTDA',
                 'FISCAL_UF' => 'SC',
             ],
-            'provider_config_overrides' => [
-                'soap_transport' => $transport,
-            ],
-            'tomador_defaults' => [
-                'cep' => '89220650',
-                'endereco' => [
-                    'numero' => 'S/N',
-                ],
-            ],
         ]);
-
-        $this->assertSame('send', $result['mode']);
-        $this->assertSame('joinville', $result['provider']['municipio']);
-        $this->assertSame('success', $result['parsed_response']['status']);
-        $this->assertSame('83188342000104', $result['prestador']['cnpj']);
-        $this->assertSame('FREELINE INFORMATICA LTDA', $result['prestador']['razao_social']);
-        $this->assertCount(1, $transport->calls);
-        $this->assertSame(
-            'https://nfsehomologacao.joinville.sc.gov.br/nfse_integracao/Services',
-            $transport->calls[0]['endpoint']
-        );
-        $this->assertStringContainsString('<svc:GerarNfse>', (string) $result['soap_envelope']);
-        $this->assertStringContainsString('<GerarNfseEnvio', (string) $result['request_xml']);
-        $this->assertStringContainsString('<Cnpj>83188342000104</Cnpj>', (string) $result['request_xml']);
-        $this->assertStringContainsString('<InscricaoMunicipal>987654321</InscricaoMunicipal>', (string) $result['request_xml']);
     }
 
     public function testPreviewAllowsBelemProductionWhenExplicitlyEnabledAndUsesFivePercentAliquota(): void

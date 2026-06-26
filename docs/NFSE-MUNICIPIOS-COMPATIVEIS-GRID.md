@@ -498,7 +498,7 @@ Base: `docs/nfse-municipios-suportados.csv`. Considera somente municípios reais
 | SC | Jaborá | `4208609` | `BETHA` | `MUNICIPAL` | `PENDENTE_HOMOLOGACAO_MUNICIPAL` | - |
 | SC | Jaragua do Sul | `4208906` | `nfse_nacional` | `NACIONAL` | `DISPENSADO_NACIONAL` | Dispensado de homologacao municipal individual pela regra nacional 100%. |
 | SC | Joaçaba | `4209003` | `nfse_nacional` | `NACIONAL` | `DISPENSADO_NACIONAL` | Dispensado de homologacao municipal individual pela regra nacional 100%. |
-| SC | Joinville | `4209102` | `PUBLICA` | `MUNICIPAL` | `PENDENTE_HOMOLOGACAO_MUNICIPAL` | - |
+| SC | Joinville | `4209102` | `nfse_nacional` | `NACIONAL` | `DISPENSADO_NACIONAL` | Dispensado de homologacao municipal individual pela regra nacional 100%. |
 | SC | Lages | `4209300` | `BETHA` | `MUNICIPAL` | `PENDENTE_HOMOLOGACAO_MUNICIPAL` | - |
 | SC | Lontras | `4209904` | `IPM` | `MUNICIPAL` | `PENDENTE_HOMOLOGACAO_MUNICIPAL` | - |
 | SC | Luzerna | `4210035` | `nfse_nacional` | `NACIONAL` | `DISPENSADO_NACIONAL` | Dispensado de homologacao municipal individual pela regra nacional 100%. |

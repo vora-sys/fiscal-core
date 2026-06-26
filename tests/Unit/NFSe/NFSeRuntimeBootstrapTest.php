@@ -37,7 +37,7 @@ final class NFSeRuntimeBootstrapTest extends TestCase
             new FakeCertificateManager(),
         );
 
-        $result = $bootstrap->makeProvider('4209102');
+        $result = $bootstrap->makeProvider('4208203');
 
         $this->assertFalse($configManager->reloadCalled);
         $this->assertSame('producao', $result['config']['ambiente']);
