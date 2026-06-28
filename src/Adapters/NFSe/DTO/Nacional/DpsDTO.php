@@ -43,16 +43,15 @@ final class DpsDTO
         $ambiente = (string) ($context['ambiente'] ?? 'homologacao');
         $codigoMunicipio = DpsPayloadHelper::onlyDigits((string) ($context['codigo_municipio'] ?? ''));
 
-        $data['serie'] = DpsPayloadHelper::normalizeNumeric($payload['serie'] ?? $payload['serie_rps'] ?? '1', 5, '1');
-        $data['nDPS'] = DpsPayloadHelper::normalizeNumeric($payload['nDPS'] ?? $payload['numero_rps'] ?? '1', 15, '1');
-        $data['dCompet'] = DpsPayloadHelper::firstString([$payload['dCompet'] ?? null]) ?? date('Y-m-d');
+        $data['serie'] = NacionalDpsIdentityBuilder::normalizeSerie($payload['serie'] ?? $payload['serie_rps'] ?? '1');
+        $data['nDPS'] = NacionalDpsIdentityBuilder::normalizeNumero($payload['nDPS'] ?? $payload['numero_rps'] ?? '1');
         $data['tpAmb'] = (string) (DpsPayloadHelper::firstString([$payload['tpAmb'] ?? null]) ?? ($ambiente === 'producao' ? '1' : '2'));
-        $data['dhEmi'] = DpsPayloadHelper::firstString([$payload['dhEmi'] ?? null]) ?? gmdate('Y-m-d\TH:i:s\Z');
         $data['verAplic'] = DpsPayloadHelper::firstString([
             $payload['verAplic'] ?? null,
             $context['ver_aplic'] ?? null,
         ]) ?? 'invoiceflow-1.0';
         $data['tpEmit'] = (string) (DpsPayloadHelper::firstString([$payload['tpEmit'] ?? null]) ?? '1');
+        $data = NacionalDpsTemporalNormalizer::normalizePayload($data, $context);
 
         $cLocEmi = DpsPayloadHelper::onlyDigits(DpsPayloadHelper::firstString([
             $payload['cLocEmi'] ?? null,
@@ -62,6 +61,13 @@ final class DpsDTO
         ]) ?? '');
         if ($cLocEmi !== '') {
             $data['cLocEmi'] = str_pad(substr($cLocEmi, 0, 7), 7, '0', STR_PAD_LEFT);
+        }
+
+        if (DpsPayloadHelper::firstString([$payload['id'] ?? null]) === null) {
+            $dpsId = NacionalDpsIdentityBuilder::fromPayload($data, $context);
+            if ($dpsId !== null) {
+                $data['id'] = $dpsId;
+            }
         }
 
         return new self($data, $context);
@@ -129,6 +135,8 @@ final class DpsDTO
         $federal = $this->tributacaoFederal->toArray();
         if ($federal !== []) {
             $tributacao['federal'] = $federal;
+        } else {
+            unset($tributacao['federal']);
         }
         $data['tributacao'] = $tributacao;
 

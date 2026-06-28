@@ -29,7 +29,14 @@ class NacionalProviderTest extends TestCase
         $this->assertStringContainsString('<DPS', $xml);
         $this->assertStringContainsString('versao="1.01"', $xml);
         $this->assertStringContainsString('infDPS', $xml);
+        $this->assertStringContainsString('<serie>1</serie>', $xml);
         $this->assertStringNotContainsString('<vRetIRRF>', $xml);
+
+        $schemaValidation = $provider->validarDpsXml($xml);
+        $this->assertTrue(
+            $schemaValidation['ok'],
+            implode(PHP_EOL, array_column($schemaValidation['errors'], 'message'))
+        );
     }
 
     public function test_emitir_inclui_irrf_retido_na_tributacao_nacional(): void
@@ -55,6 +62,43 @@ class NacionalProviderTest extends TestCase
             strpos($xml, '<tpRetISSQN>'),
             'tpRetISSQN must be emitted before pAliq in the national DPS schema order.'
         );
+    }
+
+    public function test_emitir_omite_irrf_quando_valor_zerado(): void
+    {
+        $calls = [];
+        $provider = new NacionalProvider($this->buildConfig(function ($method, $path, $body, $headers = []) use (&$calls) {
+            $calls[] = compact('method', 'path', 'body');
+            return '<Resposta><Sucesso>true</Sucesso></Resposta>';
+        }));
+
+        $dados = $this->dadosValidos();
+        $dados['servico']['valor_irrf'] = 0;
+        $dados['servico']['valor_ir'] = 0;
+
+        $provider->emitir($dados);
+
+        $payload = json_decode((string) $calls[0]['body'], true);
+        $this->assertIsArray($payload);
+        $xml = gzdecode((string) base64_decode((string) $payload['dpsXmlGZipB64']));
+        $this->assertIsString($xml);
+        $this->assertStringNotContainsString('<vRetIRRF>', $xml);
+        $this->assertStringNotContainsString('<tribFed><vRetIRRF>0.00</vRetIRRF></tribFed>', $xml);
+    }
+
+    public function test_emitir_rejeita_irrf_maior_ou_igual_ao_valor_do_servico(): void
+    {
+        $provider = new NacionalProvider($this->buildConfig(function () {
+            return '<Resposta><Sucesso>true</Sucesso></Resposta>';
+        }));
+
+        $dados = $this->dadosValidos();
+        $dados['servico']['valor_irrf'] = 1000.00;
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('vRetIRRF deve ser maior que zero e menor que vServ.');
+
+        $provider->emitir($dados);
     }
 
     public function test_emitir_inclui_endereco_nacional_do_tomador_no_bloco_toma(): void
@@ -399,15 +443,31 @@ class NacionalProviderTest extends TestCase
         $calls = [];
         $provider = new NacionalProvider($this->buildConfig(
             function ($method = null, $path = null, $body = null, $headers = []) use (&$calls) {
-                $calls[] = compact('method', 'path', 'body');
-                return '<CancelarResposta><Sucesso>true</Sucesso></CancelarResposta>';
+                $calls[] = compact('method', 'path', 'body', 'headers');
+                return json_encode([
+                    'tipoAmbiente' => 2,
+                    'versaoAplicativo' => 'test',
+                    'dataHoraProcessamento' => '2026-06-28T12:00:00-03:00',
+                ], JSON_UNESCAPED_UNICODE);
             }
         ));
 
-        $result = $provider->cancelar('NFSE123', 'Erro operacional');
+        $chave = str_repeat('1', 50);
+        $result = $provider->cancelar($chave, 'Cancelamento por erro operacional');
         $this->assertTrue($result);
         $this->assertSame('POST', $calls[0]['method']);
-        $this->assertSame('/nfse/NFSE123/eventos', $calls[0]['path']);
+        $this->assertSame('/nfse/' . $chave . '/eventos', $calls[0]['path']);
+        $this->assertContains('Content-Type: application/json', $calls[0]['headers']);
+
+        $payload = json_decode((string) $calls[0]['body'], true);
+        $this->assertIsArray($payload);
+        $this->assertArrayHasKey('pedidoRegistroEventoXmlGZipB64', $payload);
+        $xml = gzdecode((string) base64_decode((string) $payload['pedidoRegistroEventoXmlGZipB64']));
+        $this->assertIsString($xml);
+        $this->assertStringContainsString('<pedRegEvento', $xml);
+        $this->assertStringContainsString('<infPedReg Id="PRE' . $chave . '101101">', $xml);
+        $this->assertStringContainsString('<e101101>', $xml);
+        $this->assertStringContainsString('<xMotivo>Cancelamento por erro operacional</xMotivo>', $xml);
     }
 
     public function test_consultar_retorno_compnfse_com_xml_real(): void
@@ -419,7 +479,7 @@ class NacionalProviderTest extends TestCase
             fn ($method = null, $path = null, $body = null, $headers = []) => (string) $xmlReferencia
         ));
 
-        $result = $provider->cancelar('NFSE123', 'Erro operacional');
+        $result = $provider->cancelar(str_repeat('2', 50), 'Cancelamento por erro operacional');
         $this->assertTrue($result);
     }
 
@@ -476,6 +536,36 @@ class NacionalProviderTest extends TestCase
         $this->assertIsString($xml);
         $this->assertStringNotContainsString('<cTribMun>010701</cTribMun>', $xml);
         $this->assertStringContainsString('<cTribNac>010701</cTribNac>', $xml);
+    }
+
+    public function test_dps_nacional_rejeita_nbs_fora_do_padrao_do_schema(): void
+    {
+        $provider = new NacionalProvider($this->buildConfig(function () {
+            return '<Resposta><Sucesso>true</Sucesso></Resposta>';
+        }));
+
+        $dados = $this->dadosValidos();
+        $dados['servico']['cNBS'] = '0107010000';
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('servico.cNBS deve conter exatamente 9 dígitos.');
+
+        $provider->emitir($dados);
+    }
+
+    public function test_dps_nacional_rejeita_serie_com_mais_de_cinco_digitos(): void
+    {
+        $provider = new NacionalProvider($this->buildConfig(function () {
+            return '<Resposta><Sucesso>true</Sucesso></Resposta>';
+        }));
+
+        $dados = $this->dadosValidos();
+        $dados['serie'] = '123456';
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('serie deve conter de 1 a 5 dígitos numéricos.');
+
+        $provider->emitir($dados);
     }
 
     public function test_catalogo_resolve_rota_por_servico_configurado(): void
@@ -592,6 +682,9 @@ class NacionalProviderTest extends TestCase
             'api_base_url' => 'https://api.local',
             'timeout' => 10,
             'auth' => ['token' => 'abc'],
+            'prestador' => [
+                'cnpj' => '11.222.333/0001-81',
+            ],
             'endpoints' => [
                 'emitir' => '/nfse',
                 'consultar' => '/nfse/{id}',

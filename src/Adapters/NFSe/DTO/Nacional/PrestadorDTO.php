@@ -66,8 +66,12 @@ final class PrestadorDTO
         $data['opSimpNac'] = (string) (DpsPayloadHelper::firstString([$payload['opSimpNac'] ?? null]) ?? '1');
         $regApTribSn = DpsPayloadHelper::firstString([
             $payload['regApTribSN'] ?? null,
+            $payload['reg_ap_trib_sn'] ?? null,
             $payload['regime_apuracao_sn'] ?? null,
         ]);
+        if ($regApTribSn === null && $data['opSimpNac'] === '3') {
+            $regApTribSn = '1';
+        }
         if ($regApTribSn !== null) {
             $data['regApTribSN'] = $regApTribSn;
         }
@@ -87,12 +91,11 @@ final class PrestadorDTO
             $errors[] = 'prestador.documento deve ser CPF (11) ou CNPJ (14).';
         }
 
-        if (trim((string) ($this->data['inscricaoMunicipal'] ?? '')) === '') {
-            $errors[] = 'prestador.inscricaoMunicipal é obrigatório.';
-        }
-
         if (!in_array((string) ($this->data['opSimpNac'] ?? ''), ['1', '2', '3'], true)) {
             $errors[] = 'prestador.opSimpNac deve ser 1, 2 ou 3.';
+        }
+        if (($this->data['regApTribSN'] ?? null) !== null && !in_array((string) $this->data['regApTribSN'], ['1', '2', '3'], true)) {
+            $errors[] = 'prestador.regApTribSN deve ser 1, 2 ou 3.';
         }
 
         if (!in_array((string) ($this->data['regEspTrib'] ?? ''), ['0', '1', '2', '3', '4', '5', '6', '9'], true)) {

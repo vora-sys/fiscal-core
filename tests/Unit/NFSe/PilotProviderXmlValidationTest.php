@@ -82,10 +82,10 @@ final class PilotProviderXmlValidationTest extends TestCase
         }
 
         if ($municipio === 'manaus') {
-            $validation = $provider->validarXmlDps($payload);
+            $validation = $provider->validarDpsXml((string) $xml);
             $this->assertTrue(
-                $validation['valid'],
-                implode(PHP_EOL, $validation['errors'])
+                $validation['ok'],
+                implode(PHP_EOL, array_column($validation['errors'], 'message'))
             );
         } else {
             $schemaPath = (new NFSeSchemaResolver())->resolve($expectedFamily, 'emitir');
@@ -135,14 +135,14 @@ final class PilotProviderXmlValidationTest extends TestCase
         unset($belem['tomador']['endereco']['logradouro']);
 
         $manaus = NFSePilotPayloads::manaus();
-        unset($manaus['prestador']['inscricaoMunicipal']);
+        unset($manaus['prestador']['cnpj']);
 
         $joinville = NFSePilotPayloads::joinville();
         unset($joinville['servico']['codigo']);
 
         return [
             'belem' => ['belem', $belem, 'tomador.endereco.logradouro'],
-            'manaus' => ['manaus', $manaus, 'prestador.inscricaoMunicipal'],
+            'manaus' => ['manaus', $manaus, 'CNPJ do prestador inválido'],
             'joinville' => ['joinville', $joinville, 'Código de serviço é obrigatório'],
         ];
     }

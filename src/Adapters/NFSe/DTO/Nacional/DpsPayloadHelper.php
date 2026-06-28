@@ -60,6 +60,25 @@ final class DpsPayloadHelper
     }
 
     /**
+     * @param list<mixed> $values
+     */
+    public static function firstPositiveDecimal(array $values): ?float
+    {
+        foreach ($values as $value) {
+            if ($value === null || $value === '' || !is_numeric($value)) {
+                continue;
+            }
+
+            $decimal = round((float) $value, 2);
+            if ($decimal > 0.0) {
+                return $decimal;
+            }
+        }
+
+        return null;
+    }
+
+    /**
      * @return list<mixed>
      */
     public static function normalizeArrayList(mixed $value): array

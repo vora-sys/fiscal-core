@@ -698,11 +698,27 @@ class NFSeAdapterFacadeNacionalTest extends TestCase
         $this->assertStringContainsString('Joinville', (string) $response->getError());
     }
 
+    public function test_facade_permite_preparacao_nacional_de_joinville_em_homologacao(): void
+    {
+        $facade = new NFSeFacade('joinville', new NFSeAdapter('joinville', new FakeNfseProvider()));
+
+        $response = $facade->emitir([
+            'tpAmb' => '2',
+            'dCompet' => '2026-07-19',
+            'dhEmi' => '2026-07-19T10:00:00-03:00',
+        ]);
+
+        $this->assertTrue($response->isSuccess(), (string) $response->getError());
+        $this->assertSame('joinville', $response->getMetadata('municipio'));
+        $this->assertSame('nfse_nacional', $response->getMetadata('provider_key'));
+    }
+
     private function buildNacionalConfig(callable $httpClient): array
     {
         return [
             'codigo_municipio' => '3550308',
-            'versao' => '1.00',
+            'versao' => '1.01',
+            'dps_versao' => '1.01',
             'ambiente' => 'homologacao',
             'api_base_url' => 'https://api.local',
             'timeout' => 10,

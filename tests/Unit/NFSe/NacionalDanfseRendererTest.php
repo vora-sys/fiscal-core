@@ -36,6 +36,52 @@ final class NacionalDanfseRendererTest extends TestCase
         $this->assertStringContainsString('ConsultaPublica', $data['qr_code_url']);
     }
 
+    public function testBuildHtmlPreservaContratoVisualDoLayoutNacional(): void
+    {
+        $renderer = new NacionalDanfseRenderer();
+        $xml = $this->fixture('nfse_nacional_completa.xml');
+
+        $data = $this->invokePrivate($renderer, 'extractDocumentData', [$xml]);
+        $html = $this->invokePrivate($renderer, 'buildHtml', [$data]);
+
+        $this->assertStringContainsString('@page { margin: 0.15cm; }', $html);
+        $this->assertStringContainsString('.page', $html);
+        $this->assertStringContainsString('border: 1pt solid #111827', $html);
+        $this->assertStringContainsString('<div class="title">Documento Auxiliar da NFS-e</div>', $html);
+        $this->assertStringContainsString('<div class="subtitle">DANFSe padrao nacional</div>', $html);
+        $this->assertStringContainsString('<td class="qr-cell">', $html);
+        $this->assertStringContainsString('A autenticidade desta NFS-e pode ser verificada', $html);
+
+        $this->assertSectionOrder($html, [
+            'Identificacao da NFS-e' => 'three',
+            'Prestador / Fornecedor' => 'three',
+            'Tomador / Adquirente da Operacao' => 'three',
+            'Destinatario da Operacao' => 'three',
+            'Intermediario da Operacao' => 'three',
+            'Servico Prestado' => 'two',
+            'Tributacao Municipal (ISSQN)' => 'three',
+            'Tributacao Federal (Exceto CBS)' => 'two',
+            'Tributacao IBS / CBS' => 'two',
+            'Valor Total da NFS-e' => 'three',
+            'Informacoes Complementares' => 'one',
+        ]);
+
+        foreach ([
+            'RETENCOES',
+            'DESCRICAO RETENCOES',
+            'CST CLASSIFICACAO',
+            'VALOR TOTAL IBS',
+            'VALOR TOTAL CBS',
+            'VALOR LIQUIDO MAIS IBS CBS',
+            'TOTAIS APROXIMADOS TRIBUTOS',
+        ] as $label) {
+            $this->assertStringContainsString('<span class="field-label">' . $label . '</span>', $html);
+        }
+
+        $this->assertStringContainsString('<td class="highlight"><span class="field-label">SITUACAO</span>', $html);
+        $this->assertStringContainsString('<td class="highlight"><span class="field-label">VALOR LIQUIDO MAIS IBS CBS</span>', $html);
+    }
+
     public function testBuildHtmlSuprimeBlocosOpcionaisAusentes(): void
     {
         $renderer = new NacionalDanfseRenderer();
@@ -67,9 +113,29 @@ final class NacionalDanfseRendererTest extends TestCase
     {
         $reflection = new ReflectionClass($object);
         $method = $reflection->getMethod($method);
-        $method->setAccessible(true);
 
         return $method->invokeArgs($object, $args);
+    }
+
+    /**
+     * @param array<string,string> $expectedSections
+     */
+    private function assertSectionOrder(string $html, array $expectedSections): void
+    {
+        preg_match_all(
+            '/<div class="section-title">([^<]+)<\/div><table class="grid ([^"]+)">/',
+            $html,
+            $matches,
+            PREG_SET_ORDER
+        );
+
+        $actual = [];
+        foreach ($matches as $match) {
+            $actual[$match[1]] = $match[2];
+        }
+
+        $this->assertSame(array_keys($expectedSections), array_keys($actual));
+        $this->assertSame($expectedSections, $actual);
     }
 
     private function fixture(string $name): string

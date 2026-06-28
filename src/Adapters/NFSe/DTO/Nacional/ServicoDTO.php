@@ -62,6 +62,9 @@ final class ServicoDTO
         $cNbs = DpsPayloadHelper::onlyDigits(DpsPayloadHelper::firstString([
             $payload['cNBS'] ?? null,
             $payload['nbs'] ?? null,
+            $payload['codigo_nbs'] ?? null,
+            $payload['codigoNbs'] ?? null,
+            $payload['codigoNBS'] ?? null,
         ]) ?? '');
         if ($cNbs !== '') {
             $data['cNBS'] = $cNbs;
@@ -105,6 +108,10 @@ final class ServicoDTO
 
         if (!in_array((string) ($this->data['tpRetISSQN'] ?? ''), ['1', '2', '3'], true)) {
             $errors[] = 'servico.tpRetISSQN deve ser 1, 2 ou 3.';
+        }
+        $cNbs = DpsPayloadHelper::onlyDigits((string) ($this->data['cNBS'] ?? ''));
+        if ($cNbs !== '' && strlen($cNbs) !== 9) {
+            $errors[] = 'servico.cNBS deve conter exatamente 9 dígitos.';
         }
 
         return $errors;

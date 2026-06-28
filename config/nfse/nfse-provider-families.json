@@ -2240,6 +2240,7 @@
         },
         "aliquota_format": "decimal",
         "dps_send_paliq": false,
+        "dps": {},
         "versao": "1.01",
         "dps_versao": "1.01",
         "dps_xsd_path": "src/Providers/NFSe/Xsd/1.01/DPS_v1.01.xsd",

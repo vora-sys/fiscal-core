@@ -1242,6 +1242,10 @@ class NFSeFacade
             return null;
         }
 
+        if ($this->isHomologationEmissionPayload($dados)) {
+            return null;
+        }
+
         $referenceDate = $this->extractNationalMigrationReferenceDate($dados);
         if ($referenceDate === null || $referenceDate >= $effectiveFrom) {
             return null;
@@ -1270,6 +1274,28 @@ class NFSeFacade
                 'legacy_system' => $legacySystem,
             ]
         );
+    }
+
+    private function isHomologationEmissionPayload(array $dados): bool
+    {
+        $tpAmb = trim((string) ($dados['tpAmb'] ?? ''));
+        if ($tpAmb === '2') {
+            return true;
+        }
+
+        foreach (['fiscal_environment', 'ambiente', 'environment'] as $key) {
+            $value = strtolower(trim((string) ($dados[$key] ?? '')));
+            $ascii = iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $value);
+            if (is_string($ascii) && $ascii !== '') {
+                $value = $ascii;
+            }
+
+            if (in_array($value, ['homologacao', 'producao_restrita', 'restrita', 'sandbox', 'test', 'testing'], true)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private function extractNationalMigrationReferenceDate(array $dados): ?string

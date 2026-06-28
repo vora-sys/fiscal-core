@@ -20,6 +20,11 @@ final class TributacaoFederalDTO
         $federal = DpsPayloadHelper::firstArray([$tributacao['federal'] ?? null]);
         $servico = DpsPayloadHelper::firstArray([$payload['servico'] ?? null]);
         $data = $federal;
+        foreach (['vRetCP', 'valor_cp', 'vRetIRRF', 'valor_irrf', 'valor_ir', 'vRetCSLL', 'valor_csll'] as $key) {
+            if (array_key_exists($key, $data) && is_numeric($data[$key]) && round((float) $data[$key], 2) <= 0.0) {
+                unset($data[$key]);
+            }
+        }
 
         $piscofins = self::resolvePisCofins($payload, $federal, $servico);
         if ($piscofins !== []) {
@@ -55,7 +60,7 @@ final class TributacaoFederalDTO
                 $payload['valor_csll'] ?? null,
             ],
         ] as $tag => $values) {
-            $value = DpsPayloadHelper::firstDecimal($values);
+            $value = DpsPayloadHelper::firstPositiveDecimal($values);
             if ($value !== null) {
                 $data[$tag] = $value;
             }
