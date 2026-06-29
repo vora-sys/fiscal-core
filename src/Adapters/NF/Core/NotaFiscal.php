@@ -3,6 +3,9 @@
 namespace sabbajohn\FiscalCore\Adapters\NF\Core;
 
 use NFePHP\NFe\Make;
+use sabbajohn\FiscalCore\Adapters\NF\Nodes\IdentificacaoNode;
+use sabbajohn\FiscalCore\Support\ConfigManager;
+use sabbajohn\FiscalCore\Support\NFeCompatibility;
 
 /**
  * Composite Root - Representa uma NFe/NFCe completa
@@ -14,6 +17,28 @@ class NotaFiscal
     private array $nodes = [];
     
     private ?Make $make = null;
+
+    private ?string $xmlVersion = null;
+
+    private ?string $schema = null;
+
+    public function __construct(?string $xmlVersion = null, ?string $schema = null)
+    {
+        $this->xmlVersion = $xmlVersion;
+        $this->schema = $schema;
+    }
+
+    public function setLayout(?string $xmlVersion = null, ?string $schema = null): self
+    {
+        if ($this->make !== null) {
+            throw new \LogicException('Layout da nota nao pode ser alterado depois da criacao do Make');
+        }
+
+        $this->xmlVersion = $xmlVersion;
+        $this->schema = $schema;
+
+        return $this;
+    }
     
     /**
      * Adiciona um node à nota
@@ -79,7 +104,7 @@ class NotaFiscal
         $this->validate();
         
         if ($this->make === null) {
-            $this->make = new Make();
+            $this->make = NFeCompatibility::createMake($this->resolveSchema());
             
             // PASSO 0: Criar tag <infNFe> com chave da nota (OBRIGATÓRIO PRIMEIRO!)
             // O NFePHP precisa dessa tag antes de qualquer outra
@@ -88,7 +113,7 @@ class NotaFiscal
                 // Deixar o NFePHP gerar a chave automaticamente passando null
                 // Ele irá gerar baseado nos dados da tagide()
                 $infNFe = new \stdClass();
-                $infNFe->versao = '4.00';
+                $infNFe->versao = $this->resolveXmlVersion();
                 
                 $this->make->taginfNFe($infNFe);
             }
@@ -265,5 +290,45 @@ class NotaFiscal
     public function hasNode(string $tipo): bool
     {
         return isset($this->nodes[$tipo]);
+    }
+
+    private function resolveXmlVersion(): string
+    {
+        if ($this->xmlVersion !== null && trim($this->xmlVersion) !== '') {
+            return NFeCompatibility::xmlVersion($this->xmlVersion);
+        }
+
+        $config = ConfigManager::getInstance();
+
+        return NFeCompatibility::xmlVersionForModel(
+            $this->documentModel(),
+            (string) $config->get('versao_nfe'),
+            (string) $config->get('versao_nfce')
+        );
+    }
+
+    private function resolveSchema(): string
+    {
+        if ($this->schema !== null && trim($this->schema) !== '') {
+            return NFeCompatibility::schema($this->schema);
+        }
+
+        $config = ConfigManager::getInstance();
+        $schema = $this->documentModel() === 65
+            ? ($config->get('schema_nfce') ?: $config->get('schemas'))
+            : ($config->get('schema_nfe') ?: $config->get('schemas'));
+
+        return NFeCompatibility::schema((string) $schema);
+    }
+
+    private function documentModel(): int
+    {
+        $node = $this->nodes['identificacao'] ?? null;
+
+        if ($node instanceof IdentificacaoNode) {
+            return $node->getDto()->mod;
+        }
+
+        return 55;
     }
 }

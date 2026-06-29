@@ -93,15 +93,24 @@ class SingletonManagersTest extends TestCase
             'FISCAL_NFCE_CSC' => getenv('FISCAL_NFCE_CSC'),
             'FISCAL_NFCE_CSC_ID' => getenv('FISCAL_NFCE_CSC_ID'),
             'FISCAL_NFCE_QRCODE_VERSION' => getenv('FISCAL_NFCE_QRCODE_VERSION'),
+            'FISCAL_NFE_SCHEMA' => getenv('FISCAL_NFE_SCHEMA'),
+            'FISCAL_NFCE_SCHEMA' => getenv('FISCAL_NFCE_SCHEMA'),
+            'FISCAL_NFCE_XML_VERSION' => getenv('FISCAL_NFCE_XML_VERSION'),
         ];
 
         try {
             putenv('FISCAL_NFCE_CSC=ENV_CSC');
             putenv('FISCAL_NFCE_CSC_ID=000002');
             putenv('FISCAL_NFCE_QRCODE_VERSION=200');
+            putenv('FISCAL_NFE_SCHEMA=PL_009_V4');
+            putenv('FISCAL_NFCE_SCHEMA=PL_010');
+            putenv('FISCAL_NFCE_XML_VERSION=4.00');
             $_ENV['FISCAL_NFCE_CSC'] = 'ENV_CSC';
             $_ENV['FISCAL_NFCE_CSC_ID'] = '000002';
             $_ENV['FISCAL_NFCE_QRCODE_VERSION'] = '200';
+            $_ENV['FISCAL_NFE_SCHEMA'] = 'PL_009_V4';
+            $_ENV['FISCAL_NFCE_SCHEMA'] = 'PL_010';
+            $_ENV['FISCAL_NFCE_XML_VERSION'] = '4.00';
 
             $manager = ConfigManager::getInstance();
             $manager->reloadFromCurrentEnvironment();
@@ -109,6 +118,9 @@ class SingletonManagersTest extends TestCase
             $this->assertSame('ENV_CSC', $manager->get('csc'));
             $this->assertSame('000002', $manager->get('csc_id'));
             $this->assertSame('200', $manager->get('nfce_qrcode_version'));
+            $this->assertSame('PL_009_V4', $manager->getNFeConfig(55)['schemes']);
+            $this->assertStringStartsWith('PL_010', $manager->getNFeConfig(65)['schemes']);
+            $this->assertSame('4.00', $manager->getNFeConfig(65)['versao']);
         } finally {
             foreach ($previous as $key => $value) {
                 if ($value === false) {

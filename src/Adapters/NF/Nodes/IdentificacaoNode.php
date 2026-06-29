@@ -65,4 +65,9 @@ class IdentificacaoNode implements NotaNodeInterface
     {
         return 'identificacao';
     }
+
+    public function getDto(): IdentificacaoDTO
+    {
+        return $this->dto;
+    }
 }

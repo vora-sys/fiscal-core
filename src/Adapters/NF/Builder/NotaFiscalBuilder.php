@@ -89,6 +89,11 @@ class NotaFiscalBuilder
     public static function fromArray(array $data): self
     {
         $builder = new self();
+
+        $layout = self::extractLayoutConfig($data);
+        if ($layout !== []) {
+            $builder->setLayout($layout['xml_version'] ?? null, $layout['schema'] ?? null);
+        }
         
         // Identificação
         if (isset($data['identificacao'])) {
@@ -148,6 +153,13 @@ class NotaFiscalBuilder
         }
         
         return $builder;
+    }
+
+    public function setLayout(?string $xmlVersion = null, ?string $schema = null): self
+    {
+        $this->nota->setLayout($xmlVersion, $schema);
+
+        return $this;
     }
     
     /**
@@ -479,5 +491,36 @@ class NotaFiscalBuilder
     public function build(): NotaFiscal
     {
         return $this->nota;
+    }
+
+    /**
+     * @param array<string,mixed> $data
+     * @return array{xml_version?:string|null,schema?:string|null}
+     */
+    private static function extractLayoutConfig(array $data): array
+    {
+        $layout = [];
+        foreach (['layout', 'compatibilidade', 'compatibility'] as $key) {
+            if (isset($data[$key]) && is_array($data[$key])) {
+                $layout = $data[$key];
+                break;
+            }
+        }
+
+        if ($layout === []) {
+            return [];
+        }
+
+        return [
+            'xml_version' => $layout['xml_version']
+                ?? $layout['versao_xml']
+                ?? $layout['versao']
+                ?? $layout['version']
+                ?? null,
+            'schema' => $layout['schema']
+                ?? $layout['schemas']
+                ?? $layout['layout_schema']
+                ?? null,
+        ];
     }
 }

@@ -2,6 +2,7 @@
 
 namespace sabbajohn\FiscalCore\Facade;
 
+use sabbajohn\FiscalCore\Support\ConfigManager;
 use sabbajohn\FiscalCore\Support\FiscalResponse;
 use sabbajohn\FiscalCore\Support\ResponseHandler;
 
@@ -313,7 +314,8 @@ class FiscalFacade
                     'loaded_extensions' => get_loaded_extensions(),
                     'memory_usage' => memory_get_usage(true),
                     'memory_limit' => ini_get('memory_limit')
-                ]
+                ],
+                'nfe_compatibility' => ConfigManager::getInstance()->getNFeCompatibilityInfo(),
             ];
 
             return FiscalResponse::success($info, 'fiscal_config_info');

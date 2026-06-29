@@ -56,6 +56,26 @@ class ToolsFactory
      */
     public static function createNFeTools(): NFeTools
     {
+        return self::createToolsForModel(55);
+    }
+
+    /**
+     * Cria instância de Tools para NFCe
+     */
+    public static function createNFCeTools(): NFeTools
+    {
+        $tools = self::createToolsForModel(65);
+
+        $qrCodeVersion = ConfigManager::getInstance()->get('nfce_qrcode_version');
+        if (in_array((string) $qrCodeVersion, ['200', '300'], true)) {
+            $tools->forceQRCodeVersion((string) $qrCodeVersion);
+        }
+
+        return $tools;
+    }
+
+    private static function createToolsForModel(int $model): NFeTools
+    {
         $configManager = ConfigManager::getInstance();
         $certManager = CertificateManager::getInstance();
 
@@ -68,10 +88,16 @@ class ToolsFactory
         }
 
         try {
-            $config = json_encode($configManager->getNFeConfig());
+            $config = json_encode(
+                NFeCompatibility::normalizeToolsConfig($configManager->getNFeConfig($model)),
+                JSON_THROW_ON_ERROR
+            );
             $certificate = $certManager->getCertificate();
 
-            return new NFeTools($config, $certificate);
+            $tools = new NFeTools($config, $certificate);
+            $tools->model($model);
+
+            return $tools;
         } catch (\Exception $e) {
             throw new ValidationException(
                 'Erro ao criar NFeTools: ' . $e->getMessage(),
@@ -86,23 +112,6 @@ class ToolsFactory
                 ]
             );
         }
-    }
-
-    /**
-     * Cria instância de Tools para NFCe
-     */
-    public static function createNFCeTools(): NFeTools
-    {
-        // NFCe usa a mesma classe Tools da NFe, com modelo e QR Code ajustados.
-        $tools = self::createNFeTools();
-        $tools->model(65);
-
-        $qrCodeVersion = ConfigManager::getInstance()->get('nfce_qrcode_version');
-        if (in_array((string) $qrCodeVersion, ['200', '300'], true)) {
-            $tools->forceQRCodeVersion((string) $qrCodeVersion);
-        }
-
-        return $tools;
     }
 
     /**
@@ -212,7 +221,9 @@ class ToolsFactory
             'ambiente' => 2, // homologação
             'uf' => 'SP',
             'municipio_ibge' => '3550308',
-            'versao_nfe' => '4.00',
+            'versao_nfe' => NFeCompatibility::DEFAULT_XML_VERSION,
+            'versao_nfce' => NFeCompatibility::DEFAULT_XML_VERSION,
+            'schemas' => NFeCompatibility::DEFAULT_SCHEMA,
             'serie_nfe' => '1',
             'serie_nfce' => '1',
             'csc' => 'GPB0JBWLUR6HWFTVEAS6RJ69GPCROFPBBB8G', // CSC de exemplo
@@ -247,7 +258,9 @@ class ToolsFactory
 
         $productionConfig = array_merge([
             'ambiente' => 1, // produção
-            'versao_nfe' => '4.00',
+            'versao_nfe' => NFeCompatibility::DEFAULT_XML_VERSION,
+            'versao_nfce' => NFeCompatibility::DEFAULT_XML_VERSION,
+            'schemas' => NFeCompatibility::DEFAULT_SCHEMA,
             'serie_nfe' => '1',
             'serie_nfce' => '1',
         ], $config);

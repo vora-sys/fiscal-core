@@ -25,11 +25,13 @@ class ConfigManager
             'user' => '',
             'pass' => ''
         ],
-        'versao_nfe' => '4.00',
-        'versao_nfce' => '4.00',
+        'versao_nfe' => NFeCompatibility::DEFAULT_XML_VERSION,
+        'versao_nfce' => NFeCompatibility::DEFAULT_XML_VERSION,
         'serie_nfe' => '1',
         'serie_nfce' => '1',
-        'schemas' => 'PL_009_V4',
+        'schemas' => NFeCompatibility::DEFAULT_SCHEMA,
+        'schema_nfe' => null,
+        'schema_nfce' => null,
         'csc' => '',
         'csc_id' => '000001',
         'nfce_qrcode_version' => null,
@@ -107,23 +109,47 @@ class ConfigManager
     /**
      * Obtém configurações específicas para NFe
      */
-    public function getNFeConfig(): array
+    public function getNFeConfig(int $model = 55): array
     {
-
+        $schema = $model === 65
+            ? ($this->get('schema_nfce') ?: $this->get('schemas'))
+            : ($this->get('schema_nfe') ?: $this->get('schemas'));
         
         return [
             'tpAmb' => $this->get('ambiente'),
-            'versao' => $this->get('versao_nfe'),
-            'serie' => $this->get('serie_nfe'),
+            'versao' => NFeCompatibility::xmlVersionForModel(
+                $model,
+                (string) $this->get('versao_nfe'),
+                (string) $this->get('versao_nfce')
+            ),
+            'serie' => $model === 65 ? $this->get('serie_nfce') : $this->get('serie_nfe'),
             'timeout' => $this->get('timeout'),
             'proxy' => $this->get('proxy'),
             'siglaUF' => $this->get('uf'),
-            'schemes' => $this->get('schemas'),
+            'schemes' => NFeCompatibility::schema((string) $schema),
             'cnpj' => CertificateManager::getInstance()->getCnpj(),
             'razaosocial' => CertificateManager::getInstance()->getRazaoSocial(),
             'CSC' => $this->get('csc'),
             'CSCid' => $this->get('csc_id'),
             'nfce_qrcode_version' => $this->get('nfce_qrcode_version'),
+        ];
+    }
+
+    public function getNFeCompatibilityInfo(): array
+    {
+        return [
+            'configured' => [
+                'nfe' => [
+                    'xml_version' => $this->getNFeConfig(55)['versao'],
+                    'schema' => $this->getNFeConfig(55)['schemes'],
+                ],
+                'nfce' => [
+                    'xml_version' => $this->getNFeConfig(65)['versao'],
+                    'schema' => $this->getNFeConfig(65)['schemes'],
+                    'qrcode_version' => $this->get('nfce_qrcode_version'),
+                ],
+            ],
+            'runtime' => NFeCompatibility::runtimeCapabilities(),
         ];
     }
 
@@ -196,6 +222,13 @@ class ConfigManager
             'FISCAL_IM' => 'empresa.inscricao_municipal',
             'FISCAL_NFE_SERIE' => 'serie_nfe',
             'FISCAL_XML_VERSION' => 'versao_nfe',
+            'FISCAL_NFE_XML_VERSION' => 'versao_nfe',
+            'FISCAL_NFCE_XML_VERSION' => 'versao_nfce',
+            'FISCAL_NFE_SCHEMA' => 'schema_nfe',
+            'FISCAL_NFE_SCHEMAS' => 'schema_nfe',
+            'FISCAL_NFCE_SCHEMA' => 'schema_nfce',
+            'FISCAL_NFCE_SCHEMAS' => 'schema_nfce',
+            'FISCAL_XML_SCHEMA' => 'schemas',
             'FISCAL_NFCE_CSC' => 'csc',
             'FISCAL_NFCE_CSC_ID' => 'csc_id',
             'FISCAL_NFCE_QRCODE_VERSION' => 'nfce_qrcode_version',

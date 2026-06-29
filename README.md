@@ -170,6 +170,35 @@ export FISCAL_IM="sua_inscricao_municipal"
 export OPENSSL_CONF="/caminho/para/openssl.cnf"
 ```
 
+### 🧩 **Compatibilidade NFe/NFCe**
+
+O `fiscal-core` usa `nfephp-org/sped-nfe` como motor NFe/NFCe. Para acompanhar novas Notas Técnicas sem alterar código de negócio, configure versão XML e pacote de schemas por ambiente ou por modelo:
+
+```bash
+# Defaults atuais
+export FISCAL_NFE_XML_VERSION="4.00"
+export FISCAL_NFCE_XML_VERSION="4.00"
+export FISCAL_NFE_SCHEMA="PL_009_V4"
+export FISCAL_NFCE_SCHEMA="PL_009_V4"
+
+# Quando homologar/ativar layouts PL_010 no sped-nfe instalado
+export FISCAL_NFE_SCHEMA="PL_010"
+export FISCAL_NFCE_SCHEMA="PL_010"
+```
+
+Aliases aceitos para schema: `PL_009`, `PL_010`, `NT_2025_002`, `reforma_tributaria` e `IBSCBS`. O resolvedor usa o schema instalado no `sped-nfe` mais adequado, por exemplo `PL_010_V1.30` quando disponível.
+
+Também é possível sobrescrever por payload:
+
+```php
+$dados['layout'] = [
+    'schema' => 'PL_010',
+    'xml_version' => '4.00',
+];
+```
+
+Para diagnóstico, `FiscalFacade::getConfigInfo()` retorna `nfe_compatibility` com versões instaladas, schemas disponíveis e suporte a tags IBS/CBS.
+
 ### 💰 **IBPT (Tributação)**
 
 ```bash
