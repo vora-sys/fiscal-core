@@ -22,7 +22,6 @@ class NfseNacionalCanonicalContractTest extends TestCase
                 'cnpj' => '123',
                 'inscricaoMunicipal' => '123',
                 'enviarIM' => true,
-                'omitirIM' => false,
                 'opSimpNac' => '3',
                 'regApTribSN' => '1',
                 'regEspTrib' => '0',
@@ -156,27 +155,83 @@ class NfseNacionalCanonicalContractTest extends TestCase
         }
     }
 
-    public function test_provider_policy_is_rewritten_to_canonical_paths(): void
+    public function test_rejects_removed_internal_aliases_with_hints(): void
+    {
+        $this->expectException(NfseNacionalContractException::class);
+
+        try {
+            NfseNacionalCanonicalContract::assertCanonical([
+                'prestador' => [
+                    'cnpj' => '01824852000166',
+                    'omitirIM' => false,
+                    'reg_ap_trib_sn' => '1',
+                ],
+                'servico' => [
+                    'cTribNac' => '140101',
+                    'valor_irrf' => 10,
+                    'iss_retido' => false,
+                ],
+                'valores' => [
+                    'desconto_incondicionado' => 5,
+                    'deducao_reducao' => [
+                        'pDR' => 10,
+                    ],
+                ],
+                'tributacao' => [
+                    'municipal' => [
+                        'aliquota' => 5,
+                    ],
+                    'federal' => [
+                        'piscofins' => [
+                            'cst' => '01',
+                        ],
+                    ],
+                ],
+            ]);
+        } catch (NfseNacionalContractException $e) {
+            $this->assertSame([
+                'prestador.omitirIM',
+                'prestador.reg_ap_trib_sn',
+                'servico.iss_retido',
+                'servico.valor_irrf',
+                'tributacao.federal.piscofins.cst',
+                'tributacao.municipal.aliquota',
+                'valores.deducao_reducao.pDR',
+                'valores.desconto_incondicionado',
+            ], $e->details()['legacy_fields']);
+            $this->assertSame(['prestador.enviarIM'], $e->details()['invalid_fields'][0]['expected']);
+            $this->assertNotContains('prestador.omitirIM', $e->details()['expected_fields']);
+            $this->assertNotContains('servico.valor_irrf', $e->details()['expected_fields']);
+            $this->assertNotContains('tributacao.federal.piscofins.cst', $e->details()['expected_fields']);
+
+            throw $e;
+        }
+    }
+
+    public function test_provider_policy_keeps_only_exact_canonical_paths(): void
     {
         $policy = NfseNacionalCanonicalContract::canonicalizeProviderPolicy([
             'required_fields' => [
-                'service.national_tax_code',
-                'service.nbs',
-                'prestador.op_simp_nac',
+                'servico.cTribNac',
+                'servico.cNBS',
+                'prestador.opSimpNac',
                 'service.cnae_code',
             ],
             'visible_fields' => [
-                'service.municipal_code',
-                'service.national_tax_code',
-                'service.nbs',
-                'prestador.op_simp_nac',
+                'servico.cTribMun',
+                'servico.cTribNac',
+                'servico.cNBS',
+                'prestador.opSimpNac',
                 'prestador.mei',
             ],
             'field_schema' => [
-                'service.national_tax_code' => [
+                'servico.cTribNac' => [
                     'label' => 'Codigo nacional',
                     'control' => 'text',
                     'payload_paths' => ['nota.itens.*.cTribNac'],
+                ],
+                'service.nbs' => [
+                    'label' => 'NBS legado',
                 ],
             ],
         ]);

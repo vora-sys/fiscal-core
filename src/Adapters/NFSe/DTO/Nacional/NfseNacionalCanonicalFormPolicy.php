@@ -7,32 +7,16 @@ final class NfseNacionalCanonicalFormPolicy
     public const FIELD_SERVICE_MUNICIPAL_CODE = 'servico.cTribMun';
     public const FIELD_SERVICE_NATIONAL_TAX_CODE = 'servico.cTribNac';
     public const FIELD_SERVICE_NBS = 'servico.cNBS';
-    public const FIELD_SERVICE_CNAE_CODE = 'servico.codigoCnae';
-    public const FIELD_SERVICE_ACTIVITY_CODE = 'servico.codigo_atividade';
-    public const FIELD_SERVICE_BENEFIT_CODE = 'servico.benefit_code';
     public const FIELD_PRESTADOR_OP_SIMP_NAC = 'prestador.opSimpNac';
-    public const FIELD_PRESTADOR_MEI = 'prestador.mei';
 
     /**
      * @var array<string,string>
      */
-    private const LEGACY_FIELD_MAP = [
-        'service.municipal_code' => self::FIELD_SERVICE_MUNICIPAL_CODE,
-        'service.national_tax_code' => self::FIELD_SERVICE_NATIONAL_TAX_CODE,
-        'service.nbs' => self::FIELD_SERVICE_NBS,
-        'service.cnae_code' => self::FIELD_SERVICE_CNAE_CODE,
-        'service.activity_code' => self::FIELD_SERVICE_ACTIVITY_CODE,
-        'service.benefit_code' => self::FIELD_SERVICE_BENEFIT_CODE,
-        'prestador.op_simp_nac' => self::FIELD_PRESTADOR_OP_SIMP_NAC,
-        'prestador.mei' => self::FIELD_PRESTADOR_MEI,
+    private const SUPPORTED_FIELD_MAP = [
         self::FIELD_SERVICE_MUNICIPAL_CODE => self::FIELD_SERVICE_MUNICIPAL_CODE,
         self::FIELD_SERVICE_NATIONAL_TAX_CODE => self::FIELD_SERVICE_NATIONAL_TAX_CODE,
         self::FIELD_SERVICE_NBS => self::FIELD_SERVICE_NBS,
-        self::FIELD_SERVICE_CNAE_CODE => self::FIELD_SERVICE_CNAE_CODE,
-        self::FIELD_SERVICE_ACTIVITY_CODE => self::FIELD_SERVICE_ACTIVITY_CODE,
-        self::FIELD_SERVICE_BENEFIT_CODE => self::FIELD_SERVICE_BENEFIT_CODE,
         self::FIELD_PRESTADOR_OP_SIMP_NAC => self::FIELD_PRESTADOR_OP_SIMP_NAC,
-        self::FIELD_PRESTADOR_MEI => self::FIELD_PRESTADOR_MEI,
     ];
 
     /**
@@ -40,7 +24,7 @@ final class NfseNacionalCanonicalFormPolicy
      */
     public static function allowedFields(): array
     {
-        return array_values(array_unique(array_values(self::LEGACY_FIELD_MAP)));
+        return array_values(self::SUPPORTED_FIELD_MAP);
     }
 
     /**
@@ -100,11 +84,7 @@ final class NfseNacionalCanonicalFormPolicy
             self::FIELD_SERVICE_MUNICIPAL_CODE => 'Código Serviço Municipal',
             self::FIELD_SERVICE_NATIONAL_TAX_CODE => 'Código Tributação Nacional',
             self::FIELD_SERVICE_NBS => 'Código NBS',
-            self::FIELD_SERVICE_CNAE_CODE => 'CNAE do Serviço',
-            self::FIELD_SERVICE_ACTIVITY_CODE => 'Código de Atividade',
-            self::FIELD_SERVICE_BENEFIT_CODE => 'Código Benefício Municipal',
             self::FIELD_PRESTADOR_OP_SIMP_NAC => 'Simples Nacional',
-            self::FIELD_PRESTADOR_MEI => 'Emitente MEI',
         ];
     }
 
@@ -117,11 +97,7 @@ final class NfseNacionalCanonicalFormPolicy
             self::FIELD_SERVICE_MUNICIPAL_CODE => 'Código municipal do serviço aceito pelo provider NFSe.',
             self::FIELD_SERVICE_NATIONAL_TAX_CODE => 'Código nacional de tributação do serviço.',
             self::FIELD_SERVICE_NBS => 'Nomenclatura Brasileira de Serviços exigida pelo layout nacional.',
-            self::FIELD_SERVICE_CNAE_CODE => 'CNAE fiscal do serviço; alguns municípios validam esta tag no XML.',
-            self::FIELD_SERVICE_ACTIVITY_CODE => 'Código de atividade municipal quando o provider exigir campo separado.',
-            self::FIELD_SERVICE_BENEFIT_CODE => 'Código oficial do benefício municipal quando houver benefício permitido para o serviço.',
             self::FIELD_PRESTADOR_OP_SIMP_NAC => 'Opção do Simples Nacional exigida pelo layout nacional.',
-            self::FIELD_PRESTADOR_MEI => 'Classificação explícita do emitente para roteamento municipal ou nacional da NFSe.',
         ];
     }
 
@@ -206,10 +182,7 @@ final class NfseNacionalCanonicalFormPolicy
         return match ($field) {
             self::FIELD_SERVICE_MUNICIPAL_CODE,
             self::FIELD_SERVICE_NATIONAL_TAX_CODE,
-            self::FIELD_SERVICE_NBS,
-            self::FIELD_SERVICE_CNAE_CODE,
-            self::FIELD_SERVICE_ACTIVITY_CODE,
-            self::FIELD_SERVICE_BENEFIT_CODE => [
+            self::FIELD_SERVICE_NBS => [
                 'label' => $labels[$field],
                 'control' => 'text',
             ],
@@ -220,14 +193,6 @@ final class NfseNacionalCanonicalFormPolicy
                     ['value' => '1', 'label' => '1 - Não optante'],
                     ['value' => '2', 'label' => '2 - MEI'],
                     ['value' => '3', 'label' => '3 - ME/EPP'],
-                ],
-            ],
-            self::FIELD_PRESTADOR_MEI => [
-                'label' => $labels[$field],
-                'control' => 'select',
-                'options' => [
-                    ['value' => 'false', 'label' => 'Não MEI'],
-                    ['value' => 'true', 'label' => 'MEI'],
                 ],
             ],
             default => null,
@@ -346,6 +311,6 @@ final class NfseNacionalCanonicalFormPolicy
             return null;
         }
 
-        return self::LEGACY_FIELD_MAP[$key] ?? null;
+        return self::SUPPORTED_FIELD_MAP[$key] ?? null;
     }
 }
