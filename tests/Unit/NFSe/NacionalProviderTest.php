@@ -3,6 +3,7 @@
 namespace Tests\Unit\NFSe;
 
 use sabbajohn\FiscalCore\Providers\NFSe\NacionalProvider;
+use sabbajohn\FiscalCore\Support\NFSeMunicipalPreviewSupport;
 use sabbajohn\FiscalCore\Support\NFSeSchemaResolver;
 use PHPUnit\Framework\TestCase;
 
@@ -62,6 +63,60 @@ class NacionalProviderTest extends TestCase
             strpos($xml, '<tpRetISSQN>'),
             'tpRetISSQN must be emitted before pAliq in the national DPS schema order.'
         );
+    }
+
+    public function test_dps_100_emite_paliq_antes_de_tpretissqn(): void
+    {
+        $config = $this->buildConfig(function () {
+            return '<Resposta><Sucesso>true</Sucesso></Resposta>';
+        });
+        $config['versao'] = '1.00';
+        $config['dps_versao'] = '1.00';
+        $config['dps_xsd_path'] = 'src/Providers/NFSe/Xsd/1.00/DPS_v1.00.xsd';
+        $provider = new NacionalProvider($config);
+
+        $dados = $this->dadosValidos();
+        $dados['rps_serie'] = '1';
+        $xml = $provider->gerarXmlDpsPreview($dados);
+
+        $this->assertIsString($xml);
+        $this->assertLessThan(
+            strpos($xml, '<tpRetISSQN>'),
+            strpos($xml, '<pAliq>'),
+            'pAliq must be emitted before tpRetISSQN in DPS 1.00.'
+        );
+
+        $schemaValidation = $provider->validarDpsXml($xml);
+        $this->assertTrue(
+            $schemaValidation['ok'],
+            implode(PHP_EOL, array_column($schemaValidation['errors'], 'message'))
+        );
+    }
+
+    public function test_dps_100_assinado_usa_algoritmo_compativel_com_schema(): void
+    {
+        $calls = [];
+        $config = $this->buildConfig(function ($method, $path, $body, $headers = []) use (&$calls) {
+            $calls[] = compact('method', 'path', 'body');
+            return '<Resposta><Sucesso>true</Sucesso></Resposta>';
+        });
+        $config['versao'] = '1.00';
+        $config['dps_versao'] = '1.00';
+        $config['dps_xsd_path'] = 'src/Providers/NFSe/Xsd/1.00/DPS_v1.00.xsd';
+        $config['signature_mode'] = 'required';
+        $config['certificate'] = NFSeMunicipalPreviewSupport::makeCertificate('DPS 100 Signed');
+        $provider = new NacionalProvider($config);
+
+        $dados = $this->dadosValidos();
+        $dados['rps_serie'] = '1';
+        $provider->emitir($dados);
+
+        $payload = json_decode((string) $calls[0]['body'], true);
+        $this->assertIsArray($payload);
+        $xml = gzdecode((string) base64_decode((string) $payload['dpsXmlGZipB64']));
+        $this->assertIsString($xml);
+        $this->assertStringContainsString('http://www.w3.org/2000/09/xmldsig#rsa-sha1', $xml);
+        $this->assertStringContainsString('http://www.w3.org/2000/09/xmldsig#sha1', $xml);
     }
 
     public function test_emitir_omite_irrf_quando_valor_zerado(): void

@@ -26,6 +26,8 @@ use sabbajohn\FiscalCore\Adapters\NF\Nodes\{
     DestinatarioNode,
     ProdutoNode,
     ImpostoNode,
+    ImpostoSeletivoNode,
+    IbsCbsNode,
     PagamentoNode,
     TotaisNode,
     TransporteNode,
@@ -325,6 +327,15 @@ class NotaFiscalBuilder
             }
             
             $this->nota->addNode(new ImpostoNode($numeroItem, $icmsDto, $pisDto, $cofinsDto));
+
+            $impostoSeletivo = $impostos['is'] ?? $impostos['imposto_seletivo'] ?? null;
+            if (is_array($impostoSeletivo) && $impostoSeletivo !== []) {
+                $this->nota->addNode(new ImpostoSeletivoNode($numeroItem, $impostoSeletivo));
+            }
+
+            if (isset($impostos['ibs_cbs']) && is_array($impostos['ibs_cbs']) && $impostos['ibs_cbs'] !== []) {
+                $this->nota->addNode(new IbsCbsNode($numeroItem, $impostos['ibs_cbs']));
+            }
         }
         
         return $this;

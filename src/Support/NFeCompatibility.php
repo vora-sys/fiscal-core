@@ -20,7 +20,9 @@ final class NFeCompatibility
         'PL010V130' => 'PL_010_V1.30',
         'NT2025002' => 'PL_010',
         'NT2025002V130' => 'PL_010_V1.30',
+        'NT2025002V150' => 'PL_010',
         'REFORMATRIBUTARIA' => 'PL_010',
+        'RTC' => 'PL_010',
         'IBSCBS' => 'PL_010',
     ];
 
@@ -123,6 +125,13 @@ final class NFeCompatibility
             'latest_pl_010_schema' => self::latestInstalledSchema('PL_010'),
             'supports_ibscbs_tags' => method_exists(Make::class, 'tagIBSCBS')
                 && method_exists(Make::class, 'tagIBSCBSTot'),
+            'supports_is_tags' => method_exists(Make::class, 'tagIS')
+                && method_exists(Make::class, 'tagISTot'),
+            'supports_advanced_ibscbs_tags' => method_exists(Make::class, 'taggTransfCred')
+                && method_exists(Make::class, 'taggCredPresIBSZFM')
+                && method_exists(Make::class, 'taggAjusteCompet')
+                && method_exists(Make::class, 'taggEstornoCred')
+                && method_exists(Make::class, 'tagDFeReferenciado'),
             'supports_nfce_qrcode_v300' => method_exists(\NFePHP\NFe\Tools::class, 'forceQRCodeVersion'),
         ];
     }

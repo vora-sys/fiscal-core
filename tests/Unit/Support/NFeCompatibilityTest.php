@@ -36,6 +36,8 @@ class NFeCompatibilityTest extends TestCase
         $this->assertContains(NFeCompatibility::DEFAULT_SCHEMA, $capabilities['installed_schemas']);
         $this->assertTrue($capabilities['supports_pl_010']);
         $this->assertTrue($capabilities['supports_ibscbs_tags']);
+        $this->assertTrue($capabilities['supports_is_tags']);
+        $this->assertTrue($capabilities['supports_advanced_ibscbs_tags']);
     }
 
     public function test_explicit_missing_schema_fails_instead_of_falling_back(): void
@@ -125,7 +127,6 @@ class NFeCompatibilityTest extends TestCase
     {
         $reflection = new \ReflectionClass($make);
         $propertyReflection = $reflection->getProperty($property);
-        $propertyReflection->setAccessible(true);
 
         return $propertyReflection->getValue($make);
     }

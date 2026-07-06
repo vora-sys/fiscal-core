@@ -83,7 +83,13 @@ foreach ($previewMunicipios as $municipio) {
     echo PHP_EOL . strtoupper($municipio) . PHP_EOL;
     echo str_repeat('-', strlen($municipio)) . PHP_EOL;
 
-    $preview = previewMunicipalProvider($municipio);
+    try {
+        $preview = previewMunicipalProvider($municipio);
+    } catch (InvalidArgumentException $e) {
+        echo "Preview municipal ignorado: " . $e->getMessage() . PHP_EOL;
+        continue;
+    }
+
     $payload = $preview['payload'];
     $response = $preview['parsed_response'];
 

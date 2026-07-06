@@ -1176,15 +1176,9 @@ class NacionalProvider extends AbstractNFSeProvider implements NFSeNacionalCapab
             $this->appendNodeDps($dom, $tribMun, 'cPaisResult', $cPaisResult);
         }
         $tpImunidade = $this->firstString([$merged['tpImunidade'] ?? null, $merged['tipo_imunidade'] ?? null]);
-        if ($tpImunidade !== null) {
-            $this->appendNodeDps($dom, $tribMun, 'tpImunidade', $tpImunidade);
-        }
-        $this->appendExigSuspDps($dom, $tribMun, $merged);
-        $this->appendBeneficioMunicipalGroup($dom, $tribMun, $merged);
 
         $retentionPayload = $municipal + $servico;
         $tpRetIssqn = $this->resolveDpsIssRetentionCode($retentionPayload);
-        $this->appendNodeDps($dom, $tribMun, 'tpRetISSQN', $tpRetIssqn);
 
         $aliquota = $this->firstDecimal([
             $municipal['pAliq'] ?? null,
@@ -1203,9 +1197,30 @@ class NacionalProvider extends AbstractNFSeProvider implements NFSeNacionalCapab
             $sendPAliq = $municipalSendPAliq;
         }
         $sendPAliq = $this->shouldSendDpsMunicipalAliquota($dados, $merged, $tribIssqn, $tpRetIssqn, $sendPAliq);
-        if ($sendPAliq && $aliquotaPercent > 0) {
-            $this->appendNodeDps($dom, $tribMun, 'pAliq', $this->formatDecimal($aliquotaPercent, 2));
+        $appendPAliq = function () use ($dom, $tribMun, $sendPAliq, $aliquotaPercent): void {
+            if ($sendPAliq && $aliquotaPercent > 0) {
+                $this->appendNodeDps($dom, $tribMun, 'pAliq', $this->formatDecimal($aliquotaPercent, 2));
+            }
+        };
+
+        if (version_compare($this->resolveDpsVersion(), '1.01', '<')) {
+            $this->appendBeneficioMunicipalGroup($dom, $tribMun, $merged);
+            $this->appendExigSuspDps($dom, $tribMun, $merged);
+            if ($tpImunidade !== null) {
+                $this->appendNodeDps($dom, $tribMun, 'tpImunidade', $tpImunidade);
+            }
+            $appendPAliq();
+            $this->appendNodeDps($dom, $tribMun, 'tpRetISSQN', $tpRetIssqn);
+            return;
         }
+
+        if ($tpImunidade !== null) {
+            $this->appendNodeDps($dom, $tribMun, 'tpImunidade', $tpImunidade);
+        }
+        $this->appendExigSuspDps($dom, $tribMun, $merged);
+        $this->appendBeneficioMunicipalGroup($dom, $tribMun, $merged);
+        $this->appendNodeDps($dom, $tribMun, 'tpRetISSQN', $tpRetIssqn);
+        $appendPAliq();
     }
 
     /**
@@ -3419,7 +3434,13 @@ class NacionalProvider extends AbstractNFSeProvider implements NFSeNacionalCapab
         }
 
         try {
-            $signedXml = Signer::sign($certificate, $xml, 'infPedReg', 'Id', OPENSSL_ALGO_SHA256);
+            $signedXml = Signer::sign(
+                $certificate,
+                $xml,
+                'infPedReg',
+                'Id',
+                $this->resolveXmlSignatureAlgorithm((string) ($this->config['evento_versao'] ?? '1.01'))
+            );
             $this->lastSignatureApplied = $signedXml !== $xml;
 
             return $signedXml;
@@ -3955,7 +3976,7 @@ class NacionalProvider extends AbstractNFSeProvider implements NFSeNacionalCapab
                 $xml,
                 $signTag,
                 $signAttr,
-                OPENSSL_ALGO_SHA256
+                $this->resolveXmlSignatureAlgorithm($this->resolveDpsVersion())
             );
             $this->lastSignatureApplied = $signedXml !== $xml;
             return $signedXml;
@@ -3965,6 +3986,11 @@ class NacionalProvider extends AbstractNFSeProvider implements NFSeNacionalCapab
             }
             return $xml;
         }
+    }
+
+    private function resolveXmlSignatureAlgorithm(string $version): int
+    {
+        return version_compare($version, '1.01', '<') ? OPENSSL_ALGO_SHA1 : OPENSSL_ALGO_SHA256;
     }
 
     private function resolveRuntimeCertificate(): ?Certificate

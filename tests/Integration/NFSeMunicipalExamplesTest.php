@@ -12,7 +12,8 @@ final class NFSeMunicipalExamplesTest extends TestCase
 
         $this->assertStringContainsString('Status preview: success', $output);
         $this->assertStringContainsString('Numero preview: 1105', $output);
-        $this->assertStringContainsString('Numero preview: 202600000000123', $output);
+        $this->assertStringContainsString('Preview municipal ignorado', $output);
+        $this->assertStringContainsString('fluxo NFSe nacional', $output);
         $this->assertStringNotContainsString('Dados inválidos', $output);
     }
 
@@ -22,7 +23,8 @@ final class NFSeMunicipalExamplesTest extends TestCase
 
         $this->assertStringContainsString('Status parseado: success', $output);
         $this->assertStringContainsString('Nenhuma prefeitura foi acionada neste exemplo.', $output);
-        $this->assertStringContainsString('202600000000123', $output);
+        $this->assertStringContainsString('Preview municipal ignorado', $output);
+        $this->assertStringContainsString('fluxo NFSe nacional', $output);
     }
 
     private function runScript(string $relativePath): string

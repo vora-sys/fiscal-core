@@ -48,7 +48,7 @@ class NotaFiscal
         $tipo = $node->getNodeType();
 
         // Nodes repetíveis (itens) precisam ser acumulados para não sobrescrever.
-        if (in_array($tipo, ['produto', 'imposto'], true)) {
+        if (in_array($tipo, ['produto', 'imposto', 'imposto_seletivo', 'ibs_cbs'], true)) {
             if (!isset($this->nodes[$tipo])) {
                 $this->nodes[$tipo] = [];
             }
@@ -137,6 +137,8 @@ class NotaFiscal
                 'destinatario',
                 'produto',      // Array de produtos
                 'imposto',      // Array de impostos (vinculado aos produtos)
+                'imposto_seletivo',
+                'ibs_cbs',      // Array de IBS/CBS por item
                 'totais',
                 'transporte',
                 'cobranca',
@@ -311,6 +313,10 @@ class NotaFiscal
     {
         if ($this->schema !== null && trim($this->schema) !== '') {
             return NFeCompatibility::schema($this->schema);
+        }
+
+        if (isset($this->nodes['ibs_cbs']) || isset($this->nodes['imposto_seletivo'])) {
+            return NFeCompatibility::schema('IBSCBS');
         }
 
         $config = ConfigManager::getInstance();

@@ -40,7 +40,15 @@ echo "EMISSAO MUNICIPAL FUNCIONAL - PREVIEW LOCAL\n";
 echo "==========================================\n\n";
 
 foreach (['belem', 'joinville'] as $municipio) {
-    $result = emitirMunicipioEmPreview($municipio);
+    try {
+        $result = emitirMunicipioEmPreview($municipio);
+    } catch (InvalidArgumentException $e) {
+        echo strtoupper($municipio) . PHP_EOL;
+        echo str_repeat('=', strlen($municipio)) . PHP_EOL;
+        echo "Preview municipal ignorado: " . $e->getMessage() . PHP_EOL . PHP_EOL;
+        continue;
+    }
+
     $payload = $result['payload'];
     $parsed = $result['parsed_response'];
 
