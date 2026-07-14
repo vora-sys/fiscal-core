@@ -326,7 +326,13 @@ class NotaFiscalBuilder
                 );
             }
             
-            $this->nota->addNode(new ImpostoNode($numeroItem, $icmsDto, $pisDto, $cofinsDto));
+            $this->nota->addNode(new ImpostoNode(
+                $numeroItem,
+                $icmsDto,
+                $pisDto,
+                $cofinsDto,
+                isset($impostos['vTotTrib']) ? (float) $impostos['vTotTrib'] : null,
+            ));
 
             $impostoSeletivo = $impostos['is'] ?? $impostos['imposto_seletivo'] ?? null;
             if (is_array($impostoSeletivo) && $impostoSeletivo !== []) {

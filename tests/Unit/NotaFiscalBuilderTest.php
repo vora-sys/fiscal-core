@@ -51,9 +51,10 @@ class NotaFiscalBuilderTest extends TestCase
                         'valorTotal' => 10.00,
                     ],
                     'impostos' => [
+                        'vTotTrib' => 3.33,
                         'icms' => ['cst' => '102', 'orig' => 0],
-                        'pis' => ['cst' => '49'],
-                        'cofins' => ['cst' => '49'],
+                        'pis' => ['cst' => '49', 'vBC' => 10, 'pPIS' => 0, 'vPIS' => 0],
+                        'cofins' => ['cst' => '49', 'vBC' => 10, 'pCOFINS' => 0, 'vCOFINS' => 0],
                     ],
                 ],
             ],
@@ -71,6 +72,8 @@ class NotaFiscalBuilderTest extends TestCase
         $this->assertTrue($nota->hasNode('produto'));
         $this->assertTrue($nota->hasNode('imposto'));
         $this->assertTrue($nota->hasNode('pagamento'));
+        $xml = $nota->toXml();
+        $this->assertMatchesRegularExpression('/<imposto><vTotTrib>3\.33<\/vTotTrib><ICMS>/', $xml);
     }
 
     public function testFromArrayComMultiplosItens()

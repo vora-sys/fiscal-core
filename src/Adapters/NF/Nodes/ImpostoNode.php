@@ -17,10 +17,18 @@ class ImpostoNode implements NotaNodeInterface
         private IcmsDTO $icms,
         private ?PisDTO $pis = null,
         private ?CofinsDTO $cofins = null,
+        private ?float $vTotTrib = null,
     ) {}
     
     public function addToMake(Make $make): void
     {
+        if ($this->vTotTrib !== null) {
+            $make->tagimposto((object) [
+                'item' => $this->item,
+                'vTotTrib' => number_format(max(0, $this->vTotTrib), 2, '.', ''),
+            ]);
+        }
+
         // ICMS - detecta regime pelo CST
         $cst = $this->icms->cst;
         
