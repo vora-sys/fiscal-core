@@ -31,7 +31,11 @@ class NFSeFacade
     private array $runtimeContext = [];
     private FiscalResponseNormalizer $publicNormalizer;
 
-    public function __construct(string $municipio = 'nacional', ?NFSeAdapter $nfse = null)
+    public function __construct(
+        string $municipio = 'nacional',
+        ?NFSeAdapter $nfse = null,
+        bool $requireOperationalCredentials = true
+    )
     {
         $this->municipio = $municipio;
         $this->responseHandler = new ResponseHandler();
@@ -71,7 +75,7 @@ class NFSeFacade
                     return;
                 }
 
-                $bootstrap = (new NFSeRuntimeBootstrap())->makeProvider($municipio);
+                $bootstrap = (new NFSeRuntimeBootstrap())->makeProvider($municipio, $requireOperationalCredentials);
                 $this->runtimeContext = $bootstrap;
                 $this->nfse = new NFSeAdapter($municipio, $bootstrap['provider']);
             } catch (\Exception $e) {

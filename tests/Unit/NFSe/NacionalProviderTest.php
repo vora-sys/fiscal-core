@@ -257,6 +257,8 @@ class NacionalProviderTest extends TestCase
         }));
 
         $dados = $this->dadosValidos();
+        $dados['prestador']['opSimpNac'] = '3';
+        $dados['prestador']['regApTribSN'] = '1';
         $dados['valores'] = [
             'vReceb' => 950.00,
             'vDescIncond' => 25.00,
@@ -277,6 +279,28 @@ class NacionalProviderTest extends TestCase
         $this->assertStringContainsString('<vDedRed><vDR>100.00</vDR></vDedRed>', $xml);
         $this->assertStringContainsString('<totTrib><pTotTribSN>4.25</pTotTribSN></totTrib>', $xml);
         $this->assertStringNotContainsString('<vTotTribFed>0.00</vTotTribFed>', $xml);
+    }
+
+    public function test_dps_nacional_nao_envia_indicador_ou_percentual_simples_para_nao_optante(): void
+    {
+        $provider = new NacionalProvider($this->buildConfig(function () {
+            return '<Resposta><Sucesso>true</Sucesso></Resposta>';
+        }));
+
+        $dados = $this->dadosValidos();
+        $dados['prestador']['opSimpNac'] = '1';
+        $dados['tributacao']['total'] = [
+            'indTotTrib' => '0',
+            'pTotTribSN' => 4.25,
+        ];
+
+        $xml = $provider->gerarXmlDpsPreview($dados);
+
+        $this->assertIsString($xml);
+        $this->assertStringNotContainsString('<indTotTrib>', $xml);
+        $this->assertStringNotContainsString('<pTotTribSN>', $xml);
+        $this->assertStringContainsString('<vTotTribFed>135.00</vTotTribFed>', $xml);
+        $this->assertStringContainsString('<vTotTribMun>47.00</vTotTribMun>', $xml);
     }
 
     public function test_dps_nacional_inclui_ibscbs_minimo_com_tributacao_regular_e_diferimento(): void

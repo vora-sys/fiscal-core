@@ -18,7 +18,7 @@ final class NFSeRuntimeBootstrap
     ) {
     }
 
-    public function makeProvider(string $municipio): array
+    public function makeProvider(string $municipio, bool $requireOperationalCredentials = true): array
     {
         $configManager = $this->configManager ?? ConfigManager::getInstance();
 
@@ -44,7 +44,7 @@ final class NFSeRuntimeBootstrap
         }
 
         $signatureMode = strtolower((string) ($config['signature_mode'] ?? 'optional'));
-        if ($signatureMode === 'required') {
+        if ($signatureMode === 'required' && $requireOperationalCredentials) {
             if (!$certificate instanceof Certificate) {
                 throw new RuntimeException("Provider '{$providerKey}' requer certificado digital valido.");
             }
@@ -54,7 +54,18 @@ final class NFSeRuntimeBootstrap
             }
         }
 
-        if ($providerKey !== ProviderRegistry::NFSE_NATIONAL_KEY) {
+        if ($requireOperationalCredentials && $certificate instanceof Certificate) {
+            $matchMode = $providerKey === ProviderRegistry::NFSE_NATIONAL_KEY
+                ? strtolower((string) ($configManager->get('empresa.certificate_match_mode') ?? 'exact'))
+                : 'exact';
+            $this->assertCertificateCompatibility(
+                (string) ($configManager->getEmpresaConfig()['cnpj'] ?? ''),
+                (string) ($certificate->getCnpj() ?? $certificate->getCpf() ?? ''),
+                $matchMode
+            );
+        }
+
+        if ($providerKey !== ProviderRegistry::NFSE_NATIONAL_KEY && $requireOperationalCredentials) {
             $config['prestador'] = $this->buildPrestadorContext(
                 $configManager->getEmpresaConfig(),
                 $certificate,
@@ -83,14 +94,8 @@ final class NFSeRuntimeBootstrap
 
     private function buildPrestadorContext(array $empresaConfig, ?Certificate $certificate, string $codigoMunicipio): array
     {
-        $configCnpj = preg_replace('/\D+/', '', (string) ($empresaConfig['cnpj'] ?? '')) ?? '';
-        $certificateCnpj = $certificate?->getCnpj() ?? $certificate?->getCpf() ?? '';
-
-        if ($configCnpj !== '' && $certificateCnpj !== '' && $configCnpj !== $certificateCnpj) {
-            throw new RuntimeException(
-                "CNPJ configurado ({$configCnpj}) diverge do certificado carregado ({$certificateCnpj})."
-            );
-        }
+        $configCnpj = $this->normalizeCnpj((string) ($empresaConfig['cnpj'] ?? ''));
+        $certificateCnpj = $this->normalizeCnpj((string) ($certificate?->getCnpj() ?? $certificate?->getCpf() ?? ''));
 
         $cnpj = $configCnpj !== '' ? $configCnpj : $certificateCnpj;
         if ($cnpj === '') {
@@ -118,5 +123,32 @@ final class NFSeRuntimeBootstrap
             'razao_social' => $razaoSocial,
             'codigo_municipio' => $codigoMunicipio,
         ];
+    }
+
+    private function assertCertificateCompatibility(string $configured, string $certificate, string $matchMode): void
+    {
+        $configured = $this->normalizeCnpj($configured);
+        $certificate = $this->normalizeCnpj($certificate);
+        if ($configured === '' || $certificate === '') {
+            throw new RuntimeException('Nao foi possivel validar o CNPJ do certificado digital.');
+        }
+
+        $matches = $matchMode === 'root'
+            ? substr($configured, 0, 8) === substr($certificate, 0, 8)
+            : $configured === $certificate;
+
+        if (!$matches) {
+            throw new RuntimeException(
+                "CNPJ configurado ({$configured}) diverge do certificado carregado ({$certificate}) no modo {$matchMode}."
+            );
+        }
+    }
+
+    private function normalizeCnpj(string $value): string
+    {
+        $normalized = strtoupper(trim($value));
+        $normalized = preg_replace('/[.\/\-\s]+/', '', $normalized) ?? '';
+
+        return preg_match('/^[A-Z0-9]{12}[0-9]{2}$/', $normalized) === 1 ? $normalized : '';
     }
 }

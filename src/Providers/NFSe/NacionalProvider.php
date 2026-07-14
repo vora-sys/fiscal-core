@@ -1422,8 +1422,18 @@ class NacionalProvider extends AbstractNFSeProvider implements NFSeNacionalCapab
             ? $tributacao['total']
             : (is_array($dados['totTrib'] ?? null) ? $dados['totTrib'] : []);
 
+        if (trim((string)($dados['prestador']['opSimpNac'] ?? '')) === '1') {
+            unset($total['indTotTrib'], $total['pTotTribSN']);
+        }
+
         $totTrib = $dom->createElementNS($this->getDpsNamespace(), 'totTrib');
         $trib->appendChild($totTrib);
+
+        if ($total === []) {
+            $total = [
+                'vTotTrib' => $this->defaultApproximateTotalTributos($dados),
+            ];
+        }
 
         if (isset($total['indTotTrib'])) {
             $this->appendNodeDps($dom, $totTrib, 'indTotTrib', (string)$total['indTotTrib']);
@@ -1448,6 +1458,25 @@ class NacionalProvider extends AbstractNFSeProvider implements NFSeNacionalCapab
         $this->appendNodeDps($dom, $node, 'vTotTribFed', $this->formatDecimal((float)($values['vTotTribFed'] ?? 0), 2));
         $this->appendNodeDps($dom, $node, 'vTotTribEst', $this->formatDecimal((float)($values['vTotTribEst'] ?? 0), 2));
         $this->appendNodeDps($dom, $node, 'vTotTribMun', $this->formatDecimal((float)($values['vTotTribMun'] ?? 0), 2));
+    }
+
+    /**
+     * @param array<string,mixed> $dados
+     * @return array{vTotTribFed:float,vTotTribEst:float,vTotTribMun:float}
+     */
+    private function defaultApproximateTotalTributos(array $dados): array
+    {
+        $valores = is_array($dados['valores'] ?? null) ? $dados['valores'] : [];
+        $valorServicos = $this->firstDecimal([
+            $dados['valor_servicos'] ?? null,
+            $valores['vServ'] ?? null,
+        ]) ?? 0.0;
+
+        return [
+            'vTotTribFed' => round($valorServicos * 0.135, 2),
+            'vTotTribEst' => 0.0,
+            'vTotTribMun' => round($valorServicos * 0.047, 2),
+        ];
     }
 
     /**

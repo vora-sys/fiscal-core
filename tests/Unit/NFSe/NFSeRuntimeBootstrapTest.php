@@ -17,6 +17,22 @@ use PHPUnit\Framework\Attributes\DataProvider;
 
 final class NFSeRuntimeBootstrapTest extends TestCase
 {
+    public function test_root_policy_accepts_different_establishments_from_same_cnpj_root(): void
+    {
+        $method = new \ReflectionMethod(NFSeRuntimeBootstrap::class, 'assertCertificateCompatibility');
+        $method->invoke(new NFSeRuntimeBootstrap(), '12345678000270', '12345678000199', 'root');
+
+        $this->addToAssertionCount(1);
+    }
+
+    public function test_exact_policy_rejects_different_establishment_even_from_same_root(): void
+    {
+        $method = new \ReflectionMethod(NFSeRuntimeBootstrap::class, 'assertCertificateCompatibility');
+
+        $this->expectException(\RuntimeException::class);
+        $method->invoke(new NFSeRuntimeBootstrap(), '12345678000270', '12345678000199', 'exact');
+    }
+
     public function test_make_provider_preserves_runtime_environment_without_reloading_config(): void
     {
         $configManager = new FakeConfigManager([
