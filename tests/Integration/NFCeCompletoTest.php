@@ -2,6 +2,7 @@
 
 namespace Tests\Integration;
 
+use NFePHP\NFe\Make;
 use PHPUnit\Framework\TestCase;
 use sabbajohn\FiscalCore\Adapters\NF\Builder\NotaFiscalBuilder;
 use sabbajohn\FiscalCore\Adapters\NF\Core\NotaFiscal;
@@ -12,7 +13,7 @@ use sabbajohn\FiscalCore\Adapters\NF\Core\NotaFiscal;
  */
 class NFCeCompletoTest extends TestCase
 {
-    public function testCriarNFCeCompletaViaBuilder()
+    public function test_criar_nf_ce_completa_via_builder()
     {
         $dados = [
             'identificacao' => [
@@ -103,13 +104,13 @@ class NFCeCompletoTest extends TestCase
 
         // Obter Make
         $make = $nota->getMake();
-        $this->assertInstanceOf(\NFePHP\NFe\Make::class, $make);
+        $this->assertInstanceOf(Make::class, $make);
 
         // Nota: Geração de XML completo requer tags adicionais (totais, etc)
         // Por enquanto validamos apenas a construção e integração com Make
     }
 
-    public function testCriarNFCeComMultiplosPagamentos()
+    public function test_criar_nf_ce_com_multiplos_pagamentos()
     {
         $dados = [
             'identificacao' => [
@@ -167,12 +168,12 @@ class NFCeCompletoTest extends TestCase
 
         $this->assertInstanceOf(NotaFiscal::class, $nota);
         $this->assertTrue($nota->validate());
-        
+
         // Verificar que pagamento foi adicionado
         $this->assertTrue($nota->hasNode('pagamento'));
     }
 
-    public function testCriarNFCeComValidacoes()
+    public function test_criar_nf_ce_com_validacoes()
     {
         $dados = [
             'identificacao' => [

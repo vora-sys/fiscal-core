@@ -9,13 +9,18 @@ final class DpsPayloadHelper
         return preg_replace('/\D/', '', (string) $value) ?? '';
     }
 
+    public static function fiscalDocument(mixed $value): string
+    {
+        return preg_replace('/[^A-Z0-9]/', '', strtoupper((string) $value)) ?? '';
+    }
+
     /**
-     * @param list<mixed> $values
+     * @param  list<mixed>  $values
      */
     public static function firstString(array $values): ?string
     {
         foreach ($values as $value) {
-            if (!is_scalar($value)) {
+            if (! is_scalar($value)) {
                 continue;
             }
 
@@ -29,7 +34,7 @@ final class DpsPayloadHelper
     }
 
     /**
-     * @param list<mixed> $values
+     * @param  list<mixed>  $values
      * @return array<string,mixed>
      */
     public static function firstArray(array $values): array
@@ -44,12 +49,12 @@ final class DpsPayloadHelper
     }
 
     /**
-     * @param list<mixed> $values
+     * @param  list<mixed>  $values
      */
     public static function firstDecimal(array $values): ?float
     {
         foreach ($values as $value) {
-            if ($value === null || $value === '' || !is_numeric($value)) {
+            if ($value === null || $value === '' || ! is_numeric($value)) {
                 continue;
             }
 
@@ -60,12 +65,12 @@ final class DpsPayloadHelper
     }
 
     /**
-     * @param list<mixed> $values
+     * @param  list<mixed>  $values
      */
     public static function firstPositiveDecimal(array $values): ?float
     {
         foreach ($values as $value) {
-            if ($value === null || $value === '' || !is_numeric($value)) {
+            if ($value === null || $value === '' || ! is_numeric($value)) {
                 continue;
             }
 
@@ -83,7 +88,7 @@ final class DpsPayloadHelper
      */
     public static function normalizeArrayList(mixed $value): array
     {
-        if (!is_array($value)) {
+        if (! is_array($value)) {
             return [];
         }
 
@@ -139,7 +144,7 @@ final class DpsPayloadHelper
         }
 
         foreach (['IssRetido', 'iss_retido', 'issRetido'] as $key) {
-            if (!array_key_exists($key, $data)) {
+            if (! array_key_exists($key, $data)) {
                 continue;
             }
 
@@ -148,7 +153,7 @@ final class DpsPayloadHelper
                 return $value ? '2' : '1';
             }
 
-            if (!is_scalar($value)) {
+            if (! is_scalar($value)) {
                 continue;
             }
 

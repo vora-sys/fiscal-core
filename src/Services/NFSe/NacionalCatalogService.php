@@ -8,9 +8,13 @@ use sabbajohn\FiscalCore\Support\CertificateManager;
 class NacionalCatalogService
 {
     private string $apiBaseUrl;
+
     private int $timeout;
+
     private FileCacheStore $cache;
+
     private int $ttl;
+
     private $httpClient;
 
     public function __construct(
@@ -22,7 +26,7 @@ class NacionalCatalogService
     ) {
         $this->apiBaseUrl = $this->normalizeCatalogBaseUrl($apiBaseUrl);
         $this->timeout = $timeout;
-        $this->cache = $cache ?? new FileCacheStore();
+        $this->cache = $cache ?? new FileCacheStore;
         $this->ttl = $ttl;
         $this->httpClient = $httpClient;
     }
@@ -33,6 +37,7 @@ class NacionalCatalogService
     public function listarMunicipios(bool $forceRefresh = false): array
     {
         $cacheKey = 'municipios';
+
         return $this->fetchWithCache(
             $cacheKey,
             '/catalogos/municipios',
@@ -48,13 +53,12 @@ class NacionalCatalogService
         ?string $codigoServico = null,
         ?string $competencia = null,
         bool $forceRefresh = false
-    ): array
-    {
-        if (!preg_match('/^\d{7}$/', $codigoMunicipio)) {
+    ): array {
+        if (! preg_match('/^\d{7}$/', $codigoMunicipio)) {
             throw new \InvalidArgumentException('Código do município deve conter 7 dígitos');
         }
 
-        $codigoServicoNorm = preg_replace('/\s+/', '', trim((string)$codigoServico)) ?? '';
+        $codigoServicoNorm = $this->normalizeCodigoServicoForParamApi($codigoServico);
         if ($codigoServicoNorm === '') {
             throw new \InvalidArgumentException(
                 'Código do serviço é obrigatório para consulta de alíquota (/{codigoMunicipio}/{codigoServico}/{competencia}/aliquota).'
@@ -82,15 +86,16 @@ class NacionalCatalogService
         string $codigoServico,
         bool $forceRefresh = false
     ): array {
-        if (!preg_match('/^\d{7}$/', $codigoMunicipio)) {
+        if (! preg_match('/^\d{7}$/', $codigoMunicipio)) {
             throw new \InvalidArgumentException('Código do município deve conter 7 dígitos');
         }
-        $codigoServicoNorm = preg_replace('/\s+/', '', trim($codigoServico)) ?? '';
+        $codigoServicoNorm = $this->normalizeCodigoServicoForParamApi($codigoServico);
         if ($codigoServicoNorm === '') {
             throw new \InvalidArgumentException('Código do serviço é obrigatório');
         }
 
         $cacheKey = "historico_aliquotas:{$codigoMunicipio}:{$codigoServicoNorm}";
+
         return $this->fetchWithCache(
             $cacheKey,
             "/{$codigoMunicipio}/{$codigoServicoNorm}/historicoaliquotas",
@@ -103,11 +108,12 @@ class NacionalCatalogService
      */
     public function consultarConvenioMunicipio(string $codigoMunicipio, bool $forceRefresh = false): array
     {
-        if (!preg_match('/^\d{7}$/', $codigoMunicipio)) {
+        if (! preg_match('/^\d{7}$/', $codigoMunicipio)) {
             throw new \InvalidArgumentException('Código do município deve conter 7 dígitos');
         }
 
         $cacheKey = "convenio:{$codigoMunicipio}";
+
         return $this->fetchWithCache(
             $cacheKey,
             "/{$codigoMunicipio}/convenio",
@@ -121,7 +127,7 @@ class NacionalCatalogService
     private function fetchWithCache(string $cacheKey, string $path, bool $forceRefresh): array
     {
         $cached = $this->cache->get($cacheKey, $this->ttl);
-        if (!$forceRefresh && $cached !== null && $cached['stale'] === false) {
+        if (! $forceRefresh && $cached !== null && $cached['stale'] === false) {
             return [
                 'data' => is_array($cached['value']) ? $cached['value'] : [],
                 'metadata' => [
@@ -135,7 +141,7 @@ class NacionalCatalogService
         try {
             $json = $this->requestJson($path);
             $data = $json['data'] ?? $json;
-            if (!is_array($data)) {
+            if (! is_array($data)) {
                 $data = [];
             }
 
@@ -155,10 +161,11 @@ class NacionalCatalogService
                 try {
                     $json = $this->requestJson($legacyPath);
                     $data = $json['data'] ?? $json;
-                    if (!is_array($data)) {
+                    if (! is_array($data)) {
                         $data = [];
                     }
                     $this->cache->put($cacheKey, $data);
+
                     return [
                         'data' => $data,
                         'metadata' => [
@@ -191,13 +198,41 @@ class NacionalCatalogService
 
     private function normalizeCompetencia(?string $competencia): string
     {
-        $raw = trim((string)$competencia);
+        $raw = trim((string) $competencia);
         if ($raw === '') {
             return gmdate('Y-m-d\TH:i:s\Z');
         }
         if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $raw) === 1) {
-            return $raw . 'T00:00:00Z';
+            return $raw.'T00:00:00Z';
         }
+
+        return $raw;
+    }
+
+    private function normalizeCodigoServicoForParamApi(?string $codigoServico): string
+    {
+        $raw = preg_replace('/\s+/', '', trim((string) $codigoServico)) ?? '';
+        if ($raw === '') {
+            return '';
+        }
+
+        if (preg_match('/^\d{2}\.\d{2}\.\d{2}\.\d{3}$/', $raw) === 1) {
+            return $raw;
+        }
+
+        $digits = preg_replace('/\D+/', '', $raw) ?? '';
+        if (strlen($digits) === 6) {
+            return substr($digits, 0, 2).'.'
+                .substr($digits, 2, 2).'.'
+                .substr($digits, 4, 2).'.000';
+        }
+        if (strlen($digits) === 9) {
+            return substr($digits, 0, 2).'.'
+                .substr($digits, 2, 2).'.'
+                .substr($digits, 4, 2).'.'
+                .substr($digits, 6, 3);
+        }
+
         return $raw;
     }
 
@@ -217,6 +252,7 @@ class NacionalCatalogService
         if (count($parts) === 2 && $parts[1] === 'convenio') {
             return "/catalogos/municipios/{$parts[0]}/convenio";
         }
+
         return null;
     }
 
@@ -230,8 +266,8 @@ class NacionalCatalogService
             throw new \RuntimeException('Cliente HTTP mock retornou payload inválido');
         }
 
-        $url = $this->apiBaseUrl . $path;
-        $headers = ["Accept: application/json"];
+        $url = $this->apiBaseUrl.$path;
+        $headers = ['Accept: application/json'];
 
         if (function_exists('curl_init')) {
             $ch = curl_init($url);
@@ -271,7 +307,7 @@ class NacionalCatalogService
         }
 
         $decoded = json_decode($response, true);
-        if (!is_array($decoded)) {
+        if (! is_array($decoded)) {
             throw new \RuntimeException('Resposta JSON inválida do catálogo nacional');
         }
 
@@ -286,15 +322,15 @@ class NacionalCatalogService
             return;
         }
 
-        $certPem = (string)$certificate;
-        $keyPem = (string)$certificate->privateKey;
+        $certPem = (string) $certificate;
+        $keyPem = (string) $certificate->privateKey;
         if ($certPem === '' || $keyPem === '') {
             return;
         }
 
         $tempCertFile = tempnam(sys_get_temp_dir(), 'nfse_cat_cert_');
         $tempKeyFile = tempnam(sys_get_temp_dir(), 'nfse_cat_key_');
-        if (!is_string($tempCertFile) || !is_string($tempKeyFile)) {
+        if (! is_string($tempCertFile) || ! is_string($tempKeyFile)) {
             return;
         }
 
@@ -330,11 +366,11 @@ class NacionalCatalogService
             return $trimmed;
         }
 
-        $path = rtrim((string)($parsed['path'] ?? ''), '/');
+        $path = rtrim((string) ($parsed['path'] ?? ''), '/');
         if ($path === '/parametrizacao') {
             return $trimmed;
         }
 
-        return $trimmed . '/parametrizacao';
+        return $trimmed.'/parametrizacao';
     }
 }

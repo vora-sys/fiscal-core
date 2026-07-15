@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-use sabbajohn\FiscalCore\Adapters\NF\NFSeAdapter;
 use PHPUnit\Framework\TestCase;
+use sabbajohn\FiscalCore\Adapters\NF\NFSeAdapter;
 
 final class NFSeAdapterTest extends TestCase
 {
-    public function testJoinvilleUsesNacionalProvider(): void
+    public function test_joinville_uses_nacional_provider(): void
     {
         $adapter = new NFSeAdapter('joinville');
 
@@ -20,7 +20,7 @@ final class NFSeAdapterTest extends TestCase
         $this->assertContains('baixar_danfse', $info['supported_operations']);
     }
 
-    public function testBelemUsesCurrentMunicipalProvider(): void
+    public function test_belem_uses_current_municipal_provider(): void
     {
         $adapter = new NFSeAdapter('belem');
 
@@ -32,7 +32,7 @@ final class NFSeAdapterTest extends TestCase
         $this->assertContains('cancelar_nfse', $info['supported_operations']);
     }
 
-    public function testDirectBelemProviderKeyUsesCurrentMunicipalProvider(): void
+    public function test_direct_belem_provider_key_uses_current_municipal_provider(): void
     {
         $adapter = new NFSeAdapter('BELEM_MUNICIPAL_2025');
 
@@ -42,7 +42,7 @@ final class NFSeAdapterTest extends TestCase
         $this->assertStringContainsString('BelemMunicipalProvider', $info['provider_class']);
     }
 
-    public function testManausUsesNacionalProvider(): void
+    public function test_manaus_uses_nacional_provider(): void
     {
         $adapter = new NFSeAdapter('manaus');
 
@@ -54,7 +54,7 @@ final class NFSeAdapterTest extends TestCase
         $this->assertContains('baixar_danfse', $info['supported_operations']);
     }
 
-    public function testRecifeUsesNacionalProviderAfterMigration(): void
+    public function test_recife_uses_nacional_provider_after_migration(): void
     {
         $adapter = new NFSeAdapter('recife');
 
@@ -65,7 +65,7 @@ final class NFSeAdapterTest extends TestCase
         $this->assertStringContainsString('NacionalProvider', $info['provider_class']);
     }
 
-    public function testCampoGrandeUsesAbrasfSharedProviderAfterDsfMigration(): void
+    public function test_campo_grande_uses_abrasf_shared_provider_after_dsf_migration(): void
     {
         $adapter = new NFSeAdapter('campo-grande');
 
@@ -77,7 +77,7 @@ final class NFSeAdapterTest extends TestCase
         $this->assertContains('substituir_nfse', $info['supported_operations']);
     }
 
-    public function testJoaoPessoaUsesAbrasfSharedProviderAfterDsfMigration(): void
+    public function test_joao_pessoa_uses_abrasf_shared_provider_after_dsf_migration(): void
     {
         $adapter = new NFSeAdapter('joao-pessoa');
 
@@ -89,7 +89,7 @@ final class NFSeAdapterTest extends TestCase
         $this->assertContains('substituir_nfse', $info['supported_operations']);
     }
 
-    public function testCastanhalUsesAbrasfSharedProvider(): void
+    public function test_castanhal_uses_abrasf_shared_provider(): void
     {
         $adapter = new NFSeAdapter('castanhal');
 
@@ -101,7 +101,7 @@ final class NFSeAdapterTest extends TestCase
         $this->assertContains('substituir_nfse', $info['supported_operations']);
     }
 
-    public function testNatalUsesNacionalProviderAfterMigration(): void
+    public function test_natal_uses_nacional_provider_after_migration(): void
     {
         $adapter = new NFSeAdapter('natal');
 
@@ -112,7 +112,7 @@ final class NFSeAdapterTest extends TestCase
         $this->assertStringContainsString('NacionalProvider', $info['provider_class']);
     }
 
-    public function testSouthPriorityCitiesUseExpectedFamilies(): void
+    public function test_south_priority_cities_use_expected_families(): void
     {
         $expectedMappings = [
             'joinville' => ['provider_key' => 'nfse_nacional', 'ibge' => '4209102'],
@@ -137,7 +137,7 @@ final class NFSeAdapterTest extends TestCase
         }
     }
 
-    public function testRioBrancoAliasResolvesToNationalProvider(): void
+    public function test_rio_branco_alias_resolves_to_national_provider(): void
     {
         $adapter = new NFSeAdapter('rio-branco');
 
@@ -147,7 +147,7 @@ final class NFSeAdapterTest extends TestCase
         $this->assertSame('1200401', $info['codigo_municipio']);
     }
 
-    public function testAnanindeuaUsesNationalProviderAfterOfficialMigration(): void
+    public function test_ananindeua_uses_national_provider_after_official_migration(): void
     {
         $adapter = new NFSeAdapter('ananindeua');
 
@@ -158,7 +158,7 @@ final class NFSeAdapterTest extends TestCase
         $this->assertStringContainsString('NacionalProvider', $info['provider_class']);
     }
 
-    public function testMarabaUsesNationalProviderAfterOfficialMigration(): void
+    public function test_maraba_uses_national_provider_after_official_migration(): void
     {
         $adapter = new NFSeAdapter('maraba');
 
@@ -169,7 +169,7 @@ final class NFSeAdapterTest extends TestCase
         $this->assertStringContainsString('NacionalProvider', $info['provider_class']);
     }
 
-    public function testWave3Lot1CapitalsUseExpectedFamilies(): void
+    public function test_wave3_lot1_capitals_use_expected_families(): void
     {
         $expectedMappings = [
             'brasilia' => ['provider_key' => 'ISSNET', 'ibge' => '5300108'],
@@ -188,7 +188,7 @@ final class NFSeAdapterTest extends TestCase
         }
     }
 
-    public function testWave3Lot2CapitalsUseExpectedFamilies(): void
+    public function test_wave3_lot2_capitals_use_expected_families(): void
     {
         $expectedMappings = [
             'sao-paulo' => ['provider_key' => 'PAULISTANA', 'ibge' => '3550308'],
@@ -207,7 +207,7 @@ final class NFSeAdapterTest extends TestCase
         }
     }
 
-    public function testWave4NordesteMunicipalLotUsesExpectedFamilies(): void
+    public function test_wave4_nordeste_municipal_lot_uses_expected_families(): void
     {
         $expectedMappings = [
             'aracaju' => ['provider_key' => 'WEBISS', 'ibge' => '2800308'],
@@ -225,7 +225,7 @@ final class NFSeAdapterTest extends TestCase
         }
     }
 
-    public function testPresidenteFigueiredoUsesIsswebProvider(): void
+    public function test_presidente_figueiredo_uses_issweb_provider(): void
     {
         $adapter = new NFSeAdapter('presidente-figueiredo');
 
@@ -237,7 +237,7 @@ final class NFSeAdapterTest extends TestCase
         $this->assertContains('consultar', $info['supported_operations']);
     }
 
-    public function testRioPretoDaEvaUsesIsswebProvider(): void
+    public function test_rio_preto_da_eva_uses_issweb_provider(): void
     {
         $adapter = new NFSeAdapter('rio-preto-da-eva');
 
@@ -249,7 +249,7 @@ final class NFSeAdapterTest extends TestCase
         $this->assertContains('consultar', $info['supported_operations']);
     }
 
-    public function testUnknownUsesNacionalProvider(): void
+    public function test_unknown_uses_nacional_provider(): void
     {
         $adapter = new NFSeAdapter('nao-existe');
 

@@ -6,12 +6,13 @@ use sabbajohn\FiscalCore\Adapters\NF\NFSeAdapter;
 use sabbajohn\FiscalCore\Support\BelemMunicipalDocumentUrlBuilder;
 use sabbajohn\FiscalCore\Support\CertificateManager;
 use sabbajohn\FiscalCore\Support\FiscalResponse;
+use sabbajohn\FiscalCore\Support\FiscalResponseNormalizer;
 use sabbajohn\FiscalCore\Support\MunicipalDanfseRendererResolver;
 use sabbajohn\FiscalCore\Support\NFSeProviderResolver;
+use sabbajohn\FiscalCore\Support\NFSeResultNormalizer;
 use sabbajohn\FiscalCore\Support\NFSeRuntimeBootstrap;
 use sabbajohn\FiscalCore\Support\ProviderRegistry;
 use sabbajohn\FiscalCore\Support\ResponseHandler;
-use sabbajohn\FiscalCore\Support\FiscalResponseNormalizer;
 use sabbajohn\FiscalCore\Support\XmlUtils;
 
 /**
@@ -21,26 +22,34 @@ use sabbajohn\FiscalCore\Support\XmlUtils;
 class NFSeFacade
 {
     private ?NFSeAdapter $nfse = null;
+
     private ResponseHandler $responseHandler;
+
     private ?FiscalResponse $initializationError = null;
+
     private string $municipio;
+
     private string $providerKey;
+
     private bool $municipioIgnored = false;
+
     private array $deprecationWarnings = [];
+
     private ?array $municipioResolved = null;
+
     private array $runtimeContext = [];
+
     private FiscalResponseNormalizer $publicNormalizer;
 
     public function __construct(
         string $municipio = 'nacional',
         ?NFSeAdapter $nfse = null,
         bool $requireOperationalCredentials = true
-    )
-    {
+    ) {
         $this->municipio = $municipio;
-        $this->responseHandler = new ResponseHandler();
-        $this->publicNormalizer = new FiscalResponseNormalizer();
-        $resolver = new NFSeProviderResolver();
+        $this->responseHandler = new ResponseHandler;
+        $this->publicNormalizer = new FiscalResponseNormalizer;
+        $resolver = new NFSeProviderResolver;
         $compat = $resolver->buildMetadata($municipio);
         $this->providerKey = $compat['provider_key'];
         $this->municipioIgnored = $compat['municipio_ignored'];
@@ -54,7 +63,7 @@ class NFSeFacade
         } else {
             try {
                 $registry = ProviderRegistry::getInstance();
-                if (!$registry->has($this->providerKey)) {
+                if (! $registry->has($this->providerKey)) {
                     $this->initializationError = FiscalResponse::error(
                         "Provider NFSe '{$this->providerKey}' não encontrado",
                         'PROVIDER_NOT_FOUND',
@@ -68,14 +77,15 @@ class NFSeFacade
                             'warnings' => $this->deprecationWarnings,
                             'suggestions' => [
                                 "Configure '{$this->providerKey}' em config/nfse/nfse-provider-families.json",
-                                "Revise o roteamento em config/nfse/providers-catalog.json",
-                            ]
+                                'Revise o roteamento em config/nfse/providers-catalog.json',
+                            ],
                         ]
                     );
+
                     return;
                 }
 
-                $bootstrap = (new NFSeRuntimeBootstrap())->makeProvider($municipio, $requireOperationalCredentials);
+                $bootstrap = (new NFSeRuntimeBootstrap)->makeProvider($municipio, $requireOperationalCredentials);
                 $this->runtimeContext = $bootstrap;
                 $this->nfse = new NFSeAdapter($municipio, $bootstrap['provider']);
             } catch (\Exception $e) {
@@ -92,6 +102,7 @@ class NFSeFacade
         if ($this->initializationError !== null) {
             return $this->initializationError;
         }
+
         return null;
     }
 
@@ -133,7 +144,7 @@ class NFSeFacade
             ];
             $data += $this->publicNormalizer->normalizeFiscalOperation('nfse', 'nfse_emission', [
                 'status' => $parsed['status'] ?? null,
-                'ok' => !in_array((string) ($parsed['status'] ?? ''), ['error', 'invalid_xml', 'empty'], true),
+                'ok' => ! in_array((string) ($parsed['status'] ?? ''), ['error', 'invalid_xml', 'empty'], true),
                 'mensagens' => is_array($parsed['mensagens'] ?? null) ? $parsed['mensagens'] : [],
                 'protocolo' => $documento['protocolo'],
             ], $documento, [
@@ -146,13 +157,14 @@ class NFSeFacade
                 'response_body' => $artifacts['response_raw'] ?? $resultado,
                 'response_xml' => $artifacts['response_xml'] ?? (str_starts_with(ltrim($resultado), '<') ? $resultado : null),
                 'parsed_response' => $parsed ?: null,
+                'emission_context' => $artifacts['emission_context'] ?? null,
             ]);
             $metadata = [
                 'municipio' => $this->municipio,
                 'provider_key' => $this->providerKey,
                 'municipio_ignored' => $this->municipioIgnored,
                 'warnings' => $this->deprecationWarnings,
-                'provider_info' => $this->nfse->getProviderInfo()
+                'provider_info' => $this->nfse->getProviderInfo(),
             ];
 
             if ($failure = $this->normalizeEmissionFailure($lastEmission, 'nfse_emission', $metadata, $data)) {
@@ -171,6 +183,11 @@ class NFSeFacade
                 'warnings' => $this->deprecationWarnings,
                 'emissao' => $lastEmission,
             ];
+            $metadata = array_merge($metadata, $this->nfseNacionalValidationMetadata($lastEmission));
+            $exceptionDetails = $lastEmission['exception']['details'] ?? null;
+            if (is_array($exceptionDetails) && $exceptionDetails !== []) {
+                $metadata['preflight'] = $exceptionDetails;
+            }
             $normalizedError = $this->resolveEmissionExceptionMessage($lastEmission, $e->getMessage());
 
             return FiscalResponse::error(
@@ -204,6 +221,7 @@ class NFSeFacade
                 $emissionStatus = (string) ($parsedEmission['status'] ?? 'unknown');
                 if (in_array($emissionStatus, ['error', 'invalid_xml', 'empty'], true)) {
                     $mensagens = is_array($parsedEmission['mensagens'] ?? null) ? $parsedEmission['mensagens'] : [];
+
                     return FiscalResponse::error(
                         $mensagens !== [] ? implode(' | ', $mensagens) : 'Falha na emissao da NFSe.',
                         'NFSE_EMISSION_FAILED',
@@ -249,7 +267,7 @@ class NFSeFacade
 
             $flowStatus = 'parcial';
             if (
-                !$this->isNationalProviderFlow()
+                ! $this->isNationalProviderFlow()
                 && ($impressao['disponivel'] ?? false) !== true
                 && ($officialUrl = $this->resolveOfficialDocumentUrl($consultaData, $emissaoData)) !== null
             ) {
@@ -307,7 +325,7 @@ class NFSeFacade
                 return $this->consultarDisponibilidadeIssweb($criterios, $options);
             }
 
-            if (!$this->isBelemMunicipalFlow()) {
+            if (! $this->isBelemMunicipalFlow()) {
                 throw new \RuntimeException(
                     "consultarDisponibilidade() ainda nao foi implementado para o provider '{$this->providerKey}'."
                 );
@@ -343,6 +361,7 @@ class NFSeFacade
                 'mensagens' => $data['consulta']['mensagens'] ?? [],
                 'protocolo' => $data['documento']['protocolo'] ?? null,
             ];
+
             return FiscalResponse::success(array_merge($data, [
                 'type' => 'nfse_consulta',
                 'chave' => $chave,
@@ -499,6 +518,7 @@ class NFSeFacade
                     ?? (str_starts_with(ltrim($resultado), '<') ? $resultado : null),
                 'parsed_response' => $operation['parsed_response'] ?? null,
             ]);
+
             return FiscalResponse::success($normalized + [
                 'resultado' => $resultado,
                 'type' => 'nfse_substituicao',
@@ -515,7 +535,20 @@ class NFSeFacade
                 $this->buildCompatibilityMetadata(),
             );
         } catch (\Exception $e) {
-            return $this->responseHandler->handle($e, 'nfse_substitution');
+            $response = $this->responseHandler->handle($e, 'nfse_substitution');
+            $operation = method_exists($this->nfse, 'getLastOperationInfo')
+                ? $this->nfse->getLastOperationInfo()
+                : [];
+
+            if ($operation !== []) {
+                $response = $response->withMetadata('substituicao', $operation);
+                $artifacts = $operation['artifacts'] ?? null;
+                if (is_array($artifacts) && $artifacts !== []) {
+                    $response = $response->withMetadata('artifacts', $artifacts);
+                }
+            }
+
+            return $response;
         }
     }
 
@@ -530,6 +563,7 @@ class NFSeFacade
             $operation = method_exists($this->nfse, 'getLastOperationInfo')
                 ? $this->nfse->getLastOperationInfo()
                 : [];
+
             return FiscalResponse::success(array_merge($resultado->toArray(), [
                 'type' => 'nfse_consulta_rps',
                 'municipio' => $this->municipio,
@@ -551,6 +585,7 @@ class NFSeFacade
             $operation = method_exists($this->nfse, 'getLastOperationInfo')
                 ? $this->nfse->getLastOperationInfo()
                 : [];
+
             return FiscalResponse::success(array_merge($resultado->toArray(), [
                 'type' => 'nfse_consulta_lote',
                 'protocolo' => $protocolo,
@@ -581,7 +616,7 @@ class NFSeFacade
             $parsedArray = is_array($parsed) ? $parsed : [];
             $normalized = $this->publicNormalizer->normalizeFiscalOperation('nfse', 'nfse_download_xml', [
                 'status' => $parsedArray['status'] ?? null,
-                'ok' => !in_array((string) ($parsedArray['status'] ?? ''), ['error', 'invalid_xml', 'empty'], true),
+                'ok' => ! in_array((string) ($parsedArray['status'] ?? ''), ['error', 'invalid_xml', 'empty'], true),
                 'mensagens' => is_array($parsedArray['mensagens'] ?? null) ? $parsedArray['mensagens'] : [],
                 'protocolo' => $parsedArray['protocolo'] ?? null,
             ], [
@@ -664,6 +699,7 @@ class NFSeFacade
                 'situacao' => $data['operacao']['status'],
                 'protocolo' => null,
             ];
+
             return FiscalResponse::success(array_merge($data, [
                 'type' => 'nfse_danfse_download',
                 'chave' => $chave,
@@ -685,15 +721,15 @@ class NFSeFacade
                 throw new \InvalidArgumentException('XML final da NFSe e obrigatorio para gerar o DANFSe.');
             }
 
-            $renderer = (new MunicipalDanfseRendererResolver())->resolve($this->providerKey);
+            $renderer = (new MunicipalDanfseRendererResolver)->resolve($this->providerKey);
             $pdf = $renderer->render($xmlNfse);
 
-            $printResult = (new \sabbajohn\FiscalCore\Support\NFSeResultNormalizer())->normalizePdfBase64(
+            $printResult = (new NFSeResultNormalizer)->normalizePdfBase64(
                 base64_encode($pdf),
                 [
                     'provider_key' => $this->providerKey,
                     'municipio' => $this->municipio,
-                    'filename' => 'danfse_' . strtolower($this->municipio) . '_' . date('Ymd_His') . '.pdf',
+                    'filename' => 'danfse_'.strtolower($this->municipio).'_'.date('Ymd_His').'.pdf',
                     'source' => 'render_local',
                 ],
                 [
@@ -722,6 +758,7 @@ class NFSeFacade
                 'protocolo' => null,
             ];
             $data['xml'] = $xmlNfse;
+
             return FiscalResponse::success(array_merge($data, [
                 'type' => 'nfse_generate_danfse',
             ]), 'nfse_generate_danfse', $this->buildCompatibilityMetadata());
@@ -738,6 +775,7 @@ class NFSeFacade
 
         try {
             $resultado = $this->nfse->listarMunicipiosNacionais($forceRefresh);
+
             return FiscalResponse::success($resultado['data'] ?? [], 'nfse_nacional_municipios', [
                 'source' => $resultado['metadata']['source'] ?? null,
                 'stale' => $resultado['metadata']['stale'] ?? null,
@@ -769,6 +807,7 @@ class NFSeFacade
                 $competencia,
                 $forceRefresh
             );
+
             return FiscalResponse::success($resultado['data'] ?? [], 'nfse_nacional_aliquotas', [
                 'source' => $resultado['metadata']['source'] ?? null,
                 'stale' => $resultado['metadata']['stale'] ?? null,
@@ -794,6 +833,7 @@ class NFSeFacade
 
         try {
             $resultado = $this->nfse->consultarConvenioMunicipio($codigoMunicipio, $forceRefresh);
+
             return FiscalResponse::success($resultado['data'] ?? [], 'nfse_nacional_convenio', [
                 'source' => $resultado['metadata']['source'] ?? null,
                 'stale' => $resultado['metadata']['stale'] ?? null,
@@ -815,7 +855,7 @@ class NFSeFacade
             $adapter = new NFSeAdapter($municipio);
             $data = $adapter->consultarContribuinteCnc($cnc);
 
-            if (!is_array($data)) {
+            if (! is_array($data)) {
                 $data = ['resultado' => $data];
             }
 
@@ -851,6 +891,7 @@ class NFSeFacade
 
         try {
             $resultado = $this->nfse->validarLayoutDps($payload, $checkCatalog);
+
             return FiscalResponse::success($resultado, 'nfse_nacional_layout_check', [
                 'municipio' => $this->municipio,
                 'provider_key' => $this->providerKey,
@@ -871,6 +912,7 @@ class NFSeFacade
 
         try {
             $xml = $this->nfse->gerarXmlDpsPreview($payload);
+
             return FiscalResponse::success([
                 'xml' => $xml,
             ], 'nfse_nacional_layout_preview', [
@@ -922,6 +964,7 @@ class NFSeFacade
 
         try {
             $resultado = $this->nfse->validarXmlDps($payload);
+
             return FiscalResponse::success($resultado, 'nfse_nacional_xml_check', [
                 'municipio' => $this->municipio,
                 'provider_key' => $this->providerKey,
@@ -969,6 +1012,7 @@ class NFSeFacade
             $info['municipio_ignored'] = $this->municipioIgnored;
             $info['warnings'] = $this->deprecationWarnings;
             $info['runtime_bootstrapped'] = $this->runtimeContext !== [];
+
             return FiscalResponse::success($info, 'nfse_provider_info');
         } catch (\Exception $e) {
             return $this->responseHandler->handle($e, 'nfse_provider_info');
@@ -982,16 +1026,16 @@ class NFSeFacade
     {
         return $this->responseHandler->handle(function () use ($xml) {
             if (empty($xml)) {
-                throw new \InvalidArgumentException("XML não pode estar vazio");
+                throw new \InvalidArgumentException('XML não pode estar vazio');
             }
 
             // Validação básica de XML
-            $dom = new \DOMDocument();
+            $dom = new \DOMDocument;
             libxml_use_internal_errors(true);
 
-            if (!$dom->loadXML($xml)) {
+            if (! $dom->loadXML($xml)) {
                 $errors = libxml_get_errors();
-                $errorMsg = "XML inválido: " . $errors[0]->message ?? 'Erro desconhecido';
+                $errorMsg = 'XML inválido: '.$errors[0]->message ?? 'Erro desconhecido';
                 libxml_clear_errors();
                 throw new \InvalidArgumentException($errorMsg);
             }
@@ -1007,15 +1051,15 @@ class NFSeFacade
                 }
             }
 
-            if (!$tipoDetectado) {
-                throw new \InvalidArgumentException("XML não é uma NFSe válida");
+            if (! $tipoDetectado) {
+                throw new \InvalidArgumentException('XML não é uma NFSe válida');
             }
 
             return [
                 'xml_valido' => true,
                 'tipo_nfse' => $tipoDetectado,
                 'municipio_esperado' => $this->municipio,
-                'tamanho_xml' => strlen($xml)
+                'tamanho_xml' => strlen($xml),
             ];
         }, 'validacao_xml_nfse');
     }
@@ -1047,18 +1091,18 @@ class NFSeFacade
                 $erros[] = 'Razão Social é obrigatória';
             }
 
-            if (!empty($erros)) {
-                throw new \InvalidArgumentException("Prestador inválido: " . implode(', ', $erros));
+            if (! empty($erros)) {
+                throw new \InvalidArgumentException('Prestador inválido: '.implode(', ', $erros));
             }
 
             return [
                 'prestador_valido' => true,
                 'cnpj_formatado' => isset($prestador['cnpj']) ? preg_replace('/\D/', '', $prestador['cnpj']) : null,
                 'validacoes' => [
-                    'cnpj' => !empty($prestador['cnpj']),
-                    'inscricao_municipal' => !empty($prestador['inscricaoMunicipal']),
-                    'razao_social' => !empty($prestador['razaoSocial'])
-                ]
+                    'cnpj' => ! empty($prestador['cnpj']),
+                    'inscricao_municipal' => ! empty($prestador['inscricaoMunicipal']),
+                    'razao_social' => ! empty($prestador['razaoSocial']),
+                ],
             ];
         }, 'validacao_prestador_nfse');
     }
@@ -1073,7 +1117,7 @@ class NFSeFacade
         try {
             $registry = ProviderRegistry::getInstance();
 
-            if (!$registry->has($this->providerKey)) {
+            if (! $registry->has($this->providerKey)) {
                 return FiscalResponse::error(
                     "Provider NFSe '{$this->providerKey}' não está configurado",
                     'MUNICIPALITY_NOT_CONFIGURED',
@@ -1086,21 +1130,22 @@ class NFSeFacade
                         'warnings' => $this->deprecationWarnings,
                         'suggestions' => [
                             "Configure '{$this->providerKey}' em config/nfse/nfse-provider-families.json",
-                            "Revise o mapeamento do município em config/nfse/providers-catalog.json",
-                        ]
+                            'Revise o mapeamento do município em config/nfse/providers-catalog.json',
+                        ],
                     ]
                 );
             }
 
             $config = $registry->getConfig($this->providerKey);
+
             return FiscalResponse::success([
                 'municipio' => $municipioToValidate,
                 'provider_key' => $this->providerKey,
                 'municipio_ignored' => true,
                 'configured' => true,
-                'config_keys' => array_keys($config)
+                'config_keys' => array_keys($config),
             ], 'nfse_municipality_validation', [
-                'warnings' => $this->deprecationWarnings
+                'warnings' => $this->deprecationWarnings,
             ]);
 
         } catch (\Exception $e) {
@@ -1126,38 +1171,95 @@ class NFSeFacade
     private function normalizeEmissionFailure(array $lastEmission, string $operation, array $metadata, array $data): ?FiscalResponse
     {
         $parsedEmission = $lastEmission['parsed_response'] ?? [];
-        if (!is_array($parsedEmission)) {
+        if (! is_array($parsedEmission)) {
             return null;
         }
 
         $emissionStatus = (string) ($parsedEmission['status'] ?? 'unknown');
-        if (!in_array($emissionStatus, ['error', 'invalid_xml', 'empty'], true)) {
+        if (! in_array($emissionStatus, ['error', 'invalid_xml', 'empty'], true)) {
             return null;
         }
 
         $mensagens = is_array($parsedEmission['mensagens'] ?? null) ? $parsedEmission['mensagens'] : [];
         $errorCode = $this->resolveProviderErrorCode($parsedEmission) ?? 'NFSE_EMISSION_FAILED';
+        $errorMetadata = [
+            'emission_status' => $emissionStatus,
+            'retryable' => (bool) ($parsedEmission['retryable'] ?? false),
+            'transport_error' => $parsedEmission['transport_error'] ?? null,
+            'redirect_location' => $parsedEmission['redirect_location'] ?? null,
+            'http_status' => $parsedEmission['http_status'] ?? null,
+            'emissao' => $lastEmission,
+            'response' => $data,
+        ];
+        $errorMetadata = array_merge($errorMetadata, $this->nfseNacionalValidationMetadata($lastEmission));
 
         return FiscalResponse::error(
             $mensagens !== [] ? implode(' | ', $mensagens) : 'Falha na emissao da NFSe.',
             $errorCode,
             $operation,
-            $metadata + [
-                'emission_status' => $emissionStatus,
-                'retryable' => (bool) ($parsedEmission['retryable'] ?? false),
-                'transport_error' => $parsedEmission['transport_error'] ?? null,
-                'redirect_location' => $parsedEmission['redirect_location'] ?? null,
-                'http_status' => $parsedEmission['http_status'] ?? null,
-                'emissao' => $lastEmission,
-                'response' => $data,
-            ]
+            $metadata + $errorMetadata
         );
+    }
+
+    /**
+     * @param  array<string,mixed>  $lastEmission
+     * @return array<string,mixed>
+     */
+    private function nfseNacionalValidationMetadata(array $lastEmission): array
+    {
+        $validation = $lastEmission['parsed_response']['schema_validation']
+            ?? $lastEmission['artifacts']['parsed_response']['schema_validation']
+            ?? null;
+
+        if (! is_array($validation) || ($validation['ok'] ?? null) === true) {
+            return [];
+        }
+
+        return [
+            'diagnostico_validacao_xml' => [
+                'valido' => false,
+                'schema' => $validation['schema'] ?? null,
+                'erros' => $this->normalizeSchemaValidationErrors((array) ($validation['errors'] ?? [])),
+            ],
+        ];
+    }
+
+    /**
+     * @param  array<int,mixed>  $errors
+     * @return list<array<string,mixed>>
+     */
+    private function normalizeSchemaValidationErrors(array $errors): array
+    {
+        $normalized = [];
+
+        foreach ($errors as $error) {
+            if (! is_array($error)) {
+                continue;
+            }
+
+            $normalized[] = [
+                'tipo' => $error['type'] ?? null,
+                'mensagem' => $error['message'] ?? null,
+                'linha' => $error['line'] ?? null,
+                'coluna' => $error['column'] ?? null,
+                'campo_provavel' => $error['campo_provavel'] ?? null,
+                'xml_path' => $error['xml_path'] ?? null,
+                'payload_path' => $error['payload_path'] ?? null,
+            ];
+        }
+
+        return $normalized;
     }
 
     private function resolveEmissionExceptionCode(array $lastEmission): string
     {
+        $preflightCode = $lastEmission['exception']['details']['code'] ?? null;
+        if (is_string($preflightCode) && trim($preflightCode) !== '') {
+            return $preflightCode;
+        }
+
         $parsedEmission = $lastEmission['parsed_response'] ?? [];
-        if (!is_array($parsedEmission)) {
+        if (! is_array($parsedEmission)) {
             return 'NFSE_EMISSION_ERROR';
         }
 
@@ -1181,7 +1283,7 @@ class NFSeFacade
     private function resolveEmissionExceptionMessage(array $lastEmission, string $fallback): string
     {
         $parsedEmission = $lastEmission['parsed_response'] ?? [];
-        if (!is_array($parsedEmission)) {
+        if (! is_array($parsedEmission)) {
             return $fallback;
         }
 
@@ -1194,7 +1296,7 @@ class NFSeFacade
         if ($errors !== []) {
             $messages = [];
             foreach ($errors as $error) {
-                if (!is_array($error)) {
+                if (! is_array($error)) {
                     continue;
                 }
 
@@ -1219,7 +1321,7 @@ class NFSeFacade
     {
         $errors = is_array($parsedEmission['errors'] ?? null) ? $parsedEmission['errors'] : [];
         foreach ($errors as $error) {
-            if (!is_array($error)) {
+            if (! is_array($error)) {
                 continue;
             }
 
@@ -1230,7 +1332,7 @@ class NFSeFacade
         }
 
         foreach ((array) ($parsedEmission['mensagens'] ?? []) as $message) {
-            if (!is_string($message)) {
+            if (! is_string($message)) {
                 continue;
             }
 
@@ -1254,14 +1356,14 @@ class NFSeFacade
 
     private function validateNationalMigrationEmissionWindow(array $dados): ?FiscalResponse
     {
-        if (!is_array($this->municipioResolved)) {
+        if (! is_array($this->municipioResolved)) {
             return null;
         }
 
         $policy = is_array($this->municipioResolved['national_migration_policy'] ?? null)
             ? $this->municipioResolved['national_migration_policy']
             : [];
-        if ($policy === [] || !($policy['enforce_emission_block_before_effective_date'] ?? false)) {
+        if ($policy === [] || ! ($policy['enforce_emission_block_before_effective_date'] ?? false)) {
             return null;
         }
 
@@ -1365,7 +1467,7 @@ class NFSeFacade
             if ($consulta->isSuccess()) {
                 $consultaData = $consulta->getData();
                 $availability = $this->stripAvailabilityEnvelope($consultaData);
-                if (($availability['source'] ?? null) === 'rps' && !empty($availability['warnings'])) {
+                if (($availability['source'] ?? null) === 'rps' && ! empty($availability['warnings'])) {
                     $warnings = array_merge($warnings, $availability['warnings']);
                 }
             } else {
@@ -1599,7 +1701,7 @@ class NFSeFacade
             }
         }
 
-        if (!is_array($nfse)) {
+        if (! is_array($nfse)) {
             return null;
         }
 
@@ -1659,12 +1761,12 @@ class NFSeFacade
         ];
 
         foreach ($xmlCandidates as $xml) {
-            if (!is_string($xml) || trim($xml) === '') {
+            if (! is_string($xml) || trim($xml) === '') {
                 continue;
             }
 
-            $dom = new \DOMDocument();
-            if (!@$dom->loadXML($xml)) {
+            $dom = new \DOMDocument;
+            if (! @$dom->loadXML($xml)) {
                 continue;
             }
 
@@ -1700,7 +1802,7 @@ class NFSeFacade
     private function resolvePostEmissionConsultation(array $dados, array $emissaoData): ?FiscalResponse
     {
         $parsedResponse = $emissaoData['emissao']['parsed_response'] ?? [];
-        if (!is_array($parsedResponse)) {
+        if (! is_array($parsedResponse)) {
             $parsedResponse = [];
         }
 
@@ -1774,7 +1876,7 @@ class NFSeFacade
 
         $fallback = null;
         foreach ($candidates as $candidate) {
-            if (!is_scalar($candidate)) {
+            if (! is_scalar($candidate)) {
                 continue;
             }
 
@@ -1798,13 +1900,13 @@ class NFSeFacade
             return null;
         }
 
-        $dom = new \DOMDocument();
-        if (!@$dom->loadXML($xml)) {
+        $dom = new \DOMDocument;
+        if (! @$dom->loadXML($xml)) {
             return null;
         }
 
         $infNfse = (new \DOMXPath($dom))->query("//*[local-name()='infNFSe' or local-name()='InfNfse']")->item(0);
-        if (!$infNfse instanceof \DOMElement) {
+        if (! $infNfse instanceof \DOMElement) {
             return null;
         }
 
@@ -1815,17 +1917,17 @@ class NFSeFacade
 
     private function extractFiscalXmlFromCandidate(mixed $candidate): ?string
     {
-        if (!is_string($candidate)) {
+        if (! is_string($candidate)) {
             return null;
         }
 
         $candidate = trim($candidate);
-        if ($candidate === '' || !str_starts_with(ltrim($candidate), '<')) {
+        if ($candidate === '' || ! str_starts_with(ltrim($candidate), '<')) {
             return null;
         }
 
-        $dom = new \DOMDocument();
-        if (!@$dom->loadXML($candidate)) {
+        $dom = new \DOMDocument;
+        if (! @$dom->loadXML($candidate)) {
             return null;
         }
 
@@ -1842,7 +1944,7 @@ class NFSeFacade
 
     private function decodeGZipBase64ToFiscalXml(mixed $candidate): ?string
     {
-        if (!is_string($candidate) || trim($candidate) === '') {
+        if (! is_string($candidate) || trim($candidate) === '') {
             return null;
         }
 
@@ -1861,14 +1963,14 @@ class NFSeFacade
 
     private function extractNodeValue(string $xml, string $localName): ?string
     {
-        $dom = new \DOMDocument();
-        if (!@$dom->loadXML($xml)) {
+        $dom = new \DOMDocument;
+        if (! @$dom->loadXML($xml)) {
             return null;
         }
 
         $xpath = new \DOMXPath($dom);
         $node = $xpath->query("//*[local-name()='{$localName}']")->item(0);
-        if (!$node instanceof \DOMNode) {
+        if (! $node instanceof \DOMNode) {
             return null;
         }
 
@@ -1879,14 +1981,14 @@ class NFSeFacade
 
     private function extractNodeAttributeValue(string $xml, string $nodeLocalName, string $attributeName): ?string
     {
-        $dom = new \DOMDocument();
-        if (!@$dom->loadXML($xml)) {
+        $dom = new \DOMDocument;
+        if (! @$dom->loadXML($xml)) {
             return null;
         }
 
         $xpath = new \DOMXPath($dom);
         $node = $xpath->query("//*[local-name()='{$nodeLocalName}']/@{$attributeName}")->item(0);
-        if (!$node instanceof \DOMNode) {
+        if (! $node instanceof \DOMNode) {
             return null;
         }
 
@@ -1974,7 +2076,7 @@ class NFSeFacade
 
             foreach ($parsedCandidates as $candidateData) {
                 $parsed = $candidateData['parsed'] ?? null;
-                if (!is_array($parsed)) {
+                if (! is_array($parsed)) {
                     continue;
                 }
 
@@ -2042,19 +2144,21 @@ class NFSeFacade
 
             $missing = [];
             foreach (['provider_class', 'api_base_url', 'param_api_base_url', 'timeout'] as $key) {
-                if (!array_key_exists($key, $config) || trim((string) $config[$key]) === '') {
+                if (! array_key_exists($key, $config) || trim((string) $config[$key]) === '') {
                     $missing[] = $key;
                 }
             }
 
-            foreach (['services', 'endpoints', 'operation_methods', 'catalog_endpoints', 'cnc_endpoints'] as $key) {
-                if (!is_array($config[$key] ?? null) || $config[$key] === []) {
+            foreach (['services', 'endpoints', 'operation_methods', 'catalog_endpoints', 'cnc_endpoints', 'distribution_endpoints'] as $key) {
+                if (! is_array($config[$key] ?? null) || $config[$key] === []) {
                     $missing[] = $key;
                 }
             }
 
             foreach ([
                 'services.adn.homologacao' => $config['services']['adn']['homologacao'] ?? null,
+                'services.adn_contribuintes.homologacao' => $config['services']['adn_contribuintes']['homologacao'] ?? null,
+                'services.cnc_consulta.homologacao' => $config['services']['cnc_consulta']['homologacao'] ?? null,
                 'services.parametrizacao.homologacao' => $config['services']['parametrizacao']['homologacao'] ?? null,
                 'services.danfse.homologacao' => $config['services']['danfse']['homologacao'] ?? null,
                 'endpoints.emitir' => $config['endpoints']['emitir'] ?? null,
@@ -2064,13 +2168,17 @@ class NFSeFacade
                 'endpoints.consultar_lote' => $config['endpoints']['consultar_lote'] ?? null,
                 'endpoints.baixar_xml' => $config['endpoints']['baixar_xml'] ?? null,
                 'endpoints.baixar_danfse' => $config['endpoints']['baixar_danfse'] ?? null,
-                'catalog_endpoints.municipios' => $config['catalog_endpoints']['municipios'] ?? null,
                 'catalog_endpoints.aliquotas_municipio' => $config['catalog_endpoints']['aliquotas_municipio'] ?? null,
+                'catalog_endpoints.historico_aliquotas' => $config['catalog_endpoints']['historico_aliquotas'] ?? null,
+                'catalog_endpoints.beneficio' => $config['catalog_endpoints']['beneficio'] ?? null,
                 'catalog_endpoints.convenio_municipio' => $config['catalog_endpoints']['convenio_municipio'] ?? null,
-                'cnc_endpoints.contribuinte' => $config['cnc_endpoints']['contribuinte'] ?? null,
-                'cnc_endpoints.habilitacao' => $config['cnc_endpoints']['habilitacao'] ?? null,
+                'catalog_endpoints.regimes_especiais' => $config['catalog_endpoints']['regimes_especiais'] ?? null,
+                'catalog_endpoints.retencoes' => $config['catalog_endpoints']['retencoes'] ?? null,
+                'cnc_endpoints.cadastro' => $config['cnc_endpoints']['cadastro'] ?? null,
+                'distribution_endpoints.dfe' => $config['distribution_endpoints']['dfe'] ?? null,
+                'distribution_endpoints.eventos' => $config['distribution_endpoints']['eventos'] ?? null,
             ] as $key => $value) {
-                if (!is_string($value) || trim($value) === '') {
+                if (! is_string($value) || trim($value) === '') {
                     $missing[] = $key;
                 }
             }
@@ -2080,7 +2188,7 @@ class NFSeFacade
             $certLoaded = $certManager->getCertificate() !== null;
             $certValid = $certManager->isValid();
 
-            if ($signatureMode === 'required' && (!$certLoaded || !$certValid)) {
+            if ($signatureMode === 'required' && (! $certLoaded || ! $certValid)) {
                 $missing[] = 'certificado_digital_valido';
             }
 

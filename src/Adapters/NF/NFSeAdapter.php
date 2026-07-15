@@ -2,43 +2,55 @@
 
 namespace sabbajohn\FiscalCore\Adapters\NF;
 
+use NFePHP\Common\Certificate;
 use sabbajohn\FiscalCore\Contracts\NFSeConsultaResultInterface;
 use sabbajohn\FiscalCore\Contracts\NFSeImpressaoResultInterface;
-use sabbajohn\FiscalCore\Contracts\NotaServicoInterface;
 use sabbajohn\FiscalCore\Contracts\NFSeNacionalCapabilitiesInterface;
+use sabbajohn\FiscalCore\Contracts\NfseNacionalCncInterface;
+use sabbajohn\FiscalCore\Contracts\NfseNacionalDistribuicaoInterface;
+use sabbajohn\FiscalCore\Contracts\NfseNacionalParametrizacaoInterface;
 use sabbajohn\FiscalCore\Contracts\NFSeOperationalIntrospectionInterface;
 use sabbajohn\FiscalCore\Contracts\NFSeProviderConfigInterface;
+use sabbajohn\FiscalCore\Contracts\NotaServicoInterface;
+use sabbajohn\FiscalCore\DTO\NFSe\Nacional\NacionalApiResult;
 use sabbajohn\FiscalCore\Support\NFSeEmissionRoutingPolicy;
 use sabbajohn\FiscalCore\Support\NFSeFormPolicy;
-use sabbajohn\FiscalCore\Support\NFSeProviderTranslationPolicy;
 use sabbajohn\FiscalCore\Support\NFSeProviderResolver;
+use sabbajohn\FiscalCore\Support\NFSeProviderTranslationPolicy;
 use sabbajohn\FiscalCore\Support\NFSeResultNormalizer;
 use sabbajohn\FiscalCore\Support\ProviderRegistry;
-use NFePHP\Common\Certificate;
 
 class NFSeAdapter implements NotaServicoInterface
 {
     private NFSeProviderConfigInterface $provider;
+
     private string $municipio;
+
     private string $providerKey;
+
     private array $compatMetadata;
+
     private bool $injectedProvider;
+
     private array $lastEmissionInfo = [];
+
     private array $lastOperationInfo = [];
+
     private NFSeEmissionRoutingPolicy $routingPolicy;
 
     public function __construct(string $municipio, ?NFSeProviderConfigInterface $provider = null)
     {
         $this->municipio = $municipio;
-        $this->routingPolicy = new NFSeEmissionRoutingPolicy();
+        $this->routingPolicy = new NFSeEmissionRoutingPolicy;
 
-        $resolver = new NFSeProviderResolver();
+        $resolver = new NFSeProviderResolver;
         $this->providerKey = $resolver->resolveKey($municipio);
         $this->compatMetadata = $resolver->buildMetadata($municipio);
 
         if ($provider !== null) {
             $this->provider = $provider;
             $this->injectedProvider = true;
+
             return;
         }
 
@@ -67,8 +79,14 @@ class NFSeAdapter implements NotaServicoInterface
                 'exception' => [
                     'class' => get_class($e),
                     'message' => $e->getMessage(),
+                    'details' => property_exists($e, 'details') && is_array($e->details) ? $e->details : [],
                 ],
             ];
+            if (method_exists($provider, 'getLastEmissionContext')) {
+                $info['artifacts'] = array_merge((array) ($info['artifacts'] ?? []), [
+                    'emission_context' => $provider->getLastEmissionContext(),
+                ]);
+            }
             $this->lastEmissionInfo = $info;
             $this->lastOperationInfo = ['operation' => 'emitir'] + $info;
 
@@ -86,6 +104,11 @@ class NFSeAdapter implements NotaServicoInterface
                 ? $provider->getLastOperationArtifacts()
                 : null,
         ];
+        if (method_exists($provider, 'getLastEmissionContext')) {
+            $info['artifacts'] = array_merge((array) ($info['artifacts'] ?? []), [
+                'emission_context' => $provider->getLastEmissionContext(),
+            ]);
+        }
         $this->lastEmissionInfo = $info;
         $this->lastOperationInfo = ['operation' => 'emitir'] + $info;
 
@@ -118,13 +141,27 @@ class NFSeAdapter implements NotaServicoInterface
 
     public function substituir(string $chave, array $dados): string
     {
-        $result = $this->provider->substituir($chave, $dados);
-        $this->lastOperationInfo = $this->buildProviderOperationInfo('substituir', $this->provider, [
-            'chave' => $chave,
-            'resultado' => $result,
-        ]);
+        try {
+            $result = $this->provider->substituir($chave, $dados);
+            $this->lastOperationInfo = $this->buildProviderOperationInfo('substituir', $this->provider, [
+                'chave' => $chave,
+                'resultado' => $result,
+            ]);
 
-        return $result;
+            return $result;
+        } catch (\Throwable $exception) {
+            // Preserve the provider introspection state even when the transport fails.
+            // The request XML is essential for auditing an indeterminate substitution.
+            $this->lastOperationInfo = $this->buildProviderOperationInfo('substituir', $this->provider, [
+                'chave' => $chave,
+                'exception' => [
+                    'class' => $exception::class,
+                    'message' => $exception->getMessage(),
+                ],
+            ]);
+
+            throw $exception;
+        }
     }
 
     public function consultarPorRps(array $identificacaoRps): NFSeConsultaResultInterface
@@ -221,6 +258,51 @@ class NFSeAdapter implements NotaServicoInterface
     public function consultarConvenioMunicipio(string $codigoMunicipio, bool $forceRefresh = false): array
     {
         return $this->requireNacionalCapabilities()->consultarConvenioMunicipio($codigoMunicipio, $forceRefresh);
+    }
+
+    public function consultarParametrizacaoNacional(string $recurso, array $params, bool $forceRefresh = false): NacionalApiResult
+    {
+        $provider = $this->provider;
+        if (! $provider instanceof NfseNacionalParametrizacaoInterface) {
+            throw new \RuntimeException('Provider não suporta parametrização Nacional.');
+        }
+
+        return match ($recurso) {
+            'aliquota' => $provider->consultarAliquota((string) $params['municipio'], (string) $params['servico'], (string) $params['competencia'], $forceRefresh),
+            'historico-aliquotas' => $provider->consultarHistoricoAliquotas((string) $params['municipio'], (string) $params['servico'], $forceRefresh),
+            'beneficio' => $provider->consultarBeneficio((string) $params['municipio'], (string) $params['beneficio'], (string) $params['competencia'], $forceRefresh),
+            'convenio' => $provider->consultarConvenio((string) $params['municipio'], $forceRefresh),
+            'regimes-especiais' => $provider->consultarRegimesEspeciais((string) $params['municipio'], (string) $params['servico'], (string) $params['competencia'], $forceRefresh),
+            'retencoes' => $provider->consultarRetencoes((string) $params['municipio'], (string) $params['competencia'], $forceRefresh),
+            default => throw new \InvalidArgumentException('Recurso de parametrização Nacional inválido.'),
+        };
+    }
+
+    public function consultarCadastroCncNacional(string $municipio, string $documento, ?string $inscricaoMunicipal = null, bool $forceRefresh = false): NacionalApiResult
+    {
+        if (! $this->provider instanceof NfseNacionalCncInterface) {
+            throw new \RuntimeException('Provider não suporta consulta CNC Nacional.');
+        }
+
+        return $this->provider->consultarCadastroCnc($municipio, $documento, $inscricaoMunicipal, $forceRefresh);
+    }
+
+    public function distribuirDfeNacional(string $nsu, ?string $cnpj = null, bool $lote = true): NacionalApiResult
+    {
+        if (! $this->provider instanceof NfseNacionalDistribuicaoInterface) {
+            throw new \RuntimeException('Provider não suporta distribuição Nacional.');
+        }
+
+        return $this->provider->distribuirDfe($nsu, $cnpj, $lote);
+    }
+
+    public function consultarEventosDistribuidosNacional(string $chave): NacionalApiResult
+    {
+        if (! $this->provider instanceof NfseNacionalDistribuicaoInterface) {
+            throw new \RuntimeException('Provider não suporta eventos distribuídos.');
+        }
+
+        return $this->provider->consultarEventosDistribuidos($chave);
     }
 
     public function validarLayoutDps(array $payload, bool $checkCatalog = true): array
@@ -324,16 +406,9 @@ class NFSeAdapter implements NotaServicoInterface
     /** @return list<string> */
     private function normalizeSupportedOperations(array $operations): array
     {
-        $aliases = [
-            'cancelar_nfse' => 'cancelar',
-            'substituir_nfse' => 'substituir',
-            'consultar_nfse_numero' => 'consultar',
-            'consultar_nfse_rps' => 'consultar_por_rps',
-        ];
-        return array_values(array_unique(array_map(
-            static fn (mixed $operation): string => $aliases[(string) $operation] ?? (string) $operation,
-            $operations,
-        )));
+        $aliases = ['cancelar_nfse' => 'cancelar', 'substituir_nfse' => 'substituir', 'consultar_nfse_numero' => 'consultar', 'consultar_nfse_rps' => 'consultar_por_rps'];
+
+        return array_values(array_unique(array_map(static fn (mixed $operation): string => $aliases[(string) $operation] ?? (string) $operation, $operations)));
     }
 
     public function getLastEmissionInfo(): array
@@ -353,7 +428,7 @@ class NFSeAdapter implements NotaServicoInterface
         $municipioIbge = (string) ($this->provider->getCodigoMunicipio() ?: ($config['codigo_municipio'] ?? ''));
         $municipioNome = (string) ($config['municipio_nome'] ?? $this->municipio);
 
-        return (new NFSeFormPolicy())->build(
+        return (new NFSeFormPolicy)->build(
             $this->providerKey,
             $layoutFamily,
             $municipioIbge,
@@ -375,7 +450,7 @@ class NFSeAdapter implements NotaServicoInterface
 
     private function requireNacionalCapabilities(): NFSeNacionalCapabilitiesInterface
     {
-        if (!$this->provider instanceof NFSeNacionalCapabilitiesInterface) {
+        if (! $this->provider instanceof NFSeNacionalCapabilitiesInterface) {
             throw new \RuntimeException(
                 "Provider '{$this->municipio}' não suporta capacidades avançadas da NFSe Nacional"
             );
@@ -411,7 +486,7 @@ class NFSeAdapter implements NotaServicoInterface
 
         $parsedResponse = is_array($info['parsed_response'] ?? null) ? $info['parsed_response'] : null;
         if ($parsedResponse !== null) {
-            $info['normalized_result'] = (new NFSeResultNormalizer())->normalizeOperacao(
+            $info['normalized_result'] = (new NFSeResultNormalizer)->normalizeOperacao(
                 $operation,
                 $parsedResponse,
                 is_array($info['artifacts'] ?? null) ? $info['artifacts'] : [],

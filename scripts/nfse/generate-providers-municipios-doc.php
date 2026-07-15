@@ -10,18 +10,22 @@ $options = getopt('', [
     'catalog::',
     'families::',
     'output::',
+    'generated-at::',
+    'dry-run',
 ]);
 
-$catalogPath = trim((string) ($options['catalog'] ?? ($root . '/config/nfse/providers-catalog.json')));
-$familiesPath = trim((string) ($options['families'] ?? ($root . '/config/nfse/nfse-provider-families.json')));
-$outputPath = trim((string) ($options['output'] ?? ($root . '/docs/NFSE-PROVIDERS-MUNICIPIOS.md')));
+$catalogPath = trim((string) ($options['catalog'] ?? ($root.'/config/nfse/providers-catalog.json')));
+$familiesPath = trim((string) ($options['families'] ?? ($root.'/config/nfse/nfse-provider-families.json')));
+$outputPath = trim((string) ($options['output'] ?? ($root.'/docs/NFSE-PROVIDERS-MUNICIPIOS.md')));
+$generatedAt = trim((string) ($options['generated-at'] ?? gmdate('Y-m-d H:i:s').' UTC'));
+$dryRun = array_key_exists('dry-run', $options);
 
-if (!is_file($catalogPath)) {
+if (! is_file($catalogPath)) {
     fwrite(STDERR, "Catalogo NFSe nao encontrado: {$catalogPath}\n");
     exit(1);
 }
 
-if (!is_file($familiesPath)) {
+if (! is_file($familiesPath)) {
     fwrite(STDERR, "Families NFSe nao encontrado: {$familiesPath}\n");
     exit(1);
 }
@@ -29,7 +33,7 @@ if (!is_file($familiesPath)) {
 $catalog = json_decode((string) file_get_contents($catalogPath), true, 512, JSON_THROW_ON_ERROR);
 $families = json_decode((string) file_get_contents($familiesPath), true, 512, JSON_THROW_ON_ERROR);
 
-if (!is_array($catalog) || !is_array($families)) {
+if (! is_array($catalog) || ! is_array($families)) {
     fwrite(STDERR, "JSON invalido em catalog/families.\n");
     exit(1);
 }
@@ -38,7 +42,7 @@ $municipios = is_array($catalog['municipios'] ?? null) ? $catalog['municipios'] 
 $byFamily = [];
 
 foreach ($municipios as $ibge => $entry) {
-    if (!is_array($entry)) {
+    if (! is_array($entry)) {
         continue;
     }
 
@@ -67,7 +71,7 @@ $lines = [];
 $lines[] = '# NFSe - Provedores Implementados e Municipios Atendidos';
 $lines[] = '';
 $lines[] = 'Base: `config/nfse/nfse-provider-families.json` + `config/nfse/providers-catalog.json`.';
-$lines[] = 'Gerado em: `' . gmdate('Y-m-d H:i:s') . ' UTC`.';
+$lines[] = 'Gerado em: `'.$generatedAt.'`.';
 $lines[] = '';
 $lines[] = 'Legenda: considera somente municipios `active=true`; entradas tecnicas (`UF=AN/XX`) sao separadas na contagem.';
 $lines[] = '';
@@ -75,7 +79,7 @@ $lines[] = '| Provider family | Provider class | Municipios reais | Entradas tec
 $lines[] = '| --- | --- | ---: | ---: | --- |';
 
 foreach ($families as $familyKey => $familyConfig) {
-    if (!is_array($familyConfig)) {
+    if (! is_array($familyConfig)) {
         continue;
     }
 
@@ -87,7 +91,7 @@ foreach ($families as $familyKey => $familyConfig) {
         static fn (array $a, array $b): int => [$a['uf'], $a['nome'], $a['ibge']] <=> [$b['uf'], $b['nome'], $b['ibge']]
     );
 
-    $real = array_values(array_filter($items, static fn (array $m): bool => !($m['is_technical'] ?? false)));
+    $real = array_values(array_filter($items, static fn (array $m): bool => ! ($m['is_technical'] ?? false)));
     $technical = array_values(array_filter($items, static fn (array $m): bool => (bool) ($m['is_technical'] ?? false)));
 
     $municipiosLabel = '-';
@@ -121,7 +125,15 @@ $lines[] = '';
 $lines[] = '- `php scripts/nfse/generate-providers-municipios-doc.php`';
 $lines[] = '- `php scripts/nfse/generate-providers-municipios-doc.php --output=docs/NFSE-PROVIDERS-MUNICIPIOS.md`';
 
-file_put_contents($outputPath, implode(PHP_EOL, $lines) . PHP_EOL);
+$content = implode(PHP_EOL, $lines).PHP_EOL;
 
-echo "Documento gerado: {$outputPath}\n";
+if (! $dryRun) {
+    file_put_contents($outputPath, $content);
+}
+
+echo json_encode([
+    'dry_run' => $dryRun,
+    'output' => $outputPath,
+    'written' => $dryRun ? [] : [$outputPath],
+], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR).PHP_EOL;
 exit(0);

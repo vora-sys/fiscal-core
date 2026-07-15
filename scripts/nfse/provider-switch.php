@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 use sabbajohn\FiscalCore\Support\NFSeMunicipalCatalog;
 
-require dirname(__DIR__, 2) . '/vendor/autoload.php';
+require dirname(__DIR__, 2).'/vendor/autoload.php';
 
 $options = getopt('', [
     'list',
@@ -21,7 +21,7 @@ $options = getopt('', [
 $operation = resolveOperation($options);
 $dryRun = array_key_exists('dry-run', $options);
 $root = dirname(__DIR__, 2);
-$overridePath = trim((string) ($options['file'] ?? ($root . '/config/nfse/municipio-provider-overrides.json')));
+$overridePath = trim((string) ($options['file'] ?? ($root.'/config/nfse/municipio-provider-overrides.json')));
 
 $document = loadOverridesDocument($overridePath);
 
@@ -32,7 +32,7 @@ if ($operation === 'list') {
         'file' => $overridePath,
         'count' => count($document['overrides']),
         'overrides' => $document['overrides'],
-    ], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) . PHP_EOL;
+    ], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES).PHP_EOL;
     exit(0);
 }
 
@@ -42,7 +42,7 @@ if ($municipioInput === '') {
     exit(1);
 }
 
-$catalog = new NFSeMunicipalCatalog($root . '/config/nfse/providers-catalog.json');
+$catalog = new NFSeMunicipalCatalog($root.'/config/nfse/providers-catalog.json');
 $resolved = $catalog->resolveMunicipio($municipioInput);
 if ($resolved === null) {
     fwrite(STDERR, "Município '{$municipioInput}' não encontrado no catálogo.\n");
@@ -61,7 +61,7 @@ if ($operation === 'set') {
         exit(1);
     }
 
-    $providerKey = resolveProviderKey($providerInput, $root . '/config/nfse/nfse-provider-families.json');
+    $providerKey = resolveProviderKey($providerInput, $root.'/config/nfse/nfse-provider-families.json');
     $entry = [
         'provider_family' => $providerKey,
         'active' => true,
@@ -82,7 +82,7 @@ if ($operation === 'set') {
     $document['updated_at'] = gmdate('c');
     ksort($document['overrides']);
 
-    if (!$dryRun) {
+    if (! $dryRun) {
         saveOverridesDocument($overridePath, $document);
     }
 
@@ -98,7 +98,7 @@ if ($operation === 'set') {
         ],
         'before' => $before,
         'after' => $entry,
-    ], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) . PHP_EOL;
+    ], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES).PHP_EOL;
 
     exit(0);
 }
@@ -110,7 +110,7 @@ if (array_key_exists($ibge, $document['overrides'])) {
     $removed = true;
 }
 
-if (!$dryRun) {
+if (! $dryRun) {
     saveOverridesDocument($overridePath, $document);
 }
 
@@ -126,12 +126,12 @@ echo json_encode([
     ],
     'removed' => $removed,
     'before' => $before,
-], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) . PHP_EOL;
+], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES).PHP_EOL;
 
 exit(0);
 
 /**
- * @param array<string, mixed> $options
+ * @param  array<string, mixed>  $options
  */
 function resolveOperation(array $options): string
 {
@@ -155,7 +155,7 @@ function resolveOperation(array $options): string
  */
 function loadOverridesDocument(string $path): array
 {
-    if (!is_file($path)) {
+    if (! is_file($path)) {
         return [
             'version' => 1,
             'updated_at' => null,
@@ -176,7 +176,7 @@ function loadOverridesDocument(string $path): array
         exit(1);
     }
 
-    if (!is_array($data)) {
+    if (! is_array($data)) {
         return [
             'version' => 1,
             'updated_at' => null,
@@ -194,7 +194,7 @@ function loadOverridesDocument(string $path): array
 }
 
 /**
- * @param array{version:int,updated_at:?string,overrides:array<string,mixed>} $document
+ * @param  array{version:int,updated_at:?string,overrides:array<string,mixed>}  $document
  */
 function saveOverridesDocument(string $path, array $document): void
 {
@@ -203,7 +203,7 @@ function saveOverridesDocument(string $path, array $document): void
         JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR
     );
 
-    file_put_contents($path, $encoded . PHP_EOL);
+    file_put_contents($path, $encoded.PHP_EOL);
 }
 
 function resolveProviderKey(string $input, string $familiesPath): string
@@ -221,7 +221,7 @@ function resolveProviderKey(string $input, string $familiesPath): string
         exit(1);
     }
 
-    if (!is_array($families)) {
+    if (! is_array($families)) {
         fwrite(STDERR, "Estrutura inválida de famílias em {$familiesPath}\n");
         exit(1);
     }

@@ -18,7 +18,7 @@ if ($family === '') {
 $layoutFamily = strtoupper(trim((string) ($options['layout-family'] ?? $family)));
 $schemaPackage = strtoupper(trim((string) ($options['schema-package'] ?? $family)));
 $dryRun = array_key_exists('dry-run', $options);
-$className = str_replace(' ', '', ucwords(strtolower(str_replace(['_', '-'], ' ', $family)))) . 'Provider';
+$className = str_replace(' ', '', ucwords(strtolower(str_replace(['_', '-'], ' ', $family)))).'Provider';
 $basePath = "build/nfse-scaffold/families/{$family}";
 
 echo json_encode([
@@ -35,4 +35,4 @@ echo json_encode([
         ['path' => "{$basePath}/snippets/nfse-provider-family.json"],
         ['path' => "{$basePath}/docs/nfse-providers/{$family}.md"],
     ],
-], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . PHP_EOL;
+], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES).PHP_EOL;

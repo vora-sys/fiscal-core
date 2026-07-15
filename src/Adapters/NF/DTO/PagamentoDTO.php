@@ -16,7 +16,7 @@ class PagamentoDTO
         public ?string $tBand = null,       // Bandeira do cartão (01=Visa, 02=Master, etc)
         public ?string $cAut = null,        // Autorização da operação
     ) {}
-    
+
     /**
      * Pagamento em dinheiro
      */
@@ -24,7 +24,7 @@ class PagamentoDTO
     {
         return new self(tPag: '01', vPag: $valor);
     }
-    
+
     /**
      * Pagamento com cartão de crédito
      */
@@ -43,7 +43,7 @@ class PagamentoDTO
             cAut: $autorizacao
         );
     }
-    
+
     /**
      * Pagamento com cartão de débito
      */
@@ -62,7 +62,7 @@ class PagamentoDTO
             cAut: $autorizacao
         );
     }
-    
+
     /**
      * Pagamento via PIX
      */
@@ -70,16 +70,25 @@ class PagamentoDTO
     {
         return new self(tPag: '17', vPag: $valor);
     }
-    
+
     public function toStdClass(): \stdClass
     {
-        $obj = new \stdClass();
+        $obj = new \stdClass;
         $obj->tPag = $this->tPag;
         $obj->vPag = $this->vPag;
-        if ($this->tpIntegra !== null) $obj->tpIntegra = $this->tpIntegra;
-        if ($this->cnpj !== null) $obj->cnpj = $this->cnpj;
-        if ($this->tBand !== null) $obj->tBand = $this->tBand;
-        if ($this->cAut !== null) $obj->cAut = $this->cAut;
+        if ($this->tpIntegra !== null) {
+            $obj->tpIntegra = $this->tpIntegra;
+        }
+        if ($this->cnpj !== null) {
+            $obj->cnpj = $this->cnpj;
+        }
+        if ($this->tBand !== null) {
+            $obj->tBand = $this->tBand;
+        }
+        if ($this->cAut !== null) {
+            $obj->cAut = $this->cAut;
+        }
+
         return $obj;
     }
 }

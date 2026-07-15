@@ -2,12 +2,12 @@
 
 namespace sabbajohn\FiscalCore\Adapters\NF;
 
-use sabbajohn\FiscalCore\Contracts\NotaFiscalInterface;
+use NFePHP\NFe\Tools;
 use sabbajohn\FiscalCore\Adapters\NF\Builder\NotaFiscalBuilder;
 use sabbajohn\FiscalCore\Adapters\NF\Core\NotaFiscal;
+use sabbajohn\FiscalCore\Contracts\NotaFiscalInterface;
 use sabbajohn\FiscalCore\Support\ManifestationType;
 use sabbajohn\FiscalCore\Support\SefazAdvancedMethodRegistry;
-use NFePHP\NFe\Tools;
 
 /**
  * Adapter para NFe (modelo 55)
@@ -16,7 +16,9 @@ use NFePHP\NFe\Tools;
 class NFeAdapter implements NotaFiscalInterface
 {
     private Tools $tools;
+
     private ?string $lastSignedXml = null;
+
     private ?string $lastResponseXml = null;
 
     public function __construct(Tools $tools)
@@ -27,9 +29,10 @@ class NFeAdapter implements NotaFiscalInterface
     /**
      * Emite uma NFe a partir de array de dados
      * Usa o Builder para construir a nota de forma type-safe
-     * 
-     * @param array $dados Dados da nota fiscal
+     *
+     * @param  array  $dados  Dados da nota fiscal
      * @return string XML de retorno da SEFAZ
+     *
      * @throws \Exception Se houver erro na construção ou envio
      */
     public function emitir(array $dados): string
@@ -39,17 +42,17 @@ class NFeAdapter implements NotaFiscalInterface
 
         // Gera o XML uma única vez; toXml() já valida a nota e o Make internamente.
         $xml = $nota->toXml();
-        
+
         // Assina o XML
         $xmlAssinado = $this->tools->signNFe($xml);
 
         $lote = is_array($dados['lote'] ?? null) ? $dados['lote'] : [];
         $idLote = preg_replace('/\D/', '', (string) ($lote['idLote'] ?? '')) ?: '1';
         $indSinc = (int) ($lote['indSinc'] ?? 1);
-        if (!in_array($indSinc, [0, 1], true)) {
+        if (! in_array($indSinc, [0, 1], true)) {
             $indSinc = 1;
         }
-        
+
         // Envia para SEFAZ
         $this->lastSignedXml = $xmlAssinado;
         $this->lastResponseXml = $this->tools->sefazEnviaLote([$xmlAssinado], $idLote, $indSinc);
@@ -78,7 +81,7 @@ class NFeAdapter implements NotaFiscalInterface
      */
     public static function builder(): NotaFiscalBuilder
     {
-        return new NotaFiscalBuilder();
+        return new NotaFiscalBuilder;
     }
 
     /**
@@ -104,6 +107,7 @@ class NFeAdapter implements NotaFiscalInterface
     {
         // sped-nfe v5 usa (serie, numeroInicial, numeroFinal, justificativa, tpAmb, ano[2])
         $ano2Digitos = str_pad((string) ($ano % 100), 2, '0', STR_PAD_LEFT);
+
         return $this->captureResponse(
             $this->tools->sefazInutiliza($serie, $numeroInicial, $numeroFinal, $justificativa, null, $ano2Digitos)
         );
@@ -111,13 +115,8 @@ class NFeAdapter implements NotaFiscalInterface
 
     /**
      * Consulta notas emitidas para estabelecimento(Notas de entrada)
-     * @param int $ultimoNsu
-     * @param int $numNSU
-     * @param string|null $chave
-     * @param string $fonte
-     * @return string
      */
-    public function consultaNotasEmitidasParaEstabelecimento(int $ultimoNsu=0, int $numNSU=0, ?string $chave=null, string $fonte='AN'): string
+    public function consultaNotasEmitidasParaEstabelecimento(int $ultimoNsu = 0, int $numNSU = 0, ?string $chave = null, string $fonte = 'AN'): string
     {
         return $this->captureResponse($this->tools->sefazDistDFe($ultimoNsu, $numNSU, $chave, $fonte));
     }
@@ -213,7 +212,7 @@ class NFeAdapter implements NotaFiscalInterface
 
     public function registrarEventoAvancado(string $metodo, array|\stdClass $dados, array $opcoes = []): string
     {
-        if (!SefazAdvancedMethodRegistry::isAllowedForModel($metodo, 55)) {
+        if (! SefazAdvancedMethodRegistry::isAllowedForModel($metodo, 55)) {
             throw new \InvalidArgumentException("Método SEFAZ não suportado para NFe: {$metodo}");
         }
 
@@ -280,19 +279,19 @@ class NFeAdapter implements NotaFiscalInterface
             return $eventos;
         }
 
-        $std = new \stdClass();
+        $std = new \stdClass;
         $std->evento = [];
 
         foreach ($eventos as $evento) {
             $item = $this->toStdClass($evento);
             $tipo = $item->tipo ?? $item->tpEvento ?? null;
-            if (is_string($tipo) && !ctype_digit($tipo)) {
+            if (is_string($tipo) && ! ctype_digit($tipo)) {
                 $tipo = ManifestationType::fromValue($tipo)->eventCode();
             } elseif ($tipo instanceof ManifestationType) {
                 $tipo = $tipo->eventCode();
             }
 
-            $evt = new \stdClass();
+            $evt = new \stdClass;
             $evt->chNFe = (string) ($item->chNFe ?? $item->chave ?? '');
             $evt->tpEvento = (int) $tipo;
             $evt->nSeqEvento = (int) ($item->nSeqEvento ?? $item->sequencia ?? 1);
@@ -309,12 +308,12 @@ class NFeAdapter implements NotaFiscalInterface
             return $eventos;
         }
 
-        $std = new \stdClass();
+        $std = new \stdClass;
         $std->evento = [];
 
         foreach ($eventos as $evento) {
             $item = $this->toStdClass($evento);
-            $evt = new \stdClass();
+            $evt = new \stdClass;
             $evt->chave = (string) ($item->chave ?? $item->chNFe ?? '');
             $evt->tpEvento = (int) ($item->tpEvento ?? $item->tipo_evento ?? $item->tipoEvento ?? 0);
             $evt->nSeqEvento = (int) ($item->nSeqEvento ?? $item->sequencia ?? 1);

@@ -2130,6 +2130,28 @@
         "provider_class": "sabbajohn\\FiscalCore\\Providers\\NFSe\\NacionalProvider",
         "layout_family": "NACIONAL",
         "schema_root": "src/Providers/NFSe/Xsd/1.01",
+        "active_layout_version": "1.01",
+        "layout_profiles": {
+            "1.01": {
+                "enabled": true,
+                "xsd": "src/Providers/NFSe/Xsd/1.01/DPS_v1.01.xsd",
+                "capabilities": {
+                    "declaracao_ibs_cbs": true,
+                    "cnpj_alfanumerico": false,
+                    "simples_nacional_rtc": false
+                }
+            },
+            "1.04": {
+                "enabled": false,
+                "xsd": null,
+                "capabilities": {
+                    "declaracao_ibs_cbs": true,
+                    "cnpj_alfanumerico": true,
+                    "simples_nacional_rtc": true
+                },
+                "activation_note": "Aguardando XSD oficial e homologação específica da NT 009."
+            }
+        },
         "xsd_entrypoints": {
             "emitir": "DPS_v1.01.xsd"
         },
@@ -2230,13 +2252,19 @@
             "baixar_danfse": "pdf"
         },
         "cnc_endpoints": {
-            "contribuinte": "cnc:/contribuintes/{cpfCnpj}",
-            "habilitacao": "cnc:/contribuintes/{cpfCnpj}/habilitacao"
+            "cadastro": "cnc_consulta:/cad"
         },
         "catalog_endpoints": {
-            "municipios": "parametrizacao:/catalogos/municipios",
             "aliquotas_municipio": "parametrizacao:/{codigo_municipio}/{codigoServico}/{competencia}/aliquota",
-            "convenio_municipio": "parametrizacao:/{codigo_municipio}/convenio"
+            "historico_aliquotas": "parametrizacao:/{codigo_municipio}/{codigoServico}/historicoaliquotas",
+            "beneficio": "parametrizacao:/{codigo_municipio}/{numeroBeneficio}/{competencia}/beneficio",
+            "convenio_municipio": "parametrizacao:/{codigo_municipio}/convenio",
+            "regimes_especiais": "parametrizacao:/{codigo_municipio}/{codigoServico}/{competencia}/regimes_especiais",
+            "retencoes": "parametrizacao:/{codigo_municipio}/{competencia}/retencoes"
+        },
+        "distribution_endpoints": {
+            "dfe": "adn_contribuintes:/DFe/{NSU}",
+            "eventos": "adn_contribuintes:/NFSe/{chaveAcesso}/Eventos"
         },
         "aliquota_format": "decimal",
         "dps_send_paliq": false,
@@ -2269,7 +2297,16 @@
             "consultar_nfse_rps",
             "consultar_lote",
             "baixar_xml",
-            "baixar_danfse"
+            "baixar_danfse",
+            "parametrizacao_aliquota",
+            "parametrizacao_historico_aliquotas",
+            "parametrizacao_beneficio",
+            "parametrizacao_convenio",
+            "parametrizacao_regimes_especiais",
+            "parametrizacao_retencoes",
+            "cnc_consulta_cadastro",
+            "distribuicao_dfe_contribuinte",
+            "distribuicao_eventos"
         ]
     }
 }

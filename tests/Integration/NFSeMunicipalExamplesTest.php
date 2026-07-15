@@ -6,7 +6,7 @@ use PHPUnit\Framework\TestCase;
 
 final class NFSeMunicipalExamplesTest extends TestCase
 {
-    public function testMultiplosMunicipiosExampleRunsWithConsistentPayloads(): void
+    public function test_multiplos_municipios_example_runs_with_consistent_payloads(): void
     {
         $output = $this->runScript('examples/avancado/01-multiplos-municipios.php');
 
@@ -17,7 +17,7 @@ final class NFSeMunicipalExamplesTest extends TestCase
         $this->assertStringNotContainsString('Dados inválidos', $output);
     }
 
-    public function testFunctionalMunicipalEmissionExampleRunsWithoutCallingPrefeitura(): void
+    public function test_functional_municipal_emission_example_runs_without_calling_prefeitura(): void
     {
         $output = $this->runScript('examples/avancado/03-emissao-municipal-funcional.php');
 
@@ -30,7 +30,7 @@ final class NFSeMunicipalExamplesTest extends TestCase
     private function runScript(string $relativePath): string
     {
         $root = dirname(__DIR__, 2);
-        $script = $root . '/' . $relativePath;
+        $script = $root.'/'.$relativePath;
         $command = sprintf('env -u OPENSSL_CONF php %s 2>&1', escapeshellarg($script));
         exec($command, $lines, $exitCode);
 

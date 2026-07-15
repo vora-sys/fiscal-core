@@ -53,7 +53,7 @@ final class NFSeMunicipalPreviewSupport
         }
 
         $pkcs12 = '';
-        if (!@openssl_pkcs12_export($x509, $pkcs12, $privateKey, 'preview-secret')) {
+        if (! @openssl_pkcs12_export($x509, $pkcs12, $privateKey, 'preview-secret')) {
             throw new RuntimeException('Falha ao exportar certificado PKCS#12 de preview NFSe.');
         }
 
@@ -66,10 +66,9 @@ final class NFSeMunicipalPreviewSupport
     {
         $responseXml = self::successSoapResponse($municipio);
 
-        return new class($responseXml) implements NFSeSoapTransportInterface {
-            public function __construct(private readonly string $responseXml)
-            {
-            }
+        return new class($responseXml) implements NFSeSoapTransportInterface
+        {
+            public function __construct(private readonly string $responseXml) {}
 
             public function send(string $endpoint, string $envelope, array $options = []): array
             {

@@ -16,7 +16,7 @@ final class JoinvilleMunicipalDanfseRenderer implements MunicipalDanfseRendererI
         $data = $this->extractDocumentData($xmlNfse);
         $html = $this->buildHtml($data);
 
-        $options = new Options();
+        $options = new Options;
         $options->set('isRemoteEnabled', false);
         $options->set('defaultFont', 'DejaVu Sans');
 
@@ -30,8 +30,8 @@ final class JoinvilleMunicipalDanfseRenderer implements MunicipalDanfseRendererI
 
     private function extractDocumentData(string $xmlNfse): array
     {
-        $dom = new \DOMDocument();
-        if (!@$dom->loadXML($xmlNfse)) {
+        $dom = new \DOMDocument;
+        if (! @$dom->loadXML($xmlNfse)) {
             throw new RuntimeException('XML final da NFSe de Joinville invalido para gerar o DANFSe.');
         }
 

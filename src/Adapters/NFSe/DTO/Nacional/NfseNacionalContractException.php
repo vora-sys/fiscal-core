@@ -7,8 +7,8 @@ use InvalidArgumentException;
 class NfseNacionalContractException extends InvalidArgumentException
 {
     /**
-     * @param list<string> $expectedFields
-     * @param list<string> $legacyFields
+     * @param  list<string>  $expectedFields
+     * @param  list<string>  $legacyFields
      * @param list<array{
      *     path:string,
      *     reason:string,

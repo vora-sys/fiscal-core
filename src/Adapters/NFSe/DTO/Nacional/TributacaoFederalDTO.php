@@ -5,14 +5,12 @@ namespace sabbajohn\FiscalCore\Adapters\NFSe\DTO\Nacional;
 final class TributacaoFederalDTO
 {
     /**
-     * @param array<string,mixed> $data
+     * @param  array<string,mixed>  $data
      */
-    private function __construct(private array $data)
-    {
-    }
+    private function __construct(private array $data) {}
 
     /**
-     * @param array<string,mixed> $payload
+     * @param  array<string,mixed>  $payload
      */
     public static function fromArray(array $payload): self
     {
@@ -92,9 +90,9 @@ final class TributacaoFederalDTO
     }
 
     /**
-     * @param array<string,mixed> $payload
-     * @param array<string,mixed> $federal
-     * @param array<string,mixed> $servico
+     * @param  array<string,mixed>  $payload
+     * @param  array<string,mixed>  $federal
+     * @param  array<string,mixed>  $servico
      * @return array<string,mixed>
      */
     private static function resolvePisCofins(array $payload, array $federal, array $servico): array
@@ -135,7 +133,7 @@ final class TributacaoFederalDTO
         if ($tpRet !== null) {
             $resolved['tpRetPisCofins'] = $tpRet;
         }
-        if ($resolved !== [] && !isset($resolved['CST'])) {
+        if ($resolved !== [] && ! isset($resolved['CST'])) {
             $resolved['CST'] = '00';
         }
 

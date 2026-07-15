@@ -7,16 +7,23 @@ namespace sabbajohn\FiscalCore\Support;
 final class NFSeFormPolicy
 {
     private const FIELD_SERVICE_MUNICIPAL_CODE = 'servico.cTribMun';
+
     private const FIELD_SERVICE_NATIONAL_TAX_CODE = 'servico.cTribNac';
+
     private const FIELD_SERVICE_NBS = 'servico.cNBS';
+
     private const FIELD_SERVICE_CNAE_CODE = 'servico.codigoCnae';
+
     private const FIELD_SERVICE_ACTIVITY_CODE = 'servico.codigo_atividade';
+
     private const FIELD_SERVICE_BENEFIT_CODE = 'servico.benefit_code';
+
     private const FIELD_PRESTADOR_OP_SIMP_NAC = 'prestador.opSimpNac';
+
     private const FIELD_PRESTADOR_MEI = 'prestador.mei';
 
     /**
-     * @param array<string,mixed> $config
+     * @param  array<string,mixed>  $config
      * @return array<string,mixed>
      */
     public function build(
@@ -64,8 +71,8 @@ final class NFSeFormPolicy
     }
 
     /**
-     * @param array<string,mixed> $base
-     * @param array<string,mixed> $override
+     * @param  array<string,mixed>  $base
+     * @param  array<string,mixed>  $override
      * @return array<string,mixed>
      */
     private function merge(array $base, array $override): array
@@ -111,7 +118,7 @@ final class NFSeFormPolicy
     }
 
     /**
-     * @param array<string,mixed> $policy
+     * @param  array<string,mixed>  $policy
      * @return array<string,mixed>
      */
     private function normalizeFields(array $policy): array
@@ -163,7 +170,7 @@ final class NFSeFormPolicy
     }
 
     /**
-     * @param array<string,string> $labels
+     * @param  array<string,string>  $labels
      * @return array<string,array<string,mixed>>
      */
     private function defaultFieldSchema(array $labels): array

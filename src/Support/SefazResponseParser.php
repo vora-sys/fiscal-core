@@ -11,7 +11,7 @@ final class SefazResponseParser
     {
         $common = $this->parseCommonResponse($xml);
         $dom = $this->loadXml($xml);
-        if (!$dom instanceof \DOMDocument) {
+        if (! $dom instanceof \DOMDocument) {
             return $common + ['eventos' => []];
         }
 
@@ -21,7 +21,7 @@ final class SefazResponseParser
 
         if ($eventNodes !== false) {
             foreach ($eventNodes as $eventNode) {
-                if (!$eventNode instanceof \DOMElement) {
+                if (! $eventNode instanceof \DOMElement) {
                     continue;
                 }
 
@@ -85,14 +85,14 @@ final class SefazResponseParser
 
         $dom = new \DOMDocument('1.0', 'UTF-8');
         $previous = libxml_use_internal_errors(true);
-        $loaded = $dom->loadXML('<root>' . $fragment . '</root>');
+        $loaded = $dom->loadXML('<root>'.$fragment.'</root>');
         $errors = libxml_get_errors();
         libxml_clear_errors();
         libxml_use_internal_errors($previous);
 
         if ($loaded === false) {
             $message = $errors[0]->message ?? 'fragmento XML inválido';
-            throw new \InvalidArgumentException('tagAdicional XML inválida: ' . trim($message));
+            throw new \InvalidArgumentException('tagAdicional XML inválida: '.trim($message));
         }
     }
 
@@ -103,11 +103,12 @@ final class SefazResponseParser
         }
 
         $dom = $this->loadXml($xml);
-        if (!$dom instanceof \DOMDocument) {
+        if (! $dom instanceof \DOMDocument) {
             return null;
         }
 
         $xpath = new \DOMXPath($dom);
+
         return $this->firstNodeValue($xpath, $tagNames);
     }
 
@@ -127,7 +128,7 @@ final class SefazResponseParser
     }
 
     /**
-     * @param list<string> $tagNames
+     * @param  list<string>  $tagNames
      */
     private function firstNodeValue(\DOMXPath $xpath, array $tagNames, ?\DOMNode $context = null): ?string
     {

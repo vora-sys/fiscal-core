@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace sabbajohn\FiscalCore\Support;
 
-use JsonException;
 use InvalidArgumentException;
+use JsonException;
 use RuntimeException;
 
 final class NFSeMunicipalCatalog
@@ -14,7 +14,7 @@ final class NFSeMunicipalCatalog
 
     public function __construct(?string $path = null)
     {
-        $path ??= dirname(__DIR__, 2) . '/config/nfse/providers-catalog.json';
+        $path ??= dirname(__DIR__, 2).'/config/nfse/providers-catalog.json';
 
         $this->catalog = $this->loadCatalog($path);
     }
@@ -94,7 +94,7 @@ final class NFSeMunicipalCatalog
     {
         $ibge = trim($ibge);
 
-        if ($ibge === '' || !isset($this->catalog['municipios'][$ibge])) {
+        if ($ibge === '' || ! isset($this->catalog['municipios'][$ibge])) {
             return null;
         }
 
@@ -149,7 +149,7 @@ final class NFSeMunicipalCatalog
 
     private function loadCatalog(string $path): array
     {
-        if (!is_file($path)) {
+        if (! is_file($path)) {
             throw new RuntimeException("Catálogo NFSe municipal não encontrado em: {$path}");
         }
 
@@ -169,19 +169,19 @@ final class NFSeMunicipalCatalog
         }
 
         if (
-            !is_array($data) ||
-            !isset($data['municipios']) || !is_array($data['municipios']) ||
-            !isset($data['aliases']) || !is_array($data['aliases'])
+            ! is_array($data) ||
+            ! isset($data['municipios']) || ! is_array($data['municipios']) ||
+            ! isset($data['aliases']) || ! is_array($data['aliases'])
         ) {
             throw new RuntimeException("Estrutura inválida do catálogo NFSe municipal em: {$path}");
         }
 
-        return $data;
+        return NFSeCatalogRuntime::resolve('municipalities', $data);
     }
 
     private function normalizeMunicipio(string $ibge): array
     {
-        if (!isset($this->catalog['municipios'][$ibge])) {
+        if (! isset($this->catalog['municipios'][$ibge])) {
             throw new RuntimeException("Município IBGE '{$ibge}' não encontrado no catálogo NFSe municipal.");
         }
 

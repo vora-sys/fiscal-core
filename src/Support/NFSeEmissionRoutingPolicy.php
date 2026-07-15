@@ -11,8 +11,7 @@ final class NFSeEmissionRoutingPolicy
 {
     public function __construct(
         private readonly ?ProviderRegistry $registry = null
-    ) {
-    }
+    ) {}
 
     /**
      * @return array{0:string,1:NFSeProviderConfigInterface,2:string}
@@ -55,7 +54,7 @@ final class NFSeEmissionRoutingPolicy
     public function resolveMeiClassification(array $dados): ?bool
     {
         $prestador = $dados['prestador'] ?? null;
-        if (!is_array($prestador)) {
+        if (! is_array($prestador)) {
             return null;
         }
 
@@ -66,7 +65,7 @@ final class NFSeEmissionRoutingPolicy
         }
 
         foreach (['regime_tributario', 'regime', 'tipo_empresa', 'enquadramento'] as $stringKey) {
-            if (!isset($prestador[$stringKey])) {
+            if (! isset($prestador[$stringKey])) {
                 continue;
             }
 

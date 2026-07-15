@@ -2,14 +2,14 @@
 
 declare(strict_types=1);
 
-require_once __DIR__ . '/../../vendor/autoload.php';
-require_once __DIR__ . '/common.php';
+require_once __DIR__.'/../../vendor/autoload.php';
+require_once __DIR__.'/common.php';
 
 use sabbajohn\FiscalCore\Facade\NFSeFacade;
 
 $options = nfseJoinvilleNacionalParseOptions($argv);
 if (($options['help'] ?? false) === true) {
-    echo nfseJoinvilleNacionalUsage(basename((string) $argv[0])) . PHP_EOL;
+    echo nfseJoinvilleNacionalUsage(basename((string) $argv[0])).PHP_EOL;
     exit(0);
 }
 
@@ -29,12 +29,12 @@ if (($options['send'] ?? false) !== true) {
         'layout' => $layout->toArray(),
         'payload' => $payload,
         'xml_preview' => $xml->getData('xml'),
-    ], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) . PHP_EOL;
+    ], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES).PHP_EOL;
     exit(0);
 }
 
 $resultado = $nfse->emitirCompleto($payload);
-echo $resultado->toJson(JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) . PHP_EOL;
+echo $resultado->toJson(JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES).PHP_EOL;
 
 function nfseJoinvilleNacionalUsage(string $scriptName): string
 {
@@ -64,11 +64,13 @@ function nfseJoinvilleNacionalParseOptions(array $argv): array
     foreach (array_slice($argv, 1) as $arg) {
         if ($arg === '--send') {
             $options['send'] = true;
+
             continue;
         }
 
         if ($arg === '--help' || $arg === '-h') {
             $options['help'] = true;
+
             continue;
         }
 
@@ -82,6 +84,7 @@ function nfseJoinvilleNacionalParseOptions(array $argv): array
         ] as $prefix => $key) {
             if (str_starts_with($arg, $prefix)) {
                 $options[$key] = substr($arg, strlen($prefix));
+
                 continue 2;
             }
         }
@@ -113,9 +116,9 @@ function nfseJoinvilleNacionalPayload(array $options): array
     $cTribNac = (string) ($options['c_trib_nac'] ?? '010101');
 
     return [
-        'id' => 'DPS42091022' . $cnpj . $serie . $numero,
+        'id' => 'DPS42091022'.$cnpj.$serie.$numero,
         'tpAmb' => '2',
-        'dhEmi' => $competencia . 'T10:00:00-03:00',
+        'dhEmi' => $competencia.'T10:00:00-03:00',
         'verAplic' => 'fiscal-core-examples',
         'serie' => '1',
         'nDPS' => $numero,

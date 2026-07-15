@@ -3,39 +3,35 @@
 namespace sabbajohn\FiscalCore\Adapters\NF\Builder;
 
 use sabbajohn\FiscalCore\Adapters\NF\Core\NotaFiscal;
+use sabbajohn\FiscalCore\Adapters\NF\DTO\CobrancaDTO;
+use sabbajohn\FiscalCore\Adapters\NF\DTO\CofinsDTO;
+use sabbajohn\FiscalCore\Adapters\NF\DTO\DestinatarioDTO;
+use sabbajohn\FiscalCore\Adapters\NF\DTO\EmitenteDTO;
+use sabbajohn\FiscalCore\Adapters\NF\DTO\IcmsDTO;
+use sabbajohn\FiscalCore\Adapters\NF\DTO\IdentificacaoDTO;
+use sabbajohn\FiscalCore\Adapters\NF\DTO\InfoAdicionalDTO;
+use sabbajohn\FiscalCore\Adapters\NF\DTO\InfoSuplementarDTO;
+use sabbajohn\FiscalCore\Adapters\NF\DTO\PagamentoDTO;
+use sabbajohn\FiscalCore\Adapters\NF\DTO\PisDTO;
+use sabbajohn\FiscalCore\Adapters\NF\DTO\ProdutoDTO;
+use sabbajohn\FiscalCore\Adapters\NF\DTO\ResponsavelTecnicoDTO;
+use sabbajohn\FiscalCore\Adapters\NF\DTO\TotaisDTO;
+use sabbajohn\FiscalCore\Adapters\NF\DTO\TransporteDTO;
+use sabbajohn\FiscalCore\Adapters\NF\Nodes\CobrancaNode;
+use sabbajohn\FiscalCore\Adapters\NF\Nodes\DestinatarioNode;
+use sabbajohn\FiscalCore\Adapters\NF\Nodes\EmitenteNode;
+use sabbajohn\FiscalCore\Adapters\NF\Nodes\IbsCbsNode;
+use sabbajohn\FiscalCore\Adapters\NF\Nodes\IdentificacaoNode;
+use sabbajohn\FiscalCore\Adapters\NF\Nodes\ImpostoNode;
+use sabbajohn\FiscalCore\Adapters\NF\Nodes\ImpostoSeletivoNode;
+use sabbajohn\FiscalCore\Adapters\NF\Nodes\InfoAdicionalNode;
+use sabbajohn\FiscalCore\Adapters\NF\Nodes\InfoSuplementarNode;
+use sabbajohn\FiscalCore\Adapters\NF\Nodes\PagamentoNode;
+use sabbajohn\FiscalCore\Adapters\NF\Nodes\ProdutoNode;
+use sabbajohn\FiscalCore\Adapters\NF\Nodes\ResponsavelTecnicoNode;
+use sabbajohn\FiscalCore\Adapters\NF\Nodes\TotaisNode;
+use sabbajohn\FiscalCore\Adapters\NF\Nodes\TransporteNode;
 use sabbajohn\FiscalCore\Adapters\NF\XmlParser;
-use sabbajohn\FiscalCore\Adapters\NF\DTO\{
-    IdentificacaoDTO,
-    EmitenteDTO,
-    DestinatarioDTO,
-    ProdutoDTO,
-    IcmsDTO,
-    PisDTO,
-    CofinsDTO,
-    PagamentoDTO,
-    TotaisDTO,
-    TransporteDTO,
-    CobrancaDTO,
-    InfoAdicionalDTO,
-    ResponsavelTecnicoDTO,
-    InfoSuplementarDTO
-};
-use sabbajohn\FiscalCore\Adapters\NF\Nodes\{
-    IdentificacaoNode,
-    EmitenteNode,
-    DestinatarioNode,
-    ProdutoNode,
-    ImpostoNode,
-    ImpostoSeletivoNode,
-    IbsCbsNode,
-    PagamentoNode,
-    TotaisNode,
-    TransporteNode,
-    CobrancaNode,
-    InfoAdicionalNode,
-    ResponsavelTecnicoNode,
-    InfoSuplementarNode
-};
 
 /**
  * Builder para construir NotaFiscal a partir de arrays/JSON/XML
@@ -44,36 +40,36 @@ use sabbajohn\FiscalCore\Adapters\NF\Nodes\{
 class NotaFiscalBuilder
 {
     private NotaFiscal $nota;
-    
+
     private function __construct()
     {
-        $this->nota = new NotaFiscal();
+        $this->nota = new NotaFiscal;
     }
-    
+
     /**
      * Cria um builder a partir de XML (string ou arquivo)
-     * 
-     * @param string $xmlContent Conteúdo XML ou caminho do arquivo
-     * @param bool $isFile Se true, $xmlContent é tratado como caminho de arquivo
+     *
+     * @param  string  $xmlContent  Conteúdo XML ou caminho do arquivo
+     * @param  bool  $isFile  Se true, $xmlContent é tratado como caminho de arquivo
      */
     public static function fromXml(string $xmlContent, bool $isFile = false): self
     {
         if ($isFile) {
-            if (!file_exists($xmlContent)) {
+            if (! file_exists($xmlContent)) {
                 throw new \InvalidArgumentException("Arquivo XML não encontrado: {$xmlContent}");
             }
             $xmlContent = file_get_contents($xmlContent);
         }
-        
+
         $parser = new XmlParser($xmlContent);
         $data = $parser->toArray();
-        
+
         return self::fromArray($data);
     }
-    
+
     /**
      * Cria um builder a partir de um array de dados
-     * 
+     *
      * Exemplo de estrutura:
      * [
      *   'identificacao' => [...],
@@ -90,70 +86,70 @@ class NotaFiscalBuilder
      */
     public static function fromArray(array $data): self
     {
-        $builder = new self();
+        $builder = new self;
 
         $layout = self::extractLayoutConfig($data);
         if ($layout !== []) {
             $builder->setLayout($layout['xml_version'] ?? null, $layout['schema'] ?? null);
         }
-        
+
         // Identificação
         if (isset($data['identificacao'])) {
             $builder->setIdentificacao($data['identificacao']);
         }
-        
+
         // Emitente
         if (isset($data['emitente'])) {
             $builder->setEmitente($data['emitente']);
         }
-        
+
         // Destinatário
         if (isset($data['destinatario'])) {
             $builder->setDestinatario($data['destinatario']);
         }
-        
+
         // Itens (produtos + impostos)
         if (isset($data['itens'])) {
             foreach ($data['itens'] as $index => $item) {
                 $builder->addItem($item, $index + 1);
             }
         }
-        
+
         // Pagamentos
         if (isset($data['pagamentos'])) {
             $builder->setPagamentos($data['pagamentos']);
         }
-        
+
         // Totais
         if (isset($data['totais'])) {
             $builder->setTotais($data['totais']);
         }
-        
+
         // Transporte
         if (isset($data['transporte'])) {
             $builder->setTransporte($data['transporte']);
         }
-        
+
         // Cobrança
         if (isset($data['cobranca'])) {
             $builder->setCobranca($data['cobranca']);
         }
-        
+
         // Informações adicionais
         if (isset($data['infoAdicional'])) {
             $builder->setInfoAdicional($data['infoAdicional']);
         }
-        
+
         // Responsável técnico
         if (isset($data['responsavelTecnico'])) {
             $builder->setResponsavelTecnico($data['responsavelTecnico']);
         }
-        
+
         // Info suplementar (NFCe)
         if (isset($data['infoSuplementar'])) {
             $builder->setInfoSuplementar($data['infoSuplementar']);
         }
-        
+
         return $builder;
     }
 
@@ -163,7 +159,7 @@ class NotaFiscalBuilder
 
         return $this;
     }
-    
+
     /**
      * Define a identificação da nota
      */
@@ -190,13 +186,14 @@ class NotaFiscalBuilder
             indPres: $data['indPres'] ?? 1,
             procEmi: $data['procEmi'] ?? 0,
             verProc: $data['verProc'] ?? '1.0.0',
-            indIntermed: isset($data['indIntermed']) ? (int)$data['indIntermed'] : null,
+            indIntermed: isset($data['indIntermed']) ? (int) $data['indIntermed'] : null,
         );
-        
+
         $this->nota->addNode(new IdentificacaoNode($dto));
+
         return $this;
     }
-    
+
     /**
      * Define o emitente
      */
@@ -222,11 +219,12 @@ class NotaFiscalBuilder
             cnae: $data['cnae'] ?? null,
             crt: $data['crt'] ?? 1,
         );
-        
+
         $this->nota->addNode(new EmitenteNode($dto));
+
         return $this;
     }
-    
+
     /**
      * Define o destinatário
      */
@@ -250,11 +248,12 @@ class NotaFiscalBuilder
             email: $data['email'] ?? null,
             indIEDest: $data['indIEDest'] ?? 9,
         );
-        
+
         $this->nota->addNode(new DestinatarioNode($dto));
+
         return $this;
     }
-    
+
     /**
      * Adiciona um item (produto + impostos)
      */
@@ -280,13 +279,13 @@ class NotaFiscalBuilder
             indTot: $produto['indTot'] ?? 1,
             cest: $produto['cest'] ?? null,
         );
-        
+
         $this->nota->addNode(new ProdutoNode($produtoDto));
-        
+
         // Impostos
         if (isset($item['impostos'])) {
             $impostos = $item['impostos'];
-            
+
             // ICMS
             $icmsData = $impostos['icms'];
             $icmsDto = new IcmsDTO(
@@ -301,7 +300,7 @@ class NotaFiscalBuilder
                 pRedBC: $icmsData['pRedBC'] ?? null,
                 motDesICMS: $icmsData['motDesICMS'] ?? null,
             );
-            
+
             // PIS
             $pisDto = null;
             if (isset($impostos['pis'])) {
@@ -313,7 +312,7 @@ class NotaFiscalBuilder
                     vPIS: $pisData['vPIS'] ?? null,
                 );
             }
-            
+
             // COFINS
             $cofinsDto = null;
             if (isset($impostos['cofins'])) {
@@ -325,7 +324,7 @@ class NotaFiscalBuilder
                     vCOFINS: $cofinsData['vCOFINS'] ?? null,
                 );
             }
-            
+
             $this->nota->addNode(new ImpostoNode(
                 $numeroItem,
                 $icmsDto,
@@ -343,17 +342,17 @@ class NotaFiscalBuilder
                 $this->nota->addNode(new IbsCbsNode($numeroItem, $impostos['ibs_cbs']));
             }
         }
-        
+
         return $this;
     }
-    
+
     /**
      * Define as formas de pagamento
      */
     public function setPagamentos(array $pagamentosData): self
     {
         $pagamentos = [];
-        
+
         foreach ($pagamentosData as $pag) {
             $pagamentos[] = new PagamentoDTO(
                 tPag: $pag['tPag'],
@@ -364,11 +363,12 @@ class NotaFiscalBuilder
                 cAut: $pag['cAut'] ?? null,
             );
         }
-        
+
         $this->nota->addNode(new PagamentoNode(...$pagamentos));
+
         return $this;
     }
-    
+
     /**
      * Define os totais da nota
      */
@@ -407,11 +407,12 @@ class NotaFiscalBuilder
             vBCRetPrev: $data['vBCRetPrev'] ?? 0.00,
             vRetPrev: $data['vRetPrev'] ?? 0.00,
         );
-        
+
         $this->nota->addNode(new TotaisNode($dto));
+
         return $this;
     }
-    
+
     /**
      * Define dados de transporte
      */
@@ -432,11 +433,12 @@ class NotaFiscalBuilder
             volumes: $data['volumes'] ?? null,
             lacres: $data['lacres'] ?? null,
         );
-        
+
         $this->nota->addNode(new TransporteNode($dto));
+
         return $this;
     }
-    
+
     /**
      * Define dados de cobrança
      */
@@ -449,11 +451,12 @@ class NotaFiscalBuilder
             valorLiquido: $data['valorLiquido'] ?? null,
             duplicatas: $data['duplicatas'] ?? [],
         );
-        
+
         $this->nota->addNode(new CobrancaNode($dto));
+
         return $this;
     }
-    
+
     /**
      * Define informações adicionais
      */
@@ -465,11 +468,12 @@ class NotaFiscalBuilder
             obsCont: $data['obsCont'] ?? [],
             obsFisco: $data['obsFisco'] ?? [],
         );
-        
+
         $this->nota->addNode(new InfoAdicionalNode($dto));
+
         return $this;
     }
-    
+
     /**
      * Define responsável técnico
      */
@@ -483,11 +487,12 @@ class NotaFiscalBuilder
             idCSRT: $data['idCSRT'] ?? null,
             hashCSRT: $data['hashCSRT'] ?? null,
         );
-        
+
         $this->nota->addNode(new ResponsavelTecnicoNode($dto));
+
         return $this;
     }
-    
+
     /**
      * Define informações suplementares (NFCe)
      */
@@ -497,11 +502,12 @@ class NotaFiscalBuilder
             qrCode: $data['qrCode'],
             urlChave: $data['urlChave'] ?? null,
         );
-        
+
         $this->nota->addNode(new InfoSuplementarNode($dto));
+
         return $this;
     }
-    
+
     /**
      * Retorna a NotaFiscal construída
      */
@@ -511,7 +517,7 @@ class NotaFiscalBuilder
     }
 
     /**
-     * @param array<string,mixed> $data
+     * @param  array<string,mixed>  $data
      * @return array{xml_version?:string|null,schema?:string|null}
      */
     private static function extractLayoutConfig(array $data): array

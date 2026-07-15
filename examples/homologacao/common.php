@@ -7,20 +7,20 @@ use sabbajohn\FiscalCore\Support\NFSeMunicipalHomologationService;
 function nfseMunicipalLoadDotEnv(?string $projectRoot = null): void
 {
     $projectRoot ??= dirname(__DIR__, 2);
-    $envPath = $projectRoot . '/.env';
+    $envPath = $projectRoot.'/.env';
 
-    if (!is_file($envPath)) {
+    if (! is_file($envPath)) {
         return;
     }
 
     $lines = file($envPath, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
-    if (!is_array($lines)) {
+    if (! is_array($lines)) {
         return;
     }
 
     foreach ($lines as $line) {
         $trimmed = trim($line);
-        if ($trimmed === '' || str_starts_with($trimmed, '#') || !str_contains($line, '=')) {
+        if ($trimmed === '' || str_starts_with($trimmed, '#') || ! str_contains($line, '=')) {
             continue;
         }
 
@@ -41,7 +41,7 @@ function nfseMunicipalLoadDotEnv(?string $projectRoot = null): void
 
         $_ENV[$key] = $value;
         $_SERVER[$key] = $value;
-        putenv($key . '=' . $value);
+        putenv($key.'='.$value);
     }
 }
 
@@ -50,7 +50,7 @@ nfseMunicipalLoadDotEnv();
 function nfseMunicipalEnvValue(string $key): ?string
 {
     $value = $_ENV[$key] ?? getenv($key);
-    if (!is_string($value)) {
+    if (! is_string($value)) {
         return null;
     }
 
@@ -85,8 +85,8 @@ function nfseMunicipalBuildEnvOverrides(
     $opensslConf = nfseMunicipalEnvValue('OPENSSL_CONF');
     if ($opensslConf !== null) {
         $overrides['OPENSSL_CONF'] = $opensslConf;
-    } elseif (strtolower($municipio) === 'belem' && is_file($projectRoot . '/openssl.cnf')) {
-        $overrides['OPENSSL_CONF'] = $projectRoot . '/openssl.cnf';
+    } elseif (strtolower($municipio) === 'belem' && is_file($projectRoot.'/openssl.cnf')) {
+        $overrides['OPENSSL_CONF'] = $projectRoot.'/openssl.cnf';
     }
 
     if (strtolower($municipio) === 'joinville') {
@@ -105,7 +105,7 @@ function nfseMunicipalApplyEnvOverrides(array $envOverrides): void
             continue;
         }
 
-        putenv($key . '=' . $value);
+        putenv($key.'='.$value);
         $_ENV[$key] = $value;
         $_SERVER[$key] = $value;
     }
@@ -178,26 +178,31 @@ function nfseMunicipalParseOptions(array $argv): array
     foreach (array_slice($argv, 1) as $arg) {
         if ($arg === '--send') {
             $options['send'] = true;
+
             continue;
         }
 
         if ($arg === '--debug-http') {
             $options['debug_http'] = true;
+
             continue;
         }
 
         if ($arg === '--help' || $arg === '-h') {
             $options['help'] = true;
+
             continue;
         }
 
         if (str_starts_with($arg, '--tomador-cnpj=')) {
             $options['tomador_documento'] = substr($arg, 15);
+
             continue;
         }
 
         if (str_starts_with($arg, '--tomador-doc=')) {
             $options['tomador_documento'] = substr($arg, 14);
+
             continue;
         }
 
@@ -211,35 +216,35 @@ function nfseMunicipalParseOptions(array $argv): array
 
 function nfseMunicipalPrintResult(array $result): void
 {
-    echo "Modo: " . strtoupper((string) $result['mode']) . PHP_EOL;
-    echo "Municipio: " . $result['provider']['municipio'] . PHP_EOL;
-    echo "Provider: " . $result['provider']['class'] . PHP_EOL;
-    echo "WSDL: " . $result['provider']['wsdl'] . PHP_EOL;
-    echo "Certificado: " . $result['certificate']['cnpj'] . ' - ' . $result['certificate']['razao_social'] . PHP_EOL;
-    echo "Valido ate: " . $result['certificate']['valid_to'] . PHP_EOL;
-    echo "Prestador IM: " . $result['prestador']['inscricaoMunicipal'] . PHP_EOL;
-    echo "Tomador: " . $result['tomador']['razao_social'] . ' (' . $result['tomador']['documento'] . ')' . PHP_EOL;
+    echo 'Modo: '.strtoupper((string) $result['mode']).PHP_EOL;
+    echo 'Municipio: '.$result['provider']['municipio'].PHP_EOL;
+    echo 'Provider: '.$result['provider']['class'].PHP_EOL;
+    echo 'WSDL: '.$result['provider']['wsdl'].PHP_EOL;
+    echo 'Certificado: '.$result['certificate']['cnpj'].' - '.$result['certificate']['razao_social'].PHP_EOL;
+    echo 'Valido ate: '.$result['certificate']['valid_to'].PHP_EOL;
+    echo 'Prestador IM: '.$result['prestador']['inscricaoMunicipal'].PHP_EOL;
+    echo 'Tomador: '.$result['tomador']['razao_social'].' ('.$result['tomador']['documento'].')'.PHP_EOL;
 
     if (($result['warnings'] ?? []) !== []) {
-        echo "Avisos:" . PHP_EOL;
+        echo 'Avisos:'.PHP_EOL;
         foreach ($result['warnings'] as $warning) {
-            echo " - {$warning}" . PHP_EOL;
+            echo " - {$warning}".PHP_EOL;
         }
     }
 
     if (($result['resolved_paths'] ?? []) !== []) {
-        echo "Paths resolvidos:" . PHP_EOL;
+        echo 'Paths resolvidos:'.PHP_EOL;
         foreach ($result['resolved_paths'] as $key => $value) {
-            echo " - {$key}: {$value}" . PHP_EOL;
+            echo " - {$key}: {$value}".PHP_EOL;
         }
     }
 
     echo "Payload:\n";
-    echo json_encode($result['payload'], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) . PHP_EOL;
+    echo json_encode($result['payload'], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES).PHP_EOL;
     echo "Request XML:\n";
-    echo $result['request_xml'] . PHP_EOL;
+    echo $result['request_xml'].PHP_EOL;
     echo "Resposta parseada:\n";
-    echo json_encode($result['parsed_response'], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) . PHP_EOL;
+    echo json_encode($result['parsed_response'], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES).PHP_EOL;
 }
 
 function nfseMunicipalRunScript(string $municipio, array $argv, array $envOverrides, array $scriptOptions = []): int
@@ -248,7 +253,8 @@ function nfseMunicipalRunScript(string $municipio, array $argv, array $envOverri
     $defaults = nfseMunicipalDefaultTomador($municipio);
     $ambiente = (string) ($scriptOptions['ambiente'] ?? ($envOverrides['FISCAL_ENVIRONMENT'] ?? 'homologacao'));
     if (($options['help'] ?? false) === true) {
-        echo nfseMunicipalUsage(basename((string) $argv[0]), $municipio, $ambiente) . PHP_EOL;
+        echo nfseMunicipalUsage(basename((string) $argv[0]), $municipio, $ambiente).PHP_EOL;
+
         return 0;
     }
 
@@ -288,13 +294,14 @@ function nfseMunicipalRunScript(string $municipio, array $argv, array $envOverri
 
         nfseMunicipalPrintResult($result);
 
-        if (!$options['send']) {
-            echo "Preview seguro concluido. Nenhuma requisicao real foi enviada." . PHP_EOL;
+        if (! $options['send']) {
+            echo 'Preview seguro concluido. Nenhuma requisicao real foi enviada.'.PHP_EOL;
         }
 
         return 0;
     } catch (Throwable $e) {
-        fwrite(STDERR, 'Erro: ' . $e->getMessage() . PHP_EOL);
+        fwrite(STDERR, 'Erro: '.$e->getMessage().PHP_EOL);
+
         return 1;
     }
 }

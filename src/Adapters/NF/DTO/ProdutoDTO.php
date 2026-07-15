@@ -27,7 +27,7 @@ class ProdutoDTO
         public ?string $cest = null,        // CEST (opcional)
         public ?string $exTipi = null,      // EX TIPI (opcional)
     ) {}
-    
+
     /**
      * Cria DTO simplificado para produto básico
      */
@@ -43,7 +43,7 @@ class ProdutoDTO
         string $ean = 'SEM GTIN'
     ): self {
         $valorTotal = $quantidade * $valorUnitario;
-        
+
         return new self(
             item: $item,
             codigo: $codigo,
@@ -61,10 +61,10 @@ class ProdutoDTO
             valorUnitarioTributavel: $valorUnitario
         );
     }
-    
+
     public function toStdClass(): \stdClass
     {
-        $obj = new \stdClass();
+        $obj = new \stdClass;
         $obj->item = $this->item;
         $obj->codigo = $this->codigo;
         $obj->cean = $this->cean;
@@ -80,8 +80,13 @@ class ProdutoDTO
         $obj->quantidadeTributavel = $this->quantidadeTributavel;
         $obj->valorUnitarioTributavel = $this->valorUnitarioTributavel;
         $obj->indTot = $this->indTot;
-        if ($this->cest !== null) $obj->cest = $this->cest;
-        if ($this->exTipi !== null) $obj->exTipi = $this->exTipi;
+        if ($this->cest !== null) {
+            $obj->cest = $this->cest;
+        }
+        if ($this->exTipi !== null) {
+            $obj->exTipi = $this->exTipi;
+        }
+
         return $obj;
     }
 }

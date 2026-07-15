@@ -2,18 +2,20 @@
 
 declare(strict_types=1);
 
-require_once dirname(__DIR__, 2) . '/Support/TestCertificateFile.php';
+require_once dirname(__DIR__, 2).'/Support/TestCertificateFile.php';
 
+use PHPUnit\Framework\TestCase;
 use sabbajohn\FiscalCore\Facade\FiscalFacade;
 use sabbajohn\FiscalCore\Support\CertificateManager;
 use sabbajohn\FiscalCore\Support\ConfigManager;
 use sabbajohn\FiscalCore\Support\ProviderRegistry;
-use PHPUnit\Framework\TestCase;
 
 final class FiscalFacadeCachingTest extends TestCase
 {
     private string $projectRoot;
+
     private string $originalCwd;
+
     /** @var array{path:string,password:string} */
     private array $certificateFile;
 
@@ -27,17 +29,17 @@ final class FiscalFacadeCachingTest extends TestCase
             '83188342000104'
         );
 
-        $tempDir = sys_get_temp_dir() . '/fiscal-facade-cache-' . uniqid('', true);
+        $tempDir = sys_get_temp_dir().'/fiscal-facade-cache-'.uniqid('', true);
         mkdir($tempDir, 0777, true);
-        file_put_contents($tempDir . '/.env', implode(PHP_EOL, [
+        file_put_contents($tempDir.'/.env', implode(PHP_EOL, [
             'FISCAL_ENVIRONMENT=homologacao',
             'FISCAL_IM=4007197',
             'FISCAL_CNPJ=83188342000104',
             'FISCAL_RAZAO_SOCIAL="FREELINE INFORMATICA LTDA"',
             'FISCAL_UF=SC',
-            'FISCAL_CERT_PATH="' . $this->certificateFile['path'] . '"',
-            'FISCAL_CERT_PASSWORD="' . $this->certificateFile['password'] . '"',
-        ]) . PHP_EOL);
+            'FISCAL_CERT_PATH="'.$this->certificateFile['path'].'"',
+            'FISCAL_CERT_PASSWORD="'.$this->certificateFile['password'].'"',
+        ]).PHP_EOL);
 
         chdir($tempDir);
         ConfigManager::getInstance()->reload();
@@ -54,9 +56,9 @@ final class FiscalFacadeCachingTest extends TestCase
         ProviderRegistry::getInstance()->reload();
     }
 
-    public function testFiscalFacadeCachesNfseInstancesByMunicipio(): void
+    public function test_fiscal_facade_caches_nfse_instances_by_municipio(): void
     {
-        $facade = new FiscalFacade();
+        $facade = new FiscalFacade;
 
         $belemA = $facade->nfse('belem');
         $belemB = $facade->nfse('belem');

@@ -11,16 +11,20 @@ use RuntimeException;
 
 /**
  * Singleton para gerenciamento de certificados digitais
- * 
+ *
  * Centraliza o carregamento e configuração de certificados A1 (.pfx)
  * para uso em operações fiscais (NFe, NFCe, NFSe)
  */
 class CertificateManager
 {
     private static ?self $instance = null;
+
     private ?Certificate $certificate = null;
+
     private ?string $certificateContent = null;
+
     private ?string $certificatePassword = null;
+
     private array $config = [];
 
     private function __construct() {}
@@ -28,9 +32,10 @@ class CertificateManager
     public static function getInstance(): self
     {
         if (self::$instance === null) {
-            self::$instance = new self();
+            self::$instance = new self;
             self::$instance->loadCertificate();
         }
+
         return self::$instance;
     }
 
@@ -40,7 +45,7 @@ class CertificateManager
     public function loadFromFile(string $pfxPath, string $password): self
     {
         $resolvedPath = $this->resolvePath($pfxPath);
-        if ($resolvedPath === null || !file_exists($resolvedPath)) {
+        if ($resolvedPath === null || ! file_exists($resolvedPath)) {
             throw new InvalidArgumentException("Certificado não encontrado: {$pfxPath}");
         }
 
@@ -87,7 +92,7 @@ class CertificateManager
         $tmpFile = tempnam(sys_get_temp_dir(), 'cert_');
         if ($tmpFile === false) {
             throw new InvalidArgumentException(
-                'Erro ao carregar certificado: ' . $previous->getMessage(),
+                'Erro ao carregar certificado: '.$previous->getMessage(),
                 0,
                 $previous
             );
@@ -95,6 +100,7 @@ class CertificateManager
 
         try {
             file_put_contents($tmpFile, $pfxContent);
+
             return $this->loadLegacyFromFile($tmpFile, $password, $previous);
         } finally {
             @unlink($tmpFile);
@@ -104,9 +110,10 @@ class CertificateManager
     public static function isLoaded(): bool
     {
         $instance = self::getInstance();
+
         return $instance->certificate !== null;
     }
-    
+
     public static function reload(): void
     {
         $instance = self::getInstance();
@@ -181,12 +188,12 @@ class CertificateManager
      */
     public function isValid(): bool
     {
-        if (!$this->certificate) {
+        if (! $this->certificate) {
             return false;
         }
 
         $validTo = $this->config['valid_to'] ?? null;
-        if (!$validTo) {
+        if (! $validTo) {
             return false;
         }
 
@@ -199,11 +206,12 @@ class CertificateManager
     public function getDaysUntilExpiration(): ?int
     {
         $validTo = $this->config['valid_to'] ?? null;
-        if (!$validTo) {
+        if (! $validTo) {
             return null;
         }
 
         $diff = $validTo - time();
+
         return max(0, (int) ceil($diff / 86400)); // 86400 = segundos em um dia
     }
 
@@ -216,6 +224,7 @@ class CertificateManager
         $this->certificateContent = null;
         $this->certificatePassword = null;
         $this->config = [];
+
         return $this;
     }
 
@@ -224,12 +233,12 @@ class CertificateManager
      */
     private function loadCertificateInfo(): void
     {
-        if (!$this->certificate) {
+        if (! $this->certificate) {
             return;
         }
 
         try {
-            
+
             $this->config = [
                 'cnpj' => $this->certificate->getCnpj() ?? $this->certificate->getCpf(),
                 'razao_social' => $this->certificate->getCompanyName(),
@@ -245,9 +254,10 @@ class CertificateManager
 
     public function getExpirationDate(): ?\DateTime
     {
-        if (!$this->certificate) {
+        if (! $this->certificate) {
             return null;
         }
+
         return $this->certificate->getValidTo();
     }
 
@@ -256,15 +266,15 @@ class CertificateManager
         try {
             $publicCert = $this->runOpenSslPkcs12Command([
                 'openssl', 'pkcs12', '-legacy', '-clcerts', '-nokeys',
-                '-passin', 'pass:' . $password, '-in', $resolvedPath,
+                '-passin', 'pass:'.$password, '-in', $resolvedPath,
             ]);
             $privateKey = $this->runOpenSslPkcs12Command([
                 'openssl', 'pkcs12', '-legacy', '-nocerts', '-nodes',
-                '-passin', 'pass:' . $password, '-in', $resolvedPath,
+                '-passin', 'pass:'.$password, '-in', $resolvedPath,
             ]);
             $chain = $this->runOpenSslPkcs12Command([
                 'openssl', 'pkcs12', '-legacy', '-cacerts', '-nokeys',
-                '-passin', 'pass:' . $password, '-in', $resolvedPath,
+                '-passin', 'pass:'.$password, '-in', $resolvedPath,
             ], true);
 
             $this->certificate = new Certificate(
@@ -280,7 +290,7 @@ class CertificateManager
             return $this;
         } catch (\Throwable $legacyException) {
             throw new InvalidArgumentException(
-                'Erro ao carregar certificado: ' . $previous->getMessage(),
+                'Erro ao carregar certificado: '.$previous->getMessage(),
                 0,
                 $legacyException
             );
@@ -290,7 +300,7 @@ class CertificateManager
     private function resolveOpenSslConf(): void
     {
         $opensslConf = $_ENV['OPENSSL_CONF'] ?? getenv('OPENSSL_CONF');
-        if (!is_string($opensslConf) || trim($opensslConf) === '') {
+        if (! is_string($opensslConf) || trim($opensslConf) === '') {
             return;
         }
 
@@ -300,7 +310,7 @@ class CertificateManager
         }
 
         $_ENV['OPENSSL_CONF'] = $resolved;
-        putenv('OPENSSL_CONF=' . $resolved);
+        putenv('OPENSSL_CONF='.$resolved);
     }
 
     private function resolvePath(string $path): ?string
@@ -316,13 +326,13 @@ class CertificateManager
         if (str_starts_with($normalized, '/')) {
             $candidates[] = $normalized;
         } else {
-            $candidates[] = getcwd() . '/' . $normalized;
-            $candidates[] = $projectRoot . '/' . ltrim($normalized, './');
+            $candidates[] = getcwd().'/'.$normalized;
+            $candidates[] = $projectRoot.'/'.ltrim($normalized, './');
             if (str_contains($normalized, 'certs/')) {
-                $candidates[] = $projectRoot . '/certs/' . basename($normalized);
+                $candidates[] = $projectRoot.'/certs/'.basename($normalized);
             }
             if (basename($normalized) === 'openssl.cnf') {
-                $candidates[] = $projectRoot . '/openssl.cnf';
+                $candidates[] = $projectRoot.'/openssl.cnf';
             }
         }
 
@@ -344,7 +354,7 @@ class CertificateManager
         ];
 
         $process = proc_open($command, $descriptorSpec, $pipes);
-        if (!is_resource($process)) {
+        if (! is_resource($process)) {
             throw new RuntimeException('Nao foi possivel iniciar o comando openssl para ler o certificado legado.');
         }
 
@@ -355,11 +365,11 @@ class CertificateManager
 
         $exitCode = proc_close($process);
         if ($exitCode !== 0) {
-            throw new RuntimeException('Falha ao ler certificado legado com openssl: ' . trim((string) $stderr));
+            throw new RuntimeException('Falha ao ler certificado legado com openssl: '.trim((string) $stderr));
         }
 
         $output = trim((string) $stdout);
-        if ($output === '' && !$allowEmptyOutput) {
+        if ($output === '' && ! $allowEmptyOutput) {
             throw new RuntimeException('Saida vazia ao ler certificado legado com openssl.');
         }
 
@@ -401,20 +411,21 @@ class CertificateManager
         $pattern = sprintf('/-----BEGIN %1$s-----(.*?)-----END %1$s-----/s', preg_quote($type, '/'));
         preg_match_all($pattern, $content, $matches);
 
-        if (!isset($matches[0]) || !is_array($matches[0])) {
+        if (! isset($matches[0]) || ! is_array($matches[0])) {
             return [];
         }
 
         return array_map(
-            static fn (string $block): string => trim($block) . PHP_EOL,
+            static fn (string $block): string => trim($block).PHP_EOL,
             array_values(array_filter($matches[0], static fn (string $block): bool => trim($block) !== ''))
         );
     }
 
     // Previne clonagem e serialização
     private function __clone() {}
+
     public function __wakeup()
     {
-        throw new \Exception("Cannot unserialize singleton");
+        throw new \Exception('Cannot unserialize singleton');
     }
 }

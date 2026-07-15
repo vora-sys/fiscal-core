@@ -8,10 +8,11 @@ namespace sabbajohn\FiscalCore\Exceptions;
 class ValidationException extends FiscalException
 {
     protected ?string $errorCode = 'VALIDATION_ERROR';
+
     protected array $validationErrors = [];
 
     public function __construct(
-        string $message = "",
+        string $message = '',
         int $code = 0,
         ?\Throwable $previous = null,
         array $context = [],
@@ -38,8 +39,8 @@ class ValidationException extends FiscalException
                 'suggestions' => [
                     'Chave deve ter exatamente 44 dígitos',
                     'Remova espaços e caracteres especiais',
-                    'Verifique se copiou a chave completa'
-                ]
+                    'Verifique se copiou a chave completa',
+                ],
             ],
             ['chave_acesso' => 'Deve ter 44 dígitos numéricos']
         );
@@ -56,8 +57,8 @@ class ValidationException extends FiscalException
                 'suggestions' => [
                     'CNPJ deve ter 14 dígitos',
                     'Verifique o dígito verificador',
-                    'Use apenas números'
-                ]
+                    'Use apenas números',
+                ],
             ],
             ['cnpj' => 'Formato inválido ou dígito verificador incorreto']
         );
@@ -74,8 +75,8 @@ class ValidationException extends FiscalException
                 'suggestions' => [
                     'CPF deve ter 11 dígitos',
                     'Verifique o dígito verificador',
-                    'Use apenas números'
-                ]
+                    'Use apenas números',
+                ],
             ],
             ['cpf' => 'Formato inválido ou dígito verificador incorreto']
         );
@@ -98,8 +99,8 @@ class ValidationException extends FiscalException
                 'suggestions' => [
                     "Informe o valor para {$field}",
                     'Verifique a documentação dos campos obrigatórios',
-                    'Consulte exemplos de preenchimento'
-                ]
+                    'Consulte exemplos de preenchimento',
+                ],
             ],
             [$field => 'Campo obrigatório']
         );
@@ -107,7 +108,7 @@ class ValidationException extends FiscalException
 
     public static function invalidValue(string $field, $value, string $expected = ''): self
     {
-        $message = "Valor inválido para {$field}: " . var_export($value, true);
+        $message = "Valor inválido para {$field}: ".var_export($value, true);
         if ($expected) {
             $message .= ". Esperado: {$expected}";
         }
@@ -123,8 +124,8 @@ class ValidationException extends FiscalException
                 'suggestions' => [
                     "Corrija o valor do campo {$field}",
                     'Verifique o tipo de dado esperado',
-                    'Consulte a documentação do campo'
-                ]
+                    'Consulte a documentação do campo',
+                ],
             ],
             [$field => "Valor inválido. Esperado: {$expected}"]
         );
@@ -148,8 +149,8 @@ class ValidationException extends FiscalException
                 'suggestions' => [
                     'Corrija todos os erros listados',
                     'Verifique os dados obrigatórios',
-                    'Consulte a documentação'
-                ]
+                    'Consulte a documentação',
+                ],
             ],
             $errors
         );

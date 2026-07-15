@@ -1,0 +1,1048 @@
+{
+    "schema": "nfse-nacional-annex-manifest",
+    "schema_version": "1.0",
+    "source": {
+        "file": "anexo_iii-cnc-snnfse-v1-00-20251216.xlsx",
+        "sha256": "dce1b5b49a0cce5bcd8ac8a8e06fe36eb1e695d08a1da9fefadffc68eecd97da",
+        "bytes": 27931
+    },
+    "workbook": {
+        "sheets": [
+            {
+                "name": "RN_RECEPCAO_LEIAUTE_CNC",
+                "sheet_id": "11",
+                "relationship_id": "rId1",
+                "path": "xl/worksheets/sheet1.xml",
+                "dimension": "A1:H11",
+                "rows": [
+                    {
+                        "row": 1,
+                        "cells": {
+                            "A": "#",
+                            "B": "REGRAS DE NEGÓCIO",
+                            "D": "APLIC.",
+                            "E": "EFEITO",
+                            "F": "CÓD. ERRO",
+                            "G": "MSG. ERRO",
+                            "H": "NOTAS EXPLICATIVAS"
+                        }
+                    },
+                    {
+                        "row": 2,
+                        "cells": {
+                            "A": "1",
+                            "B": "Validação do Certificado de Transmissão",
+                            "D": "-",
+                            "E": "-",
+                            "F": "-",
+                            "G": "-",
+                            "H": "-"
+                        }
+                    },
+                    {
+                        "row": 3,
+                        "cells": {
+                            "A": "2",
+                            "B": "Certificado de Transmissor Inválido: - Certificado de Transmissor inexistente na mensagem - Versão difere \"3\" - Se informado o Basic Constraint deve ser true (não pode ser Certificado de AC) - KeyUsage não define \"Autenticação Cliente\"",
+                            "D": "Obrig.",
+                            "E": "Rej.",
+                            "F": "E3316",
+                            "G": "Certificado de Transmissão Inválido",
+                            "H": "-"
+                        }
+                    },
+                    {
+                        "row": 4,
+                        "cells": {
+                            "A": "3",
+                            "B": "Validade do Certificado (data início e data fim)",
+                            "D": "Obrig.",
+                            "E": "Rej.",
+                            "F": "E3317",
+                            "G": "Certificado de Transmissão expirado",
+                            "H": "-"
+                        }
+                    },
+                    {
+                        "row": 5,
+                        "cells": {
+                            "A": "4",
+                            "B": "Verifica a Cadeia de Certificação: - Certificado da AC emissora não cadastrado na RFB - Certificado de AC revogado - Certificado não assinado pela AC emissora do Certificado",
+                            "D": "Obrig.",
+                            "E": "Rej.",
+                            "F": "E3321",
+                            "G": "Certificado de Transmissão - Erro Cadeira de Certificação",
+                            "H": "-"
+                        }
+                    },
+                    {
+                        "row": 6,
+                        "cells": {
+                            "A": "5",
+                            "B": "LCR do Certificado de Transmissor - Falta o endereço da LCR (CRL DistributionPoint) - LCR indisponível - LCR inválida",
+                            "D": "Obrig.",
+                            "E": "Rej.",
+                            "F": "E3319",
+                            "G": "Certificado de Transmissão - Erro de acesso a LCR",
+                            "H": "-"
+                        }
+                    },
+                    {
+                        "row": 7,
+                        "cells": {
+                            "A": "6",
+                            "B": "Certificado do Transmissor revogado",
+                            "D": "Obrig.",
+                            "E": "Rej.",
+                            "F": "E3320",
+                            "G": "Certificado de Transmissão revogado",
+                            "H": "-"
+                        }
+                    },
+                    {
+                        "row": 8,
+                        "cells": {
+                            "A": "7",
+                            "B": "Certificado Raiz difere da \"ICP-Brasil\"",
+                            "D": "Obrig.",
+                            "E": "Rej.",
+                            "F": "E3322",
+                            "G": "Certificado de Transmissão difere da ICP - Brasil",
+                            "H": "-"
+                        }
+                    },
+                    {
+                        "row": 9,
+                        "cells": {
+                            "A": "8",
+                            "B": "Falta a extensão de CNPJ no Certificado (OtherName - OID=2.16.76.1.3.3)",
+                            "D": "Obrig.",
+                            "E": "Rej.",
+                            "F": "E3318",
+                            "G": "Certificado de Transmissão sem CNPJ",
+                            "H": "-"
+                        }
+                    },
+                    {
+                        "row": 10,
+                        "cells": {
+                            "A": "9",
+                            "B": "Verificar se o CNPJ do município informado corresponde ao CNPJ de transmissão.",
+                            "D": "Obrig.",
+                            "E": "Rej.",
+                            "F": "E3338",
+                            "G": "O CNPJ do município informado não corresponde ao CNPJ de transmissão.",
+                            "H": "-"
+                        }
+                    },
+                    {
+                        "row": 11,
+                        "cells": {
+                            "A": "10",
+                            "B": "Falha no esquema XML.",
+                            "D": "Obrig.",
+                            "E": "Rej.",
+                            "F": "E3344",
+                            "G": "Falha no esquema XML.",
+                            "H": "-"
+                        }
+                    }
+                ]
+            },
+            {
+                "name": "LEIAUTE_CNC",
+                "sheet_id": "1",
+                "relationship_id": "rId2",
+                "path": "xl/worksheets/sheet2.xml",
+                "dimension": "A1:I29",
+                "rows": [
+                    {
+                        "row": 1,
+                        "cells": {
+                            "A": "#",
+                            "B": "CAMINHO NO XML",
+                            "C": "CAMPO",
+                            "D": "ELE",
+                            "E": "TIPO",
+                            "F": "OCOR.",
+                            "G": "TAM.",
+                            "H": "DESCRIÇÃO",
+                            "I": "NOTAS EXPLICATIVAS"
+                        }
+                    },
+                    {
+                        "row": 2,
+                        "cells": {
+                            "A": "1",
+                            "C": "CNC",
+                            "D": "Raiz",
+                            "E": "-",
+                            "F": "-",
+                            "G": "-",
+                            "H": "TAG raiz",
+                            "I": "-"
+                        }
+                    },
+                    {
+                        "row": 3,
+                        "cells": {
+                            "A": "2",
+                            "B": "CNC/",
+                            "C": "versao",
+                            "D": "A",
+                            "E": "C",
+                            "F": "1-1",
+                            "G": "1-4V2",
+                            "H": "Versão do leiaute.",
+                            "I": "-"
+                        }
+                    },
+                    {
+                        "row": 4,
+                        "cells": {
+                            "A": "3",
+                            "B": "CNC/",
+                            "C": "infCNC",
+                            "D": "G",
+                            "E": "-",
+                            "F": "1-1",
+                            "G": "-",
+                            "H": "Grupo de informações do Cadastro Nacional Complementar NFS-e",
+                            "I": "-"
+                        }
+                    },
+                    {
+                        "row": 5,
+                        "cells": {
+                            "A": "4",
+                            "B": "CNC/infCNC/",
+                            "C": "Id",
+                            "D": "ID",
+                            "E": "C",
+                            "F": "1-1",
+                            "G": "26",
+                            "H": "\"CNC\" + Cód.Mun.(7) + Tipo de Ambiente(1) + IM(15)",
+                            "I": "-"
+                        }
+                    },
+                    {
+                        "row": 6,
+                        "cells": {
+                            "A": "5",
+                            "B": "CNC/infCNC/",
+                            "C": "cMun",
+                            "D": "E",
+                            "E": "N",
+                            "F": "1-1",
+                            "G": "7",
+                            "H": "Código IBGE do município do contribuinte.",
+                            "I": "Conforme AnexoA-Tabelas_ISO2Paises_MunIBGE_Rodovias-SNNFSe."
+                        }
+                    },
+                    {
+                        "row": 7,
+                        "cells": {
+                            "A": "6",
+                            "B": "CNC/infCNC/",
+                            "C": "cnpjMun",
+                            "D": "E",
+                            "E": "N",
+                            "F": "1-1",
+                            "G": "14",
+                            "H": "CNPJ do Município.",
+                            "I": "-"
+                        }
+                    },
+                    {
+                        "row": 8,
+                        "cells": {
+                            "A": "7",
+                            "B": "CNC/infCNC/",
+                            "C": "CPFAgTrib",
+                            "D": "E",
+                            "E": "N",
+                            "F": "1-1",
+                            "G": "11",
+                            "H": "CPF do agente da administração tributária municipal quer enviou o registro do contribuinte do município para o CNC.",
+                            "I": "-"
+                        }
+                    },
+                    {
+                        "row": 9,
+                        "cells": {
+                            "A": "8",
+                            "B": "CNC/infCNC/",
+                            "C": "tpAmb",
+                            "D": "E",
+                            "E": "N",
+                            "F": "1-1",
+                            "G": "1",
+                            "H": "Tipo de ambiente: 1 - Produção; 2 - Homologação;",
+                            "I": "-"
+                        }
+                    },
+                    {
+                        "row": 10,
+                        "cells": {
+                            "A": "9",
+                            "B": "CNC/infCNC/",
+                            "C": "verAplic",
+                            "D": "E",
+                            "E": "C",
+                            "F": "1-1",
+                            "G": "1-20",
+                            "H": "Versão do aplicativo que gerou a Movimentação.",
+                            "I": "-"
+                        }
+                    },
+                    {
+                        "row": 11,
+                        "cells": {
+                            "A": "10",
+                            "B": "CNC/infCNC/",
+                            "C": "infContrib",
+                            "D": "G",
+                            "E": "-",
+                            "F": "1-1",
+                            "G": "-",
+                            "H": "Grupo de informações do Contribuinte",
+                            "I": "-"
+                        }
+                    },
+                    {
+                        "row": 12,
+                        "cells": {
+                            "A": "11",
+                            "B": "CNC/infCNC/infContrib/",
+                            "C": "CNPJ",
+                            "D": "CE",
+                            "E": "N",
+                            "F": "1-1",
+                            "G": "14",
+                            "H": "Número da inscrição federal (CNPJ) do contribuinte da NFS-e.",
+                            "I": "Um mesmo IDFed pode ser registrado mais de uma por um mesmo município desde que cada um destes registros realizados pelo município tenham IMs diferentes entre si. Para um município, a chave para cadastro e manutenção do CNC é IDFederal (CNPJ/CPF) + Identificador Municipal (IM) (IDFed + IM são sempre obrigatórios)."
+                        }
+                    },
+                    {
+                        "row": 13,
+                        "cells": {
+                            "A": "12",
+                            "B": "CNC/infCNC/infContrib/",
+                            "C": "CPF",
+                            "D": "CE",
+                            "E": "N",
+                            "F": "1-1",
+                            "G": "11",
+                            "H": "Número da inscrição federal (CPF) do contribuinte da NFS-e."
+                        }
+                    },
+                    {
+                        "row": 14,
+                        "cells": {
+                            "A": "13",
+                            "B": "CNC/infCNC/infContrib/",
+                            "C": "IM",
+                            "D": "E",
+                            "E": "C",
+                            "F": "1-1",
+                            "G": "15",
+                            "H": "Número do identificador municipal do contribuinte da NFS-e."
+                        }
+                    },
+                    {
+                        "row": 15,
+                        "cells": {
+                            "A": "14",
+                            "B": "CNC/infCNC/infContrib/",
+                            "C": "dIM",
+                            "D": "E",
+                            "E": "D",
+                            "F": "1-1",
+                            "G": "-",
+                            "H": "A data em que foi criada o indicador municipal do contribuinte AAAA-MM-DD.",
+                            "I": "-"
+                        }
+                    },
+                    {
+                        "row": 16,
+                        "cells": {
+                            "A": "15",
+                            "B": "CNC/infCNC/infContrib/",
+                            "C": "xFantasia",
+                            "D": "E",
+                            "E": "C",
+                            "F": "0-1",
+                            "G": "150",
+                            "H": "Nome fantasia do contribuinte.",
+                            "I": "-"
+                        }
+                    },
+                    {
+                        "row": 17,
+                        "cells": {
+                            "A": "16",
+                            "B": "CNC/infCNC/infContrib/",
+                            "C": "ender",
+                            "D": "G",
+                            "E": "-",
+                            "F": "0-1",
+                            "G": "-",
+                            "H": "Grupo de informações do endereço do contribuinte do município",
+                            "I": "-"
+                        }
+                    },
+                    {
+                        "row": 18,
+                        "cells": {
+                            "A": "17",
+                            "B": "CNC/infCNC/infContrib/ender/",
+                            "C": "CEP",
+                            "D": "E",
+                            "E": "N",
+                            "F": "1-1",
+                            "G": "8",
+                            "H": "Número do CEP do endereço do contribuinte. (Informar os zeros não significativos)",
+                            "I": "-"
+                        }
+                    },
+                    {
+                        "row": 19,
+                        "cells": {
+                            "A": "18",
+                            "B": "CNC/infCNC/infContrib/ender/",
+                            "C": "xLgr",
+                            "D": "E",
+                            "E": "C",
+                            "F": "1-1",
+                            "G": "1-255",
+                            "H": "Tipo e nome do logradouro da localização do endereço do contribuinte.",
+                            "I": "-"
+                        }
+                    },
+                    {
+                        "row": 20,
+                        "cells": {
+                            "A": "19",
+                            "B": "CNC/infCNC/infContrib/ender/",
+                            "C": "nro",
+                            "D": "E",
+                            "E": "C",
+                            "F": "1-1",
+                            "G": "1-60",
+                            "H": "Número do imóvel do endereço do contribuinte.",
+                            "I": "-"
+                        }
+                    },
+                    {
+                        "row": 21,
+                        "cells": {
+                            "A": "20",
+                            "B": "CNC/infCNC/infContrib/ender/",
+                            "C": "xCpl",
+                            "D": "E",
+                            "E": "C",
+                            "F": "0-1",
+                            "G": "1-156",
+                            "H": "Complemento do endereço do contribuinte.",
+                            "I": "-"
+                        }
+                    },
+                    {
+                        "row": 22,
+                        "cells": {
+                            "A": "21",
+                            "B": "CNC/infCNC/infContrib/ender/",
+                            "C": "xBairro",
+                            "D": "E",
+                            "E": "C",
+                            "F": "1-1",
+                            "G": "1-60",
+                            "H": "Bairro do endereço do contribuinte.",
+                            "I": "-"
+                        }
+                    },
+                    {
+                        "row": 23,
+                        "cells": {
+                            "A": "22",
+                            "B": "CNC/infCNC/infContrib/",
+                            "C": "fone",
+                            "D": "E",
+                            "E": "N",
+                            "F": "0-1",
+                            "G": "9-20",
+                            "H": "Número do telefone do contribuinte. (Preencher com o Código DDD + número do telefone. Nas operações com exterior é permitido informar o código do país + código da localidade + número do telefone)",
+                            "I": "-"
+                        }
+                    },
+                    {
+                        "row": 24,
+                        "cells": {
+                            "A": "23",
+                            "B": "CNC/infCNC/infContrib/",
+                            "C": "email",
+                            "D": "E",
+                            "E": "C",
+                            "F": "0-1",
+                            "G": "80",
+                            "H": "E-mail do contribuinte.",
+                            "I": "-"
+                        }
+                    },
+                    {
+                        "row": 25,
+                        "cells": {
+                            "B": "CNC/infCNC/infContrib/",
+                            "C": "dAutEmiss",
+                            "D": "E",
+                            "E": "D",
+                            "F": "1-1",
+                            "G": "-",
+                            "H": "Data inicial de autorização do contribuinte para emissão de NFS-e nos emissores públicos do Sistema Nacional NFS-e.",
+                            "I": "-"
+                        }
+                    },
+                    {
+                        "row": 26,
+                        "cells": {
+                            "A": "24",
+                            "B": "CNC/infCNC/infContrib/",
+                            "C": "cStatEmiss",
+                            "D": "E",
+                            "E": "N",
+                            "F": "1-1",
+                            "G": "1",
+                            "H": "Status para emissão de NFS-e: 0 - Suspenso; 1 - Autorizado;",
+                            "I": "Por padrão todos os contribuintes com endereço em um município pelos cadastros RFB (CNPJ e CPF) estão habilitados a emitirem NFS-e pelos Emissores Públicos Nacionais. Para desabilitar um contribuinte a emitir NFS-e pelo município, este deve registra o complemento no CNC (IDFed + IM + cStatEmiss = 0)."
+                        }
+                    },
+                    {
+                        "row": 27,
+                        "cells": {
+                            "A": "26",
+                            "B": "CNC/infCNC/infContrib/",
+                            "C": "cSitCNC",
+                            "D": "E",
+                            "E": "N",
+                            "F": "1-1",
+                            "G": "1",
+                            "H": "Situação do registro no CNC NFS-e: 0 - Inativo; 1 - Ativo;",
+                            "I": "Exclusão lógica do registro no CNC."
+                        }
+                    },
+                    {
+                        "row": 28,
+                        "cells": {
+                            "A": "27",
+                            "B": "CNC/infCNC/infContrib/",
+                            "C": "xSitCadMun",
+                            "D": "E",
+                            "E": "C",
+                            "F": "0-1",
+                            "G": "1-150",
+                            "H": "Descrição Situação Cadastral no Município.",
+                            "I": "-"
+                        }
+                    },
+                    {
+                        "row": 29,
+                        "cells": {
+                            "A": "28",
+                            "B": "CNC/infCNC/infContrib/",
+                            "C": "xMotivoSitCadMun",
+                            "D": "E",
+                            "E": "C",
+                            "F": "0-1",
+                            "G": "1-255",
+                            "H": "Motivo da Situação Cadastral no Município.",
+                            "I": "-"
+                        }
+                    }
+                ]
+            },
+            {
+                "name": "RN_LEIAUTE_CNC",
+                "sheet_id": "9",
+                "relationship_id": "rId3",
+                "path": "xl/worksheets/sheet3.xml",
+                "dimension": "A1:J37",
+                "rows": [
+                    {
+                        "row": 1,
+                        "cells": {
+                            "A": "#",
+                            "B": "CAMINHO NO XML",
+                            "C": "CAMPO",
+                            "D": "REGRAS DE NEGÓCIO",
+                            "F": "APLIC.",
+                            "G": "EFEITO",
+                            "H": "CÓD. ERRO",
+                            "J": "NOTAS EXPLICATIVAS"
+                        }
+                    },
+                    {
+                        "row": 2,
+                        "cells": {
+                            "A": "1",
+                            "C": "CNC",
+                            "J": "-"
+                        }
+                    },
+                    {
+                        "row": 3,
+                        "cells": {
+                            "A": "2",
+                            "B": "CNC/",
+                            "C": "versao",
+                            "D": "Prazo de aceitação da versão do leiaute CNC ultrapassado.",
+                            "F": "Obrig.",
+                            "G": "Rej.",
+                            "H": "E3329",
+                            "I": "O prazo de aceitação da versão do leiaute da CNC expirou.",
+                            "J": "-"
+                        }
+                    },
+                    {
+                        "row": 4,
+                        "cells": {
+                            "A": "3",
+                            "B": "CNC/",
+                            "C": "infCNC",
+                            "J": "-"
+                        }
+                    },
+                    {
+                        "row": 5,
+                        "cells": {
+                            "A": "4",
+                            "B": "CNC/infCNC/",
+                            "C": "Id",
+                            "D": "Verificar se o código do município está de acordo com o campo cMun do leiaute CNC.",
+                            "F": "Obrig.",
+                            "G": "Rej.",
+                            "H": "E3341",
+                            "I": "O código do município do id não está de acordo com a informação do campo cMun do leiaute."
+                        }
+                    },
+                    {
+                        "row": 6,
+                        "cells": {
+                            "A": "5",
+                            "D": "Verificar se o tipo de ambiente está de acordo com o campo tpAmb do leiaute CNC.",
+                            "F": "Obrig.",
+                            "G": "Rej.",
+                            "H": "E3342",
+                            "I": "O tipo de ambiente do id não está de acordo com a informação do campo tpAmb do leiaute."
+                        }
+                    },
+                    {
+                        "row": 7,
+                        "cells": {
+                            "A": "6",
+                            "D": "Verificar se a inscrição municipal está de acordo com o campo IM do leiaute CNC.",
+                            "F": "Obrig.",
+                            "G": "Rej.",
+                            "H": "E3343",
+                            "I": "A inscrição municipal do id não está de acordo com a informação do campo IM do leiaute."
+                        }
+                    },
+                    {
+                        "row": 8,
+                        "cells": {
+                            "A": "7",
+                            "B": "CNC/infCNC/",
+                            "C": "cMun",
+                            "D": "O código do município deve estar associado ao CNPJ de transmissão e existir no cadastro de convênio municipal do sistema nacional.",
+                            "F": "Obrig.",
+                            "G": "Rej.",
+                            "H": "E3336",
+                            "I": "O código do município não existe no cadastro de convênio municipal do sistema nacional.",
+                            "J": "Conforme AnexoA-Tabelas_ISO2Paises_MunIBGE_Rodovias-SNNFSe."
+                        }
+                    },
+                    {
+                        "row": 9,
+                        "cells": {
+                            "A": "8",
+                            "B": "CNC/infCNC/",
+                            "C": "cnpjMun",
+                            "D": "O CNPJ do município deve corresponder ao CNPJ de transmissão.",
+                            "F": "Obrig.",
+                            "G": "Rej.",
+                            "H": "E3338",
+                            "I": "O CNPJ do município informado não corresponde ao CNPJ de transmissão."
+                        }
+                    },
+                    {
+                        "row": 10,
+                        "cells": {
+                            "A": "9",
+                            "D": "O CNPJ do município deve estar registrado no cadastro de convênio municipal do sistema nacional e estar \"CADASTRADO\", \"PARAMETRIZADO\" ou \"ATIVO\".",
+                            "F": "Obrig.",
+                            "G": "Rej.",
+                            "H": "E3333",
+                            "I": "O CNPJ do município informado não existe no cadastro de convênio municipal do sistema nacional ou não está conveniado."
+                        }
+                    },
+                    {
+                        "row": 11,
+                        "cells": {
+                            "A": "10",
+                            "D": "O CNPJ do município existe no cadastro de convênio municipal do sistema nacional, mas está suspenso.",
+                            "F": "Obrig.",
+                            "G": "Rej.",
+                            "H": "E3334",
+                            "I": "O código do município informado existe, mas está suspenso no convênio municipal."
+                        }
+                    },
+                    {
+                        "row": 12,
+                        "cells": {
+                            "A": "11",
+                            "D": "O CNPJ do município existe no cadastro de convênio municipal do sistema nacional, mas está inativo.",
+                            "F": "Obrig.",
+                            "G": "Rej.",
+                            "H": "E3335",
+                            "I": "O código do município informado existe, mas não está ativo há mais de <número de dias> dias no cadastro de convênio municipal."
+                        }
+                    },
+                    {
+                        "row": 13,
+                        "cells": {
+                            "A": "12",
+                            "B": "CNC/infCNC/",
+                            "C": "CPFAgTrib",
+                            "D": "CPF informado é inválido (verificar DV).",
+                            "F": "Obrig.",
+                            "G": "Rej.",
+                            "H": "E3330",
+                            "I": "CPF do agente tributário informado é inválido.",
+                            "J": "-"
+                        }
+                    },
+                    {
+                        "row": 14,
+                        "cells": {
+                            "D": "O CPF do Agente Tributário deve corresponder ao CPF de um Gestor Municipal ATIVO do município que está realizando o registro complementar no CNC NFS-e.",
+                            "F": "Obrig.",
+                            "G": "Rej.",
+                            "H": "E3353",
+                            "I": "O CPF do Agente Tributário deve corresponder ao CPF de um Gestor Municipal ATIVO do município que está realizando o registro complementar no CNC NFS-e."
+                        }
+                    },
+                    {
+                        "row": 15,
+                        "cells": {
+                            "A": "13",
+                            "B": "CNC/infCNC/",
+                            "C": "tpAmb",
+                            "D": "Ambiente informado diverge do ambiente de recebimento para o qual o município enviou o movimento.",
+                            "F": "Obrig.",
+                            "G": "Rej.",
+                            "H": "E3331",
+                            "I": "Ambiente informado diverge do ambiente de recebimento para o qual o município enviou o movimento CNC.",
+                            "J": "-"
+                        }
+                    },
+                    {
+                        "row": 16,
+                        "cells": {
+                            "A": "15",
+                            "B": "CNC/infCNC/",
+                            "C": "verAplic",
+                            "D": "-",
+                            "F": "-",
+                            "G": "-",
+                            "H": "-",
+                            "I": "-",
+                            "J": "-"
+                        }
+                    },
+                    {
+                        "row": 17,
+                        "cells": {
+                            "A": "16",
+                            "B": "CNC/infCNC/",
+                            "C": "infContrib",
+                            "D": "É obrigatório informar pelo menos um dado complementar do contribuinte para qualquer registro pelo município no CNC NFS-e.",
+                            "F": "Obrig.",
+                            "G": "Rej.",
+                            "H": "E3348",
+                            "I": "Para qualquer registro complementar de um contribuinte o município deve informar IDFed + IM + pelo menos mais uma informação complementar",
+                            "J": "-"
+                        }
+                    },
+                    {
+                        "row": 18,
+                        "cells": {
+                            "A": "17",
+                            "D": "Não é permitido realizar movimentações em um registro de contribuinte do CNC NFS-e inativo (cSitCNC = 0).",
+                            "F": "Obrig.",
+                            "G": "Rej.",
+                            "H": "E3351",
+                            "I": "Não é permitido realizar movimentações em um registro de contribuinte do CNC NFS-e inativo."
+                        }
+                    },
+                    {
+                        "row": 19,
+                        "cells": {
+                            "A": "18",
+                            "B": "CNC/infCNC/infContrib/",
+                            "C": "CNPJ",
+                            "D": "CNPJ informado é inválido (verificar DV).",
+                            "F": "Obrig.",
+                            "G": "Rej.",
+                            "H": "E3339",
+                            "I": "CNPJ do contribuinte informado é inválido.",
+                            "J": "-"
+                        }
+                    },
+                    {
+                        "row": 20,
+                        "cells": {
+                            "A": "19",
+                            "B": "CNC/infCNC/infContrib/",
+                            "C": "CPF",
+                            "D": "CPF informado é inválido (verificar DV).",
+                            "F": "Obrig.",
+                            "G": "Rej.",
+                            "H": "E3340",
+                            "I": "CPF do contribuinte informado é inválido.",
+                            "J": "-"
+                        }
+                    },
+                    {
+                        "row": 21,
+                        "cells": {
+                            "A": "20",
+                            "B": "CNC/infCNC/infContrib/",
+                            "C": "IM",
+                            "D": "-",
+                            "F": "-",
+                            "G": "-",
+                            "H": "-",
+                            "I": "-",
+                            "J": "-"
+                        }
+                    },
+                    {
+                        "row": 22,
+                        "cells": {
+                            "A": "21",
+                            "B": "CNC/infCNC/infContrib/",
+                            "C": "dIM",
+                            "D": "Esta data deve ser posterior ou igual à data de inscrição do contribuinte nos cadastros RFB.",
+                            "F": "Obrig.",
+                            "G": "Rej.",
+                            "H": "3356",
+                            "I": "A data do indicador municipal deve ser posterior ou igual à data de inscrição do contribuinte nos cadastros RFB.",
+                            "J": "-"
+                        }
+                    },
+                    {
+                        "row": 23,
+                        "cells": {
+                            "A": "22",
+                            "B": "CNC/infCNC/infContrib/",
+                            "C": "xFantasia",
+                            "D": "-",
+                            "F": "-",
+                            "G": "-",
+                            "H": "-",
+                            "I": "-",
+                            "J": "-"
+                        }
+                    },
+                    {
+                        "row": 24,
+                        "cells": {
+                            "A": "23",
+                            "B": "CNC/infCNC/infContrib/",
+                            "C": "ender",
+                            "D": "Verificar se o município no endereço dos cadastros RFB (CNPJ/CPF) para o CNPJ ou CPF do contribuinte que se está complementando informações no CNC NFS-e, corresponde ao mesmo município (cMun) que está enviando este registro. Se os municípios forem diferentes, então é obrigatório registrar o grupo de informações complementares de endereço (ender).",
+                            "F": "Obrig.",
+                            "G": "Rej.",
+                            "H": "E3352",
+                            "I": "É obrigatório informar o grupo de informações complementares de endereço quando o município do endereço, nos cadastros RFB para o contribuinte informado, for diferente do município que está registrando informações complementares para o contribuinte no CNC NFS-e."
+                        }
+                    },
+                    {
+                        "row": 25,
+                        "cells": {
+                            "A": "24",
+                            "B": "CNC/infCNC/infContrib/ender/",
+                            "C": "CEP",
+                            "D": "O CEP informado deve existir e pertencer ao município correspondente ao código do município (cMun) que está enviando a informação do contribuinte.",
+                            "F": "Obrig.",
+                            "G": "Rej.",
+                            "H": "E3313",
+                            "I": "O CEP informado para o endereço do contribuinte não existe ou não pertence ao município. Informe um CEP existente e que pertença ao município que está enviando a informação do contribuinte.",
+                            "J": "-"
+                        }
+                    },
+                    {
+                        "row": 26,
+                        "cells": {
+                            "A": "25",
+                            "B": "CNC/infCNC/infContrib/ender/",
+                            "C": "xLgr",
+                            "D": "-",
+                            "F": "-",
+                            "G": "-",
+                            "H": "-",
+                            "I": "-",
+                            "J": "-"
+                        }
+                    },
+                    {
+                        "row": 27,
+                        "cells": {
+                            "A": "26",
+                            "B": "CNC/infCNC/infContrib/ender/",
+                            "C": "nro",
+                            "D": "-",
+                            "F": "-",
+                            "G": "-",
+                            "H": "-",
+                            "I": "-",
+                            "J": "-"
+                        }
+                    },
+                    {
+                        "row": 28,
+                        "cells": {
+                            "A": "27",
+                            "B": "CNC/infCNC/infContrib/ender/",
+                            "C": "xCpl",
+                            "D": "-",
+                            "F": "-",
+                            "G": "-",
+                            "H": "-",
+                            "I": "-",
+                            "J": "-"
+                        }
+                    },
+                    {
+                        "row": 29,
+                        "cells": {
+                            "A": "28",
+                            "B": "CNC/infCNC/infContrib/ender/",
+                            "C": "xBairro",
+                            "D": "-",
+                            "F": "-",
+                            "G": "-",
+                            "H": "-",
+                            "I": "-",
+                            "J": "-"
+                        }
+                    },
+                    {
+                        "row": 30,
+                        "cells": {
+                            "A": "29",
+                            "B": "CNC/infCNC/infContrib/",
+                            "C": "fone",
+                            "D": "-",
+                            "F": "-",
+                            "G": "-",
+                            "H": "-",
+                            "I": "-",
+                            "J": "-"
+                        }
+                    },
+                    {
+                        "row": 31,
+                        "cells": {
+                            "A": "30",
+                            "B": "CNC/infCNC/infContrib/",
+                            "C": "email",
+                            "D": "Email deve ser informado conforme estrutura (conter @, ponto etc.).",
+                            "F": "Obrig.",
+                            "G": "Rej.",
+                            "H": "E3332",
+                            "I": "Email informado no documento inválido.",
+                            "J": "-"
+                        }
+                    },
+                    {
+                        "row": 32,
+                        "cells": {
+                            "B": "CNC/infCNC/infContrib/",
+                            "C": "dAutEmiss",
+                            "D": "A data de autorização de uso dos emissores públicos deve ser posterior ou igual à data do indicador municipal. O contribuinte poderá emitir novos documentos fiscais a partir desta data de autorização de uso dos emissores públicos ou a partir da data de início de vigência do convênio municipal, prevalecendo a maior data.",
+                            "F": "Obrig.",
+                            "G": "Rej.",
+                            "H": "E3354",
+                            "I": "A data de autorização de uso dos emissores públicos deve ser posterior ou igual à data do indicador municipal."
+                        }
+                    },
+                    {
+                        "row": 33,
+                        "cells": {
+                            "D": "A data de autorização de uso dos emissores públicos não pode ser alterada se for menor ou igual que a data atual da alteracão.",
+                            "F": "Obrig.",
+                            "G": "Rej.",
+                            "H": "E3355",
+                            "I": "A data de autorização de uso dos emissores públicos não pode ser alterada se for menor ou igual que a data atual da alteracão."
+                        }
+                    },
+                    {
+                        "row": 34,
+                        "cells": {
+                            "A": "31",
+                            "B": "CNC/infCNC/infContrib/",
+                            "C": "cStatEmiss",
+                            "D": "-",
+                            "F": "-",
+                            "G": "-",
+                            "H": "-",
+                            "I": "-",
+                            "J": "-"
+                        }
+                    },
+                    {
+                        "row": 35,
+                        "cells": {
+                            "A": "34",
+                            "B": "CNC/infCNC/infContrib/",
+                            "C": "cSitCNC",
+                            "D": "-",
+                            "F": "-",
+                            "G": "-",
+                            "H": "-",
+                            "I": "-",
+                            "J": "-"
+                        }
+                    },
+                    {
+                        "row": 36,
+                        "cells": {
+                            "A": "35",
+                            "B": "CNC/infCNC/infContrib/",
+                            "C": "xSitCadMun",
+                            "D": "-",
+                            "F": "-",
+                            "G": "-",
+                            "H": "-",
+                            "I": "-",
+                            "J": "-"
+                        }
+                    },
+                    {
+                        "row": 37,
+                        "cells": {
+                            "A": "36",
+                            "B": "CNC/infCNC/infContrib/",
+                            "C": "xMotivoSitCadMun",
+                            "D": "-",
+                            "F": "-",
+                            "G": "-",
+                            "H": "-",
+                            "I": "-"
+                        }
+                    }
+                ]
+            }
+        ]
+    }
+}

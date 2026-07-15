@@ -2,9 +2,9 @@
 
 namespace sabbajohn\FiscalCore\Adapters\NF\Nodes;
 
+use NFePHP\NFe\Make;
 use sabbajohn\FiscalCore\Adapters\NF\Core\NotaNodeInterface;
 use sabbajohn\FiscalCore\Adapters\NF\DTO\IdentificacaoDTO;
-use NFePHP\NFe\Make;
 
 /**
  * Node para tag <ide> (Identificação da NFe/NFCe)
@@ -12,10 +12,10 @@ use NFePHP\NFe\Make;
 class IdentificacaoNode implements NotaNodeInterface
 {
     public function __construct(private IdentificacaoDTO $dto) {}
-    
+
     public function addToMake(Make $make): void
     {
-        $std = (object)[
+        $std = (object) [
             'cUF' => $this->dto->cUF,
             'natOp' => $this->dto->natOp,
             'mod' => $this->dto->mod,
@@ -35,32 +35,32 @@ class IdentificacaoNode implements NotaNodeInterface
             'procEmi' => $this->dto->procEmi,
             'verProc' => $this->dto->verProc,
         ];
-        
+
         if (isset($this->dto->indIntermed)) {
             $std->indIntermed = $this->dto->indIntermed;
         }
-        
+
         $make->tagide($std);
     }
-    
+
     public function validate(): bool
     {
         // Validações básicas
         if (empty($this->dto->natOp)) {
             throw new \InvalidArgumentException('Natureza da operação é obrigatória');
         }
-        
-        if (!in_array($this->dto->mod, [55, 65])) {
+
+        if (! in_array($this->dto->mod, [55, 65])) {
             throw new \InvalidArgumentException('Modelo deve ser 55 (NFe) ou 65 (NFCe)');
         }
-        
+
         if ($this->dto->nNF <= 0) {
             throw new \InvalidArgumentException('Número da nota deve ser maior que zero');
         }
-        
+
         return true;
     }
-    
+
     public function getNodeType(): string
     {
         return 'identificacao';

@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
+use PHPUnit\Framework\TestCase;
 use sabbajohn\FiscalCore\Facade\FiscalFacade;
 use sabbajohn\FiscalCore\Support\NFSeMunicipalHomologationService;
-use PHPUnit\Framework\TestCase;
 
 /**
  * @group integration
@@ -12,20 +12,21 @@ use PHPUnit\Framework\TestCase;
 final class NFSeMunicipalHomologationRealTest extends TestCase
 {
     private string $projectRoot;
+
     private const DEFAULT_TOMADOR_CPF = '12345678909';
 
     protected function setUp(): void
     {
         $this->projectRoot = dirname(__DIR__, 2);
 
-        if (!$this->externalTestsEnabled() || !$this->municipalRealTestsEnabled()) {
+        if (! $this->externalTestsEnabled() || ! $this->municipalRealTestsEnabled()) {
             $this->markTestSkipped(
                 'Defina ENABLE_EXTERNAL_TESTS=true e ENABLE_NFSE_MUNICIPAL_REAL_TESTS=true para executar homologacao municipal real.'
             );
         }
     }
 
-    public function testBelemRealHomologationSend(): void
+    public function test_belem_real_homologation_send(): void
     {
         $service = new NFSeMunicipalHomologationService($this->projectRoot);
         $result = $service->send('belem', $this->resolveTomadorDocumento('TEST_NFSE_BELEM_TOMADOR_DOC'), [
@@ -46,11 +47,11 @@ final class NFSeMunicipalHomologationRealTest extends TestCase
         $this->assertSuccessfulRealResponse('belem', $result['parsed_response']);
     }
 
-    public function testBelemRealHomologationConsultarLote(): void
+    public function test_belem_real_homologation_consultar_lote(): void
     {
         $this->applyEnvOverrides($this->resolveBelemEnvOverrides('homologacao'));
 
-        $fiscalFacade = new FiscalFacade();
+        $fiscalFacade = new FiscalFacade;
         $nfse = $fiscalFacade->nfse('belem');
         $protocolo = $this->resolveBelemProtocolo();
         $resultado = $nfse->consultarLote($protocolo);
@@ -64,7 +65,7 @@ final class NFSeMunicipalHomologationRealTest extends TestCase
         $this->assertSuccessfulRealConsultaResponse('belem', $data['consulta'] ?? []);
     }
 
-    public function testJoinvilleRealHomologationSend(): void
+    public function test_joinville_real_homologation_send(): void
     {
         $service = new NFSeMunicipalHomologationService($this->projectRoot);
         $result = $service->send('joinville', $this->resolveTomadorDocumento('TEST_NFSE_JOINVILLE_TOMADOR_DOC'), [
@@ -88,12 +89,14 @@ final class NFSeMunicipalHomologationRealTest extends TestCase
     private function externalTestsEnabled(): bool
     {
         $value = getenv('ENABLE_EXTERNAL_TESTS');
+
         return is_string($value) && in_array(strtolower($value), ['1', 'true', 'yes', 'on'], true);
     }
 
     private function municipalRealTestsEnabled(): bool
     {
         $value = getenv('ENABLE_NFSE_MUNICIPAL_REAL_TESTS');
+
         return is_string($value) && in_array(strtolower($value), ['1', 'true', 'yes', 'on'], true);
     }
 
@@ -125,7 +128,7 @@ final class NFSeMunicipalHomologationRealTest extends TestCase
     private function applyEnvOverrides(array $overrides): void
     {
         foreach ($overrides as $key => $value) {
-            putenv($key . '=' . $value);
+            putenv($key.'='.$value);
             $_ENV[$key] = $value;
             $_SERVER[$key] = $value;
         }
@@ -168,7 +171,7 @@ final class NFSeMunicipalHomologationRealTest extends TestCase
     private function envValue(string $key): ?string
     {
         $value = $_ENV[$key] ?? getenv($key);
-        if (!is_string($value)) {
+        if (! is_string($value)) {
             return null;
         }
 
@@ -198,7 +201,7 @@ final class NFSeMunicipalHomologationRealTest extends TestCase
             return $path;
         }
 
-        return $this->projectRoot . '/' . ltrim($path, './');
+        return $this->projectRoot.'/'.ltrim($path, './');
     }
 
     private function assertSuccessfulRealResponse(string $municipio, array $parsedResponse): void

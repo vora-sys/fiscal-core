@@ -5,14 +5,12 @@ namespace sabbajohn\FiscalCore\Adapters\NFSe\DTO\Nacional;
 final class TributacaoMunicipalDTO
 {
     /**
-     * @param array<string,mixed> $data
+     * @param  array<string,mixed>  $data
      */
-    private function __construct(private array $data)
-    {
-    }
+    private function __construct(private array $data) {}
 
     /**
-     * @param array<string,mixed> $payload
+     * @param  array<string,mixed>  $payload
      */
     public static function fromArray(array $payload): self
     {
@@ -105,12 +103,12 @@ final class TributacaoMunicipalDTO
     {
         $errors = [];
         $tribIssqn = (string) ($this->data['tribISSQN'] ?? '');
-        if (!in_array($tribIssqn, ['1', '2', '3', '4'], true)) {
+        if (! in_array($tribIssqn, ['1', '2', '3', '4'], true)) {
             $errors[] = 'tributacao.municipal.tribISSQN deve ser 1, 2, 3 ou 4.';
         }
 
         $tpRet = (string) ($this->data['tpRetISSQN'] ?? '');
-        if (!in_array($tpRet, ['1', '2', '3'], true)) {
+        if (! in_array($tpRet, ['1', '2', '3'], true)) {
             $errors[] = 'tributacao.municipal.tpRetISSQN deve ser 1, 2 ou 3.';
         }
 

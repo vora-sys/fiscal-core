@@ -9,10 +9,10 @@ final class NFSeCapitalsPriorityMatrixTest extends TestCase
 {
     private function catalog(): NFSeMunicipalCatalog
     {
-        return new NFSeMunicipalCatalog(dirname(__DIR__, 3) . '/config/nfse/providers-catalog.json');
+        return new NFSeMunicipalCatalog(dirname(__DIR__, 3).'/config/nfse/providers-catalog.json');
     }
 
-    public function testCapitalsStayInExpectedFamiliesByPriorityWave(): void
+    public function test_capitals_stay_in_expected_families_by_priority_wave(): void
     {
         $catalog = $this->catalog();
 
@@ -69,7 +69,7 @@ final class NFSeCapitalsPriorityMatrixTest extends TestCase
         }
     }
 
-    public function testNationalWaveCapitalsExposeMigrationCutoffPolicy(): void
+    public function test_national_wave_capitals_expose_migration_cutoff_policy(): void
     {
         $catalog = $this->catalog();
 

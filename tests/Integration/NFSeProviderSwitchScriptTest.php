@@ -20,7 +20,7 @@ final class NFSeProviderSwitchScriptTest extends TestCase
         $this->tempFiles = [];
     }
 
-    public function testSetAndRemoveMunicipioOverride(): void
+    public function test_set_and_remove_municipio_override(): void
     {
         $overrideFile = $this->makeTempOverrideFile();
 
@@ -54,7 +54,7 @@ final class NFSeProviderSwitchScriptTest extends TestCase
         $this->assertArrayNotHasKey('1303536', $savedAfterRemove['overrides'] ?? []);
     }
 
-    public function testSetOverrideDryRunDoesNotPersist(): void
+    public function test_set_override_dry_run_does_not_persist(): void
     {
         $overrideFile = $this->makeTempOverrideFile();
 
@@ -84,7 +84,7 @@ final class NFSeProviderSwitchScriptTest extends TestCase
                 'version' => 1,
                 'updated_at' => null,
                 'overrides' => [],
-            ], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR) . PHP_EOL
+            ], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR).PHP_EOL
         );
 
         return $tmp;

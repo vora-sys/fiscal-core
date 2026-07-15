@@ -15,16 +15,16 @@ final class NacionalDpsIdentityBuilder
         $tpInsc = strlen($prestadorDigits) === 14 ? '2' : '1';
 
         return 'DPS'
-            . str_pad(substr(DpsPayloadHelper::onlyDigits($codigoMunicipio), 0, 7), 7, '0', STR_PAD_LEFT)
-            . $tpInsc
-            . $prestadorDoc
-            . self::normalizeSerie($serie)
-            . self::normalizeNumero($numero);
+            .str_pad(substr(DpsPayloadHelper::onlyDigits($codigoMunicipio), 0, 7), 7, '0', STR_PAD_LEFT)
+            .$tpInsc
+            .$prestadorDoc
+            .self::normalizeSerie($serie)
+            .self::normalizeNumero($numero);
     }
 
     /**
-     * @param array<string,mixed> $payload
-     * @param array<string,mixed> $context
+     * @param  array<string,mixed>  $payload
+     * @param  array<string,mixed>  $context
      */
     public static function fromPayload(array $payload, array $context = []): ?string
     {

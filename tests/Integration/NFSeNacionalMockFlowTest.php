@@ -2,10 +2,10 @@
 
 namespace Tests\Integration;
 
+use PHPUnit\Framework\TestCase;
 use sabbajohn\FiscalCore\Adapters\NF\NFSeAdapter;
 use sabbajohn\FiscalCore\Facade\NFSeFacade;
 use sabbajohn\FiscalCore\Providers\NFSe\NacionalProvider;
-use PHPUnit\Framework\TestCase;
 
 class NFSeNacionalMockFlowTest extends TestCase
 {
@@ -18,7 +18,7 @@ class NFSeNacionalMockFlowTest extends TestCase
             'ambiente' => 'homologacao',
             'api_base_url' => 'https://api.local',
             'timeout' => 10,
-            'cache_dir' => sys_get_temp_dir() . '/fiscal-core-integration-' . uniqid(),
+            'cache_dir' => sys_get_temp_dir().'/fiscal-core-integration-'.uniqid(),
             'signature_mode' => 'none',
             'prestador' => [
                 'cnpj' => '11.222.333/0001-81',
@@ -27,10 +27,10 @@ class NFSeNacionalMockFlowTest extends TestCase
                 if ($method === 'POST' && $path === '/nfse') {
                     return '<Resposta><Sucesso>true</Sucesso><NumeroNfse>1001</NumeroNfse></Resposta>';
                 }
-                if ($method === 'GET' && $path === '/nfse/' . $chaveAcesso) {
+                if ($method === 'GET' && $path === '/nfse/'.$chaveAcesso) {
                     return '<Consulta><Sucesso>true</Sucesso><NumeroNfse>1001</NumeroNfse></Consulta>';
                 }
-                if ($method === 'POST' && $path === '/nfse/' . $chaveAcesso . '/eventos') {
+                if ($method === 'POST' && $path === '/nfse/'.$chaveAcesso.'/eventos') {
                     return '<Cancelamento><Sucesso>true</Sucesso></Cancelamento>';
                 }
 

@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use NFePHP\Common\Certificate;
+use sabbajohn\FiscalCore\Support\ProviderRegistry;
 
 final class NFSeBelemMunicipalFixtures
 {
@@ -147,7 +148,7 @@ final class NFSeBelemMunicipalFixtures
 
     public static function belemConfig(array $overrides = []): array
     {
-        $config = \sabbajohn\FiscalCore\Support\ProviderRegistry::getInstance()->getConfig('BELEM_MUNICIPAL_2025');
+        $config = ProviderRegistry::getInstance()->getConfig('BELEM_MUNICIPAL_2025');
         $config['prestador'] = [
             'cnpj' => self::payload()['prestador']['cnpj'],
             'inscricaoMunicipal' => self::payload()['prestador']['inscricaoMunicipal'],
@@ -389,7 +390,7 @@ XML;
 
     public static function sanitizedExportXmlPath(): string
     {
-        return __DIR__ . '/belem/retorno_lista_nfse_sanitizado.xml';
+        return __DIR__.'/belem/retorno_lista_nfse_sanitizado.xml';
     }
 
     public static function makeCertificate(): Certificate
@@ -423,7 +424,7 @@ XML;
         }
 
         $pkcs12 = '';
-        if (!@openssl_pkcs12_export($x509, $pkcs12, $privateKey, 'secret')) {
+        if (! @openssl_pkcs12_export($x509, $pkcs12, $privateKey, 'secret')) {
             throw new RuntimeException('Falha ao exportar certificado PKCS#12 de teste.');
         }
 
@@ -437,6 +438,7 @@ XML;
         foreach ($overrides as $key => $value) {
             if (is_array($value) && isset($base[$key]) && is_array($base[$key])) {
                 $base[$key] = self::arrayMergeRecursiveDistinct($base[$key], $value);
+
                 continue;
             }
 

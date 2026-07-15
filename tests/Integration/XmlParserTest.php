@@ -2,10 +2,11 @@
 
 namespace Tests\Integration;
 
+use NFePHP\NFe\Make;
 use PHPUnit\Framework\TestCase;
 use sabbajohn\FiscalCore\Adapters\NF\Builder\NotaFiscalBuilder;
-use sabbajohn\FiscalCore\Adapters\NF\XmlParser;
 use sabbajohn\FiscalCore\Adapters\NF\Core\NotaFiscal;
+use sabbajohn\FiscalCore\Adapters\NF\XmlParser;
 
 /**
  * Testes para parsing de XML e reconstrução de NotaFiscal
@@ -13,11 +14,11 @@ use sabbajohn\FiscalCore\Adapters\NF\Core\NotaFiscal;
 class XmlParserTest extends TestCase
 {
     private string $xmlNFCeExemplo;
-    
+
     protected function setUp(): void
     {
         // XML simplificado de NFCe para testes
-        $this->xmlNFCeExemplo = <<<XML
+        $this->xmlNFCeExemplo = <<<'XML'
             <?xml version="1.0" encoding="UTF-8"?>
             <NFe xmlns="http://www.portalfiscal.inf.br/nfe">
             <infNFe Id="NFe43231234567890001234650010000001231234567890" versao="4.00">
@@ -135,12 +136,12 @@ class XmlParserTest extends TestCase
             </NFe>
             XML;
     }
-    
-    public function testParseIdentificacao()
+
+    public function test_parse_identificacao()
     {
         $parser = new XmlParser($this->xmlNFCeExemplo);
         $ide = $parser->parseIdentificacao();
-        
+
         $this->assertEquals(43, $ide->cUF);
         $this->assertEquals(65, $ide->mod);
         $this->assertEquals(1, $ide->serie);
@@ -148,12 +149,12 @@ class XmlParserTest extends TestCase
         $this->assertEquals('VENDA AO CONSUMIDOR', $ide->natOp);
         $this->assertEquals(1, $ide->indFinal);
     }
-    
-    public function testParseEmitente()
+
+    public function test_parse_emitente()
     {
         $parser = new XmlParser($this->xmlNFCeExemplo);
         $emit = $parser->parseEmitente();
-        
+
         $this->assertEquals('12345678000190', $emit->cnpj);
         $this->assertEquals('EMPRESA TESTE LTDA', $emit->razaoSocial);
         $this->assertEquals('TESTE', $emit->nomeFantasia);
@@ -162,25 +163,25 @@ class XmlParserTest extends TestCase
         $this->assertEquals('RS', $emit->uf);
         $this->assertEquals(1, $emit->crt);
     }
-    
-    public function testParseDestinatario()
+
+    public function test_parse_destinatario()
     {
         $parser = new XmlParser($this->xmlNFCeExemplo);
         $dest = $parser->parseDestinatario();
-        
+
         $this->assertNotNull($dest);
         $this->assertEquals('12345678901', $dest->cpfCnpj);
         $this->assertEquals('CONSUMIDOR FINAL', $dest->nome);
         $this->assertEquals(9, $dest->indIEDest);
     }
-    
-    public function testParseProdutos()
+
+    public function test_parse_produtos()
     {
         $parser = new XmlParser($this->xmlNFCeExemplo);
         $produtos = $parser->parseProdutos();
-        
+
         $this->assertCount(1, $produtos);
-        
+
         $prod = $produtos[0];
         $this->assertEquals(1, $prod->item);
         $this->assertEquals('PROD001', $prod->codigo);
@@ -191,54 +192,54 @@ class XmlParserTest extends TestCase
         $this->assertEquals(10.0, $prod->valorUnitario);
         $this->assertEquals(20.0, $prod->valorTotal);
     }
-    
-    public function testParseImpostos()
+
+    public function test_parse_impostos()
     {
         $parser = new XmlParser($this->xmlNFCeExemplo);
         $impostos = $parser->parseImpostos(1);
-        
+
         $this->assertArrayHasKey('icms', $impostos);
         $this->assertEquals('102', $impostos['icms']['cst']);
         $this->assertEquals(0, $impostos['icms']['orig']);
-        
+
         $this->assertArrayHasKey('pis', $impostos);
         $this->assertEquals('49', $impostos['pis']['cst']);
-        
+
         $this->assertArrayHasKey('cofins', $impostos);
         $this->assertEquals('49', $impostos['cofins']['cst']);
     }
-    
-    public function testParsePagamentos()
+
+    public function test_parse_pagamentos()
     {
         $parser = new XmlParser($this->xmlNFCeExemplo);
         $pagamentos = $parser->parsePagamentos();
-        
+
         $this->assertCount(1, $pagamentos);
-        
+
         $pag = $pagamentos[0];
         $this->assertEquals('01', $pag->tPag);
         $this->assertEquals(20.0, $pag->vPag);
     }
-    
-    public function testToArrayCompleto()
+
+    public function test_to_array_completo()
     {
         $parser = new XmlParser($this->xmlNFCeExemplo);
         $data = $parser->toArray();
-        
+
         $this->assertArrayHasKey('identificacao', $data);
         $this->assertArrayHasKey('emitente', $data);
         $this->assertArrayHasKey('destinatario', $data);
         $this->assertArrayHasKey('itens', $data);
         $this->assertArrayHasKey('pagamentos', $data);
-        
+
         $this->assertCount(1, $data['itens']);
         $this->assertCount(1, $data['pagamentos']);
     }
-    
-    public function testBuilderFromXml()
+
+    public function test_builder_from_xml()
     {
         $nota = NotaFiscalBuilder::fromXml($this->xmlNFCeExemplo)->build();
-        
+
         $this->assertInstanceOf(NotaFiscal::class, $nota);
         $this->assertTrue($nota->hasNode('identificacao'));
         $this->assertTrue($nota->hasNode('emitente'));
@@ -247,36 +248,36 @@ class XmlParserTest extends TestCase
         $this->assertTrue($nota->hasNode('imposto'));
         $this->assertTrue($nota->hasNode('pagamento'));
     }
-    
-    public function testBuilderFromXmlValidate()
+
+    public function test_builder_from_xml_validate()
     {
         $nota = NotaFiscalBuilder::fromXml($this->xmlNFCeExemplo)->build();
-        
+
         $this->assertTrue($nota->validate());
     }
-    
-    public function testBuilderFromXmlGetMake()
+
+    public function test_builder_from_xml_get_make()
     {
         $nota = NotaFiscalBuilder::fromXml($this->xmlNFCeExemplo)->build();
-        
+
         $make = $nota->getMake();
-        $this->assertInstanceOf(\NFePHP\NFe\Make::class, $make);
+        $this->assertInstanceOf(Make::class, $make);
     }
-    
-    public function testXmlInvalidoLancaExcecao()
+
+    public function test_xml_invalido_lanca_excecao()
     {
         $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage('XML inválido');
-        
+
         $xmlInvalido = '<?xml version="1.0"?><root></root>';
         new XmlParser($xmlInvalido);
     }
-    
-    public function testBuilderFromXmlArquivoNaoExistente()
+
+    public function test_builder_from_xml_arquivo_nao_existente()
     {
         $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage('Arquivo XML não encontrado');
-        
+
         NotaFiscalBuilder::fromXml('/caminho/inexistente/nota.xml', true);
     }
 }

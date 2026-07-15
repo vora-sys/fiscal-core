@@ -10,11 +10,12 @@ use sabbajohn\FiscalCore\Support\ConfigManager;
 class GTINAdapterTest extends TestCase
 {
     private GTINAdapter $adapter;
+
     protected function setUp(): void
     {
-        $this->adapter = new GTINAdapter();
+        $this->adapter = new GTINAdapter;
     }
-    
+
     protected function tearDown(): void
     {
         // Singletons mantêm estado durante testes
@@ -37,11 +38,11 @@ class GTINAdapterTest extends TestCase
         $this->assertFalse($this->adapter->validarGTIN('123'));
         $this->assertFalse($this->adapter->validarGTIN('abcdefghijkl'));
     }
-    
+
     /**
      * @testdox Deve validar GTINs válidos corretamente
      */
-    public function testValidarGTINValidos()
+    public function test_validar_gtin_validos()
     {
         $gtinsValidos = [
             '7891000315507', // GTIN-13 válido
@@ -60,7 +61,7 @@ class GTINAdapterTest extends TestCase
     /**
      * @testdox Deve rejeitar GTINs inválidos
      */
-    public function testValidarGTINInvalidos()
+    public function test_validar_gtin_invalidos()
     {
         $gtinsInvalidos = [
             '123',           // Muito curto
@@ -80,7 +81,7 @@ class GTINAdapterTest extends TestCase
     /**
      * @testdox Deve executar checkGTIN sem erros para GTINs válidos
      */
-    public function testCheckGTINValido()
+    public function test_check_gtin_valido()
     {
         $result = $this->adapter->checkGTIN('7891000315507');
         $this->assertInstanceOf(GTINAdapter::class, $result);
@@ -96,7 +97,7 @@ class GTINAdapterTest extends TestCase
     /**
      * @testdox Deve lançar exceção para GTINs inválidos no checkGTIN
      */
-    public function testCheckGTINInvalidoLancaExcecao()
+    public function test_check_gtin_invalido_lanca_excecao()
     {
         $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage('formato inválido');
@@ -107,7 +108,7 @@ class GTINAdapterTest extends TestCase
     /**
      * @testdox Deve detectar GTIN com dígito verificador inválido
      */
-    public function testCheckGTINDigitoVerificadorInvalido()
+    public function test_check_gtin_digito_verificador_invalido()
     {
         // Este teste verifica se o método detecta dígitos incorretos
         // Se a lib NFePHP estiver disponível, pode retornar sucesso
@@ -118,63 +119,63 @@ class GTINAdapterTest extends TestCase
             $this->assertStringContainsString('inválido', $e->getMessage());
         }
     }
-    
+
     /**
      * @testdox Deve requerer certificado para buscar produto
      */
-    public function testBuscarProdutoSemCertificado()
+    public function test_buscar_produto_sem_certificado()
     {
         $certificateManager = CertificateManager::getInstance();
         $certificateManager->clear(); // Garante que não há certificado carregado
 
         $this->expectException(\RuntimeException::class);
         $this->expectExceptionMessage('Certificado digital necessário');
-        
+
         $this->adapter->buscarProduto('7891000315507');
     }
-    
+
     /**
      * @testdox Deve lançar exceção para GTIN inválido na busca
      */
-    public function testBuscarProdutoGTINInvalido()
+    public function test_buscar_produto_gtin_invalido()
     {
         $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage('GTIN inválido');
-        
+
         $this->adapter->buscarProduto('123');
     }
-    
+
     /**
      * @testdox Deve retornar estrutura esperada na busca (simulada)
      */
-    public function testBuscarProdutoComCertificado()
+    public function test_buscar_produto_com_certificado()
     {
-        
+
         // Cria novo adapter que deve detectar o certificado
-        $adapter = new GTINAdapter();
+        $adapter = new GTINAdapter;
         CertificateManager::reload();
         $resultado = $adapter->buscarProduto('7891000315507');
-        
+
         $this->assertIsArray($resultado);
         $this->assertArrayHasKey('sucesso', $resultado);
         $this->assertArrayHasKey('xProd', $resultado);
         $this->assertArrayHasKey('NCM', $resultado);
         $this->assertArrayHasKey('CEST', $resultado);
         $this->assertArrayHasKey('cstat', $resultado);
-        
+
         $this->assertEquals('21011110', $resultado['NCM']);
     }
-    
+
     /**
      * @testdox Deve consultar NCM com certificado
      */
-    public function testConsultarNCM()
+    public function test_consultar_ncm()
     {
         CertificateManager::reload();
         // Cria novo adapter que deve detectar o certificado
-        $adapter = new GTINAdapter();
+        $adapter = new GTINAdapter;
         $resultado = $adapter->consultarNCM('7891000315507');
-        
+
         $this->assertIsArray($resultado);
         $this->assertArrayHasKey('gtin', $resultado);
         $this->assertArrayHasKey('ncm', $resultado);
@@ -188,50 +189,50 @@ class GTINAdapterTest extends TestCase
     /**
      * @testdox Tenta encontrar o NCM oficial do produto através do nome
      */
-    public function testObterNCMPorDescricaoDoProduto()
+    public function test_obter_ncm_por_descricao_do_produto()
     {
-        $this->markTestSkipped("Removemos a funcionalidade pois mesclava duas fontes distintas.");
+        $this->markTestSkipped('Removemos a funcionalidade pois mesclava duas fontes distintas.');
         // 2101.11.10
         // Café solúvel, mesmo descafeinado
         $descricao = 'Café Solúvel';
         $ncm = $this->adapter->pesquisarNCM($descricao);
 
         $this->assertIsArray($ncm);
-        $this->assertEquals("2101.11.10", $ncm[0]['codigo']);
+        $this->assertEquals('2101.11.10', $ncm[0]['codigo']);
         $this->assertStringContainsString('Café solúvel', $ncm[0]['descricao']);
     }
-    
+
     /**
      * @testdox Deve obter descrição do produto
      */
-    public function testObterDescricao()
+    public function test_obter_descricao()
     {
         // Sem certificado, deve retornar null
         CertificateManager::getInstance()->clear();
         $this->assertNull($this->adapter->obterDescricao('7891000315507'));
-        
+
         // Com certificado, deve retornar descrição
         CertificateManager::reload();
 
-        $adapter = new GTINAdapter();
+        $adapter = new GTINAdapter;
         $descricao = $adapter->obterDescricao('7891000315507');
         $this->assertIsString($descricao);
         $this->assertEquals('NESCAFÉ Café Solúvel Matinal 100g', $descricao);
     }
-    
+
     /**
      * @testdox Deve inicializar com singletons quando disponíveis
      */
-    public function testInicializacaoComSingletons()
+    public function test_inicializacao_com_singletons()
     {
         // Configura singletons
         $configManager = ConfigManager::getInstance();
-        
+
         $configManager->set('ambiente', 'teste');
-        
+
         // Cria novo adapter - deve usar os singletons
-        $adapter = new GTINAdapter();
-        
+        $adapter = new GTINAdapter;
+
         // Testa se funcionalidades que dependem de certificado funcionam
         $resultado = $adapter->buscarProduto('7891000315507');
         $this->assertIsArray($resultado);

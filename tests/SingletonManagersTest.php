@@ -1,5 +1,6 @@
 <?php
 
+use NFePHP\Common\Exception\InvalidArgumentException;
 use PHPUnit\Framework\TestCase;
 use sabbajohn\FiscalCore\Exceptions\ValidationException;
 use sabbajohn\FiscalCore\Support\CertificateManager;
@@ -35,7 +36,7 @@ class SingletonManagersTest extends TestCase
 
     public function test_certificate_manager_initially_empty(): void
     {
-        
+
         $manager = CertificateManager::getInstance();
         $manager->clear();
         $this->assertFalse($manager->isLoaded());
@@ -126,10 +127,11 @@ class SingletonManagersTest extends TestCase
                 if ($value === false) {
                     putenv($key);
                     unset($_ENV[$key]);
+
                     continue;
                 }
 
-                putenv($key . '=' . $value);
+                putenv($key.'='.$value);
                 $_ENV[$key] = $value;
             }
 
@@ -152,7 +154,7 @@ class SingletonManagersTest extends TestCase
 
     public function test_tools_factory_requires_certificate(): void
     {
-        $this->expectException(\RuntimeException::class);
+        $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('Certificado digital não carregado');
 
         ToolsFactory::createNFeTools();
@@ -160,11 +162,12 @@ class SingletonManagersTest extends TestCase
 
     /**
      * @skip If certificate is loaded
+     *
      * @depends test_tools_factory_requires_certificate
      */
     public function test_tools_factory_validate_environment_without_certificate(): void
     {
-        $this->markTestSkipped("Skipping test because certificate is loaded");
+        $this->markTestSkipped('Skipping test because certificate is loaded');
         $validation = ToolsFactory::validateEnvironment();
 
         $this->assertFalse($validation['valid']);
@@ -176,7 +179,7 @@ class SingletonManagersTest extends TestCase
     {
         ToolsFactory::setupForDevelopment([
             'uf' => 'RJ',
-            'token_ibpt' => 'TEST_TOKEN'
+            'token_ibpt' => 'TEST_TOKEN',
         ]);
 
         $manager = ConfigManager::getInstance();
@@ -191,7 +194,7 @@ class SingletonManagersTest extends TestCase
         $this->expectExceptionMessage('erro(s) de validação encontrado(s) em configuração de produção');
 
         ToolsFactory::setupForProduction([
-            'uf' => 'SP'
+            'uf' => 'SP',
         ]);
     }
 
@@ -201,7 +204,7 @@ class SingletonManagersTest extends TestCase
             'csc' => 'TEST_CSC',
             'csc_id' => '000001',
             'uf' => 'SP',
-            'municipio_ibge' => '3550308'
+            'municipio_ibge' => '3550308',
         ]);
 
         $manager = ConfigManager::getInstance();
@@ -215,7 +218,7 @@ class SingletonManagersTest extends TestCase
     {
         $manager = CertificateManager::getInstance();
 
-        $this->expectException(\NFePHP\Common\Exception\InvalidArgumentException::class);
+        $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('Certificado não encontrado');
 
         $manager->loadFromFile('/path/that/does/not/exist.pfx', 'password');
@@ -255,8 +258,8 @@ class SingletonManagersTest extends TestCase
     {
         $manager = CertificateManager::getInstance();
 
-        $this->expectException(\Error::class);
-        
+        $this->expectException(Error::class);
+
         $clone = clone $manager;
     }
 

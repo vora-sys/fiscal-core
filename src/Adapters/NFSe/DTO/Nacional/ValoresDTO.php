@@ -5,16 +5,15 @@ namespace sabbajohn\FiscalCore\Adapters\NFSe\DTO\Nacional;
 final class ValoresDTO
 {
     /**
-     * @param array<string,mixed> $data
+     * @param  array<string,mixed>  $data
      */
     private function __construct(
         private array $data,
         private float $valorServicos,
-    ) {
-    }
+    ) {}
 
     /**
-     * @param array<string,mixed> $payload
+     * @param  array<string,mixed>  $payload
      */
     public static function fromArray(array $payload): self
     {

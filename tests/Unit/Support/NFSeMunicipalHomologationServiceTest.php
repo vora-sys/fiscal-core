@@ -2,23 +2,26 @@
 
 declare(strict_types=1);
 
-require_once dirname(__DIR__, 2) . '/Fixtures/NFSeBelemMunicipalFixtures.php';
-require_once dirname(__DIR__, 2) . '/Support/TestCertificateFile.php';
+require_once dirname(__DIR__, 2).'/Fixtures/NFSeBelemMunicipalFixtures.php';
+require_once dirname(__DIR__, 2).'/Support/TestCertificateFile.php';
 
+use PHPUnit\Framework\TestCase;
 use sabbajohn\FiscalCore\Support\CertificateManager;
 use sabbajohn\FiscalCore\Support\ConfigManager;
 use sabbajohn\FiscalCore\Support\NFSeMunicipalHomologationService;
 use sabbajohn\FiscalCore\Support\NFSeSoapTransportInterface;
 use sabbajohn\FiscalCore\Support\ProviderRegistry;
-use PHPUnit\Framework\TestCase;
 
 final class NFSeMunicipalHomologationServiceTest extends TestCase
 {
     private string $projectRoot;
+
     /** @var array{path:string,password:string} */
     private array $belemCertificateFile;
+
     /** @var array{path:string,password:string} */
     private array $joinvilleCertificateFile;
+
     /** @var string[] */
     private array $envKeys = [
         'FISCAL_ENVIRONMENT',
@@ -59,9 +62,9 @@ final class NFSeMunicipalHomologationServiceTest extends TestCase
         CertificateManager::reload();
     }
 
-    public function testPreviewRejectsJoinvilleAfterNationalMigration(): void
+    public function test_preview_rejects_joinville_after_national_migration(): void
     {
-        $envPath = $this->makeEnvFile(<<<ENV
+        $envPath = $this->makeEnvFile(<<<'ENV'
 FISCAL_ENVIRONMENT=homologacao
 FISCAL_IM=123456
 FISCAL_RAZAO_SOCIAL="Freeline Informatica Ltda"
@@ -81,9 +84,9 @@ ENV);
         ]);
     }
 
-    public function testPreviewFailsWhenFiscalImIsMissing(): void
+    public function test_preview_fails_when_fiscal_im_is_missing(): void
     {
-        $envPath = $this->makeEnvFile(<<<ENV
+        $envPath = $this->makeEnvFile(<<<'ENV'
 FISCAL_ENVIRONMENT=homologacao
 FISCAL_RAZAO_SOCIAL="Freeline Informatica Ltda"
 ENV);
@@ -112,14 +115,14 @@ ENV);
             'env_overrides' => [
                 'FISCAL_CERT_PATH' => $this->belemCertificateFile['path'],
                 'FISCAL_CERT_PASSWORD' => $this->belemCertificateFile['password'],
-                'OPENSSL_CONF' => $this->projectRoot . '/openssl.cnf',
+                'OPENSSL_CONF' => $this->projectRoot.'/openssl.cnf',
             ],
         ]);
     }
 
-    public function testPreviewLoadsFaivesLegacyCertificateWhenOpenSslConfIsProvided(): void
+    public function test_preview_loads_faives_legacy_certificate_when_open_ssl_conf_is_provided(): void
     {
-        $envPath = $this->makeEnvFile(<<<ENV
+        $envPath = $this->makeEnvFile(<<<'ENV'
 FISCAL_ENVIRONMENT=homologacao
 FISCAL_IM=4007197
 FISCAL_RAZAO_SOCIAL="Faives Solucoes em Tecnologia Ltda"
@@ -148,7 +151,7 @@ ENV);
             'env_overrides' => [
                 'FISCAL_CERT_PATH' => $this->belemCertificateFile['path'],
                 'FISCAL_CERT_PASSWORD' => $this->belemCertificateFile['password'],
-                'OPENSSL_CONF' => $this->projectRoot . '/openssl.cnf',
+                'OPENSSL_CONF' => $this->projectRoot.'/openssl.cnf',
             ],
         ]);
 
@@ -156,14 +159,14 @@ ENV);
         $this->assertSame('success', $result['parsed_response']['status']);
         $this->assertStringContainsString('<EnviarLoteRpsSincronoEnvio', (string) $result['request_xml']);
         $this->assertSame(
-            realpath($this->projectRoot . '/openssl.cnf'),
+            realpath($this->projectRoot.'/openssl.cnf'),
             $result['resolved_paths']['OPENSSL_CONF'] ?? null
         );
     }
 
-    public function testPreviewAcceptsCpfTomadorWhenLookupProvidesAddress(): void
+    public function test_preview_accepts_cpf_tomador_when_lookup_provides_address(): void
     {
-        $envPath = $this->makeEnvFile(<<<ENV
+        $envPath = $this->makeEnvFile(<<<'ENV'
 FISCAL_ENVIRONMENT=homologacao
 FISCAL_IM=123456
 FISCAL_RAZAO_SOCIAL="Freeline Informatica Ltda"
@@ -191,7 +194,7 @@ ENV);
             'env_overrides' => [
                 'FISCAL_CERT_PATH' => $this->belemCertificateFile['path'],
                 'FISCAL_CERT_PASSWORD' => $this->belemCertificateFile['password'],
-                'OPENSSL_CONF' => $this->projectRoot . '/openssl.cnf',
+                'OPENSSL_CONF' => $this->projectRoot.'/openssl.cnf',
             ],
         ]);
 
@@ -200,15 +203,16 @@ ENV);
         $this->assertSame('success', $result['parsed_response']['status']);
     }
 
-    public function testSendBuildsBelemRequestAndDispatchesThroughSoapTransport(): void
+    public function test_send_builds_belem_request_and_dispatches_through_soap_transport(): void
     {
-        $envPath = $this->makeEnvFile(<<<ENV
+        $envPath = $this->makeEnvFile(<<<'ENV'
 FISCAL_ENVIRONMENT=homologacao
 FISCAL_IM=4007197
 FISCAL_RAZAO_SOCIAL="Faives Solucoes em Tecnologia Ltda"
 ENV);
 
-        $transport = new class implements NFSeSoapTransportInterface {
+        $transport = new class implements NFSeSoapTransportInterface
+        {
             public array $calls = [];
 
             public function send(string $endpoint, string $envelope, array $options = []): array
@@ -241,7 +245,7 @@ ENV);
             'env_overrides' => [
                 'FISCAL_CERT_PATH' => $this->belemCertificateFile['path'],
                 'FISCAL_CERT_PASSWORD' => $this->belemCertificateFile['password'],
-                'OPENSSL_CONF' => $this->projectRoot . '/openssl.cnf',
+                'OPENSSL_CONF' => $this->projectRoot.'/openssl.cnf',
             ],
             'provider_config_overrides' => [
                 'soap_transport' => $transport,
@@ -265,7 +269,7 @@ ENV);
         $this->assertStringContainsString('<svc:RecepcionarLoteRpsSincrono>', (string) $result['soap_envelope']);
         $this->assertStringContainsString('<EnviarLoteRpsSincronoEnvio', (string) $result['request_xml']);
 
-        $dom = new DOMDocument();
+        $dom = new DOMDocument;
         $dom->loadXML((string) $result['request_xml']);
         $xpath = new DOMXPath($dom);
         $xpath->registerNamespace('ds', 'http://www.w3.org/2000/09/xmldsig#');
@@ -296,9 +300,9 @@ ENV);
         );
     }
 
-    public function testSendRejectsJoinvilleAfterNationalMigration(): void
+    public function test_send_rejects_joinville_after_national_migration(): void
     {
-        $envPath = $this->makeEnvFile(<<<ENV
+        $envPath = $this->makeEnvFile(<<<'ENV'
 FISCAL_ENVIRONMENT=homologacao
 FISCAL_IM=987654321
 FISCAL_RAZAO_SOCIAL="FREELINE INFORMATICA LTDA"
@@ -323,15 +327,16 @@ ENV);
         ]);
     }
 
-    public function testPreviewAllowsBelemProductionWhenExplicitlyEnabledAndUsesFivePercentAliquota(): void
+    public function test_preview_allows_belem_production_when_explicitly_enabled_and_uses_five_percent_aliquota(): void
     {
-        $envPath = $this->makeEnvFile(<<<ENV
+        $envPath = $this->makeEnvFile(<<<'ENV'
 FISCAL_ENVIRONMENT=producao
 FISCAL_IM=4007197
 FISCAL_RAZAO_SOCIAL="Faives Solucoes em Tecnologia Ltda"
 ENV);
 
-        $transport = new class implements NFSeSoapTransportInterface {
+        $transport = new class implements NFSeSoapTransportInterface
+        {
             public array $calls = [];
 
             public function send(string $endpoint, string $envelope, array $options = []): array
@@ -365,7 +370,7 @@ ENV);
             'env_overrides' => [
                 'FISCAL_CERT_PATH' => $this->belemCertificateFile['path'],
                 'FISCAL_CERT_PASSWORD' => $this->belemCertificateFile['password'],
-                'OPENSSL_CONF' => $this->projectRoot . '/openssl.cnf',
+                'OPENSSL_CONF' => $this->projectRoot.'/openssl.cnf',
             ],
             'provider_config_overrides' => [
                 'soap_transport' => $transport,

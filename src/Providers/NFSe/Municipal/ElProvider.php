@@ -4,7 +4,4 @@ declare(strict_types=1);
 
 namespace sabbajohn\FiscalCore\Providers\NFSe\Municipal;
 
-final class ElProvider extends AbrasfSharedProvider
-{
-}
-
+final class ElProvider extends AbrasfSharedProvider {}

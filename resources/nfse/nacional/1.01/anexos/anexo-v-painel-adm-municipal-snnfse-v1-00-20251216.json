@@ -1,0 +1,903 @@
+{
+    "schema": "nfse-nacional-annex-manifest",
+    "schema_version": "1.0",
+    "source": {
+        "file": "anexo_v-painel_adm_municipal-snnfse-v1-00-20251216.xlsx",
+        "sha256": "74da67e240f80533deb2053610cfc4d7c52a0a1ae001ffa273c43bf508b22a89",
+        "bytes": 22437
+    },
+    "workbook": {
+        "sheets": [
+            {
+                "name": "LEIAUTE_PAR",
+                "sheet_id": "1",
+                "relationship_id": "rId1",
+                "path": "xl/worksheets/sheet1.xml",
+                "dimension": "A1:I21",
+                "rows": [
+                    {
+                        "row": 1,
+                        "cells": {
+                            "A": "#",
+                            "B": "CAMINHO NO XML",
+                            "C": "CAMPO",
+                            "D": "ELE",
+                            "E": "TIPO",
+                            "F": "OCOR.",
+                            "G": "TAM.",
+                            "H": "DESCRIÇÃO",
+                            "I": "NOTAS EXPLICATIVAS"
+                        }
+                    },
+                    {
+                        "row": 2,
+                        "cells": {
+                            "A": "1",
+                            "C": "PARAM",
+                            "D": "Raiz",
+                            "E": "-",
+                            "F": "-",
+                            "G": "-",
+                            "H": "TAG raiz",
+                            "I": "-"
+                        }
+                    },
+                    {
+                        "row": 3,
+                        "cells": {
+                            "A": "2",
+                            "B": "PARAM/",
+                            "C": "versao",
+                            "D": "A",
+                            "E": "C",
+                            "F": "1-1",
+                            "G": "1-4V2",
+                            "H": "Versão do leiaute.",
+                            "I": "-"
+                        }
+                    },
+                    {
+                        "row": 4,
+                        "cells": {
+                            "A": "3",
+                            "B": "PARAM/",
+                            "C": "infPARAM",
+                            "D": "G",
+                            "E": "-",
+                            "F": "1-1",
+                            "G": "-",
+                            "H": "Grupo de informações da manutenção do processamento",
+                            "I": "-"
+                        }
+                    },
+                    {
+                        "row": 5,
+                        "cells": {
+                            "A": "4",
+                            "B": "PARAM/infPARAM/",
+                            "C": "Id",
+                            "D": "ID",
+                            "E": "C",
+                            "F": "1-1",
+                            "G": "26",
+                            "H": "\"PAR\" + Cód.Mun.(7) + Tipo de Ambiente(1) + idPar(14)",
+                            "I": "-"
+                        }
+                    },
+                    {
+                        "row": 6,
+                        "cells": {
+                            "A": "5",
+                            "B": "PARAM/infPARAM/",
+                            "C": "cMun",
+                            "D": "E",
+                            "E": "N",
+                            "F": "1-1",
+                            "G": "7",
+                            "H": "Código IBGE do município do contribuinte.",
+                            "I": "Conforme AnexoA-Tabelas_ISO2Paises_MunIBGE_Rodovias-SNNFSe."
+                        }
+                    },
+                    {
+                        "row": 7,
+                        "cells": {
+                            "A": "6",
+                            "B": "PARAM/infPARAM/",
+                            "C": "CNPJ",
+                            "D": "E",
+                            "E": "N",
+                            "F": "1-1",
+                            "G": "14",
+                            "H": "CNPJ do Município.",
+                            "I": "-"
+                        }
+                    },
+                    {
+                        "row": 8,
+                        "cells": {
+                            "A": "7",
+                            "B": "PARAM/infPARAM/",
+                            "C": "CPFAgTrib",
+                            "D": "E",
+                            "E": "N",
+                            "F": "1-1",
+                            "G": "11",
+                            "H": "CPF do agente da administração tributária municipal que enviou a manutenção da parametrização pelo município.",
+                            "I": "-"
+                        }
+                    },
+                    {
+                        "row": 9,
+                        "cells": {
+                            "A": "8",
+                            "B": "PARAM/infPARAM/",
+                            "C": "idPar",
+                            "D": "E",
+                            "E": "N",
+                            "F": "1-1",
+                            "G": "14",
+                            "H": "Identificador do parâmetro a ser manutenido.",
+                            "I": "-"
+                        }
+                    },
+                    {
+                        "row": 10,
+                        "cells": {
+                            "A": "9",
+                            "B": "PARAM/infPARAM/",
+                            "C": "tpAmb",
+                            "D": "E",
+                            "E": "N",
+                            "F": "1-1",
+                            "G": "1",
+                            "H": "Tipo de ambiente: 1 - Produção; 2 - Homologação;",
+                            "I": "-"
+                        }
+                    },
+                    {
+                        "row": 11,
+                        "cells": {
+                            "A": "10",
+                            "B": "PARAM/infPARAM/",
+                            "C": "dhEmi",
+                            "D": "E",
+                            "E": "N",
+                            "F": "1-1",
+                            "G": "-",
+                            "H": "Data da Emissão da manutenção da parametrização.",
+                            "I": "-"
+                        }
+                    },
+                    {
+                        "row": 12,
+                        "cells": {
+                            "A": "11",
+                            "B": "PARAM/infPARAM/",
+                            "C": "verAplic",
+                            "D": "E",
+                            "E": "C",
+                            "F": "1-1",
+                            "G": "1-20",
+                            "H": "Versão do aplicativo que gerou a manuteção da parametrização.",
+                            "I": "-"
+                        }
+                    },
+                    {
+                        "row": 13,
+                        "cells": {
+                            "B": "PARAM/infPARAM/",
+                            "C": "versao",
+                            "D": "A",
+                            "E": "C",
+                            "F": "1-1",
+                            "G": "1-4V2",
+                            "H": "Versão do leiaute."
+                        }
+                    },
+                    {
+                        "row": 14,
+                        "cells": {
+                            "A": "12",
+                            "B": "PARAM/infPARAM/",
+                            "C": "contribuintes",
+                            "D": "G",
+                            "E": "-",
+                            "F": "1-1",
+                            "G": "-",
+                            "H": "Grupo de informações da manutenção do processamento dos contribuinte",
+                            "I": "-"
+                        }
+                    },
+                    {
+                        "row": 15,
+                        "cells": {
+                            "B": "PARAM/infPARAM/contribuintes/",
+                            "C": "infContrib",
+                            "D": "G",
+                            "E": "-",
+                            "F": "1-1000",
+                            "G": "-",
+                            "H": "Grupo de informações dos contribuintes"
+                        }
+                    },
+                    {
+                        "row": 16,
+                        "cells": {
+                            "A": "14",
+                            "B": "PARAM/infPARAM/InfContrib/contribuintes/",
+                            "C": "CNPJ",
+                            "D": "CE",
+                            "E": "N",
+                            "F": "1-1",
+                            "G": "14",
+                            "H": "Número da inscrição federal (CNPJ) do contribuinte do município.",
+                            "I": "-"
+                        }
+                    },
+                    {
+                        "row": 17,
+                        "cells": {
+                            "A": "16",
+                            "B": "PARAM/infPARAM/InfContrib/contribuintes/",
+                            "C": "CPF",
+                            "D": "CE",
+                            "E": "N",
+                            "F": "1-1",
+                            "G": "11",
+                            "H": "Número da inscrição federal (CPF) do contribuinte do município.",
+                            "I": "-"
+                        }
+                    },
+                    {
+                        "row": 18,
+                        "cells": {
+                            "A": "17",
+                            "B": "PARAM/infPARAM/InfContrib/contribuintes/",
+                            "C": "cManut",
+                            "D": "E",
+                            "E": "C",
+                            "F": "1-1",
+                            "G": "1",
+                            "H": "Código da manutenção da parametrização a ser realizada: 0 - Finalizar Vigência; 1 - Iniciar Vigência;",
+                            "I": "-"
+                        }
+                    },
+                    {
+                        "row": 19,
+                        "cells": {
+                            "A": "18",
+                            "B": "PARAM/infPARAM/InfContrib/contribuintes/",
+                            "C": "dtVig",
+                            "D": "E",
+                            "E": "D",
+                            "F": "1-1",
+                            "G": "-",
+                            "H": "Data informada para iniciar ou finalizar vigência de um registro na parametrização.",
+                            "I": "-"
+                        }
+                    },
+                    {
+                        "row": 20,
+                        "cells": {
+                            "A": "19",
+                            "B": "PARAM/infPARAM/InfContrib/contribuintes/",
+                            "C": "idLeg",
+                            "D": "E",
+                            "E": "C",
+                            "F": "1-1",
+                            "G": "14",
+                            "H": "Identificador da legislação já cadastrada do munícipio.",
+                            "I": "-"
+                        }
+                    },
+                    {
+                        "row": 21,
+                        "cells": {
+                            "A": "20",
+                            "B": "PARAM/",
+                            "C": "Signature",
+                            "D": "G",
+                            "E": "-",
+                            "F": "1-1",
+                            "G": "-",
+                            "H": "Assinatura XML da NFS-e Segundo o Padrão XML Digital Signature Obrigatório quando for enviado para API. Demais casos poderão ser opcionais a serem definidos em regra de validação.",
+                            "I": "-"
+                        }
+                    }
+                ]
+            },
+            {
+                "name": "RN_PAR",
+                "sheet_id": "9",
+                "relationship_id": "rId2",
+                "path": "xl/worksheets/sheet2.xml",
+                "dimension": "A1:J46",
+                "rows": [
+                    {
+                        "row": 1,
+                        "cells": {
+                            "A": "#",
+                            "B": "CAMINHO NO XML",
+                            "C": "CAMPO",
+                            "D": "REGRAS DE NEGÓCIO",
+                            "F": "APLIC.",
+                            "G": "EFEITO",
+                            "H": "CÓD. ERRO",
+                            "J": "NOTAS EXPLICATIVAS"
+                        }
+                    },
+                    {
+                        "row": 2,
+                        "cells": {
+                            "A": "1",
+                            "C": "PARAM",
+                            "D": "-",
+                            "F": "-",
+                            "G": "-",
+                            "H": "-",
+                            "I": "-",
+                            "J": "-"
+                        }
+                    },
+                    {
+                        "row": 3,
+                        "cells": {
+                            "A": "2",
+                            "B": "PARAM/",
+                            "C": "versao",
+                            "D": "Prazo de aceitação da versão do leiaute CNC ultrapassado.",
+                            "F": "Obrig.",
+                            "G": "Rej.",
+                            "H": "E4000",
+                            "I": "O prazo de aceitação da versão do leiaute expirou.",
+                            "J": "-"
+                        }
+                    },
+                    {
+                        "row": 4,
+                        "cells": {
+                            "A": "3",
+                            "B": "PARAM/",
+                            "C": "infPARAM",
+                            "D": "-",
+                            "F": "-",
+                            "G": "-",
+                            "H": "-",
+                            "I": "-",
+                            "J": "-"
+                        }
+                    },
+                    {
+                        "row": 5,
+                        "cells": {
+                            "A": "4",
+                            "B": "PARAM/infPARAM/",
+                            "C": "Id",
+                            "D": "Verificar se o código do município está de acordo com o campo cMun do leiaute PAR.",
+                            "F": "Obrig.",
+                            "G": "Rej.",
+                            "H": "E4001",
+                            "I": "O código do município do id não está de acordo com a informação do campo cMun do leiaute.",
+                            "J": "-"
+                        }
+                    },
+                    {
+                        "row": 6,
+                        "cells": {
+                            "A": "5",
+                            "D": "Verificar se o tipo de ambiente está de acordo com o campo tpAmb do leiaute PAR.",
+                            "F": "Obrig.",
+                            "G": "Rej.",
+                            "H": "E4002",
+                            "I": "O tipo de ambiente do id não está de acordo com a informação do campo tpAmb do leiaute.",
+                            "J": "-"
+                        }
+                    },
+                    {
+                        "row": 7,
+                        "cells": {
+                            "A": "6",
+                            "B": "PARAM/infPARAM/",
+                            "C": "cMun",
+                            "D": "O código do município deve corresponder a um código de município válido, conforme tabela de municipios do IBGE.",
+                            "F": "Obrig.",
+                            "G": "Rej.",
+                            "H": "E4004",
+                            "I": "O código do município informado não corresponde a um código de município válido, conforme tabela de municipios do IBGE.",
+                            "J": "Conforme AnexoA-Tabelas_ISO2Paises_MunIBGE_Rodovias-SNNFSe."
+                        }
+                    },
+                    {
+                        "row": 8,
+                        "cells": {
+                            "A": "7",
+                            "D": "O código do município deve estar conveniado ao Sistema Nacional NFS-e e estar ativo.",
+                            "F": "Obrig.",
+                            "G": "Rej.",
+                            "H": "E4005",
+                            "I": "O código do município informado está conveniado ao Sistema Nacional NFS-e, mas não está ativo.",
+                            "J": "-"
+                        }
+                    },
+                    {
+                        "row": 9,
+                        "cells": {
+                            "A": "8",
+                            "D": "O código do município deve estar associado ao CNPJ de transmissão e existir no cadastro de convênio municipal do sistema nacional.",
+                            "F": "Obrig.",
+                            "G": "Rej.",
+                            "H": "E4006",
+                            "I": "O código do município não existe no cadastro de convênio municipal do sistema nacional.",
+                            "J": "-"
+                        }
+                    },
+                    {
+                        "row": 10,
+                        "cells": {
+                            "A": "9",
+                            "B": "PARAM/infPARAM/",
+                            "C": "CNPJ",
+                            "D": "CNPJ informado é inválido (verificar DV).",
+                            "F": "Obrig.",
+                            "G": "Rej.",
+                            "H": "E4007",
+                            "I": "CNPJ do agente tributário informado é inválido."
+                        }
+                    },
+                    {
+                        "row": 11,
+                        "cells": {
+                            "A": "10",
+                            "D": "O CNPJ do município deve corresponder ao CNPJ de transmissão.",
+                            "F": "Obrig.",
+                            "G": "Rej.",
+                            "H": "E4008",
+                            "I": "O CNPJ do município informado não corresponde ao CNPJ de transmissão.",
+                            "J": "-"
+                        }
+                    },
+                    {
+                        "row": 12,
+                        "cells": {
+                            "A": "11",
+                            "D": "O CNPJ do município e deve estar registrado no cadastro de convênio municipal do sistema nacional e estar ativo.",
+                            "F": "Obrig.",
+                            "G": "Rej.",
+                            "H": "E4009",
+                            "I": "O CNPJ do município informado não existe no cadastro de convênio municipal do sistema nacional.",
+                            "J": "-"
+                        }
+                    },
+                    {
+                        "row": 13,
+                        "cells": {
+                            "A": "12",
+                            "D": "O CNPJ do município existe no cadastro de convênio municipal do sistema nacional, mas está suspenso.",
+                            "F": "Obrig.",
+                            "G": "Rej.",
+                            "H": "E4010",
+                            "I": "O código do município informado existe, mas está suspenso no convênio municipal.",
+                            "J": "-"
+                        }
+                    },
+                    {
+                        "row": 14,
+                        "cells": {
+                            "A": "13",
+                            "D": "O CNPJ do município existe no cadastro de convênio municipal do sistema nacional, mas está inativo.",
+                            "F": "Obrig.",
+                            "G": "Rej.",
+                            "H": "E4011",
+                            "I": "O código do município informado existe, mas não está ativo há mais de <número de dias> dias no cadastro de convênio municipal.",
+                            "J": "-"
+                        }
+                    },
+                    {
+                        "row": 15,
+                        "cells": {
+                            "A": "14",
+                            "B": "PARAM/infPARAM/",
+                            "C": "CPFAgTrib",
+                            "D": "CPF informado é inválido (verificar DV).",
+                            "F": "Obrig.",
+                            "G": "Rej.",
+                            "H": "E4012",
+                            "I": "CPF do agente tributário informado é inválido.",
+                            "J": "-"
+                        }
+                    },
+                    {
+                        "row": 16,
+                        "cells": {
+                            "A": "15",
+                            "B": "PARAM/infPARAM/",
+                            "C": "idPar",
+                            "D": "Verificar se o identificador do parâmetro pertence ao município que está realizando a manutenção da parametrização. (Verificar se os 7 primeiros digitos do identificador da paramentrização correspondem ao código do município informado).",
+                            "F": "Obrig.",
+                            "G": "Rej.",
+                            "H": "E4013",
+                            "I": "O identificador da parametrização (idPar) informado não pertencem ao município informado (cMun).",
+                            "J": "-"
+                        }
+                    },
+                    {
+                        "row": 17,
+                        "cells": {
+                            "A": "16",
+                            "D": "Verificar se o identificador do parâmetro pertence ao tipo de parâmetro manutenido.",
+                            "F": "Obrig.",
+                            "G": "Rej.",
+                            "H": "E4014",
+                            "I": "O identificador da parametrização não encontrado."
+                        }
+                    },
+                    {
+                        "row": 18,
+                        "cells": {
+                            "A": "17",
+                            "D": "Não pode haver manutenção em parametrizações que não estejam vigentes. (Verificar se a parametarização manutenida possui data final de vigência).",
+                            "F": "Obrig.",
+                            "G": "Rej.",
+                            "H": "E4015",
+                            "I": "A parametrização informada não está mais vigente.",
+                            "J": "-"
+                        }
+                    },
+                    {
+                        "row": 19,
+                        "cells": {
+                            "A": "18",
+                            "B": "PARAM/infPARAM/",
+                            "C": "tpAmb",
+                            "D": "Ambiente informado diverge do ambiente de recebimento para o qual o município enviou a manutenção do parâmetro.",
+                            "F": "Obrig.",
+                            "G": "Rej.",
+                            "H": "E4017",
+                            "I": "Ambiente informado diverge do ambiente de recebimento para o qual o município enviou a manutenção do parâmetro.",
+                            "J": "-"
+                        }
+                    },
+                    {
+                        "row": 20,
+                        "cells": {
+                            "A": "19",
+                            "B": "PARAM/infPARAM/",
+                            "C": "dhEmi",
+                            "D": "A data de emissão da manutenção da parametrização deve ser igual à data de processamento (data atual).",
+                            "F": "Obrig.",
+                            "G": "Rej.",
+                            "H": "E4016",
+                            "I": "A data de emissão da manutenção da parametrização deve ser igual à data de processamento (data atual).",
+                            "J": "-"
+                        }
+                    },
+                    {
+                        "row": 21,
+                        "cells": {
+                            "A": "20",
+                            "B": "PARAM/infPARAM/",
+                            "C": "verAplic",
+                            "D": "-",
+                            "F": "-",
+                            "G": "-",
+                            "H": "-",
+                            "I": "-",
+                            "J": "-"
+                        }
+                    },
+                    {
+                        "row": 22,
+                        "cells": {
+                            "B": "PARAM/infPARAM/",
+                            "C": "contribuintes",
+                            "D": "-",
+                            "F": "-",
+                            "G": "-",
+                            "H": "-",
+                            "I": "-"
+                        }
+                    },
+                    {
+                        "row": 23,
+                        "cells": {
+                            "A": "21",
+                            "B": "PARAM/infPARAM/contribuintes/",
+                            "C": "infContrib",
+                            "D": "-",
+                            "F": "-",
+                            "G": "-",
+                            "H": "-",
+                            "I": "-",
+                            "J": "-"
+                        }
+                    },
+                    {
+                        "row": 24,
+                        "cells": {
+                            "A": "23",
+                            "B": "PARAM/infPARAM/contribuintes/infContrib/",
+                            "C": "CNPJ",
+                            "D": "CNPJ informado é inválido (verificar DV).",
+                            "F": "Obrig.",
+                            "G": "Rej.",
+                            "H": "E4018",
+                            "I": "CNPJ do contribuinte informado é inválido.",
+                            "J": "-"
+                        }
+                    },
+                    {
+                        "row": 25,
+                        "cells": {
+                            "A": "26",
+                            "D": "Verificar se o CNPJ do contribuinte informado para inclusão em parametrização de Regime Especial Tributação, existe e está vigente em outra parametrização de Regime Especial de Tributação para o mesmo município.",
+                            "F": "Obrig.",
+                            "G": "Rej.",
+                            "H": "E4022",
+                            "I": "Não é possível registrar o CNPJ informado pois o mesmo está vigente em outra parametrização para Regime Especial de Tributação."
+                        }
+                    },
+                    {
+                        "row": 26,
+                        "cells": {
+                            "A": "27",
+                            "B": "PARAM/infPARAM/contribuintes/infContrib/",
+                            "C": "CPF",
+                            "D": "CPF informado é inválido (verificar DV).",
+                            "F": "Obrig.",
+                            "G": "Rej.",
+                            "H": "E4019",
+                            "I": "CPF do contribuinte informado é inválido.",
+                            "J": "-"
+                        }
+                    },
+                    {
+                        "row": 27,
+                        "cells": {
+                            "A": "28",
+                            "D": "Verificar se o CPF do contribuinte informado para inclusão em parametrização de Regime Especial Tributação, existe e está vigente em outra parametrização de Regime Especial de Tributação para o mesmo município.",
+                            "F": "Obrig.",
+                            "G": "Rej.",
+                            "H": "E4025",
+                            "I": "Não é possível registrar o CPF informado pois o mesmo está vigente em outra parametrização para Regime Especial de Tributação."
+                        }
+                    },
+                    {
+                        "row": 28,
+                        "cells": {
+                            "A": "29",
+                            "B": "PARAM/infPARAM/contribuintes/infContrib/",
+                            "C": "cManut",
+                            "D": "-",
+                            "F": "-",
+                            "G": "-",
+                            "H": "-",
+                            "I": "-",
+                            "J": "-"
+                        }
+                    },
+                    {
+                        "row": 29,
+                        "cells": {
+                            "A": "30",
+                            "B": "PARAM/infPARAM/contribuintes/infContrib/",
+                            "C": "dtVig",
+                            "D": "Verificar se a data de vigência informada é maior ou igual à data de início de vigência da parametrização manutenida.",
+                            "F": "Obrig.",
+                            "G": "Rej.",
+                            "H": "E4020",
+                            "I": "A data de vigência informada é menor que a data de início de vigência da parametrização manutenida.",
+                            "J": "-"
+                        }
+                    },
+                    {
+                        "row": 30,
+                        "cells": {
+                            "A": "31",
+                            "D": "Quando a manuteção for para iniciar uma vigência de registro (cManut = 1) e existir o CNPJ informado na parametrização, verificar se já não existe registro deste CNPJ sem a data final de vigência.",
+                            "F": "Obrig.",
+                            "G": "Rej.",
+                            "H": "E4021",
+                            "I": "Não é possível registar o CNPJ informado pois o mesmo está vigente nesta parametrização informada.",
+                            "J": "-"
+                        }
+                    },
+                    {
+                        "row": 31,
+                        "cells": {
+                            "A": "30",
+                            "D": "Quando a manuteção for para iniciar uma vigência de registro (cManut = 1) e existir o CNPJ informado na parametrização com a data final de vigência do registro, verificar se a data de início de vigência informada é maior que a data final de vigência do registro mais recente.",
+                            "F": "Obrig.",
+                            "G": "Rej.",
+                            "H": "E4023",
+                            "I": "Não é possível registar o CNPJ informado pois a data de início de vigência informada é menor ou igual à data final da última vigência deste CNPJ,<informar data final da última vigência do CNPJ>.",
+                            "J": "-"
+                        }
+                    },
+                    {
+                        "row": 32,
+                        "cells": {
+                            "A": "31",
+                            "D": "Quando a manuteção for para iniciar uma vigência de registro (cManut = 1) e existir o CPF informado na parametrização, verificar se já não existe registro deste CPF sem a data final de vigência.",
+                            "F": "Obrig.",
+                            "G": "Rej.",
+                            "H": "E4024",
+                            "I": "Não é possível registar o CPF informado pois o mesmo está vigente nesta parametrização informada.",
+                            "J": "-"
+                        }
+                    },
+                    {
+                        "row": 33,
+                        "cells": {
+                            "A": "32",
+                            "D": "Quando a manuteção for para iniciar uma vigência de registro (cManut = 1) e existir o CPF informado na parametrização com a data final de vigência do registro, verificar se a data de início de vigência informada é maior que a data final de vigência do registro mais recente.",
+                            "F": "Obrig.",
+                            "G": "Rej.",
+                            "H": "E4026",
+                            "I": "Não é possível registar o CPF informado pois a data de início de vigência informada é menor ou igual à data final da última vigência deste CPF ,<informar data final da última vigência do CPF >.",
+                            "J": "-"
+                        }
+                    },
+                    {
+                        "row": 34,
+                        "cells": {
+                            "A": "33",
+                            "D": "Quando a manuteção for para finalizar uma vigência de registro (cManut = 0), verificar se existe registro deste CNPJ.",
+                            "F": "Obrig.",
+                            "G": "Rej.",
+                            "H": "E4027",
+                            "I": "Não é possível registar o fim de vigência do CNPJ informado pois o mesmo não existe nesta parametrização informada.",
+                            "J": "-"
+                        }
+                    },
+                    {
+                        "row": 35,
+                        "cells": {
+                            "A": "34",
+                            "D": "Quando a manuteção for para finalizar uma vigência de registro (cManut = 0) e existir o CNPJ informado na parametrização, verificar se não existe registro deste CNPJ sem a data final de vigência.",
+                            "F": "Obrig.",
+                            "G": "Rej.",
+                            "H": "E4028",
+                            "I": "Não é possível registar o fim de vigência do CNPJ informado pois o mesmo não está vigente na parametrização informada.",
+                            "J": "-"
+                        }
+                    },
+                    {
+                        "row": 36,
+                        "cells": {
+                            "A": "35",
+                            "D": "Quando a manuteção for para finalizar uma vigência de registro (cManut = 0) e existir o CNPJ informado na parametrização sem a data final de vigência, verificar se a data de fim de vigência informada é menor que a data de início de vigência do registro do CNPJ.",
+                            "F": "Obrig.",
+                            "G": "Rej.",
+                            "H": "E4029",
+                            "I": "Não é possível registar o fim de vigência do CNPJ informado pois a data para fim de vigência informada é menor que a data de início de vigência encontrada para este CNPJ na parametrização informada <informar data inicial da última vigência do CNPJ>.",
+                            "J": "-"
+                        }
+                    },
+                    {
+                        "row": 37,
+                        "cells": {
+                            "A": "36",
+                            "D": "Quando a manuteção for para finalizar uma vigência de registro (cManut = 0), verificar se existe registro deste CPF.",
+                            "F": "Obrig.",
+                            "G": "Rej.",
+                            "H": "E4030",
+                            "I": "Não é possível registar o fim de vigência do CPF informado pois o mesmo não existe nesta parametrização informada.",
+                            "J": "-"
+                        }
+                    },
+                    {
+                        "row": 38,
+                        "cells": {
+                            "A": "37",
+                            "D": "Quando a manuteção for para finalizar uma vigência de registro (cManut = 0) e existir o CPF informado na parametrização, verificar se não existe registro deste CPF sem a data final de vigência.",
+                            "F": "Obrig.",
+                            "G": "Rej.",
+                            "H": "E4031",
+                            "I": "Não é possível registar o fim de vigência do CPF informado pois o mesmo já não está vigente na parametrização informada.",
+                            "J": "-"
+                        }
+                    },
+                    {
+                        "row": 39,
+                        "cells": {
+                            "A": "38",
+                            "D": "Quando a manuteção for para finalizar uma vigência de registro (cManut = 0) e existir o CPF informado na parametrização sem a data final de vigência, verificar se a data de fim de vigência informada é menor que a data de início de vigência do registro do CPF .",
+                            "F": "Obrig.",
+                            "G": "Rej.",
+                            "H": "E4032",
+                            "I": "Não é possível registar o fim de vigência do CPF informado pois a data para fim de vigência informada é menor à data de início de vigência encontrada para este CPF na parametrização informada <informar data inicial da última vigência do CPF >.",
+                            "J": "-"
+                        }
+                    },
+                    {
+                        "row": 40,
+                        "cells": {
+                            "A": "39",
+                            "B": "PARAM/infPARAM/contribuintes/infContrib/",
+                            "C": "idLeg",
+                            "D": "Verificar se o identificador da legislação pertence ao município que está realizando a manutenção da parametrização. (Verificar se os 7 primeiros dígitos do identificador da legislação correspondem ao código do município informado).",
+                            "F": "Obrig.",
+                            "G": "Rej.",
+                            "H": "E4033",
+                            "I": "O identificador da legislação (idLeg) informado não pertencem ao município informado (cMun).",
+                            "J": "-"
+                        }
+                    },
+                    {
+                        "row": 41,
+                        "cells": {
+                            "A": "40",
+                            "D": "Verificar se o identificador da legislação existe no município que está realizando a manutenção da parametrização.",
+                            "F": "Obrig.",
+                            "G": "Rej.",
+                            "H": "E4034",
+                            "I": "O identificador da legislação (idLeg) informado não existe para o município informado (cMun)."
+                        }
+                    },
+                    {
+                        "row": 42,
+                        "cells": {
+                            "A": "41",
+                            "B": "PARAM/",
+                            "C": "Signature",
+                            "D": "A assinatura da PARAM deve ser válida.",
+                            "F": "Obrig.",
+                            "G": "Rej.",
+                            "H": "E4046",
+                            "I": "Arquivo enviado com erro na assinatura.",
+                            "J": "-"
+                        }
+                    },
+                    {
+                        "row": 43,
+                        "cells": {
+                            "A": "42",
+                            "D": "Verificar a validade do Certificado Digital da assinatura.",
+                            "F": "Obrig.",
+                            "G": "Rej.",
+                            "H": "E0534",
+                            "I": "Certificado expirado.",
+                            "J": "-"
+                        }
+                    },
+                    {
+                        "row": 44,
+                        "cells": {
+                            "A": "43",
+                            "D": "Certificado Digital da assinatura fora do padrão estabelecido pelo projeto NFS-e: - Versão diferente de 3; - Se informado, Basic Constraint deve ser true (não pode ser Certificado de AC); - KeyUsage não define 'Assinatura Digital' e 'Não Recusa'; - Falta a extensão de CNPJ (OtherName - OID=2.16.76.1.3.3) ou CPF (OtherName - OID=2.16.76.1.3.1); - Certificado Raiz difere da 'ICP-Brasil'.",
+                            "F": "Obrig.",
+                            "G": "Rej.",
+                            "H": "E0528",
+                            "I": "Certificado Digital fora do padrão estabelecido.",
+                            "J": "-"
+                        }
+                    },
+                    {
+                        "row": 45,
+                        "cells": {
+                            "A": "44",
+                            "D": "É obrigatória a existência da assinatura da PARAM quando for enviado para a API.",
+                            "F": "Obrig.",
+                            "G": "Rej.",
+                            "H": "E0530",
+                            "I": "A assinatura é obrigatória quando for enviado para a API.",
+                            "J": "-"
+                        }
+                    },
+                    {
+                        "row": 46,
+                        "cells": {
+                            "A": "45",
+                            "D": "A assinatura deve ser feita com o certificado digital do Municipio da PARAM.",
+                            "F": "Obrig.",
+                            "G": "Rej.",
+                            "H": "E0532",
+                            "I": "A assinatura deve ser feita com o certificado digital do município da parametrização.",
+                            "J": "-"
+                        }
+                    }
+                ]
+            }
+        ]
+    }
+}

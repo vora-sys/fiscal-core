@@ -2,50 +2,51 @@
 
 /**
  * EXEMPLOS FISCAL-CORE - Guia de Uso Completo
- * 
+ *
  * Este arquivo demonstra todos os casos de uso principais da biblioteca
  * fiscal-core após instalação via composer.
- * 
+ *
  * Instalação:
  * composer require sabbajohn/fiscal-core
- * 
+ *
  * @author fiscal-core
+ *
  * @version 2.0
  */
 
-require_once __DIR__ . '/../vendor/autoload.php';
+require_once __DIR__.'/../vendor/autoload.php';
 
 use sabbajohn\FiscalCore\Facade\FiscalFacade;
-use sabbajohn\FiscalCore\Facade\NFeFacade;
+use sabbajohn\FiscalCore\Facade\ImpressaoFacade;
 use sabbajohn\FiscalCore\Facade\NFCeFacade;
+use sabbajohn\FiscalCore\Facade\NFeFacade;
 use sabbajohn\FiscalCore\Facade\NFSeFacade;
 use sabbajohn\FiscalCore\Facade\TributacaoFacade;
-use sabbajohn\FiscalCore\Facade\ImpressaoFacade;
 
 function salvarRetornoFiscal(string $baseName, array $data): void
 {
-    $outputDir = __DIR__ . '/output';
-    if (!is_dir($outputDir)) {
+    $outputDir = __DIR__.'/output';
+    if (! is_dir($outputDir)) {
         mkdir($outputDir, 0777, true);
     }
 
     $documento = is_array($data['documento'] ?? null) ? $data['documento'] : [];
     $impressao = is_array($data['impressao'] ?? null) ? $data['impressao'] : [];
 
-    if (!empty($documento['xml'])) {
-        $xmlPath = $outputDir . '/' . $baseName . '.xml';
+    if (! empty($documento['xml'])) {
+        $xmlPath = $outputDir.'/'.$baseName.'.xml';
         file_put_contents($xmlPath, (string) $documento['xml']);
         echo "💾 XML salvo em: {$xmlPath}\n";
     }
 
-    if (($impressao['modo'] ?? null) === 'pdf_base64' && !empty($impressao['pdf_base64'])) {
-        $pdfPath = $outputDir . '/' . ($impressao['filename'] ?? ($baseName . '.pdf'));
+    if (($impressao['modo'] ?? null) === 'pdf_base64' && ! empty($impressao['pdf_base64'])) {
+        $pdfPath = $outputDir.'/'.($impressao['filename'] ?? ($baseName.'.pdf'));
         file_put_contents($pdfPath, base64_decode((string) $impressao['pdf_base64']));
         echo "💾 PDF salvo em: {$pdfPath}\n";
     }
 
-    if (($impressao['modo'] ?? null) === 'url' && !empty($impressao['url'])) {
-        $urlPath = $outputDir . '/' . $baseName . '.url.txt';
+    if (($impressao['modo'] ?? null) === 'url' && ! empty($impressao['url'])) {
+        $urlPath = $outputDir.'/'.$baseName.'.url.txt';
         file_put_contents($urlPath, (string) $impressao['url']);
         echo "💾 URL oficial salva em: {$urlPath}\n";
     }
@@ -59,7 +60,7 @@ echo "🚀 FISCAL-CORE - Exemplos de Uso\n";
 echo "================================\n\n";
 
 // Instância principal - orquestra todos os facades
-$fiscal = new FiscalFacade();
+$fiscal = new FiscalFacade;
 
 echo "1️⃣ INTERFACE UNIFICADA (Recomendado para a maioria dos casos)\n";
 echo "--------------------------------------------------------------\n";
@@ -69,7 +70,7 @@ $status = $fiscal->verificarStatus();
 if ($status->isSuccess()) {
     echo "✅ Sistema inicializado com sucesso\n";
 } else {
-    echo "⚠️ Sistema com problemas: " . $status->getError() . "\n";
+    echo '⚠️ Sistema com problemas: '.$status->getError()."\n";
 }
 
 // Consultar NCM (exemplo prático)
@@ -77,9 +78,9 @@ echo "\n🔍 Exemplo: Consultando NCM...\n";
 $ncm = $fiscal->consultarNCM('22071000');
 if ($ncm->isSuccess()) {
     $data = $ncm->getData();
-    echo "✅ NCM encontrado: " . ($data['descricao'] ?? 'N/A') . "\n";
+    echo '✅ NCM encontrado: '.($data['descricao'] ?? 'N/A')."\n";
 } else {
-    echo "❌ Erro: " . $ncm->getError() . "\n";
+    echo '❌ Erro: '.$ncm->getError()."\n";
 }
 
 // =====================================================
@@ -93,9 +94,9 @@ echo "-------------------------------\n";
 $municipios = $fiscal->nfse()->listarMunicipios();
 if ($municipios->isSuccess()) {
     $data = $municipios->getData();
-    echo "🏘️ Municípios disponíveis: " . implode(', ', array_filter($data['municipios'], function($m) {
-        return !str_starts_with($m, '_'); // Remove comentários e templates
-    })) . "\n";
+    echo '🏘️ Municípios disponíveis: '.implode(', ', array_filter($data['municipios'], function ($m) {
+        return ! str_starts_with($m, '_'); // Remove comentários e templates
+    }))."\n";
 }
 
 // Emitir NFSe para Curitiba
@@ -103,26 +104,26 @@ echo "\n📋 Exemplo: Emitindo NFSe em Curitiba...\n";
 $dadosNfse = [
     'prestador' => [
         'cnpj' => '11222333000181',
-        'inscricao_municipal' => '123456'
+        'inscricao_municipal' => '123456',
     ],
     'tomador' => [
         'cnpj' => '99888777000161',
-        'razao_social' => 'Empresa Tomadora LTDA'
+        'razao_social' => 'Empresa Tomadora LTDA',
     ],
     'servico' => [
         'codigo' => '1.01',
         'descricao' => 'Análise e desenvolvimento de sistemas',
-        'valor' => 1000.00
-    ]
+        'valor' => 1000.00,
+    ],
 ];
 
 $nfseResult = $fiscal->emitirNFSe($dadosNfse, 'curitiba');
 if ($nfseResult->isSuccess()) {
     $data = $nfseResult->getData();
-    echo "✅ NFSe emitida: " . ($data['type'] ?? 'sucesso') . "\n";
+    echo '✅ NFSe emitida: '.($data['type'] ?? 'sucesso')."\n";
     salvarRetornoFiscal('nfse_curitiba', $data);
 } else {
-    echo "ℹ️ NFSe (demo): " . $nfseResult->getError() . "\n";
+    echo 'ℹ️ NFSe (demo): '.$nfseResult->getError()."\n";
 }
 
 // =====================================================
@@ -136,24 +137,24 @@ $produto = [
     'ncm' => '85171231',
     'valor' => 299.90,
     'descricao' => 'Smartphone',
-    'uf' => 'SP'
+    'uf' => 'SP',
 ];
 
 // Validar produto primeiro
 $validacao = $fiscal->tributacao()->validarProduto($produto);
 if ($validacao->isSuccess()) {
     echo "✅ Produto validado para cálculo\n";
-    
+
     // Tentar calcular impostos (requer configuração IBPT)
     $impostos = $fiscal->tributacao()->calcular($produto);
     if ($impostos->isSuccess()) {
         $data = $impostos->getData();
-        echo "💰 Impostos calculados: R$ " . number_format($data['tributos_federais'] ?? 0, 2, ',', '.') . "\n";
+        echo '💰 Impostos calculados: R$ '.number_format($data['tributos_federais'] ?? 0, 2, ',', '.')."\n";
     } else {
         echo "ℹ️ Cálculo IBPT requer configuração (IBPT_CNPJ, IBPT_TOKEN)\n";
     }
 } else {
-    echo "❌ Produto inválido: " . $validacao->getError() . "\n";
+    echo '❌ Produto inválido: '.$validacao->getError()."\n";
 }
 
 // =====================================================
@@ -180,22 +181,22 @@ $xmlExemplo = '<?xml version="1.0" encoding="UTF-8"?>
 $validacaoXml = $fiscal->impressao()->validarXML($xmlExemplo, 'nfe');
 if ($validacaoXml->isSuccess()) {
     echo "✅ XML válido para impressão\n";
-    
+
     // Gerar DANFE (em produção você usaria um XML real autorizado)
     $danfe = $fiscal->impressao()->gerarDanfe($xmlExemplo);
     if ($danfe->isSuccess()) {
         $data = $danfe->getData();
-        echo "🖨️ DANFE gerado: " . number_format($data['size'] / 1024, 1) . "KB\n";
-        if (!empty($data['pdf_base64'])) {
-            $danfePath = __DIR__ . '/output/danfe_exemplo.pdf';
-            if (!is_dir(dirname($danfePath))) {
+        echo '🖨️ DANFE gerado: '.number_format($data['size'] / 1024, 1)."KB\n";
+        if (! empty($data['pdf_base64'])) {
+            $danfePath = __DIR__.'/output/danfe_exemplo.pdf';
+            if (! is_dir(dirname($danfePath))) {
                 mkdir(dirname($danfePath), 0777, true);
             }
             file_put_contents($danfePath, base64_decode((string) $data['pdf_base64']));
             echo "💾 DANFE salvo em: {$danfePath}\n";
         }
     } else {
-        echo "ℹ️ DANFE: " . $danfe->getError() . "\n";
+        echo 'ℹ️ DANFE: '.$danfe->getError()."\n";
     }
 } else {
     echo "⚠️ XML simplificado para exemplo\n";
@@ -204,20 +205,20 @@ if ($validacaoXml->isSuccess()) {
 echo "\n4️⃣.1 CONSULTA CANÔNICA DE NFe/NFCe\n";
 echo "----------------------------------\n";
 
-$nfeFacade = new NFeFacade();
+$nfeFacade = new NFeFacade;
 $consultaNfe = $nfeFacade->consultar(str_repeat('1', 44));
 if ($consultaNfe->isSuccess()) {
     salvarRetornoFiscal('nfe_consulta', $consultaNfe->getData());
 } else {
-    echo "ℹ️ Consulta NFe (demo): " . $consultaNfe->getError() . "\n";
+    echo 'ℹ️ Consulta NFe (demo): '.$consultaNfe->getError()."\n";
 }
 
-$nfceFacade = new NFCeFacade();
+$nfceFacade = new NFCeFacade;
 $consultaNfce = $nfceFacade->consultar(str_repeat('2', 44));
 if ($consultaNfce->isSuccess()) {
     salvarRetornoFiscal('nfce_consulta', $consultaNfce->getData());
 } else {
-    echo "ℹ️ Consulta NFCe (demo): " . $consultaNfce->getError() . "\n";
+    echo 'ℹ️ Consulta NFCe (demo): '.$consultaNfce->getError()."\n";
 }
 
 // =====================================================
@@ -232,24 +233,24 @@ $nfseJoinville = new NFSeFacade('joinville');
 $infoProvider = $nfseJoinville->getProviderInfo();
 if ($infoProvider->isSuccess()) {
     $data = $infoProvider->getData();
-    echo "🏘️ Provider Joinville: " . $data['provider_class'] . "\n";
+    echo '🏘️ Provider Joinville: '.$data['provider_class']."\n";
 } else {
-    echo "ℹ️ Joinville: " . $infoProvider->getError() . "\n";
+    echo 'ℹ️ Joinville: '.$infoProvider->getError()."\n";
 }
 
 // Tributação standalone
-$tributacao = new TributacaoFacade();
+$tributacao = new TributacaoFacade;
 $statusTrib = $tributacao->verificarStatus();
 if ($statusTrib->isSuccess()) {
     $data = $statusTrib->getData();
-    echo "💰 Tributação disponível: " . ($data['status'] ?? 'unknown') . "\n";
+    echo '💰 Tributação disponível: '.($data['status'] ?? 'unknown')."\n";
 }
 
 // Impressão standalone
-$impressao = new ImpressaoFacade();
+$impressao = new ImpressaoFacade;
 $statusImp = $impressao->verificarStatus();
 if ($statusImp->isSuccess()) {
-    echo "🖨️ Impressão disponível: PHP " . PHP_VERSION . "\n";
+    echo '🖨️ Impressão disponível: PHP '.PHP_VERSION."\n";
 }
 
 // =====================================================
@@ -264,21 +265,21 @@ $nfseInvalido = new NFSeFacade('municipio_inexistente');
 $resultado = $nfseInvalido->emitir(['dados' => 'teste']);
 
 if ($resultado->isError()) {
-    echo "🚫 Erro capturado: " . $resultado->getErrorCode() . "\n";
-    
+    echo '🚫 Erro capturado: '.$resultado->getErrorCode()."\n";
+
     // Acessar sugestões específicas
     $metadata = $resultado->getMetadata();
     if (isset($metadata['suggestions'])) {
-        echo "💡 Sugestões disponíveis: " . count($metadata['suggestions']) . " itens\n";
-        echo "   • " . $metadata['suggestions'][0] . "\n";
+        echo '💡 Sugestões disponíveis: '.count($metadata['suggestions'])." itens\n";
+        echo '   • '.$metadata['suggestions'][0]."\n";
     }
-    
+
     // Acessar municípios alternativos
     if (isset($metadata['available_municipios'])) {
-        $municipiosValidos = array_filter($metadata['available_municipios'], function($m) {
-            return !str_starts_with($m, '_');
+        $municipiosValidos = array_filter($metadata['available_municipios'], function ($m) {
+            return ! str_starts_with($m, '_');
         });
-        echo "🏘️ Use um destes: " . implode(', ', array_slice($municipiosValidos, 0, 3)) . "...\n";
+        echo '🏘️ Use um destes: '.implode(', ', array_slice($municipiosValidos, 0, 3))."...\n";
     }
 }
 

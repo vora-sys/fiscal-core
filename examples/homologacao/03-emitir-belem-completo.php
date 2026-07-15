@@ -2,21 +2,21 @@
 
 declare(strict_types=1);
 
-require_once __DIR__ . '/../../vendor/autoload.php';
+require_once __DIR__.'/../../vendor/autoload.php';
 
 use sabbajohn\FiscalCore\Facade\FiscalFacade;
 
-$fiscal = new FiscalFacade();
+$fiscal = new FiscalFacade;
 $nfse = $fiscal->nfse('belem');
 
 $payload = [
-    'id' => 'RPS-BELEM-' . date('YmdHis') . '-1',
+    'id' => 'RPS-BELEM-'.date('YmdHis').'-1',
     'lote' => [
-        'id' => 'LOTE-BELEM-' . date('YmdHis'),
+        'id' => 'LOTE-BELEM-'.date('YmdHis'),
         'numero' => date('His'),
     ],
     'rps' => [
-        'id' => 'RPS-BELEM-' . date('YmdHis') . '-RAW',
+        'id' => 'RPS-BELEM-'.date('YmdHis').'-RAW',
         'numero' => date('His'),
         'serie' => 'RPS',
         'tipo' => '1',
@@ -58,5 +58,4 @@ $payload = [
 
 $resultado = $nfse->emitirCompleto($payload);
 
-echo $resultado->toJson(JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) . PHP_EOL;
-
+echo $resultado->toJson(JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES).PHP_EOL;

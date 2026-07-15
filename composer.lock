@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "63cf03c769f27884e06ad6cfbe29ed5d",
+    "content-hash": "baf524aa00f2ba5eaf3b312d81c2b242",
     "packages": [
         {
             "name": "andreoneres/brasilapi-php",

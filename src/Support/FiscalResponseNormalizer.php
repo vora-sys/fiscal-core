@@ -43,7 +43,7 @@ final class FiscalResponseNormalizer
         return array_merge([
             'operacao' => $normalizedOperacao,
             'documento' => $normalizedDocumento,
-            'impressao' => (new FiscalDocumentResultNormalizer())->emptyImpressao(),
+            'impressao' => (new FiscalDocumentResultNormalizer)->emptyImpressao(),
             'provider' => array_merge([
                 'type' => $modelo === 'nfse' ? 'nfse' : 'sefaz',
                 'modelo' => $modelo,
@@ -68,7 +68,7 @@ final class FiscalResponseNormalizer
     ): array {
         $pdfBase64 = base64_encode($pdf);
 
-        return array_merge((new FiscalDocumentResultNormalizer())->normalizePdfBase64(
+        return array_merge((new FiscalDocumentResultNormalizer)->normalizePdfBase64(
             $modelo,
             $operation,
             $xml,

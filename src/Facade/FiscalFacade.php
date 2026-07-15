@@ -13,12 +13,18 @@ use sabbajohn\FiscalCore\Support\ResponseHandler;
 class FiscalFacade
 {
     private NFeFacade $nfe;
+
     private NFCeFacade $nfce;
+
     private NFSeFacade $nfse;
+
     /** @var array<string,NFSeFacade> */
     private array $nfseByMunicipio = [];
+
     private ImpressaoFacade $impressao;
+
     private TributacaoFacade $tributacao;
+
     private ResponseHandler $responseHandler;
 
     public function __construct(
@@ -28,15 +34,15 @@ class FiscalFacade
         ?ImpressaoFacade $impressao = null,
         ?TributacaoFacade $tributacao = null
     ) {
-        $this->responseHandler = new ResponseHandler();
-        
+        $this->responseHandler = new ResponseHandler;
+
         // Inicializa facades com fallback para instâncias padrão
-        $this->nfe = $nfe ?? new NFeFacade();
-        $this->nfce = $nfce ?? new NFCeFacade();
-        $this->nfse = $nfse ?? new NFSeFacade();
+        $this->nfe = $nfe ?? new NFeFacade;
+        $this->nfce = $nfce ?? new NFCeFacade;
+        $this->nfse = $nfse ?? new NFSeFacade;
         $this->nfseByMunicipio['__default__'] = $this->nfse;
-        $this->impressao = $impressao ?? new ImpressaoFacade();
-        $this->tributacao = $tributacao ?? new TributacaoFacade();
+        $this->impressao = $impressao ?? new ImpressaoFacade;
+        $this->tributacao = $tributacao ?? new TributacaoFacade;
     }
 
     // ===== OPERAÇÕES NFe =====
@@ -271,10 +277,10 @@ class FiscalFacade
         try {
             $status = [
                 'nfe' => $this->nfe->verificarStatusSefaz(),
-                'nfce' => $this->nfce->verificarStatusSefaz(), 
+                'nfce' => $this->nfce->verificarStatusSefaz(),
                 'nfse' => $this->nfse->getProviderInfo(),
                 'impressao' => $this->impressao->verificarStatus(),
-                'tributacao' => $this->tributacao->verificarStatus()
+                'tributacao' => $this->tributacao->verificarStatus(),
             ];
 
             $overall = 'ok';
@@ -287,9 +293,9 @@ class FiscalFacade
 
             return FiscalResponse::success([
                 'overall_status' => $overall,
-                'services' => $status
+                'services' => $status,
             ], 'fiscal_system_status');
-            
+
         } catch (\Exception $e) {
             return $this->responseHandler->handle($e, 'fiscal_system_status');
         }
@@ -307,19 +313,19 @@ class FiscalFacade
                     'nfce' => get_class($this->nfce),
                     'nfse' => get_class($this->nfse),
                     'impressao' => get_class($this->impressao),
-                    'tributacao' => get_class($this->tributacao)
+                    'tributacao' => get_class($this->tributacao),
                 ],
                 'system_info' => [
                     'php_version' => PHP_VERSION,
                     'loaded_extensions' => get_loaded_extensions(),
                     'memory_usage' => memory_get_usage(true),
-                    'memory_limit' => ini_get('memory_limit')
+                    'memory_limit' => ini_get('memory_limit'),
                 ],
                 'nfe_compatibility' => ConfigManager::getInstance()->getNFeCompatibilityInfo(),
             ];
 
             return FiscalResponse::success($info, 'fiscal_config_info');
-            
+
         } catch (\Exception $e) {
             return $this->responseHandler->handle($e, 'fiscal_config_info');
         }
@@ -332,7 +338,7 @@ class FiscalFacade
         return $this->nfe;
     }
 
-    public function nfce(): NFCeFacade  
+    public function nfce(): NFCeFacade
     {
         return $this->nfce;
     }
@@ -341,12 +347,13 @@ class FiscalFacade
     {
         if ($municipio !== null) {
             $key = strtolower(trim($municipio));
-            if (!isset($this->nfseByMunicipio[$key])) {
+            if (! isset($this->nfseByMunicipio[$key])) {
                 $this->nfseByMunicipio[$key] = new NFSeFacade($municipio);
             }
 
             return $this->nfseByMunicipio[$key];
         }
+
         return $this->nfse;
     }
 

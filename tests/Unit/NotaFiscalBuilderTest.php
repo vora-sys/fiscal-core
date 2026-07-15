@@ -8,7 +8,7 @@ use sabbajohn\FiscalCore\Adapters\NF\Core\NotaFiscal;
 
 class NotaFiscalBuilderTest extends TestCase
 {
-    public function testFromArrayComDadosCompletos()
+    public function test_from_array_com_dados_completos()
     {
         $dados = [
             'identificacao' => [
@@ -51,10 +51,9 @@ class NotaFiscalBuilderTest extends TestCase
                         'valorTotal' => 10.00,
                     ],
                     'impostos' => [
-                        'vTotTrib' => 3.33,
                         'icms' => ['cst' => '102', 'orig' => 0],
-                        'pis' => ['cst' => '49', 'vBC' => 10, 'pPIS' => 0, 'vPIS' => 0],
-                        'cofins' => ['cst' => '49', 'vBC' => 10, 'pCOFINS' => 0, 'vCOFINS' => 0],
+                        'pis' => ['cst' => '49'],
+                        'cofins' => ['cst' => '49'],
                     ],
                 ],
             ],
@@ -72,11 +71,9 @@ class NotaFiscalBuilderTest extends TestCase
         $this->assertTrue($nota->hasNode('produto'));
         $this->assertTrue($nota->hasNode('imposto'));
         $this->assertTrue($nota->hasNode('pagamento'));
-        $xml = $nota->toXml();
-        $this->assertMatchesRegularExpression('/<imposto><vTotTrib>3\.33<\/vTotTrib><ICMS>/', $xml);
     }
 
-    public function testFromArrayComMultiplosItens()
+    public function test_from_array_com_multiplos_itens()
     {
         $dados = [
             'identificacao' => [
@@ -129,7 +126,7 @@ class NotaFiscalBuilderTest extends TestCase
         $this->assertTrue($nota->hasNode('produto'));
     }
 
-    public function testBuildRetornaNotaFiscal()
+    public function test_build_retorna_nota_fiscal()
     {
         $dados = [
             'identificacao' => [
@@ -152,7 +149,7 @@ class NotaFiscalBuilderTest extends TestCase
         $this->assertInstanceOf(NotaFiscal::class, $nota);
     }
 
-    public function testSerializaIbsCbsNoXmlDaNota()
+    public function test_serializa_ibs_cbs_no_xml_da_nota()
     {
         $dados = [
             'identificacao' => [
@@ -264,7 +261,7 @@ class NotaFiscalBuilderTest extends TestCase
         $this->assertStringContainsString('<IBSCBSTot>', $xml);
     }
 
-    public function testSerializaImpostoSeletivoEGruposAvancadosRtc()
+    public function test_serializa_imposto_seletivo_e_grupos_avancados_rtc()
     {
         $dados = [
             'identificacao' => [

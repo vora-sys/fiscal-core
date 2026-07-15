@@ -2,10 +2,10 @@
 
 namespace sabbajohn\FiscalCore\Adapters\NF\Nodes;
 
+use NFePHP\NFe\Make;
 use sabbajohn\FiscalCore\Adapters\NF\Core\NotaNodeInterface;
 use sabbajohn\FiscalCore\Adapters\NF\DTO\ResponsavelTecnicoDTO;
 use sabbajohn\FiscalCore\Adapters\NF\Helpers\StdClassBuilder;
-use NFePHP\NFe\Make;
 
 /**
  * Node para dados do responsável técnico
@@ -16,23 +16,23 @@ class ResponsavelTecnicoNode implements NotaNodeInterface
     public function __construct(
         private ResponsavelTecnicoDTO $responsavel
     ) {}
-    
+
     public function getNodeType(): string
     {
         return 'responsavelTecnico';
     }
-    
+
     public function validate(): bool
     {
         $errors = $this->responsavel->validate();
-        
-        if (!empty($errors)) {
+
+        if (! empty($errors)) {
             throw new \InvalidArgumentException(implode('; ', $errors));
         }
-        
+
         return true;
     }
-    
+
     public function addToMake(Make $make): void
     {
         // Usar create() pois props() falha com indentação complexa
@@ -45,7 +45,7 @@ class ResponsavelTecnicoNode implements NotaNodeInterface
             'hashCSRT' => $this->responsavel->hashCSRT,
         ]));
     }
-    
+
     /**
      * Retorna o DTO encapsulado
      */

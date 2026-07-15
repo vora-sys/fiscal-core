@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-require_once __DIR__ . '/../../vendor/autoload.php';
-require_once __DIR__ . '/common.php';
-require_once __DIR__ . '/manaus_nacional_common.php';
+require_once __DIR__.'/../../vendor/autoload.php';
+require_once __DIR__.'/common.php';
+require_once __DIR__.'/manaus_nacional_common.php';
 
 use sabbajohn\FiscalCore\Support\FiscalResponse;
 
@@ -12,7 +12,7 @@ $projectRoot = dirname(__DIR__, 2);
 $options = agroamManausParseOptions($argv);
 
 if (($options['help'] ?? false) === true) {
-    echo agroamManausUsage(basename((string) $argv[0])) . PHP_EOL;
+    echo agroamManausUsage(basename((string) $argv[0])).PHP_EOL;
     exit(0);
 }
 
@@ -53,7 +53,7 @@ if (($options['send'] ?? false) !== true) {
         'layout' => agroamManausResponseToArray($layout),
         'payload' => $payload,
         'xml_preview' => $xmlPreview->getData('xml'),
-    ], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) . PHP_EOL;
+    ], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES).PHP_EOL;
     exit(0);
 }
 
@@ -66,7 +66,7 @@ echo json_encode([
     'payload' => $payload,
     'xml_preview' => $xmlPreview->getData('xml'),
     'result' => agroamManausResponseToArray($result),
-], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) . PHP_EOL;
+], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES).PHP_EOL;
 
 exit($result->isSuccess() ? 0 : 1);
 
@@ -131,22 +131,27 @@ function agroamManausParseOptions(array $argv): array
     foreach (array_slice($argv, 1) as $arg) {
         if ($arg === '--send') {
             $options['send'] = true;
+
             continue;
         }
         if ($arg === '--consultar-aliquota') {
             $options['consultar_aliquota'] = true;
+
             continue;
         }
         if ($arg === '--consultar-convenio') {
             $options['consultar_convenio'] = true;
+
             continue;
         }
         if ($arg === '--force-refresh') {
             $options['force_refresh'] = true;
+
             continue;
         }
         if ($arg === '--help' || $arg === '-h') {
             $options['help'] = true;
+
             continue;
         }
 
@@ -176,6 +181,7 @@ function agroamManausParseOptions(array $argv): array
         ] as $prefix => $key) {
             if (str_starts_with($arg, $prefix)) {
                 $options[$key] = substr($arg, strlen($prefix));
+
                 continue 2;
             }
         }
@@ -197,7 +203,7 @@ function agroamManausBuildPayload(array $options): array
     $seriePadded = str_pad(substr($serie, 0, 5), 5, '0', STR_PAD_LEFT);
     $numeroPadded = str_pad(substr($numero, 0, 15), 15, '0', STR_PAD_LEFT);
     $tpInsc = '2';
-    $dpsId = 'DPS1302603' . $tpInsc . $cnpj . $seriePadded . $numeroPadded;
+    $dpsId = 'DPS1302603'.$tpInsc.$cnpj.$seriePadded.$numeroPadded;
 
     $cTribNac = preg_replace('/\D+/', '', (string) $options['c_trib_nac']) ?? '140101';
     $codigoMunicipal = preg_replace('/\D+/', '', (string) $options['codigo_municipal']) ?? '100';
@@ -311,7 +317,7 @@ function agroamManausPrintResponse(string $mode, FiscalResponse $providerInfo, F
         'reference' => agroamManausReferenceSnapshot(),
         'provider' => agroamManausResponseToArray($providerInfo),
         'response' => agroamManausResponseToArray($response),
-    ], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) . PHP_EOL;
+    ], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES).PHP_EOL;
 }
 
 function agroamManausResponseToArray(FiscalResponse $response): array

@@ -8,15 +8,15 @@ use PHPUnit\Framework\TestCase;
 
 final class UninfeProviderCoverageTest extends TestCase
 {
-    public function testAllUninfeProvidersHaveFamilyAndClass(): void
+    public function test_all_uninfe_providers_have_family_and_class(): void
     {
         $root = dirname(__DIR__, 3);
-        $csvPath = $root . '/Uninfe/source/NFe.Components.Wsdl/NFse/WSDL/provedores_municipios_por_estado.csv';
-        $familiesPath = $root . '/config/nfse/nfse-provider-families.json';
+        $csvPath = $root.'/Uninfe/source/NFe.Components.Wsdl/NFse/WSDL/provedores_municipios_por_estado.csv';
+        $familiesPath = $root.'/config/nfse/nfse-provider-families.json';
 
         $this->assertFileExists($familiesPath, 'Catálogo de famílias NFSe não encontrado.');
 
-        if (!is_file($csvPath)) {
+        if (! is_file($csvPath)) {
             $this->markTestSkipped('CSV de provedores do Uninfe não encontrado neste checkout.');
         }
 

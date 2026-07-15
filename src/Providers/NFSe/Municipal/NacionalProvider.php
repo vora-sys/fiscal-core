@@ -12,6 +12,4 @@ use sabbajohn\FiscalCore\Providers\NFSe\NacionalProvider as BaseNacionalProvider
  * Mantido por compatibilidade com layouts do Uninfe enquanto
  * os municipios usam a chave canonica `nfse_nacional`.
  */
-final class NacionalProvider extends BaseNacionalProvider
-{
-}
+final class NacionalProvider extends BaseNacionalProvider {}

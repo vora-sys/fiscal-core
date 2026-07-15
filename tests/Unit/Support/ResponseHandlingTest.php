@@ -39,7 +39,7 @@ class ResponseHandlingTest extends TestCase
     {
         $dados = ['teste' => 'valor'];
         $metadata = ['timestamp' => time(), 'source' => 'api'];
-        
+
         $response = FiscalResponse::success($dados, 'test_operation', $metadata);
 
         $this->assertEquals($metadata['timestamp'], $response->getMetadata()['timestamp']);
@@ -51,10 +51,10 @@ class ResponseHandlingTest extends TestCase
     /** @test */
     public function deve_tratar_excecao_com_handler(): void
     {
-        $handler = new ResponseHandler();
-        
+        $handler = new ResponseHandler;
+
         // Testa usando o método execute que internamente chama handleException
-        $response = $handler->execute(function() {
+        $response = $handler->execute(function () {
             throw new \Exception('Teste de erro');
         }, 'test_operation');
 
@@ -65,11 +65,12 @@ class ResponseHandlingTest extends TestCase
     /** @test */
     public function deve_executar_callback_sucesso(): void
     {
-        $handler = new ResponseHandler();
+        $handler = new ResponseHandler;
         $executado = false;
-        
-        $callback = function() use (&$executado) {
+
+        $callback = function () use (&$executado) {
             $executado = true;
+
             return ['resultado' => 'ok'];
         };
 
@@ -83,9 +84,9 @@ class ResponseHandlingTest extends TestCase
     /** @test */
     public function deve_capturar_excecao_em_callback(): void
     {
-        $handler = new ResponseHandler();
-        
-        $callback = function() {
+        $handler = new ResponseHandler;
+
+        $callback = function () {
             throw new \InvalidArgumentException('Parâmetro inválido');
         };
 
@@ -103,10 +104,10 @@ class ResponseHandlingTest extends TestCase
     /** @test */
     public function deve_validar_timeout_operacao(): void
     {
-        $handler = new ResponseHandler();
-        
+        $handler = new ResponseHandler;
+
         // Simula um timeout manual sem usar sleep
-        $callback = function() {
+        $callback = function () {
             // Simula uma operação que "deveria" dar timeout
             throw new \Exception('Operation timeout exceeded');
         };
@@ -120,14 +121,15 @@ class ResponseHandlingTest extends TestCase
     /** @test */
     public function deve_implementar_retry_automatico(): void
     {
-        $handler = new ResponseHandler();
+        $handler = new ResponseHandler;
         $tentativas = 0;
-        
-        $callback = function() use (&$tentativas) {
+
+        $callback = function () use (&$tentativas) {
             $tentativas++;
             if ($tentativas < 3) {
                 throw new \Exception('Falha temporária');
             }
+
             return ['sucesso' => true, 'tentativas' => $tentativas];
         };
 
@@ -141,9 +143,9 @@ class ResponseHandlingTest extends TestCase
     /** @test */
     public function deve_falhar_apos_esgotar_tentativas(): void
     {
-        $handler = new ResponseHandler();
-        
-        $callback = function() {
+        $handler = new ResponseHandler;
+
+        $callback = function () {
             throw new \Exception('Erro persistente');
         };
 
@@ -183,20 +185,21 @@ class ResponseHandlingTest extends TestCase
     /** @test */
     public function deve_implementar_cache_resposta(): void
     {
-        $handler = new ResponseHandler();
+        $handler = new ResponseHandler;
         $executado = 0;
-        
-        $callback = function() use (&$executado) {
+
+        $callback = function () use (&$executado) {
             $executado++;
+
             return ['execucao' => $executado];
         };
 
         $chave_cache = 'teste_cache';
-        
+
         // Primeira execução - deve executar callback
         $response1 = $handler->executeWithCache($chave_cache, $callback, 1);
         $this->assertEquals(1, $response1->getData()['execucao']);
-        
+
         // Segunda execução - deve usar cache
         $response2 = $handler->executeWithCache($chave_cache, $callback, 1);
         $this->assertEquals(1, $response2->getData()['execucao']); // Mesmo valor (cache)
@@ -206,7 +209,7 @@ class ResponseHandlingTest extends TestCase
     /** @test */
     public function deve_normalizar_retorno_sefaz_xml_invalido_com_fallback(): void
     {
-        $handler = new ResponseHandler();
+        $handler = new ResponseHandler;
         $parsed = ResponseHandler::parseSefazRetorno('<xml-invalido');
 
         $this->assertSame([
@@ -220,8 +223,8 @@ class ResponseHandlingTest extends TestCase
     /** @test */
     public function deve_normalizar_retorno_sefaz_com_namespace(): void
     {
-        $handler = new ResponseHandler();
-        $xml = <<<XML
+        $handler = new ResponseHandler;
+        $xml = <<<'XML'
 <?xml version="1.0" encoding="UTF-8"?>
 <nfeProc xmlns="http://www.portalfiscal.inf.br/nfe">
   <retEnviNFe>
@@ -253,8 +256,8 @@ XML;
     /** @test */
     public function deve_converter_xml_para_array_chave_valor(): void
     {
-        $handler = new ResponseHandler();
-        $xml = <<<XML
+        $handler = new ResponseHandler;
+        $xml = <<<'XML'
 <?xml version="1.0" encoding="UTF-8"?>
 <retDistDFeInt versao="1.01">
     <cStat>138</cStat>
@@ -276,8 +279,8 @@ XML;
     /** @test */
     public function deve_agrupar_nos_repetidos_na_conversao_xml_para_array(): void
     {
-        $handler = new ResponseHandler();
-        $xml = <<<XML
+        $handler = new ResponseHandler;
+        $xml = <<<'XML'
 <?xml version="1.0" encoding="UTF-8"?>
 <root>
     <item>
@@ -297,7 +300,7 @@ XML;
     /** @test */
     public function deve_normalizar_retorno_distdfe_soap_com_consumo_indevido(): void
     {
-        $xml = <<<XML
+        $xml = <<<'XML'
 <?xml version="1.0" encoding="utf-8"?>
 <soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope">
     <soap:Body>

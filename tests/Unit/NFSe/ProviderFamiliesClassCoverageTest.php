@@ -8,9 +8,9 @@ use PHPUnit\Framework\TestCase;
 
 final class ProviderFamiliesClassCoverageTest extends TestCase
 {
-    public function testEveryProviderFamilyClassExists(): void
+    public function test_every_provider_family_class_exists(): void
     {
-        $path = dirname(__DIR__, 3) . '/config/nfse/nfse-provider-families.json';
+        $path = dirname(__DIR__, 3).'/config/nfse/nfse-provider-families.json';
         $content = file_get_contents($path);
         $this->assertNotFalse($content, 'Falha ao ler nfse-provider-families.json.');
 

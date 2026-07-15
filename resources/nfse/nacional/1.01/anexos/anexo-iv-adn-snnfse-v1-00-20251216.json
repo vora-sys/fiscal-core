@@ -1,0 +1,1317 @@
+{
+    "schema": "nfse-nacional-annex-manifest",
+    "schema_version": "1.0",
+    "source": {
+        "file": "anexo_iv-adn-snnfse-v1-00-20251216.xlsx",
+        "sha256": "fa778d0b6e58d62d90d72225b0495805108a4f4983ac77076044a21d8036302f",
+        "bytes": 26231
+    },
+    "workbook": {
+        "sheets": [
+            {
+                "name": "RN_RECEPCAO_LOTE_DF-e",
+                "sheet_id": "1",
+                "relationship_id": "rId1",
+                "path": "xl/worksheets/sheet1.xml",
+                "dimension": "A1:H24",
+                "rows": [
+                    {
+                        "row": 1,
+                        "cells": {
+                            "A": "#",
+                            "B": "REGRAS DE NEGÓCIO",
+                            "D": "APLIC.",
+                            "E": "EFEITO",
+                            "F": "CÓD. ERRO",
+                            "G": "MSG. ERRO",
+                            "H": "NOTAS EXPLICATIVAS"
+                        }
+                    },
+                    {
+                        "row": 2,
+                        "cells": {
+                            "A": "1",
+                            "B": "Validação do Certificado de Transmissão",
+                            "D": "-",
+                            "E": "-",
+                            "F": "-",
+                            "G": "-",
+                            "H": "-"
+                        }
+                    },
+                    {
+                        "row": 3,
+                        "cells": {
+                            "A": "2",
+                            "B": "Certificado de Transmissor Inválido: - Certificado de Transmissor inexistente na mensagem - Versão difere \"3\" - Se informado o Basic Constraint deve ser true (não pode ser Certificado de AC) - KeyUsage não define \"Autenticação Cliente\"",
+                            "D": "Obrig.",
+                            "E": "Rej.",
+                            "F": "E1200",
+                            "G": "Certificado de Transmissão Inválido",
+                            "H": "-"
+                        }
+                    },
+                    {
+                        "row": 4,
+                        "cells": {
+                            "A": "3",
+                            "B": "Validade do Certificado (data início e data fim)",
+                            "D": "Obrig.",
+                            "E": "Rej.",
+                            "F": "E1203",
+                            "G": "Certificado de Transmissão expirado",
+                            "H": "-"
+                        }
+                    },
+                    {
+                        "row": 5,
+                        "cells": {
+                            "A": "4",
+                            "B": "Verifica a Cadeia de Certificação: - Certificado da AC emissora não cadastrado na RFB - Certificado de AC revogado - Certificado não assinado pela AC emissora do Certificado",
+                            "D": "Obrig.",
+                            "E": "Rej.",
+                            "F": "E1205",
+                            "G": "Certificado de Transmissão - Erro Cadeira de Certificação",
+                            "H": "-"
+                        }
+                    },
+                    {
+                        "row": 6,
+                        "cells": {
+                            "A": "5",
+                            "B": "LCR do Certificado de Transmissor - Falta o endereço da LCR (CRL DistributionPoint) - LCR indisponível - LCR inválida",
+                            "D": "Obrig.",
+                            "E": "Rej.",
+                            "F": "E1206",
+                            "G": "Certificado de Transmissão - Erro de acesso a LCR",
+                            "H": "-"
+                        }
+                    },
+                    {
+                        "row": 7,
+                        "cells": {
+                            "A": "6",
+                            "B": "Certificado do Transmissor revogado",
+                            "D": "Obrig.",
+                            "E": "Rej.",
+                            "F": "E1207",
+                            "G": "Certificado de Transmissão revogado",
+                            "H": "-"
+                        }
+                    },
+                    {
+                        "row": 8,
+                        "cells": {
+                            "A": "7",
+                            "B": "Certificado Raiz difere da \"ICP-Brasil\"",
+                            "D": "Obrig.",
+                            "E": "Rej.",
+                            "F": "E1208",
+                            "G": "Certificado de Transmissão difere da ICP - Brasil",
+                            "H": "-"
+                        }
+                    },
+                    {
+                        "row": 9,
+                        "cells": {
+                            "A": "8",
+                            "B": "Falta a extensão de CNPJ no Certificado (OtherName - OID=2.16.76.1.3.3)",
+                            "D": "Obrig.",
+                            "E": "Rej.",
+                            "F": "E1209",
+                            "G": "Certificado de Transmissão sem CNPJ",
+                            "H": "-"
+                        }
+                    },
+                    {
+                        "row": 10,
+                        "cells": {
+                            "A": "9",
+                            "B": "CNPJ do certificado de transmissão do lote de DF-e não está autorizado a realizar a transmissão de DF-e pelo municipio conveniado.",
+                            "D": "Obrig.",
+                            "E": "Rej.",
+                            "F": "E1262",
+                            "G": "CNPJ não autorizado a compartilhar DF-e pelo município conveniado ao Sistema Nacional NFS-e.",
+                            "H": "-"
+                        }
+                    },
+                    {
+                        "row": 11,
+                        "cells": {
+                            "A": "10",
+                            "B": "Certificado da assinatura do lote sem CNPJ.",
+                            "D": "Obrig.",
+                            "E": "Rej.",
+                            "F": "E1245",
+                            "G": "Certificado da assinatura do lote sem CNPJ.",
+                            "H": "-"
+                        }
+                    },
+                    {
+                        "row": 12,
+                        "cells": {
+                            "A": "11",
+                            "B": "Certificado da assinatura do lote - Erro na cadeia de certificação.",
+                            "D": "Obrig.",
+                            "E": "Rej.",
+                            "F": "E1246",
+                            "G": "Certificado da assinatura do lote - Erro na cadeia de certificação.",
+                            "H": "-"
+                        }
+                    },
+                    {
+                        "row": 13,
+                        "cells": {
+                            "A": "12",
+                            "B": "Validação Inicial da Mensagem na API",
+                            "D": "-",
+                            "E": "-",
+                            "F": "-",
+                            "G": "-",
+                            "H": "-"
+                        }
+                    },
+                    {
+                        "row": 14,
+                        "cells": {
+                            "A": "13",
+                            "B": "Verifica se o servidor de processamento está paralisado para manutenção",
+                            "D": "Obrig.",
+                            "E": "Rej.",
+                            "F": "E1217",
+                            "G": "Serviço paralisado para manutenção",
+                            "H": "-"
+                        }
+                    },
+                    {
+                        "row": 15,
+                        "cells": {
+                            "A": "14",
+                            "B": "Número de documentos do lote maior do que o <<limite>.",
+                            "D": "Obrig.",
+                            "E": "Rej.",
+                            "F": "E1219",
+                            "G": "Número de documentos maior do que o limite definido para a aplicação.",
+                            "H": "-"
+                        }
+                    },
+                    {
+                        "row": 16,
+                        "cells": {
+                            "A": "15",
+                            "B": "Validação da Área de Dados",
+                            "D": "-",
+                            "E": "-",
+                            "F": "-",
+                            "G": "-",
+                            "H": "-"
+                        }
+                    },
+                    {
+                        "row": 17,
+                        "cells": {
+                            "A": "16",
+                            "B": "Falha na descompactado da base 64.",
+                            "D": "Obrig.",
+                            "E": "Rej.",
+                            "F": "E1225",
+                            "G": "Falha na decodificação da base 64 da área de dados",
+                            "H": "-"
+                        }
+                    },
+                    {
+                        "row": 18,
+                        "cells": {
+                            "A": "17",
+                            "B": "Estrutura descompactada mal formada.",
+                            "D": "Obrig.",
+                            "E": "Rej.",
+                            "F": "E1226",
+                            "G": "Estrutura descompactada mal formada.",
+                            "H": "-"
+                        }
+                    },
+                    {
+                        "row": 19,
+                        "cells": {
+                            "A": "18",
+                            "B": "Validação dos Tipos de Documentos",
+                            "D": "-",
+                            "E": "-",
+                            "F": "-",
+                            "G": "-",
+                            "H": "-"
+                        }
+                    },
+                    {
+                        "row": 20,
+                        "cells": {
+                            "A": "19",
+                            "B": "Validar os tipos de DF-e tratados pelo Sistema Nacional NFS-e.",
+                            "D": "Obrig.",
+                            "E": "Rej.",
+                            "F": "E1242",
+                            "G": "Tipo DF-e não tratado pelo Sistema Nacional NFS-e.",
+                            "H": "-"
+                        }
+                    },
+                    {
+                        "row": 21,
+                        "cells": {
+                            "A": "20",
+                            "B": "Uso de prefixo de namespace não permitido na área de dados descompactada.",
+                            "D": "Obrig.",
+                            "E": "Rej.",
+                            "F": "E1228",
+                            "G": "Uso de prefixo de namespace não permitido na área de dados descompactada.",
+                            "H": "-"
+                        }
+                    },
+                    {
+                        "row": 22,
+                        "cells": {
+                            "A": "21",
+                            "B": "XML não está utilizando codificação UTF8.",
+                            "D": "Obrig.",
+                            "E": "Rej.",
+                            "F": "E1229",
+                            "G": "XML não está utilizando codificação UTF8.",
+                            "H": "-"
+                        }
+                    },
+                    {
+                        "row": 23,
+                        "cells": {
+                            "A": "22",
+                            "B": "Falha no esquema XML do DF-e.",
+                            "D": "Obrig.",
+                            "E": "Rej.",
+                            "F": "E1235",
+                            "G": "Falha no esquema XML do DF-e.",
+                            "H": "-"
+                        }
+                    },
+                    {
+                        "row": 24,
+                        "cells": {
+                            "A": "23",
+                            "B": "Assinatura difere do calculado",
+                            "D": "Obrig.",
+                            "E": "Rej.",
+                            "F": "E1250",
+                            "G": "Assinatura difere do calculado",
+                            "H": "-"
+                        }
+                    }
+                ]
+            },
+            {
+                "name": "ADN-GERACAO_NSU_DFe",
+                "sheet_id": "18",
+                "relationship_id": "rId2",
+                "path": "xl/worksheets/sheet2.xml",
+                "dimension": "A1:AC39",
+                "rows": [
+                    {
+                        "row": 1,
+                        "cells": {
+                            "A": "DISTRIBUIÇÃO DE DF-e PELO SISTEMA NACIONAL NFS-e"
+                        }
+                    },
+                    {
+                        "row": 2,
+                        "cells": {
+                            "A": "#",
+                            "B": "DF-e | \\/",
+                            "D": "ADMINISTRAÇÃO TRIBUTÁRIA",
+                            "Q": "CGNFS-e",
+                            "R": "ATORES DA NFS-e"
+                        }
+                    },
+                    {
+                        "row": 3,
+                        "cells": {
+                            "D": "RFB",
+                            "E": "Município Emissor (cLocEmi)",
+                            "K": "Município do Emitente (P/T/I)",
+                            "L": "Município do Não Emitente (P/T/I) (3)",
+                            "M": "Município da Prestação (3)",
+                            "N": "Município de Incidência",
+                            "O": "Para os Municípios do: Prestador, Tomador, Intermediário, Emissor da NFS-e e Local da Prestação",
+                            "Q": "CGNFS-e",
+                            "R": "Emitente (P/T/I)",
+                            "S": "Não Emitente (P/T/I)"
+                        }
+                    },
+                    {
+                        "row": 5,
+                        "cells": {
+                            "B": "GERAÇÃO DE NSU ->",
+                            "D": "Geral",
+                            "E": "Recepção",
+                            "G": "Distribuição",
+                            "K": "Distribuição",
+                            "L": "Distribuição (1)",
+                            "M": "Distribuição (2)",
+                            "N": "Distribuição",
+                            "O": "MEI (CSTAT = 107)",
+                            "Q": "BYPASS (CSTAT = 102)",
+                            "R": "Distribuição",
+                            "S": "Distribuição"
+                        }
+                    },
+                    {
+                        "row": 6,
+                        "cells": {
+                            "E": "DF-e Emitido na Sefin Nacional",
+                            "F": "DF-e Emitido no Sistema Próprio do Município e Compartilhado com ADN",
+                            "G": "Existente* e Ativo",
+                            "I": "Existente* e Não Ativo",
+                            "J": "Inexistente**",
+                            "O": "Município inexistente ou Existente INATIVO no SN NFS-e",
+                            "P": "Município Existente diferente de INATIVO no SN NFS-e"
+                        }
+                    },
+                    {
+                        "row": 7,
+                        "cells": {
+                            "G": "DF-e Emitido na Sefin Nacional",
+                            "H": "DF-e Emitido no Sistema Próprio do Município e Compartilhado com ADN"
+                        }
+                    },
+                    {
+                        "row": 8,
+                        "cells": {
+                            "A": "1",
+                            "B": "NFS-e",
+                            "D": "V",
+                            "E": "X",
+                            "F": "V",
+                            "G": "X",
+                            "H": "V",
+                            "I": "X",
+                            "J": "X",
+                            "K": "O NSU de distribuição do DF-e para o Município do Emitente do DF-e já é contemplada pois: Município do Emitente (P/T/I) é o Município Emissor, dependendo do tipo de emitente da NFS-e.",
+                            "L": "V",
+                            "M": "V",
+                            "N": "O NSU de distribuição do DF-e para o Município de Incidência do ISSQN já é contemplada pois: o Município de Incidência é: ou 1) Município do Prestador ou 2) Município do Tomador ou 3) Município da Prestação do Serviço",
+                            "O": "V",
+                            "P": "X",
+                            "Q": "V",
+                            "R": "V",
+                            "S": "V"
+                        }
+                    },
+                    {
+                        "row": 9,
+                        "cells": {
+                            "A": "2",
+                            "B": "Cancelamento de NFS-e",
+                            "D": "V",
+                            "E": "X",
+                            "F": "V",
+                            "G": "X",
+                            "H": "V",
+                            "I": "X",
+                            "J": "X",
+                            "L": "V",
+                            "M": "V",
+                            "O": "V",
+                            "P": "X",
+                            "Q": "V",
+                            "R": "V",
+                            "S": "V"
+                        }
+                    },
+                    {
+                        "row": 10,
+                        "cells": {
+                            "A": "3",
+                            "B": "Cancelamento de NFS-e por Substituição",
+                            "D": "V",
+                            "E": "X",
+                            "F": "V",
+                            "G": "X",
+                            "H": "V",
+                            "I": "X",
+                            "J": "X",
+                            "L": "V",
+                            "M": "V",
+                            "O": "V",
+                            "P": "X",
+                            "Q": "V",
+                            "R": "V",
+                            "S": "V"
+                        }
+                    },
+                    {
+                        "row": 11,
+                        "cells": {
+                            "A": "4",
+                            "B": "Solicitação de Análise Fiscal para Cancelamento de NFS-e",
+                            "D": "V",
+                            "E": "X",
+                            "F": "V",
+                            "G": "X",
+                            "H": "V",
+                            "I": "X",
+                            "J": "X",
+                            "L": "V",
+                            "M": "V",
+                            "O": "V",
+                            "P": "X",
+                            "Q": "V",
+                            "R": "V",
+                            "S": "V"
+                        }
+                    },
+                    {
+                        "row": 12,
+                        "cells": {
+                            "A": "5",
+                            "B": "Cancelamento de NFS-e Deferido por Análise Fiscal",
+                            "D": "V",
+                            "E": "X",
+                            "F": "V",
+                            "G": "X",
+                            "H": "V",
+                            "I": "X",
+                            "J": "X",
+                            "L": "V",
+                            "M": "V",
+                            "O": "V",
+                            "P": "X",
+                            "Q": "V",
+                            "R": "V",
+                            "S": "V"
+                        }
+                    },
+                    {
+                        "row": 13,
+                        "cells": {
+                            "A": "6",
+                            "B": "Cancelamento de NFS-e Indeferido por Análise Fiscal",
+                            "D": "V",
+                            "E": "X",
+                            "F": "V",
+                            "G": "X",
+                            "H": "V",
+                            "I": "X",
+                            "J": "X",
+                            "L": "V",
+                            "M": "V",
+                            "O": "V",
+                            "P": "X",
+                            "Q": "V",
+                            "R": "V",
+                            "S": "V"
+                        }
+                    },
+                    {
+                        "row": 14,
+                        "cells": {
+                            "A": "7",
+                            "B": "Manifestação de NFS-e",
+                            "C": "Confirmação do Prestador",
+                            "D": "V",
+                            "E": "X",
+                            "F": "V",
+                            "G": "X",
+                            "H": "V",
+                            "I": "X",
+                            "J": "X",
+                            "L": "V",
+                            "M": "V",
+                            "O": "V",
+                            "P": "X",
+                            "Q": "V",
+                            "R": "V",
+                            "S": "V"
+                        }
+                    },
+                    {
+                        "row": 15,
+                        "cells": {
+                            "A": "8",
+                            "C": "Confirmação do Tomador",
+                            "D": "V",
+                            "E": "X",
+                            "F": "V",
+                            "G": "X",
+                            "H": "V",
+                            "I": "X",
+                            "J": "X",
+                            "L": "V",
+                            "M": "V",
+                            "O": "V",
+                            "P": "X",
+                            "Q": "V",
+                            "R": "V",
+                            "S": "V"
+                        }
+                    },
+                    {
+                        "row": 16,
+                        "cells": {
+                            "A": "9",
+                            "C": "Confirmação do Intermediário",
+                            "D": "V",
+                            "E": "X",
+                            "F": "V",
+                            "G": "X",
+                            "H": "V",
+                            "I": "X",
+                            "J": "X",
+                            "L": "V",
+                            "M": "V",
+                            "O": "V",
+                            "P": "X",
+                            "Q": "V",
+                            "R": "V",
+                            "S": "V"
+                        }
+                    },
+                    {
+                        "row": 17,
+                        "cells": {
+                            "A": "10",
+                            "C": "Confirmação Tácita",
+                            "D": "V",
+                            "E": "X",
+                            "F": "V",
+                            "G": "X",
+                            "H": "V",
+                            "I": "X",
+                            "J": "X",
+                            "L": "V",
+                            "M": "V",
+                            "O": "V",
+                            "P": "X",
+                            "Q": "V",
+                            "R": "V",
+                            "S": "V"
+                        }
+                    },
+                    {
+                        "row": 18,
+                        "cells": {
+                            "A": "11",
+                            "C": "Rejeição do Prestador",
+                            "D": "V",
+                            "E": "X",
+                            "F": "V",
+                            "G": "X",
+                            "H": "V",
+                            "I": "X",
+                            "J": "X",
+                            "L": "V",
+                            "M": "V",
+                            "O": "V",
+                            "P": "X",
+                            "Q": "V",
+                            "R": "V",
+                            "S": "V"
+                        }
+                    },
+                    {
+                        "row": 19,
+                        "cells": {
+                            "A": "12",
+                            "C": "Rejeição do Tomador",
+                            "D": "V",
+                            "E": "X",
+                            "F": "V",
+                            "G": "X",
+                            "H": "V",
+                            "I": "X",
+                            "J": "X",
+                            "L": "V",
+                            "M": "V",
+                            "O": "V",
+                            "P": "X",
+                            "Q": "V",
+                            "R": "V",
+                            "S": "V"
+                        }
+                    },
+                    {
+                        "row": 20,
+                        "cells": {
+                            "A": "13",
+                            "C": "Rejeição do Intermediário",
+                            "D": "V",
+                            "E": "X",
+                            "F": "V",
+                            "G": "X",
+                            "H": "V",
+                            "I": "X",
+                            "J": "X",
+                            "L": "V",
+                            "M": "V",
+                            "O": "V",
+                            "P": "X",
+                            "Q": "V",
+                            "R": "V",
+                            "S": "V"
+                        }
+                    },
+                    {
+                        "row": 21,
+                        "cells": {
+                            "A": "14",
+                            "C": "Anulação da Rejeição",
+                            "D": "V",
+                            "E": "X",
+                            "F": "V",
+                            "G": "X",
+                            "H": "V",
+                            "I": "X",
+                            "J": "X",
+                            "L": "V",
+                            "M": "V",
+                            "O": "V",
+                            "P": "X",
+                            "Q": "V",
+                            "R": "V",
+                            "S": "V"
+                        }
+                    },
+                    {
+                        "row": 22,
+                        "cells": {
+                            "A": "15",
+                            "B": "Cancelamento de NFS-e por Ofício",
+                            "D": "V",
+                            "E": "X",
+                            "F": "V",
+                            "G": "X",
+                            "H": "V",
+                            "I": "X",
+                            "J": "X",
+                            "L": "V",
+                            "M": "V",
+                            "O": "V",
+                            "P": "X",
+                            "Q": "V",
+                            "R": "V",
+                            "S": "V"
+                        }
+                    },
+                    {
+                        "row": 23,
+                        "cells": {
+                            "A": "16",
+                            "B": "Bloqueio de NFS-e por Ofício",
+                            "C": "Cancelamento de NFS-e",
+                            "D": "V",
+                            "E": "X",
+                            "F": "V",
+                            "G": "X",
+                            "H": "V",
+                            "I": "X",
+                            "J": "X",
+                            "L": "V",
+                            "M": "V",
+                            "O": "V",
+                            "P": "X",
+                            "Q": "V",
+                            "R": "V",
+                            "S": "X"
+                        }
+                    },
+                    {
+                        "row": 24,
+                        "cells": {
+                            "A": "17",
+                            "C": "Cancelamento de NFS-e por Substituição",
+                            "D": "V",
+                            "E": "X",
+                            "F": "V",
+                            "G": "X",
+                            "H": "V",
+                            "I": "X",
+                            "J": "X",
+                            "L": "V",
+                            "M": "V",
+                            "O": "V",
+                            "P": "X",
+                            "Q": "V",
+                            "R": "V",
+                            "S": "X"
+                        }
+                    },
+                    {
+                        "row": 25,
+                        "cells": {
+                            "A": "18",
+                            "C": "Cancelamento de NFS-e Deferido por Análise Fiscal",
+                            "D": "V",
+                            "E": "X",
+                            "F": "V",
+                            "G": "X",
+                            "H": "V",
+                            "I": "X",
+                            "J": "X",
+                            "L": "V",
+                            "M": "V",
+                            "O": "V",
+                            "P": "X",
+                            "Q": "V",
+                            "R": "V",
+                            "S": "X"
+                        }
+                    },
+                    {
+                        "row": 26,
+                        "cells": {
+                            "A": "19",
+                            "C": "Cancelamento de NFS-e Indeferido por Análise Fiscal",
+                            "D": "V",
+                            "E": "X",
+                            "F": "V",
+                            "G": "X",
+                            "H": "V",
+                            "I": "X",
+                            "J": "X",
+                            "L": "V",
+                            "M": "V",
+                            "O": "V",
+                            "P": "X",
+                            "Q": "V",
+                            "R": "V",
+                            "S": "X"
+                        }
+                    },
+                    {
+                        "row": 27,
+                        "cells": {
+                            "A": "20",
+                            "C": "Cancelamento de NFS-e por Ofício",
+                            "D": "V",
+                            "E": "X",
+                            "F": "V",
+                            "G": "X",
+                            "H": "V",
+                            "I": "X",
+                            "J": "X",
+                            "L": "V",
+                            "M": "V",
+                            "O": "V",
+                            "P": "X",
+                            "Q": "V",
+                            "R": "V",
+                            "S": "X"
+                        }
+                    },
+                    {
+                        "row": 28,
+                        "cells": {
+                            "A": "21",
+                            "B": "Desbloqueio de NFS-e por Ofício",
+                            "C": "Cancelamento de NFS-e",
+                            "D": "V",
+                            "E": "X",
+                            "F": "V",
+                            "G": "X",
+                            "H": "V",
+                            "I": "X",
+                            "J": "X",
+                            "L": "V",
+                            "M": "V",
+                            "O": "V",
+                            "P": "X",
+                            "Q": "V",
+                            "R": "V",
+                            "S": "X"
+                        }
+                    },
+                    {
+                        "row": 29,
+                        "cells": {
+                            "A": "22",
+                            "C": "Cancelamento de NFS-e por Substituição",
+                            "D": "V",
+                            "E": "X",
+                            "F": "V",
+                            "G": "X",
+                            "H": "V",
+                            "I": "X",
+                            "J": "X",
+                            "L": "V",
+                            "M": "V",
+                            "O": "V",
+                            "P": "X",
+                            "Q": "V",
+                            "R": "V",
+                            "S": "X"
+                        }
+                    },
+                    {
+                        "row": 30,
+                        "cells": {
+                            "A": "23",
+                            "C": "Cancelamento de NFS-e Deferido por Análise Fiscal",
+                            "D": "V",
+                            "E": "X",
+                            "F": "V",
+                            "G": "X",
+                            "H": "V",
+                            "I": "X",
+                            "J": "X",
+                            "L": "V",
+                            "M": "V",
+                            "O": "V",
+                            "P": "X",
+                            "Q": "V",
+                            "R": "V",
+                            "S": "X"
+                        }
+                    },
+                    {
+                        "row": 31,
+                        "cells": {
+                            "A": "24",
+                            "C": "Cancelamento de NFS-e Indeferido por Análise Fiscal",
+                            "D": "V",
+                            "E": "X",
+                            "F": "V",
+                            "G": "X",
+                            "H": "V",
+                            "I": "X",
+                            "J": "X",
+                            "L": "V",
+                            "M": "V",
+                            "O": "V",
+                            "P": "X",
+                            "Q": "V",
+                            "R": "V",
+                            "S": "X"
+                        }
+                    },
+                    {
+                        "row": 32,
+                        "cells": {
+                            "A": "25",
+                            "C": "Cancelamento de NFS-e por Ofício",
+                            "D": "V",
+                            "E": "X",
+                            "F": "V",
+                            "G": "X",
+                            "H": "V",
+                            "I": "X",
+                            "J": "X",
+                            "L": "V",
+                            "M": "V",
+                            "O": "V",
+                            "P": "X",
+                            "Q": "V",
+                            "R": "V",
+                            "S": "X"
+                        }
+                    },
+                    {
+                        "row": 33,
+                        "cells": {
+                            "D": "(1)",
+                            "E": "Gerar NSU de Distribuição somente se o Município do Não Emitente for diferente do Município do Emitente."
+                        }
+                    },
+                    {
+                        "row": 34,
+                        "cells": {
+                            "D": "(2)",
+                            "E": "Gerar NSU de Distribuição somente se o Município da Prestação for diferente do Município do Emitente E do Município do Não Emitente."
+                        }
+                    },
+                    {
+                        "row": 35,
+                        "cells": {
+                            "D": "(3)",
+                            "E": "Os NSU são gerados para qualquer Município, ativos ou não ativos no Sistema Nacional NFS-e. Todos os DF-e podem ser solicitados na API de distribuição, exceto quando o município for inexistente ou existente inativo ou suspenso."
+                        }
+                    },
+                    {
+                        "row": 36,
+                        "cells": {
+                            "D": "(4)",
+                            "E": "Gerar NSU de Distribuição somente se o Município do Destinatário for diferente do Município do Tomador ."
+                        }
+                    },
+                    {
+                        "row": 37,
+                        "cells": {
+                            "D": "(5)",
+                            "E": "Gerar NSU de Distribuição somente se o Destinatário for diferente do Tomador ."
+                        }
+                    },
+                    {
+                        "row": 38,
+                        "cells": {
+                            "D": "*",
+                            "E": "EXISTENTE no cadastro de municípios conveniados ao Sistema Nacional NFS-e"
+                        }
+                    },
+                    {
+                        "row": 39,
+                        "cells": {
+                            "D": "**",
+                            "E": "INEXISTENTE no cadastro de municípios conveniados ao Sistema Nacional NFS-e"
+                        }
+                    }
+                ]
+            },
+            {
+                "name": "ADN-RN_DISTRIB_MUN_CONTRIB",
+                "sheet_id": "14",
+                "relationship_id": "rId3",
+                "path": "xl/worksheets/sheet3.xml",
+                "dimension": "A1:H29",
+                "rows": [
+                    {
+                        "row": 1,
+                        "cells": {
+                            "A": "#",
+                            "B": "REGRAS DE NEGÓCIO",
+                            "D": "APLIC.",
+                            "E": "EFEITO",
+                            "F": "CÓD. ERRO",
+                            "G": "MSG. ERRO",
+                            "H": "OBSERVAÇÕES DE NEGÓCIO"
+                        }
+                    },
+                    {
+                        "row": 2,
+                        "cells": {
+                            "A": "1",
+                            "B": "Validação da Distribuição para NSU Geral",
+                            "D": "-",
+                            "E": "-",
+                            "F": "-",
+                            "G": "-",
+                            "H": "-"
+                        }
+                    },
+                    {
+                        "row": 3,
+                        "cells": {
+                            "A": "2",
+                            "B": "CNPJ do transmissor deve estar cadastrado para um Órgão no convênio do sistema nacional.",
+                            "D": "Obrig.",
+                            "E": "Rej.",
+                            "F": "E2301",
+                            "G": "CNPJ não cadastrado.",
+                            "H": "-"
+                        }
+                    },
+                    {
+                        "row": 4,
+                        "cells": {
+                            "A": "3",
+                            "B": "Distriuição a partir de um NSU",
+                            "D": "-",
+                            "E": "-",
+                            "F": "-",
+                            "G": "-",
+                            "H": "-"
+                        }
+                    },
+                    {
+                        "row": 5,
+                        "cells": {
+                            "A": "4",
+                            "B": "Verificar se existem DF-e a partir do NSU informado pelo o Órgão solicitante.",
+                            "D": "Obrig.",
+                            "E": "Rej.",
+                            "F": "E2305",
+                            "G": "Nenhum documento localizado – não existem documentos fiscais a partir do NSU informado.",
+                            "H": "-"
+                        }
+                    },
+                    {
+                        "row": 6,
+                        "cells": {
+                            "A": "5",
+                            "B": "Consulta por NSU",
+                            "D": "-",
+                            "E": "-",
+                            "F": "-",
+                            "G": "-",
+                            "H": "-"
+                        }
+                    },
+                    {
+                        "row": 7,
+                        "cells": {
+                            "A": "6",
+                            "B": "Verificar se existe DF-e para o NSU informado pelo Órgão solicitante.",
+                            "D": "Obrig.",
+                            "E": "Rej.",
+                            "F": "E2306",
+                            "G": "Nenhum documento localizado – não existe documento fiscal para o NSU informado.",
+                            "H": "-"
+                        }
+                    },
+                    {
+                        "row": 8,
+                        "cells": {
+                            "A": "7",
+                            "B": "Validação da Distribuição para NSU do Municipio",
+                            "D": "-",
+                            "E": "-",
+                            "F": "-",
+                            "G": "-",
+                            "H": "-"
+                        }
+                    },
+                    {
+                        "row": 9,
+                        "cells": {
+                            "A": "8",
+                            "B": "Validações do Certificado da Transmissão.",
+                            "D": "Obrig.",
+                            "E": "Rej.",
+                            "F": "E2000",
+                            "G": "Erro no Certificado de transmissão.",
+                            "H": "-"
+                        }
+                    },
+                    {
+                        "row": 10,
+                        "cells": {
+                            "A": "9",
+                            "B": "CNPJ do transmissor deve estar cadastrado para um Município no convênio municipal do sistema nacional.",
+                            "D": "Obrig.",
+                            "E": "Rej.",
+                            "F": "E2001",
+                            "G": "CNPJ não cadastrado para nenhum Município conveniado.",
+                            "H": "-"
+                        }
+                    },
+                    {
+                        "row": 11,
+                        "cells": {
+                            "A": "10",
+                            "B": "O código do Município informado deve existir e estar com a situação CADASTRADO no cadastro de convênio municipal.",
+                            "D": "Obrig.",
+                            "E": "Rej.",
+                            "F": "E2003",
+                            "G": "O código do município informado existe, mas está suspenso no convênio municipal.",
+                            "H": "-"
+                        }
+                    },
+                    {
+                        "row": 12,
+                        "cells": {
+                            "A": "11",
+                            "B": "O código do Município informado deve existir e estar inativo a menos de <<prazo para a inativação>> dias no cadastro de convênio municipal.",
+                            "D": "Obrig.",
+                            "E": "Rej.",
+                            "F": "E2004",
+                            "G": "O código do município informado existe, mas não está ativo há mais de <<prazo para a inativação>> dias no cadastro de convênio municipal.",
+                            "H": "-"
+                        }
+                    },
+                    {
+                        "row": 13,
+                        "cells": {
+                            "A": "12",
+                            "B": "Distriuição a partir de um NSU",
+                            "D": "-",
+                            "E": "-",
+                            "F": "-",
+                            "G": "-",
+                            "H": "-"
+                        }
+                    },
+                    {
+                        "row": 14,
+                        "cells": {
+                            "A": "13",
+                            "B": "Verificar se existem DF-e a partir do NSU informado pelo o município solicitante.",
+                            "D": "Obrig.",
+                            "E": "Rej.",
+                            "F": "E2020",
+                            "G": "Nenhum documento localizado – não existem documentos fiscais para o Município a partir do NSU informado.",
+                            "H": "-"
+                        }
+                    },
+                    {
+                        "row": 15,
+                        "cells": {
+                            "A": "14",
+                            "B": "Consulta por NSU",
+                            "D": "-",
+                            "E": "-",
+                            "F": "-",
+                            "G": "-",
+                            "H": "-"
+                        }
+                    },
+                    {
+                        "row": 16,
+                        "cells": {
+                            "A": "15",
+                            "B": "Verificar se existe DF-e para o NSU informado pelo municipio solicitante.",
+                            "D": "Obrig.",
+                            "E": "Rej.",
+                            "F": "E2040",
+                            "G": "Nenhum documento localizado – não existe documento fiscal para o Município com o NSU informado.",
+                            "H": "-"
+                        }
+                    },
+                    {
+                        "row": 17,
+                        "cells": {
+                            "A": "16",
+                            "B": "Consulta por Chave de Acesso",
+                            "H": "-"
+                        }
+                    },
+                    {
+                        "row": 18,
+                        "cells": {
+                            "A": "17",
+                            "B": "Chave de acesso não localizada.",
+                            "D": "Obrig.",
+                            "E": "Rej.",
+                            "F": "E2060",
+                            "G": "Nenhum documento localizado – não existe documentos fiscal para a chave de acesso informada.",
+                            "H": "-"
+                        }
+                    },
+                    {
+                        "row": 19,
+                        "cells": {
+                            "A": "18",
+                            "B": "Chave de acesso não referencia o Município solicitante.",
+                            "D": "Obrig.",
+                            "E": "Rej.",
+                            "F": "E2061",
+                            "G": "Chave de acesso da NFS-e não referencia o Município solicitante e por isso não pode ser compartilhado.",
+                            "H": "-"
+                        }
+                    },
+                    {
+                        "row": 20,
+                        "cells": {
+                            "A": "19",
+                            "B": "Recuperação de Backup - Município Emissor",
+                            "D": "-",
+                            "E": "-",
+                            "F": "-",
+                            "G": "-",
+                            "H": "-"
+                        }
+                    },
+                    {
+                        "row": 21,
+                        "cells": {
+                            "A": "20",
+                            "B": "NSU (NSU de recepção) não localizado para o Município solicitante.",
+                            "D": "Obrig.",
+                            "E": "Rej.",
+                            "F": "E2070",
+                            "G": "Nenhum documento localizado – não existem documentos fiscais recebidos para o Município a partir do NSU de recepção informado.",
+                            "H": "-"
+                        }
+                    },
+                    {
+                        "row": 22,
+                        "cells": {
+                            "B": "Validação da Distribuição para NSU dos Atores da NFS-e",
+                            "D": "-",
+                            "E": "-",
+                            "F": "-",
+                            "G": "-",
+                            "H": "-"
+                        }
+                    },
+                    {
+                        "row": 23,
+                        "cells": {
+                            "A": "22",
+                            "B": "Distriuição a partir de um NSU",
+                            "D": "-",
+                            "E": "-",
+                            "F": "-",
+                            "G": "-",
+                            "H": "-"
+                        }
+                    },
+                    {
+                        "row": 24,
+                        "cells": {
+                            "A": "23",
+                            "B": "Verificar se existem DF-e a partir do NSU informado pelo o contribuinte solicitante.",
+                            "D": "Obrig.",
+                            "E": "Rej.",
+                            "F": "E2215",
+                            "G": "Nenhum documento localizado – não existem documentos fiscais para o Contribuinte a partir do NSU informado.",
+                            "H": "-"
+                        }
+                    },
+                    {
+                        "row": 25,
+                        "cells": {
+                            "A": "24",
+                            "B": "Consulta por NSU",
+                            "D": "-",
+                            "E": "-",
+                            "F": "-",
+                            "G": "-",
+                            "H": "-"
+                        }
+                    },
+                    {
+                        "row": 26,
+                        "cells": {
+                            "A": "25",
+                            "B": "Verificar se existe DF-e para o NSU informado pelo contribuinte solicitante.",
+                            "D": "Obrig.",
+                            "E": "Rej.",
+                            "F": "E2230",
+                            "G": "Nenhum documento localizado – não existe documento fiscal para o Contribuinte com o NSU informado.",
+                            "H": "-"
+                        }
+                    },
+                    {
+                        "row": 27,
+                        "cells": {
+                            "A": "26",
+                            "B": "Consulta por Chave de Acesso",
+                            "D": "-",
+                            "E": "-",
+                            "F": "-",
+                            "G": "-",
+                            "H": "-"
+                        }
+                    },
+                    {
+                        "row": 28,
+                        "cells": {
+                            "A": "27",
+                            "B": "Chave de acesso não localizada.",
+                            "D": "Obrig.",
+                            "E": "Rej.",
+                            "F": "E2240",
+                            "G": "Nenhum documento localizado – não existe documentos fiscal para a chave de acesso informada.",
+                            "H": "-"
+                        }
+                    },
+                    {
+                        "row": 29,
+                        "cells": {
+                            "A": "28",
+                            "B": "Chave de acesso não referencia o Contribuinte solicitante.",
+                            "D": "Obrig.",
+                            "E": "Rej.",
+                            "F": "E2241",
+                            "G": "Chave de acesso da NFS-e não referencia o Contribuinte solicitante e por isso não pode ser compartilhado.",
+                            "H": "-"
+                        }
+                    }
+                ]
+            }
+        ]
+    }
+}

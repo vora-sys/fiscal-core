@@ -8,25 +8,26 @@ use sabbajohn\FiscalCore\Support\ResponseHandler;
 
 /**
  * UtilsFacade - Interface para consultas públicas e utilitários
- * 
+ *
  * Responsabilidades:
  * - Consultas CEP (ViaCEP, BrasilAPI)
  * - Consultas CNPJ/CPF (ReceitaWS, brazanation/documents)
  * - Lista de bancos, feriados, cidades
  * - Validação de documentos brasileiros
  * - APIs públicas diversas
- * 
+ *
  * Separado do contexto fiscal para manter responsabilidades claras
  */
 class UtilsFacade
 {
     private BrasilAPIAdapter $brasilApi;
+
     private ResponseHandler $responseHandler;
 
     public function __construct()
     {
-        $this->brasilApi = new BrasilAPIAdapter();
-        $this->responseHandler = new ResponseHandler();
+        $this->brasilApi = new BrasilAPIAdapter;
+        $this->responseHandler = new ResponseHandler;
     }
 
     /**
@@ -34,10 +35,10 @@ class UtilsFacade
      */
     public function consultarCEP(string $cep): FiscalResponse
     {
-        return $this->responseHandler->execute(function() use ($cep) {
+        return $this->responseHandler->execute(function () use ($cep) {
             $resultado = $this->brasilApi->consultarCEP($cep);
-            
-            if (!$resultado) {
+
+            if (! $resultado) {
                 throw new \Exception('CEP não encontrado');
             }
 
@@ -48,7 +49,7 @@ class UtilsFacade
                 'localidade' => $resultado['city'] ?? $resultado['localidade'] ?? '',
                 'uf' => $resultado['state'] ?? $resultado['uf'] ?? '',
                 'ibge' => $resultado['city_ibge'] ?? $resultado['ibge'] ?? '',
-                'ddd' => $resultado['ddd'] ?? ''
+                'ddd' => $resultado['ddd'] ?? '',
             ];
         });
     }
@@ -58,18 +59,18 @@ class UtilsFacade
      */
     public function consultarCNPJ(string $cnpj): FiscalResponse
     {
-        return $this->responseHandler->execute(function() use ($cnpj) {
+        return $this->responseHandler->execute(function () use ($cnpj) {
             // Remove formatação
             $cnpj = preg_replace('/\D/', '', $cnpj);
-            
+
             // Valida formato básico
             if (strlen($cnpj) !== 14) {
                 throw new \InvalidArgumentException('CNPJ deve ter 14 dígitos');
             }
 
             $resultado = $this->brasilApi->consultarCNPJ($cnpj);
-            
-            if (!$resultado) {
+
+            if (! $resultado) {
                 throw new \Exception('CNPJ não encontrado');
             }
 
@@ -82,9 +83,9 @@ class UtilsFacade
      */
     public function validarCPF(string $cpf): FiscalResponse
     {
-        return $this->responseHandler->execute(function() use ($cpf) {
+        return $this->responseHandler->execute(function () use ($cpf) {
             $cpf = preg_replace('/\D/', '', $cpf);
-            
+
             if (strlen($cpf) !== 11) {
                 throw new \InvalidArgumentException('CPF deve ter 11 dígitos');
             }
@@ -95,13 +96,13 @@ class UtilsFacade
             }
 
             // Cálculo dos dígitos verificadores
-            if (!$this->validarDigitosCPF($cpf)) {
+            if (! $this->validarDigitosCPF($cpf)) {
                 throw new \InvalidArgumentException('CPF inválido');
             }
 
             return [
                 'cpf' => $this->formatarCPF($cpf),
-                'valido' => true
+                'valido' => true,
             ];
         });
     }
@@ -111,9 +112,9 @@ class UtilsFacade
      */
     public function validarCNPJ(string $cnpj): FiscalResponse
     {
-        return $this->responseHandler->execute(function() use ($cnpj) {
+        return $this->responseHandler->execute(function () use ($cnpj) {
             $cnpj = preg_replace('/\D/', '', $cnpj);
-            
+
             if (strlen($cnpj) !== 14) {
                 throw new \InvalidArgumentException('CNPJ deve ter 14 dígitos');
             }
@@ -124,13 +125,13 @@ class UtilsFacade
             }
 
             // Cálculo dos dígitos verificadores
-            if (!$this->validarDigitosCNPJ($cnpj)) {
+            if (! $this->validarDigitosCNPJ($cnpj)) {
                 throw new \InvalidArgumentException('CNPJ inválido');
             }
 
             return [
                 'cnpj' => $this->formatarCNPJ($cnpj),
-                'valido' => true
+                'valido' => true,
             ];
         });
     }
@@ -140,14 +141,14 @@ class UtilsFacade
      */
     public function listarBancos(): FiscalResponse
     {
-        return $this->responseHandler->execute(function() {
+        return $this->responseHandler->execute(function () {
             $bancos = $this->brasilApi->listarBancos();
-            
-            if (!$bancos) {
+
+            if (! $bancos) {
                 throw new \Exception('Erro ao consultar lista de bancos');
             }
 
-            return array_map(function($banco) {
+            return array_map(function ($banco) {
                 $codigo = (string) ($banco['code'] ?? '');
                 if (is_numeric($codigo)) {
                     $codigo = str_pad($codigo, 3, '0', STR_PAD_LEFT);
@@ -157,7 +158,7 @@ class UtilsFacade
                     'codigo' => $codigo,
                     'nome' => $banco['name'] ?? '',
                     'nome_completo' => $banco['fullName'] ?? '',
-                    'ispb' => $banco['ispb'] ?? ''
+                    'ispb' => $banco['ispb'] ?? '',
                 ];
             }, $bancos);
         });
@@ -168,15 +169,15 @@ class UtilsFacade
      */
     public function consultarBanco(string $codigo): FiscalResponse
     {
-        return $this->responseHandler->execute(function() use ($codigo) {
+        return $this->responseHandler->execute(function () use ($codigo) {
             $bancos = $this->listarBancos();
-            
-            if (!$bancos->isSuccess()) {
+
+            if (! $bancos->isSuccess()) {
                 throw new \Exception('Erro ao consultar bancos');
             }
 
             $codigoNormalizado = str_pad(preg_replace('/\D/', '', $codigo) ?? '', 3, '0', STR_PAD_LEFT);
-            $banco = array_filter($bancos->getData(), function($b) use ($codigoNormalizado) {
+            $banco = array_filter($bancos->getData(), function ($b) use ($codigoNormalizado) {
                 return $b['codigo'] === $codigoNormalizado;
             });
 
@@ -193,19 +194,19 @@ class UtilsFacade
      */
     public function listarFeriados(?int $ano = null): FiscalResponse
     {
-        return $this->responseHandler->execute(function() use ($ano) {
+        return $this->responseHandler->execute(function () use ($ano) {
             $ano = $ano ?? date('Y');
             $feriados = $this->brasilApi->consultarFeriados($ano);
-            
-            if (!$feriados) {
+
+            if (! $feriados) {
                 throw new \Exception("Erro ao consultar feriados de {$ano}");
             }
 
-            return array_map(function($feriado) {
+            return array_map(function ($feriado) {
                 return [
                     'data' => $feriado['date'] ?? '',
                     'nome' => $feriado['name'] ?? '',
-                    'tipo' => $feriado['type'] ?? 'nacional'
+                    'tipo' => $feriado['type'] ?? 'nacional',
                 ];
             }, $feriados);
         });
@@ -216,19 +217,19 @@ class UtilsFacade
      */
     public function listarMunicipios(string $uf): FiscalResponse
     {
-        return $this->responseHandler->execute(function() use ($uf) {
+        return $this->responseHandler->execute(function () use ($uf) {
             $uf = strtoupper($uf);
             $municipios = $this->brasilApi->consultarMunicipios($uf);
-            
-            if (!$municipios) {
+
+            if (! $municipios) {
                 throw new \Exception("Erro ao consultar municípios de {$uf}");
             }
 
-            return array_map(function($municipio) {
+            return array_map(function ($municipio) {
                 return [
                     'codigo_ibge' => $municipio['city_ibge'] ?? $municipio['code'] ?? '',
                     'nome' => $municipio['name'] ?? '',
-                    'uf' => $municipio['state'] ?? ''
+                    'uf' => $municipio['state'] ?? '',
                 ];
             }, $municipios);
         });
@@ -239,17 +240,17 @@ class UtilsFacade
      */
     public function consultarDDD(string $ddd): FiscalResponse
     {
-        return $this->responseHandler->execute(function() use ($ddd) {
+        return $this->responseHandler->execute(function () use ($ddd) {
             $resultado = $this->brasilApi->consultarDDD($ddd);
-            
-            if (!$resultado) {
+
+            if (! $resultado) {
                 throw new \Exception("DDD {$ddd} não encontrado");
             }
 
             return [
                 'ddd' => $ddd,
                 'estado' => $resultado['state'] ?? '',
-                'cidades' => $resultado['cities'] ?? []
+                'cidades' => $resultado['cities'] ?? [],
             ];
         });
     }
@@ -259,7 +260,7 @@ class UtilsFacade
      */
     public function verificarStatusAPIs(): FiscalResponse
     {
-        return $this->responseHandler->execute(function() {
+        return $this->responseHandler->execute(function () {
             $status = [];
 
             // Testa BrasilAPI
@@ -270,11 +271,11 @@ class UtilsFacade
                 $status['brasilapi'] = ['disponivel' => false, 'status' => $e->getMessage()];
             }
 
-            // Testa ViaCEP  
+            // Testa ViaCEP
             try {
-                $viacep = file_get_contents('https://viacep.com.br/ws/01310100/json/', false, 
+                $viacep = file_get_contents('https://viacep.com.br/ws/01310100/json/', false,
                     stream_context_create(['http' => ['timeout' => 5]]));
-                $status['viacep'] = ['disponivel' => !empty($viacep), 'status' => 'Online'];
+                $status['viacep'] = ['disponivel' => ! empty($viacep), 'status' => 'Online'];
             } catch (\Exception $e) {
                 $status['viacep'] = ['disponivel' => false, 'status' => $e->getMessage()];
             }
@@ -282,7 +283,7 @@ class UtilsFacade
             return [
                 'apis' => $status,
                 'timestamp' => date('Y-m-d H:i:s'),
-                'total_disponivel' => count(array_filter($status, fn($s) => $s['disponivel']))
+                'total_disponivel' => count(array_filter($status, fn ($s) => $s['disponivel'])),
             ];
         });
     }
@@ -308,7 +309,7 @@ class UtilsFacade
                 $resultado['ddd_fax'] ?? null,
                 $resultado['phone'] ?? null,
                 $resultado['telefone'] ?? null,
-            ], fn($valor) => $valor !== null && $valor !== ''))
+            ], fn ($valor) => $valor !== null && $valor !== ''))
         );
 
         $endereco = [
@@ -403,7 +404,7 @@ class UtilsFacade
     private function validarDigitosCNPJ(string $cnpj): bool
     {
         // Primeiro dígito
-        $pesos = [5,4,3,2,9,8,7,6,5,4,3,2];
+        $pesos = [5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2];
         $soma = 0;
         for ($i = 0; $i < 12; $i++) {
             $soma += $cnpj[$i] * $pesos[$i];
@@ -411,7 +412,7 @@ class UtilsFacade
         $digito1 = $soma % 11 < 2 ? 0 : 11 - ($soma % 11);
 
         // Segundo dígito
-        $pesos = [6,5,4,3,2,9,8,7,6,5,4,3,2];
+        $pesos = [6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2];
         $soma = 0;
         for ($i = 0; $i < 13; $i++) {
             $soma += $cnpj[$i] * $pesos[$i];

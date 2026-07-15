@@ -2,9 +2,9 @@
 
 namespace sabbajohn\FiscalCore\Adapters\NF\Nodes;
 
+use NFePHP\NFe\Make;
 use sabbajohn\FiscalCore\Adapters\NF\Core\NotaNodeInterface;
 use sabbajohn\FiscalCore\Adapters\NF\DTO\InfoSuplementarDTO;
-use NFePHP\NFe\Make;
 use sabbajohn\FiscalCore\Adapters\NF\Helpers\StdClassBuilder;
 
 /**
@@ -16,23 +16,23 @@ class InfoSuplementarNode implements NotaNodeInterface
     public function __construct(
         private InfoSuplementarDTO $infoSuplementar
     ) {}
-    
+
     public function getNodeType(): string
     {
         return 'infoSuplementar';
     }
-    
+
     public function validate(): bool
     {
         $errors = $this->infoSuplementar->validate();
-        
-        if (!empty($errors)) {
+
+        if (! empty($errors)) {
             throw new \InvalidArgumentException(implode('; ', $errors));
         }
-        
+
         return true;
     }
-    
+
     public function addToMake(Make $make): void
     {
         // Adicionar QR Code
@@ -41,7 +41,7 @@ class InfoSuplementarNode implements NotaNodeInterface
             $this->infoSuplementar->urlChave
         ));
     }
-    
+
     /**
      * Retorna o DTO encapsulado
      */

@@ -2,12 +2,13 @@
 
 namespace sabbajohn\FiscalCore\Adapters;
 
-use sabbajohn\FiscalCore\Contracts\TributacaoInterface;
 use NFePHP\Ibpt\Ibpt;
+use sabbajohn\FiscalCore\Contracts\TributacaoInterface;
 
 class IBPTAdapter implements TributacaoInterface
 {
     private Ibpt $client;
+
     private string $ufDefault;
 
     public function __construct(string $cnpj, string $token, string $ufDefault = 'SP')
@@ -49,9 +50,41 @@ class IBPTAdapter implements TributacaoInterface
                 $gtin,
                 $codigoInterno
             );
+
             return is_object($resp) ? get_object_vars($resp) : (array) $resp;
         } catch (\Throwable $e) {
-            throw new \RuntimeException('Falha ao consultar IBPT (produto): ' . $e->getMessage(), 0, $e);
+            throw new \RuntimeException('Falha ao consultar IBPT (produto): '.$e->getMessage(), 0, $e);
+        }
+    }
+
+    /**
+     * Espera campos em $servico:
+     * - uf (opcional, default construtor)
+     * - codigo_servico (string, código da LC 116/NBM aceito pelo IBPT)
+     * - descricao (string)
+     * - unidade (string)
+     * - valor (float|int)
+     */
+    public function calcularImpostosServico(array $servico): array
+    {
+        $uf = $servico['uf'] ?? $this->ufDefault;
+        $codigo = (string) ($servico['codigo_servico'] ?? '');
+        $descricao = (string) ($servico['descricao'] ?? 'Serviço');
+        $unidade = (string) ($servico['unidade'] ?? 'UN');
+        $valor = (float) ($servico['valor'] ?? 0.0);
+
+        try {
+            $resp = $this->client->serviceTaxes(
+                $uf,
+                $codigo,
+                $descricao,
+                $unidade,
+                $valor
+            );
+
+            return is_object($resp) ? get_object_vars($resp) : (array) $resp;
+        } catch (\Throwable $e) {
+            throw new \RuntimeException('Falha ao consultar IBPT (serviço): '.$e->getMessage(), 0, $e);
         }
     }
 
@@ -71,9 +104,10 @@ class IBPTAdapter implements TributacaoInterface
                 0.01,
                 ''
             );
+
             return is_object($resp) ? get_object_vars($resp) : (array) $resp;
         } catch (\Throwable $e) {
-            throw new \RuntimeException('Falha ao consultar IBPT por NCM: ' . $e->getMessage(), 0, $e);
+            throw new \RuntimeException('Falha ao consultar IBPT por NCM: '.$e->getMessage(), 0, $e);
         }
     }
 }

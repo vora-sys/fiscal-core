@@ -2,13 +2,13 @@
 
 declare(strict_types=1);
 
-require_once __DIR__ . '/../../vendor/autoload.php';
-require_once __DIR__ . '/common.php';
+require_once __DIR__.'/../../vendor/autoload.php';
+require_once __DIR__.'/common.php';
 
 use sabbajohn\FiscalCore\Facade\FiscalFacade;
 use sabbajohn\FiscalCore\Providers\NFSe\Municipal\IsswebProvider;
-use sabbajohn\FiscalCore\Support\ProviderRegistry;
 use sabbajohn\FiscalCore\Support\NFSeSoapTransportInterface;
+use sabbajohn\FiscalCore\Support\ProviderRegistry;
 
 function presidenteFigueiredoIsswebUsage(string $scriptName): string
 {
@@ -38,18 +38,22 @@ function presidenteFigueiredoIsswebOptions(array $argv): array
     foreach (array_slice($argv, 1) as $arg) {
         if ($arg === '--send') {
             $options['send'] = true;
+
             continue;
         }
         if ($arg === '--help' || $arg === '-h') {
             $options['help'] = true;
+
             continue;
         }
         if (str_starts_with($arg, '--tomador-doc=')) {
             $options['tomador_doc'] = substr($arg, 14);
+
             continue;
         }
         if (str_starts_with($arg, '--tomador-nome=')) {
             $options['tomador_nome'] = substr($arg, 15);
+
             continue;
         }
         if (str_starts_with($arg, '--numero=')) {
@@ -102,7 +106,7 @@ function presidenteFigueiredoIsswebPayload(array $options): array
 
 $options = presidenteFigueiredoIsswebOptions($argv);
 if (($options['help'] ?? false) === true) {
-    echo presidenteFigueiredoIsswebUsage(basename((string) $argv[0])) . PHP_EOL;
+    echo presidenteFigueiredoIsswebUsage(basename((string) $argv[0])).PHP_EOL;
     exit(0);
 }
 
@@ -120,7 +124,8 @@ if (($options['send'] ?? false) !== true) {
     $config = ProviderRegistry::getInstance()->getConfigForMunicipio('presidente-figueiredo');
     $config['prestador'] = $payload['prestador'];
     $config['auth']['chave'] = nfseMunicipalRequiredEnvValue('NFSE_ISSWEB_CHAVE');
-    $config['soap_transport'] = new class implements NFSeSoapTransportInterface {
+    $config['soap_transport'] = new class implements NFSeSoapTransportInterface
+    {
         public function send(string $endpoint, string $envelope, array $options = []): array
         {
             return [
@@ -140,12 +145,12 @@ if (($options['send'] ?? false) !== true) {
         'payload' => $payload,
         'artifacts' => $provider->getLastOperationArtifacts(),
         'parsed_response' => $provider->getLastResponseData(),
-    ], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) . PHP_EOL;
+    ], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES).PHP_EOL;
     exit(0);
 }
 
-$fiscal = new FiscalFacade();
+$fiscal = new FiscalFacade;
 $nfse = $fiscal->nfse('presidente-figueiredo');
 $resultado = $nfse->emitirCompleto($payload);
 
-echo $resultado->toJson(JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) . PHP_EOL;
+echo $resultado->toJson(JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES).PHP_EOL;

@@ -8,18 +8,18 @@ class FileCacheStore
 
     public function __construct(?string $cacheDir = null)
     {
-        $this->cacheDir = $cacheDir ?? sys_get_temp_dir() . '/fiscal-core-cache';
+        $this->cacheDir = $cacheDir ?? sys_get_temp_dir().'/fiscal-core-cache';
         $this->ensureCacheDirectory();
     }
 
     /**
-     * @return array{value:mixed, stale:bool}|null
+     * @return array{value:mixed, stale:bool, created_at:int, age_seconds:int}|null
      */
     public function get(string $key, int $ttl): ?array
     {
         $path = $this->resolvePath($key);
 
-        if (!is_file($path)) {
+        if (! is_file($path)) {
             return null;
         }
 
@@ -29,7 +29,7 @@ class FileCacheStore
         }
 
         $decoded = json_decode($raw, true);
-        if (!is_array($decoded) || !isset($decoded['created_at']) || !array_key_exists('value', $decoded)) {
+        if (! is_array($decoded) || ! isset($decoded['created_at']) || ! array_key_exists('value', $decoded)) {
             return null;
         }
 
@@ -38,7 +38,9 @@ class FileCacheStore
 
         return [
             'value' => $decoded['value'],
-            'stale' => !$isFresh,
+            'stale' => ! $isFresh,
+            'created_at' => $createdAt,
+            'age_seconds' => max(0, time() - $createdAt),
         ];
     }
 
@@ -55,12 +57,12 @@ class FileCacheStore
 
     private function resolvePath(string $key): string
     {
-        return rtrim($this->cacheDir, '/') . '/' . sha1($key) . '.json';
+        return rtrim($this->cacheDir, '/').'/'.sha1($key).'.json';
     }
 
     private function ensureCacheDirectory(): void
     {
-        if (!is_dir($this->cacheDir)) {
+        if (! is_dir($this->cacheDir)) {
             mkdir($this->cacheDir, 0777, true);
         }
     }

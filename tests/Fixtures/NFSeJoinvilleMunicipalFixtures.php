@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use NFePHP\Common\Certificate;
+use sabbajohn\FiscalCore\Support\ProviderRegistry;
 
 final class NFSeJoinvilleMunicipalFixtures
 {
@@ -104,7 +105,7 @@ final class NFSeJoinvilleMunicipalFixtures
 
     public static function joinvilleConfig(array $overrides = []): array
     {
-        $config = \sabbajohn\FiscalCore\Support\ProviderRegistry::getInstance()->getConfig('PUBLICA');
+        $config = ProviderRegistry::getInstance()->getConfig('PUBLICA');
         $config['emission_mode'] = 'async_lote';
         $config['prestador'] = [
             'cnpj' => self::payload()['prestador']['cnpj'],
@@ -237,7 +238,7 @@ XML);
 
     public static function sanitizedExampleResponsePath(): string
     {
-        return __DIR__ . '/joinville/gerar_nfse_resposta_sanitizada.xml';
+        return __DIR__.'/joinville/gerar_nfse_resposta_sanitizada.xml';
     }
 
     public static function makeCertificate(): Certificate
@@ -271,7 +272,7 @@ XML);
         }
 
         $pkcs12 = '';
-        if (!@openssl_pkcs12_export($x509, $pkcs12, $privateKey, 'secret')) {
+        if (! @openssl_pkcs12_export($x509, $pkcs12, $privateKey, 'secret')) {
             throw new RuntimeException('Falha ao exportar certificado PKCS#12 de teste.');
         }
 
@@ -413,6 +414,7 @@ XML;
         foreach ($overrides as $key => $value) {
             if (is_array($value) && isset($base[$key]) && is_array($base[$key])) {
                 $base[$key] = self::arrayMergeRecursiveDistinct($base[$key], $value);
+
                 continue;
             }
 

@@ -5,19 +5,17 @@ namespace sabbajohn\FiscalCore\Adapters\NFSe\DTO\Nacional;
 final class TomadorDTO
 {
     /**
-     * @param array<string,mixed> $data
+     * @param  array<string,mixed>  $data
      */
-    private function __construct(private array $data)
-    {
-    }
+    private function __construct(private array $data) {}
 
     /**
-     * @param array<string,mixed> $payload
+     * @param  array<string,mixed>  $payload
      */
     public static function fromArray(array $payload): self
     {
         $data = $payload;
-        $documento = DpsPayloadHelper::onlyDigits(DpsPayloadHelper::firstString([
+        $documento = DpsPayloadHelper::fiscalDocument(DpsPayloadHelper::firstString([
             $payload['documento'] ?? null,
             $payload['cnpj'] ?? null,
             $payload['cpf'] ?? null,
@@ -73,8 +71,10 @@ final class TomadorDTO
     public function validate(): array
     {
         $errors = [];
-        $documento = DpsPayloadHelper::onlyDigits((string) ($this->data['documento'] ?? ''));
-        if (!in_array(strlen($documento), [11, 14], true)) {
+        $documento = DpsPayloadHelper::fiscalDocument((string) ($this->data['documento'] ?? ''));
+        $validCpf = preg_match('/^\d{11}$/', $documento) === 1;
+        $validCnpj = preg_match('/^[A-Z0-9]{12}\d{2}$/', $documento) === 1;
+        if (! $validCpf && ! $validCnpj) {
             $errors[] = 'tomador.documento deve ser CPF (11) ou CNPJ (14).';
         }
 
@@ -94,7 +94,7 @@ final class TomadorDTO
     }
 
     /**
-     * @param array<string,mixed> $endereco
+     * @param  array<string,mixed>  $endereco
      * @return array<string,mixed>
      */
     private static function normalizeEndereco(array $endereco): array

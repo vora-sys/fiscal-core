@@ -2,24 +2,21 @@
 
 namespace Tests\Integration;
 
+use NFePHP\NFe\Make;
 use PHPUnit\Framework\TestCase;
 use sabbajohn\FiscalCore\Adapters\NF\Core\NotaFiscal;
-use sabbajohn\FiscalCore\Adapters\NF\DTO\{
-    IdentificacaoDTO,
-    EmitenteDTO,
-    DestinatarioDTO,
-    ProdutoDTO,
-    IcmsDTO,
-    PisDTO,
-    CofinsDTO
-};
-use sabbajohn\FiscalCore\Adapters\NF\Nodes\{
-    IdentificacaoNode,
-    EmitenteNode,
-    DestinatarioNode,
-    ProdutoNode,
-    ImpostoNode
-};
+use sabbajohn\FiscalCore\Adapters\NF\DTO\CofinsDTO;
+use sabbajohn\FiscalCore\Adapters\NF\DTO\DestinatarioDTO;
+use sabbajohn\FiscalCore\Adapters\NF\DTO\EmitenteDTO;
+use sabbajohn\FiscalCore\Adapters\NF\DTO\IcmsDTO;
+use sabbajohn\FiscalCore\Adapters\NF\DTO\IdentificacaoDTO;
+use sabbajohn\FiscalCore\Adapters\NF\DTO\PisDTO;
+use sabbajohn\FiscalCore\Adapters\NF\DTO\ProdutoDTO;
+use sabbajohn\FiscalCore\Adapters\NF\Nodes\DestinatarioNode;
+use sabbajohn\FiscalCore\Adapters\NF\Nodes\EmitenteNode;
+use sabbajohn\FiscalCore\Adapters\NF\Nodes\IdentificacaoNode;
+use sabbajohn\FiscalCore\Adapters\NF\Nodes\ImpostoNode;
+use sabbajohn\FiscalCore\Adapters\NF\Nodes\ProdutoNode;
 
 /**
  * Teste de integração NFe completa com impostos
@@ -27,9 +24,9 @@ use sabbajohn\FiscalCore\Adapters\NF\Nodes\{
  */
 class NFeConstrucaoManualTest extends TestCase
 {
-    public function testCriarNFeManualmenteComImpostosCompletos()
+    public function test_criar_n_fe_manualmente_com_impostos_completos()
     {
-        $nota = new NotaFiscal();
+        $nota = new NotaFiscal;
 
         // Identificação
         $identificacao = IdentificacaoDTO::forNFe(
@@ -116,14 +113,14 @@ class NFeConstrucaoManualTest extends TestCase
 
         // Gerar Make
         $make = $nota->getMake();
-        $this->assertInstanceOf(\NFePHP\NFe\Make::class, $make);
+        $this->assertInstanceOf(Make::class, $make);
 
         // Nota: XML completo requer tags adicionais (totais, transporte, etc)
     }
 
-    public function testCriarNFeComSimplesNacional()
+    public function test_criar_n_fe_com_simples_nacional()
     {
-        $nota = new NotaFiscal();
+        $nota = new NotaFiscal;
 
         // Identificação
         $id = IdentificacaoDTO::forNFe(41, 'VENDA', 2002, 4106902, 1);
@@ -162,10 +159,10 @@ class NFeConstrucaoManualTest extends TestCase
         $this->assertCount(5, $nota->getNodes());
     }
 
-    public function testFluxoCompletoNFe()
+    public function test_fluxo_completo_n_fe()
     {
         // 1. Criar nota
-        $nota = new NotaFiscal();
+        $nota = new NotaFiscal;
 
         // 2. Adicionar componentes fluentemente
         $nota
@@ -192,7 +189,7 @@ class NFeConstrucaoManualTest extends TestCase
 
         // 4. Obter Make
         $make = $nota->getMake();
-        $this->assertInstanceOf(\NFePHP\NFe\Make::class, $make);
+        $this->assertInstanceOf(Make::class, $make);
 
         // Nota: Interface fluente funcionando corretamente
     }

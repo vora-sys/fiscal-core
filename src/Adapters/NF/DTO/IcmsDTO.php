@@ -20,7 +20,7 @@ class IcmsDTO
         public ?float $pRedBC = null,       // Percentual redução BC
         public ?int $motDesICMS = null,     // Motivo desoneração
     ) {}
-    
+
     /**
      * ICMS para Simples Nacional (CSOSN 102 - Sem permissão de crédito)
      */
@@ -31,7 +31,7 @@ class IcmsDTO
             orig: $orig
         );
     }
-    
+
     /**
      * ICMS para Simples Nacional (CSOSN 101 - Com permissão de crédito)
      */
@@ -47,7 +47,7 @@ class IcmsDTO
             vCredICMSSN: $vCredICMSSN
         );
     }
-    
+
     /**
      * ICMS00 - Tributado integralmente
      */
@@ -67,7 +67,7 @@ class IcmsDTO
             modBC: $modBC
         );
     }
-    
+
     /**
      * ICMS40 - Isento / Não tributado
      */
@@ -78,20 +78,37 @@ class IcmsDTO
             orig: $orig
         );
     }
-    
+
     public function toStdClass(): \stdClass
     {
-        $obj = new \stdClass();
+        $obj = new \stdClass;
         $obj->cst = $this->cst;
         $obj->orig = $this->orig;
-        if ($this->vBC !== null) $obj->vBC = $this->vBC;
-        if ($this->pICMS !== null) $obj->pICMS = $this->pICMS;
-        if ($this->vICMS !== null) $obj->vICMS = $this->vICMS;
-        if ($this->pCredSN !== null) $obj->pCredSN = $this->pCredSN;
-        if ($this->vCredICMSSN !== null) $obj->vCredICMSSN = $this->vCredICMSSN;
-        if ($this->modBC !== null) $obj->modBC = $this->modBC;
-        if ($this->pRedBC !== null) $obj->pRedBC = $this->pRedBC;
-        if ($this->motDesICMS !== null) $obj->motDesICMS = $this->motDesICMS;
+        if ($this->vBC !== null) {
+            $obj->vBC = $this->vBC;
+        }
+        if ($this->pICMS !== null) {
+            $obj->pICMS = $this->pICMS;
+        }
+        if ($this->vICMS !== null) {
+            $obj->vICMS = $this->vICMS;
+        }
+        if ($this->pCredSN !== null) {
+            $obj->pCredSN = $this->pCredSN;
+        }
+        if ($this->vCredICMSSN !== null) {
+            $obj->vCredICMSSN = $this->vCredICMSSN;
+        }
+        if ($this->modBC !== null) {
+            $obj->modBC = $this->modBC;
+        }
+        if ($this->pRedBC !== null) {
+            $obj->pRedBC = $this->pRedBC;
+        }
+        if ($this->motDesICMS !== null) {
+            $obj->motDesICMS = $this->motDesICMS;
+        }
+
         return $obj;
     }
 }

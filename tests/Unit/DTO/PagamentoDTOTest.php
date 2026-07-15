@@ -7,7 +7,7 @@ use sabbajohn\FiscalCore\Adapters\NF\DTO\PagamentoDTO;
 
 class PagamentoDTOTest extends TestCase
 {
-    public function testPagamentoDinheiro()
+    public function test_pagamento_dinheiro()
     {
         $dto = PagamentoDTO::dinheiro(100.00);
 
@@ -17,7 +17,7 @@ class PagamentoDTOTest extends TestCase
         $this->assertNull($dto->tBand);
     }
 
-    public function testPagamentoCartaoCredito()
+    public function test_pagamento_cartao_credito()
     {
         $dto = PagamentoDTO::cartaoCredito(
             valor: 250.00,
@@ -34,7 +34,7 @@ class PagamentoDTOTest extends TestCase
         $this->assertEquals('ABC123', $dto->cAut);
     }
 
-    public function testPagamentoCartaoDebito()
+    public function test_pagamento_cartao_debito()
     {
         $dto = PagamentoDTO::cartaoDebito(
             valor: 150.00,
@@ -49,7 +49,7 @@ class PagamentoDTOTest extends TestCase
         $this->assertEquals('02', $dto->tBand);
     }
 
-    public function testPagamentoPix()
+    public function test_pagamento_pix()
     {
         $dto = PagamentoDTO::pix(75.50);
 
@@ -59,7 +59,7 @@ class PagamentoDTOTest extends TestCase
         $this->assertNull($dto->cnpj);
     }
 
-    public function testPagamentoCartaoSemDadosOpcionais()
+    public function test_pagamento_cartao_sem_dados_opcionais()
     {
         $dto = PagamentoDTO::cartaoCredito(100.00);
 

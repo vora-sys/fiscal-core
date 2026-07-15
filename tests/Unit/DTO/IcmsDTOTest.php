@@ -7,7 +7,7 @@ use sabbajohn\FiscalCore\Adapters\NF\DTO\IcmsDTO;
 
 class IcmsDTOTest extends TestCase
 {
-    public function testSimplesNacionalSemCredito()
+    public function test_simples_nacional_sem_credito()
     {
         $dto = IcmsDTO::simplesNacionalSemCredito();
 
@@ -17,7 +17,7 @@ class IcmsDTOTest extends TestCase
         $this->assertNull($dto->vCredICMSSN);
     }
 
-    public function testSimplesNacionalComCredito()
+    public function test_simples_nacional_com_credito()
     {
         $dto = IcmsDTO::simplesNacionalComCredito(1.86, 18.60);
 
@@ -27,7 +27,7 @@ class IcmsDTOTest extends TestCase
         $this->assertEquals(18.60, $dto->vCredICMSSN);
     }
 
-    public function testIcms00()
+    public function test_icms00()
     {
         $dto = IcmsDTO::icms00(
             vBC: 1000.00,
@@ -42,7 +42,7 @@ class IcmsDTOTest extends TestCase
         $this->assertEquals(3, $dto->modBC);
     }
 
-    public function testIcmsIsento()
+    public function test_icms_isento()
     {
         $dto = IcmsDTO::icmsIsento();
 
@@ -52,7 +52,7 @@ class IcmsDTOTest extends TestCase
         $this->assertNull($dto->pICMS);
     }
 
-    public function testOrigemPersonalizada()
+    public function test_origem_personalizada()
     {
         $dto = IcmsDTO::simplesNacionalSemCredito(orig: 1);
 

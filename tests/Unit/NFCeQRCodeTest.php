@@ -10,7 +10,7 @@ use sabbajohn\FiscalCore\Support\CertificateManager;
 use sabbajohn\FiscalCore\Support\ConfigManager;
 use sabbajohn\FiscalCore\Support\ToolsFactory;
 
-require_once dirname(__DIR__) . '/Support/TestCertificateFile.php';
+require_once dirname(__DIR__).'/Support/TestCertificateFile.php';
 
 class NFCeQRCodeTest extends TestCase
 {

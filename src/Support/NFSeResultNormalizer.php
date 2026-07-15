@@ -237,7 +237,7 @@ final class NFSeResultNormalizer
     {
         $mensagens = $parsedResponse['mensagens'] ?? [];
 
-        if (!is_array($mensagens)) {
+        if (! is_array($mensagens)) {
             return [];
         }
 
@@ -266,7 +266,7 @@ final class NFSeResultNormalizer
     {
         $status = (string) ($parsedResponse['status'] ?? 'unknown');
 
-        if ($numero !== null && ($codigoVerificacao !== null || !empty($parsedResponse['nfse_url']) || !empty($parsedResponse['pdf_base64']))) {
+        if ($numero !== null && ($codigoVerificacao !== null || ! empty($parsedResponse['nfse_url']) || ! empty($parsedResponse['pdf_base64']))) {
             return 'autorizada';
         }
 
@@ -295,7 +295,7 @@ final class NFSeResultNormalizer
     private function pickString(array $values): ?string
     {
         foreach ($values as $value) {
-            if (!is_scalar($value)) {
+            if (! is_scalar($value)) {
                 continue;
             }
 
@@ -310,12 +310,12 @@ final class NFSeResultNormalizer
 
     private function normalizeFiscalXml(mixed $candidate): ?string
     {
-        if (!is_string($candidate)) {
+        if (! is_string($candidate)) {
             return null;
         }
 
         $candidate = trim($candidate);
-        if ($candidate === '' || !str_starts_with(ltrim($candidate), '<')) {
+        if ($candidate === '' || ! str_starts_with(ltrim($candidate), '<')) {
             return null;
         }
 
@@ -329,8 +329,8 @@ final class NFSeResultNormalizer
             return null;
         }
 
-        $dom = new \DOMDocument();
-        if (!@$dom->loadXML($candidate)) {
+        $dom = new \DOMDocument;
+        if (! @$dom->loadXML($candidate)) {
             return null;
         }
 
@@ -347,7 +347,7 @@ final class NFSeResultNormalizer
 
     private function extractFiscalXmlFromGZipField(mixed $candidate): ?string
     {
-        if (!is_string($candidate) || trim($candidate) === '') {
+        if (! is_string($candidate) || trim($candidate) === '') {
             return null;
         }
 

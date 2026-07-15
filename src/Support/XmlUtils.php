@@ -33,14 +33,14 @@ class XmlUtils
         $root->setAttribute('versao', '4.00');
         $proc->appendChild($root);
 
-        $nfeDom = new \DOMDocument();
-        $protDom = new \DOMDocument();
+        $nfeDom = new \DOMDocument;
+        $protDom = new \DOMDocument;
         libxml_use_internal_errors(true);
         $loadedNfe = $nfeDom->loadXML($nfeXml);
         $loadedProt = $protDom->loadXML($protXml);
         libxml_clear_errors();
 
-        if (!$loadedNfe || !$loadedProt || !$nfeDom->documentElement || !$protDom->documentElement) {
+        if (! $loadedNfe || ! $loadedProt || ! $nfeDom->documentElement || ! $protDom->documentElement) {
             return null;
         }
 
@@ -53,7 +53,6 @@ class XmlUtils
     /**
      * Normaliza retorno XML da SEFAZ para estrutura amigável.
      *
-     * @param string $xml
      * @return array{
      *   lote: ?array{cStat:?string,xMotivo:?string,cUF:?string,dhRecbto:?string},
      *   protocolo: ?array{cStat:?string,xMotivo:?string,chNFe:?string,nProt:?string,dhRecbto:?string},
@@ -74,10 +73,11 @@ class XmlUtils
             return $fallback;
         }
 
-        $dom = new \DOMDocument();
+        $dom = new \DOMDocument;
         libxml_use_internal_errors(true);
-        if (!$dom->loadXML($xml)) {
+        if (! $dom->loadXML($xml)) {
             libxml_clear_errors();
+
             return $fallback;
         }
         libxml_clear_errors();
@@ -163,16 +163,17 @@ class XmlUtils
             return [];
         }
 
-        $dom = new \DOMDocument();
+        $dom = new \DOMDocument;
         libxml_use_internal_errors(true);
-        if (!$dom->loadXML($xml)) {
+        if (! $dom->loadXML($xml)) {
             libxml_clear_errors();
+
             return [];
         }
         libxml_clear_errors();
 
         $root = $dom->documentElement;
-        if (!$root instanceof \DOMElement) {
+        if (! $root instanceof \DOMElement) {
             return [];
         }
 
@@ -184,6 +185,7 @@ class XmlUtils
             if ($text !== '') {
                 $result[$root->localName ?: $root->nodeName] = $text;
             }
+
             return $result;
         }
 
@@ -196,13 +198,13 @@ class XmlUtils
     }
 
     /**
-     * @param array<string, mixed> $result
+     * @param  array<string, mixed>  $result
      */
     private static function flattenXmlElement(\DOMElement $element, string $path, array &$result): void
     {
         if ($element->hasAttributes()) {
             foreach ($element->attributes as $attribute) {
-                self::appendFlattenedValue($result, $path . '.@' . $attribute->nodeName, trim($attribute->nodeValue ?? ''));
+                self::appendFlattenedValue($result, $path.'.@'.$attribute->nodeName, trim($attribute->nodeValue ?? ''));
             }
         }
 
@@ -212,12 +214,13 @@ class XmlUtils
             if ($text !== '') {
                 self::appendFlattenedValue($result, $path, $text);
             }
+
             return;
         }
 
         foreach ($childElements as $child) {
             $childName = $child->localName ?: $child->nodeName;
-            self::flattenXmlElement($child, $path . '.' . $childName, $result);
+            self::flattenXmlElement($child, $path.'.'.$childName, $result);
         }
     }
 
@@ -238,7 +241,7 @@ class XmlUtils
     }
 
     /**
-     * @param array<string, mixed> $result
+     * @param  array<string, mixed>  $result
      */
     private static function appendFlattenedValue(array &$result, string $key, string $value): void
     {
@@ -246,12 +249,13 @@ class XmlUtils
             return;
         }
 
-        if (!array_key_exists($key, $result)) {
+        if (! array_key_exists($key, $result)) {
             $result[$key] = $value;
+
             return;
         }
 
-        if (!is_array($result[$key])) {
+        if (! is_array($result[$key])) {
             $result[$key] = [$result[$key]];
         }
 
@@ -261,11 +265,12 @@ class XmlUtils
     private static function firstChildTextByLocalName(\DOMXPath $xpath, \DOMNode $contextNode, string $localName): ?string
     {
         $nodes = $xpath->query("./*[local-name()='{$localName}']", $contextNode);
-        if (!$nodes || $nodes->length === 0) {
+        if (! $nodes || $nodes->length === 0) {
             return null;
         }
 
         $value = trim((string) $nodes->item(0)?->textContent);
+
         return $value === '' ? null : $value;
     }
 
@@ -275,21 +280,23 @@ class XmlUtils
             return null;
         }
 
-        $dom = new \DOMDocument();
+        $dom = new \DOMDocument;
         libxml_use_internal_errors(true);
-        if (!$dom->loadXML($xml)) {
+        if (! $dom->loadXML($xml)) {
             libxml_clear_errors();
+
             return null;
         }
         libxml_clear_errors();
 
         $xpath = new \DOMXPath($dom);
         $nodes = $xpath->query("//*[local-name()='{$localName}']");
-        if (!$nodes || $nodes->length === 0) {
+        if (! $nodes || $nodes->length === 0) {
             return null;
         }
 
         $node = $nodes->item(0);
+
         return $node instanceof \DOMElement ? $dom->saveXML($node) ?: null : null;
     }
 }

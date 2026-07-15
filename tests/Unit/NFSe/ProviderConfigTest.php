@@ -2,20 +2,23 @@
 
 declare(strict_types=1);
 
-require_once dirname(__DIR__, 2) . '/Support/TestCertificateFile.php';
+require_once dirname(__DIR__, 2).'/Support/TestCertificateFile.php';
 
+use PHPUnit\Framework\TestCase;
 use sabbajohn\FiscalCore\Facade\NFSeFacade;
 use sabbajohn\FiscalCore\Support\CertificateManager;
 use sabbajohn\FiscalCore\Support\ConfigManager;
 use sabbajohn\FiscalCore\Support\ProviderRegistry;
-use PHPUnit\Framework\TestCase;
 
 final class ProviderConfigTest extends TestCase
 {
     private string $projectRoot;
+
     private string $originalCwd;
+
     /** @var array{path:string,password:string} */
     private array $certificateFile;
+
     /** @var string[] */
     private array $managedEnvKeys = [
         'FISCAL_ENVIRONMENT',
@@ -50,7 +53,7 @@ final class ProviderConfigTest extends TestCase
         ProviderRegistry::getInstance()->reload();
     }
 
-    public function testFacadeLoadsPilotProviderInfoForBelem(): void
+    public function test_facade_loads_pilot_provider_info_for_belem(): void
     {
         $facade = new NFSeFacade('belem');
         $response = $facade->getProviderInfo();
@@ -61,7 +64,7 @@ final class ProviderConfigTest extends TestCase
         $this->assertSame('BELEM_MUNICIPAL_2025', $data['provider_key']);
         $this->assertSame('1501402', $data['codigo_municipio']);
         $this->assertStringContainsString('BelemMunicipalProvider', $data['provider_class']);
-        $this->assertContains('consultar_nfse_rps', $data['supported_operations']);
+        $this->assertContains('consultar_por_rps', $data['supported_operations']);
         $this->assertSame('belem_municipal_policy', $data['form_policy']['policy_source']);
         $this->assertContains('servico.codigoCnae', $data['form_policy']['required_fields']);
         $this->assertContains('prestador.mei', $data['form_policy']['required_fields']);
@@ -72,7 +75,7 @@ final class ProviderConfigTest extends TestCase
         $this->assertSame('2', $data['translation_policy']['field_translations']['service.iss_withheld']['codes']['false']);
     }
 
-    public function testFacadeListsActiveMunicipiosFromCurrentCatalog(): void
+    public function test_facade_lists_active_municipios_from_current_catalog(): void
     {
         $facade = new NFSeFacade('belem');
         $response = $facade->listarMunicipios();
@@ -91,7 +94,7 @@ final class ProviderConfigTest extends TestCase
         $this->assertGreaterThan(100, count($municipios));
     }
 
-    public function testFacadeMapsJoinvilleToNational(): void
+    public function test_facade_maps_joinville_to_national(): void
     {
         $facade = new NFSeFacade('joinville');
         $response = $facade->getProviderInfo();
@@ -106,7 +109,7 @@ final class ProviderConfigTest extends TestCase
         $this->assertTrue($data['supports_nacional']);
     }
 
-    public function testFacadeMapsSouthPriorityCitiesToExpectedFamilies(): void
+    public function test_facade_maps_south_priority_cities_to_expected_families(): void
     {
         $expectedMappings = [
             'curitiba' => ['provider_key' => 'nfse_nacional', 'ibge' => '4106902'],
@@ -133,7 +136,7 @@ final class ProviderConfigTest extends TestCase
         }
     }
 
-    public function testFacadeFallsBackToNationalForUnknownMunicipio(): void
+    public function test_facade_falls_back_to_national_for_unknown_municipio(): void
     {
         $facade = new NFSeFacade('municipio-inexistente');
         $response = $facade->getProviderInfo();
@@ -146,7 +149,7 @@ final class ProviderConfigTest extends TestCase
         $this->assertStringContainsString('NacionalProvider', $data['provider_class']);
     }
 
-    public function testFacadeMapsPresidenteFigueiredoToIsswebProvider(): void
+    public function test_facade_maps_presidente_figueiredo_to_issweb_provider(): void
     {
         $facade = new NFSeFacade('presidente-figueiredo');
         $response = $facade->getProviderInfo();
@@ -160,7 +163,7 @@ final class ProviderConfigTest extends TestCase
         $this->assertContains('consultar', $data['supported_operations']);
     }
 
-    public function testFacadeMapsRioPretoDaEvaToIsswebProvider(): void
+    public function test_facade_maps_rio_preto_da_eva_to_issweb_provider(): void
     {
         $facade = new NFSeFacade('rio-preto-da-eva');
         $response = $facade->getProviderInfo();
@@ -174,7 +177,7 @@ final class ProviderConfigTest extends TestCase
         $this->assertContains('consultar', $data['supported_operations']);
     }
 
-    public function testFacadeMapsManausToNationalProvider(): void
+    public function test_facade_maps_manaus_to_national_provider(): void
     {
         $facade = new NFSeFacade('manaus');
         $response = $facade->getProviderInfo();
@@ -193,7 +196,7 @@ final class ProviderConfigTest extends TestCase
         $this->assertSame('1', $data['translation_policy']['field_translations']['service.iss_withheld']['codes']['false']);
     }
 
-    public function testFacadeHomologationReadinessUsesNationalProviderConfigForManaus(): void
+    public function test_facade_homologation_readiness_uses_national_provider_config_for_manaus(): void
     {
         $facade = new NFSeFacade('manaus');
         $response = $facade->verificarProntidaoHomologacao();
@@ -206,7 +209,7 @@ final class ProviderConfigTest extends TestCase
         $this->assertTrue($response->getData('certificado_valido'));
     }
 
-    public function testFacadeMapsSaoLuisToNationalProvider(): void
+    public function test_facade_maps_sao_luis_to_national_provider(): void
     {
         $facade = new NFSeFacade('sao-luis');
         $response = $facade->getProviderInfo();
@@ -219,7 +222,7 @@ final class ProviderConfigTest extends TestCase
         $this->assertStringContainsString('NacionalProvider', $data['provider_class']);
     }
 
-    public function testFacadeMapsAnanindeuaToNationalProvider(): void
+    public function test_facade_maps_ananindeua_to_national_provider(): void
     {
         $facade = new NFSeFacade('ananindeua');
         $response = $facade->getProviderInfo();
@@ -232,7 +235,7 @@ final class ProviderConfigTest extends TestCase
         $this->assertStringContainsString('NacionalProvider', $data['provider_class']);
     }
 
-    public function testFacadeMapsMarabaToNationalProvider(): void
+    public function test_facade_maps_maraba_to_national_provider(): void
     {
         $facade = new NFSeFacade('maraba');
         $response = $facade->getProviderInfo();
@@ -245,7 +248,7 @@ final class ProviderConfigTest extends TestCase
         $this->assertStringContainsString('NacionalProvider', $data['provider_class']);
     }
 
-    public function testFacadeMapsCampoGrandeToAbrasfSharedProvider(): void
+    public function test_facade_maps_campo_grande_to_abrasf_shared_provider(): void
     {
         $facade = new NFSeFacade('campo-grande');
         $response = $facade->getProviderInfo();
@@ -258,7 +261,7 @@ final class ProviderConfigTest extends TestCase
         $this->assertStringContainsString('AbrasfSharedProvider', $data['provider_class']);
     }
 
-    public function testFacadeMapsJoaoPessoaToAbrasfSharedProvider(): void
+    public function test_facade_maps_joao_pessoa_to_abrasf_shared_provider(): void
     {
         $facade = new NFSeFacade('joao-pessoa');
         $response = $facade->getProviderInfo();
@@ -271,7 +274,7 @@ final class ProviderConfigTest extends TestCase
         $this->assertStringContainsString('AbrasfSharedProvider', $data['provider_class']);
     }
 
-    public function testFacadeMapsCastanhalToAbrasfSharedProvider(): void
+    public function test_facade_maps_castanhal_to_abrasf_shared_provider(): void
     {
         $facade = new NFSeFacade('castanhal');
         $response = $facade->getProviderInfo();
@@ -284,7 +287,7 @@ final class ProviderConfigTest extends TestCase
         $this->assertStringContainsString('AbrasfSharedProvider', $data['provider_class']);
     }
 
-    public function testFacadeMapsNatalToNationalProvider(): void
+    public function test_facade_maps_natal_to_national_provider(): void
     {
         $facade = new NFSeFacade('natal');
         $response = $facade->getProviderInfo();
@@ -297,7 +300,7 @@ final class ProviderConfigTest extends TestCase
         $this->assertStringContainsString('NacionalProvider', $data['provider_class']);
     }
 
-    public function testFacadeMapsFortalezaAndMaceioToGinfesProvider(): void
+    public function test_facade_maps_fortaleza_and_maceio_to_ginfes_provider(): void
     {
         $expected = [
             'fortaleza' => '2304400',
@@ -316,7 +319,7 @@ final class ProviderConfigTest extends TestCase
         }
     }
 
-    public function testFacadeMapsBrasiliaGoianiaAndCuiabaToIssnetProvider(): void
+    public function test_facade_maps_brasilia_goiania_and_cuiaba_to_issnet_provider(): void
     {
         $expected = [
             'brasilia' => '5300108',
@@ -339,17 +342,17 @@ final class ProviderConfigTest extends TestCase
     private function bootstrapEnvironment(): void
     {
         $this->clearEnvironment();
-        $tempDir = sys_get_temp_dir() . '/nfse-provider-config-' . uniqid('', true);
+        $tempDir = sys_get_temp_dir().'/nfse-provider-config-'.uniqid('', true);
         mkdir($tempDir, 0777, true);
-        file_put_contents($tempDir . '/.env', implode(PHP_EOL, [
+        file_put_contents($tempDir.'/.env', implode(PHP_EOL, [
             'FISCAL_ENVIRONMENT=homologacao',
             'FISCAL_IM=4007197',
             'FISCAL_CNPJ=83188342000104',
             'FISCAL_RAZAO_SOCIAL="FREELINE INFORMATICA LTDA"',
             'FISCAL_UF=SC',
-            'FISCAL_CERT_PATH="' . $this->certificateFile['path'] . '"',
-            'FISCAL_CERT_PASSWORD="' . $this->certificateFile['password'] . '"',
-        ]) . PHP_EOL);
+            'FISCAL_CERT_PATH="'.$this->certificateFile['path'].'"',
+            'FISCAL_CERT_PASSWORD="'.$this->certificateFile['password'].'"',
+        ]).PHP_EOL);
 
         chdir($tempDir);
         ConfigManager::getInstance()->reload();

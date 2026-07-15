@@ -7,17 +7,16 @@ namespace sabbajohn\FiscalCore\Support;
 final class NFSeProviderTranslationPolicy
 {
     /**
-     * @param array<string,mixed> $rules
+     * @param  array<string,mixed>  $rules
      */
     private function __construct(
         private readonly string $providerKey,
         private readonly string $layoutFamily,
         private readonly array $rules
-    ) {
-    }
+    ) {}
 
     /**
-     * @param array<string,mixed> $config
+     * @param  array<string,mixed>  $config
      */
     public static function fromProviderContext(string $providerKey, string $layoutFamily = '', array $config = []): self
     {
@@ -91,14 +90,14 @@ final class NFSeProviderTranslationPolicy
     }
 
     /**
-     * @param array<string,mixed> $base
-     * @param array<string,mixed> $overrides
+     * @param  array<string,mixed>  $base
+     * @param  array<string,mixed>  $overrides
      * @return array<string,mixed>
      */
     private static function mergeRules(array $base, array $overrides): array
     {
         foreach ($overrides as $field => $override) {
-            if (!is_array($override)) {
+            if (! is_array($override)) {
                 continue;
             }
 

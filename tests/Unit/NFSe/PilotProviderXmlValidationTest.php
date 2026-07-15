@@ -2,10 +2,12 @@
 
 declare(strict_types=1);
 
-require_once dirname(__DIR__, 2) . '/Fixtures/NFSePilotPayloads.php';
-require_once dirname(__DIR__, 2) . '/Fixtures/NFSeBelemMunicipalFixtures.php';
-require_once dirname(__DIR__, 2) . '/Fixtures/NFSeJoinvilleMunicipalFixtures.php';
+require_once dirname(__DIR__, 2).'/Fixtures/NFSePilotPayloads.php';
+require_once dirname(__DIR__, 2).'/Fixtures/NFSeBelemMunicipalFixtures.php';
+require_once dirname(__DIR__, 2).'/Fixtures/NFSeJoinvilleMunicipalFixtures.php';
 
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\TestCase;
 use sabbajohn\FiscalCore\Providers\NFSe\Municipal\BelemMunicipalProvider;
 use sabbajohn\FiscalCore\Providers\NFSe\Municipal\PublicaProvider;
 use sabbajohn\FiscalCore\Providers\NFSe\NacionalProvider;
@@ -13,13 +15,11 @@ use sabbajohn\FiscalCore\Support\NFSeSchemaResolver;
 use sabbajohn\FiscalCore\Support\NFSeSchemaValidator;
 use sabbajohn\FiscalCore\Support\NFSeSoapTransportInterface;
 use sabbajohn\FiscalCore\Support\ProviderRegistry;
-use PHPUnit\Framework\Attributes\DataProvider;
-use PHPUnit\Framework\TestCase;
 
 final class PilotProviderXmlValidationTest extends TestCase
 {
     #[DataProvider('pilotCases')]
-    public function testPilotProviderGeneratesSchemaValidXml(
+    public function test_pilot_provider_generates_schema_valid_xml(
         string $municipio,
         string $expectedClass,
         string $expectedFamily,
@@ -27,7 +27,8 @@ final class PilotProviderXmlValidationTest extends TestCase
     ): void {
         if ($municipio === 'belem') {
             $config = ProviderRegistry::getInstance()->getConfig('BELEM_MUNICIPAL_2025');
-            $config['soap_transport'] = new class implements NFSeSoapTransportInterface {
+            $config['soap_transport'] = new class implements NFSeSoapTransportInterface
+            {
                 public function send(string $endpoint, string $envelope, array $options = []): array
                 {
                     return [
@@ -42,7 +43,8 @@ final class PilotProviderXmlValidationTest extends TestCase
             $provider = new BelemMunicipalProvider($config);
         } elseif ($municipio === 'joinville') {
             $config = ProviderRegistry::getInstance()->getConfig('PUBLICA');
-            $config['soap_transport'] = new class implements NFSeSoapTransportInterface {
+            $config['soap_transport'] = new class implements NFSeSoapTransportInterface
+            {
                 public function send(string $endpoint, string $envelope, array $options = []): array
                 {
                     return [
@@ -88,8 +90,8 @@ final class PilotProviderXmlValidationTest extends TestCase
                 implode(PHP_EOL, array_column($validation['errors'], 'message'))
             );
         } else {
-            $schemaPath = (new NFSeSchemaResolver())->resolve($expectedFamily, 'emitir');
-            $validation = (new NFSeSchemaValidator())->validate($xml, $schemaPath);
+            $schemaPath = (new NFSeSchemaResolver)->resolve($expectedFamily, 'emitir');
+            $validation = (new NFSeSchemaValidator)->validate($xml, $schemaPath);
 
             $this->assertTrue(
                 $validation['valid'],
@@ -99,7 +101,7 @@ final class PilotProviderXmlValidationTest extends TestCase
     }
 
     #[DataProvider('invalidPilotCases')]
-    public function testPilotProviderRejectsMissingRequiredField(
+    public function test_pilot_provider_rejects_missing_required_field(
         string $municipio,
         array $payload,
         string $expectedMessage
@@ -114,7 +116,7 @@ final class PilotProviderXmlValidationTest extends TestCase
             $provider = $registry->getByMunicipio($municipio);
         }
 
-        $this->expectException(\InvalidArgumentException::class);
+        $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage($expectedMessage);
 
         $provider->emitir($payload);
@@ -149,9 +151,9 @@ final class PilotProviderXmlValidationTest extends TestCase
 
     private static function normalizeBelemXmlForSchemaValidation(string $xml): string
     {
-        $dom = new \DOMDocument();
+        $dom = new DOMDocument;
         $dom->loadXML($xml);
-        $xpath = new \DOMXPath($dom);
+        $xpath = new DOMXPath($dom);
         $xpath->registerNamespace('ds', 'http://www.w3.org/2000/09/xmldsig#');
 
         foreach ($xpath->query('//ds:Signature') ?: [] as $signatureNode) {
@@ -163,7 +165,7 @@ final class PilotProviderXmlValidationTest extends TestCase
         }
 
         $root = $dom->documentElement;
-        if ($root instanceof \DOMElement && !$root->hasAttribute('xmlns')) {
+        if ($root instanceof DOMElement && ! $root->hasAttribute('xmlns')) {
             $normalized = preg_replace(
                 '/^<([A-Za-z0-9:_-]+)/',
                 '<$1 xmlns="http://www.abrasf.org.br/nfse.xsd"',

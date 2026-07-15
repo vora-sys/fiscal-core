@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 use PHPUnit\Framework\TestCase;
 
-require_once dirname(__DIR__, 3) . '/examples/homologacao/common.php';
-require_once dirname(__DIR__, 3) . '/examples/homologacao/manaus_nacional_common.php';
+require_once dirname(__DIR__, 3).'/examples/homologacao/common.php';
+require_once dirname(__DIR__, 3).'/examples/homologacao/manaus_nacional_common.php';
 
 final class ManausNacionalCommonTest extends TestCase
 {
@@ -131,7 +131,7 @@ final class ManausNacionalCommonTest extends TestCase
 
     private function setEnvironment(string $key, string $value): void
     {
-        putenv($key . '=' . $value);
+        putenv($key.'='.$value);
         $_ENV[$key] = $value;
         $_SERVER[$key] = $value;
     }

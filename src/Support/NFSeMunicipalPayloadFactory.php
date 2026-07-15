@@ -11,8 +11,7 @@ final class NFSeMunicipalPayloadFactory
 {
     public function __construct(
         private readonly ?NFSeMunicipalCatalog $catalog = null
-    ) {
-    }
+    ) {}
 
     public function demo(string $municipio): array
     {
@@ -392,6 +391,7 @@ final class NFSeMunicipalPayloadFactory
         foreach ($overrides as $key => $value) {
             if (is_array($value) && isset($base[$key]) && is_array($base[$key])) {
                 $base[$key] = $this->mergeRecursiveDistinct($base[$key], $value);
+
                 continue;
             }
 
@@ -408,7 +408,7 @@ final class NFSeMunicipalPayloadFactory
 
     private function catalog(): NFSeMunicipalCatalog
     {
-        return $this->catalog ?? new NFSeMunicipalCatalog();
+        return $this->catalog ?? new NFSeMunicipalCatalog;
     }
 
     private function normalizeDigits(string $value): string

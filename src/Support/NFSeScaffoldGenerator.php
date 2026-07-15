@@ -10,9 +10,8 @@ use RuntimeException;
 final class NFSeScaffoldGenerator
 {
     public function __construct(
-        private readonly string $projectRoot = __DIR__ . '/../../'
-    ) {
-    }
+        private readonly string $projectRoot = __DIR__.'/../../'
+    ) {}
 
     public function scaffoldFamily(array $input): array
     {
@@ -23,53 +22,53 @@ final class NFSeScaffoldGenerator
 
         $providerShort = trim((string) ($input['provider_class'] ?? ''));
         if ($providerShort === '') {
-            $providerShort = $this->studly($familyKey) . 'Provider';
+            $providerShort = $this->studly($familyKey).'Provider';
         }
 
-        if (!str_ends_with($providerShort, 'Provider')) {
+        if (! str_ends_with($providerShort, 'Provider')) {
             $providerShort .= 'Provider';
         }
 
         $layoutFamily = trim((string) ($input['layout_family'] ?? $familyKey));
         $schemaPackage = trim((string) ($input['schema_package'] ?? $familyKey));
         $transport = strtolower(trim((string) ($input['transport'] ?? 'soap')));
-        $outputDir = rtrim((string) ($input['output_dir'] ?? ($this->projectRoot . '/build/nfse-scaffold/families/' . $familyKey)), '/');
+        $outputDir = rtrim((string) ($input['output_dir'] ?? ($this->projectRoot.'/build/nfse-scaffold/families/'.$familyKey)), '/');
 
         $context = [
             'family_key' => $familyKey,
             'provider_short_class' => $providerShort,
-            'provider_fqcn' => 'sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\' . $providerShort,
+            'provider_fqcn' => 'sabbajohn\\FiscalCore\\Providers\\NFSe\\Municipal\\'.$providerShort,
             'layout_family' => $layoutFamily,
             'schema_package' => $schemaPackage,
             'transport' => $transport,
             'provider_slug' => strtolower(str_replace('_', '-', $familyKey)),
-            'provider_doc_file' => $familyKey . '.md',
+            'provider_doc_file' => $familyKey.'.md',
         ];
 
         $files = [
             [
-                'path' => $outputDir . '/src/Providers/NFSe/Municipal/' . $providerShort . '.php',
+                'path' => $outputDir.'/src/Providers/NFSe/Municipal/'.$providerShort.'.php',
                 'content' => $this->renderTemplate('provider-class.stub.php', $context),
             ],
             [
-                'path' => $outputDir . '/tests/Unit/NFSe/' . $providerShort . 'Test.php',
+                'path' => $outputDir.'/tests/Unit/NFSe/'.$providerShort.'Test.php',
                 'content' => $this->renderTemplate('provider-test.stub.php', $context),
             ],
             [
-                'path' => $outputDir . '/examples/homologacao/' . strtolower($familyKey) . '-stub.php',
+                'path' => $outputDir.'/examples/homologacao/'.strtolower($familyKey).'-stub.php',
                 'content' => $this->renderTemplate('homologacao-example.stub.php', $context),
             ],
             [
-                'path' => $outputDir . '/docs/nfse-providers/' . $familyKey . '.md',
+                'path' => $outputDir.'/docs/nfse-providers/'.$familyKey.'.md',
                 'content' => $this->renderTemplate('family-doc.stub.md', $context),
             ],
             [
-                'path' => $outputDir . '/snippets/nfse-provider-family.json',
+                'path' => $outputDir.'/snippets/nfse-provider-family.json',
                 'content' => $this->prettyJson([
                     $familyKey => [
                         'provider_class' => $context['provider_fqcn'],
                         'layout_family' => $layoutFamily,
-                        'schema_root' => 'resources/nfse/schemas/' . $schemaPackage,
+                        'schema_root' => 'resources/nfse/schemas/'.$schemaPackage,
                         'xsd_entrypoints' => [
                             'emitir' => 'definir-entrypoint.xsd',
                         ],
@@ -82,7 +81,7 @@ final class NFSeScaffoldGenerator
                 ]),
             ],
             [
-                'path' => $outputDir . '/requirements-checklist.md',
+                'path' => $outputDir.'/requirements-checklist.md',
                 'content' => $this->renderTemplate('requirements-checklist.stub.md', $context),
             ],
         ];
@@ -97,8 +96,8 @@ final class NFSeScaffoldGenerator
             throw new RuntimeException('O parâmetro ibge é obrigatório para scaffold-municipio.');
         }
 
-        $catalog = new NFSeMunicipalCatalog($this->projectRoot . '/config/nfse/providers-catalog.json');
-        $manifest = $this->loadJson($this->projectRoot . '/config/nfse/nfse-catalog-manifest.json');
+        $catalog = new NFSeMunicipalCatalog($this->projectRoot.'/config/nfse/providers-catalog.json');
+        $manifest = $this->loadJson($this->projectRoot.'/config/nfse/nfse-catalog-manifest.json');
         $resolved = $catalog->getByIbge($ibge);
         $manifestOverride = $manifest['municipio_overrides'][$ibge] ?? [];
 
@@ -113,7 +112,7 @@ final class NFSeScaffoldGenerator
             throw new RuntimeException('slug, nome, uf e family são obrigatórios quando o município não existe no catálogo atual.');
         }
 
-        $outputDir = rtrim((string) ($input['output_dir'] ?? ($this->projectRoot . '/build/nfse-scaffold/municipios/' . $slug)), '/');
+        $outputDir = rtrim((string) ($input['output_dir'] ?? ($this->projectRoot.'/build/nfse-scaffold/municipios/'.$slug)), '/');
 
         $context = [
             'ibge' => $ibge,
@@ -134,7 +133,7 @@ final class NFSeScaffoldGenerator
 
         $files = [
             [
-                'path' => $outputDir . '/snippets/providers-catalog-entry.json',
+                'path' => $outputDir.'/snippets/providers-catalog-entry.json',
                 'content' => $this->prettyJson([
                     $ibge => [
                         'slug' => $slug,
@@ -152,7 +151,7 @@ final class NFSeScaffoldGenerator
                 ]),
             ],
             [
-                'path' => $outputDir . '/snippets/nfse-catalog-manifest-entry.json',
+                'path' => $outputDir.'/snippets/nfse-catalog-manifest-entry.json',
                 'content' => $this->prettyJson([
                     $ibge => [
                         'provider_family' => $family,
@@ -167,7 +166,7 @@ final class NFSeScaffoldGenerator
                 ]),
             ],
             [
-                'path' => $outputDir . '/requirements-checklist.md',
+                'path' => $outputDir.'/requirements-checklist.md',
                 'content' => $this->renderTemplate('municipio-checklist.stub.md', $context),
             ],
         ];
@@ -177,10 +176,10 @@ final class NFSeScaffoldGenerator
 
     private function finalizeResult(string $mode, array $context, array $files, bool $dryRun): array
     {
-        if (!$dryRun) {
+        if (! $dryRun) {
             foreach ($files as $file) {
                 $dir = dirname($file['path']);
-                if (!is_dir($dir) && !mkdir($dir, 0777, true) && !is_dir($dir)) {
+                if (! is_dir($dir) && ! mkdir($dir, 0777, true) && ! is_dir($dir)) {
                     throw new RuntimeException("Falha ao criar diretório de scaffold: {$dir}");
                 }
 
@@ -204,8 +203,8 @@ final class NFSeScaffoldGenerator
 
     private function renderTemplate(string $templateName, array $context): string
     {
-        $path = $this->projectRoot . '/scripts/nfse/templates/' . $templateName;
-        if (!is_file($path)) {
+        $path = $this->projectRoot.'/scripts/nfse/templates/'.$templateName;
+        if (! is_file($path)) {
             throw new RuntimeException("Template NFSe não encontrado: {$path}");
         }
 
@@ -220,7 +219,7 @@ final class NFSeScaffoldGenerator
                 $value = $this->prettyJson($value);
             }
 
-            $replacements['{{' . strtoupper($key) . '}}'] = (string) $value;
+            $replacements['{{'.strtoupper($key).'}}'] = (string) $value;
         }
 
         return strtr($template, $replacements);
@@ -228,7 +227,7 @@ final class NFSeScaffoldGenerator
 
     private function loadJson(string $path): array
     {
-        if (!is_file($path)) {
+        if (! is_file($path)) {
             return [];
         }
 

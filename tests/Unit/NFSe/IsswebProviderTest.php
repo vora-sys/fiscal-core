@@ -2,18 +2,18 @@
 
 declare(strict_types=1);
 
-require_once dirname(__DIR__, 2) . '/Fixtures/NFSeIsswebFixtures.php';
+require_once dirname(__DIR__, 2).'/Fixtures/NFSeIsswebFixtures.php';
 
-use sabbajohn\FiscalCore\Providers\NFSe\Municipal\IsswebProvider;
+use PHPUnit\Framework\TestCase;
 use sabbajohn\FiscalCore\Adapters\NF\NFSeAdapter;
 use sabbajohn\FiscalCore\Facade\NFSeFacade;
+use sabbajohn\FiscalCore\Providers\NFSe\Municipal\IsswebProvider;
 use sabbajohn\FiscalCore\Support\NFSeSchemaResolver;
 use sabbajohn\FiscalCore\Support\NFSeSchemaValidator;
-use PHPUnit\Framework\TestCase;
 
 final class IsswebProviderTest extends TestCase
 {
-    public function testEmitirGeneratesSchemaValidXmlAndParsesSuccess(): void
+    public function test_emitir_generates_schema_valid_xml_and_parses_success(): void
     {
         $provider = new IsswebProvider(NFSeIsswebFixtures::config([
             'soap_transport' => NFSeIsswebFixtures::makeTransport(NFSeIsswebFixtures::successResponse()),
@@ -22,8 +22,8 @@ final class IsswebProviderTest extends TestCase
         $provider->emitir(NFSeIsswebFixtures::payload());
         $artifacts = $provider->getLastOperationArtifacts();
 
-        $schema = (new NFSeSchemaResolver())->resolve('ISSWEB_AM', 'emitir');
-        $validation = (new NFSeSchemaValidator())->validate((string) $artifacts['request_xml'], $schema);
+        $schema = (new NFSeSchemaResolver)->resolve('ISSWEB_AM', 'emitir');
+        $validation = (new NFSeSchemaValidator)->validate((string) $artifacts['request_xml'], $schema);
 
         $this->assertTrue($validation['valid'], implode(PHP_EOL, $validation['errors']));
         $this->assertSame('success', $provider->getLastResponseData()['status']);
@@ -32,7 +32,7 @@ final class IsswebProviderTest extends TestCase
         $this->assertStringContainsString('servicosweb.pmpf.am.gov.br', (string) $provider->getLastResponseData()['nfse_url']);
     }
 
-    public function testConsultarGeneratesSchemaValidXml(): void
+    public function test_consultar_generates_schema_valid_xml(): void
     {
         $provider = new IsswebProvider(NFSeIsswebFixtures::config([
             'soap_transport' => NFSeIsswebFixtures::makeTransport(NFSeIsswebFixtures::consultaResponse()),
@@ -41,14 +41,14 @@ final class IsswebProviderTest extends TestCase
         $provider->consultar('4567');
         $artifacts = $provider->getLastOperationArtifacts();
 
-        $schema = (new NFSeSchemaResolver())->resolve('ISSWEB_AM', 'consultar');
-        $validation = (new NFSeSchemaValidator())->validate((string) $artifacts['request_xml'], $schema);
+        $schema = (new NFSeSchemaResolver)->resolve('ISSWEB_AM', 'consultar');
+        $validation = (new NFSeSchemaValidator)->validate((string) $artifacts['request_xml'], $schema);
 
         $this->assertTrue($validation['valid'], implode(PHP_EOL, $validation['errors']));
         $this->assertSame('4567', $provider->getLastResponseData()['numero']);
     }
 
-    public function testCancelarGeneratesSchemaValidXml(): void
+    public function test_cancelar_generates_schema_valid_xml(): void
     {
         $provider = new IsswebProvider(NFSeIsswebFixtures::config([
             'soap_transport' => NFSeIsswebFixtures::makeTransport(NFSeIsswebFixtures::cancelResponse()),
@@ -57,14 +57,14 @@ final class IsswebProviderTest extends TestCase
         $result = $provider->cancelar('4567', 'Cancelamento de teste em homologacao', 'AB12-C3456');
         $artifacts = $provider->getLastOperationArtifacts();
 
-        $schema = (new NFSeSchemaResolver())->resolve('ISSWEB_AM', 'cancelar_nfse');
-        $validation = (new NFSeSchemaValidator())->validate((string) $artifacts['request_xml'], $schema);
+        $schema = (new NFSeSchemaResolver)->resolve('ISSWEB_AM', 'cancelar_nfse');
+        $validation = (new NFSeSchemaValidator)->validate((string) $artifacts['request_xml'], $schema);
 
         $this->assertTrue($result);
         $this->assertTrue($validation['valid'], implode(PHP_EOL, $validation['errors']));
     }
 
-    public function testParsesRejectionResponse(): void
+    public function test_parses_rejection_response(): void
     {
         $provider = new IsswebProvider(NFSeIsswebFixtures::config([
             'soap_transport' => NFSeIsswebFixtures::makeTransport(NFSeIsswebFixtures::rejectionResponse()),
@@ -76,7 +76,7 @@ final class IsswebProviderTest extends TestCase
         $this->assertSame(['[123] Item de atividade invalido para o prestador.'], $provider->getLastResponseData()['mensagens']);
     }
 
-    public function testThrowsWhenAuthKeyIsMissing(): void
+    public function test_throws_when_auth_key_is_missing(): void
     {
         $provider = new IsswebProvider(NFSeIsswebFixtures::config([
             'auth' => ['chave' => ''],
@@ -88,7 +88,7 @@ final class IsswebProviderTest extends TestCase
         $provider->emitir(NFSeIsswebFixtures::payload());
     }
 
-    public function testThrowsWhenEndpointIsMissing(): void
+    public function test_throws_when_endpoint_is_missing(): void
     {
         $provider = new IsswebProvider(NFSeIsswebFixtures::config([
             'wsdl_homologacao' => '',
@@ -101,7 +101,7 @@ final class IsswebProviderTest extends TestCase
         $provider->emitir(NFSeIsswebFixtures::payload());
     }
 
-    public function testRejectsMissingPrestadorInscricaoMunicipal(): void
+    public function test_rejects_missing_prestador_inscricao_municipal(): void
     {
         $provider = new IsswebProvider(NFSeIsswebFixtures::config());
         $payload = NFSeIsswebFixtures::payload();
@@ -113,7 +113,7 @@ final class IsswebProviderTest extends TestCase
         $provider->emitir($payload);
     }
 
-    public function testRioPretoDaEvaUsesSharedIsswebFamilyWithMunicipalCode(): void
+    public function test_rio_preto_da_eva_uses_shared_issweb_family_with_municipal_code(): void
     {
         $provider = new IsswebProvider(NFSeIsswebFixtures::config([
             'municipio_slug' => 'rio-preto-da-eva',
@@ -125,15 +125,15 @@ final class IsswebProviderTest extends TestCase
         ]));
         $artifacts = $provider->getLastOperationArtifacts();
 
-        $schema = (new NFSeSchemaResolver())->resolve('ISSWEB_AM', 'emitir');
-        $validation = (new NFSeSchemaValidator())->validate((string) $artifacts['request_xml'], $schema);
+        $schema = (new NFSeSchemaResolver)->resolve('ISSWEB_AM', 'emitir');
+        $validation = (new NFSeSchemaValidator)->validate((string) $artifacts['request_xml'], $schema);
 
         $this->assertTrue($validation['valid'], implode(PHP_EOL, $validation['errors']));
         $this->assertSame('1303569', $provider->getCodigoMunicipio());
         $this->assertNull($provider->getLastResponseData()['nfse_url']);
     }
 
-    public function testFacadeEmitirCompletoReturnsIsswebDocumentAndOfficialUrl(): void
+    public function test_facade_emitir_completo_returns_issweb_document_and_official_url(): void
     {
         $provider = new IsswebProvider(NFSeIsswebFixtures::config([
             'soap_transport' => NFSeIsswebFixtures::makeTransport(NFSeIsswebFixtures::successResponse()),
@@ -152,7 +152,7 @@ final class IsswebProviderTest extends TestCase
         $this->assertStringContainsString('servicosweb.pmpf.am.gov.br', (string) ($response->getData('impressao')['url'] ?? ''));
     }
 
-    public function testFacadeConsultarDisponibilidadeIsswebUsesConsultaAndOfficialUrl(): void
+    public function test_facade_consultar_disponibilidade_issweb_uses_consulta_and_official_url(): void
     {
         $provider = new IsswebProvider(NFSeIsswebFixtures::config([
             'soap_transport' => NFSeIsswebFixtures::makeTransport(NFSeIsswebFixtures::consultaResponse()),
@@ -169,7 +169,7 @@ final class IsswebProviderTest extends TestCase
         $this->assertStringContainsString('validacao?numero=4567', (string) $response->getData('danfse_url'));
     }
 
-    public function testFacadeBaixarDanfseIsswebReturnsOfficialUrl(): void
+    public function test_facade_baixar_danfse_issweb_returns_official_url(): void
     {
         $provider = new IsswebProvider(NFSeIsswebFixtures::config([
             'soap_transport' => NFSeIsswebFixtures::makeTransport(NFSeIsswebFixtures::consultaResponse()),

@@ -2,14 +2,14 @@
 
 declare(strict_types=1);
 
-require_once dirname(__DIR__, 2) . '/Fixtures/NFSeBelemMunicipalFixtures.php';
+require_once dirname(__DIR__, 2).'/Fixtures/NFSeBelemMunicipalFixtures.php';
 
+use PHPUnit\Framework\TestCase;
 use sabbajohn\FiscalCore\Providers\NFSe\Municipal\BelemMunicipalProvider;
 use sabbajohn\FiscalCore\Support\NFSeSchemaResolver;
 use sabbajohn\FiscalCore\Support\NFSeSchemaValidator;
 use sabbajohn\FiscalCore\Support\NFSeSoapTransportInterface;
 use sabbajohn\FiscalCore\Support\ProviderRegistry;
-use PHPUnit\Framework\TestCase;
 
 final class BelemMunicipalProviderTest extends TestCase
 {
@@ -18,14 +18,13 @@ final class BelemMunicipalProviderTest extends TestCase
         ProviderRegistry::getInstance()->reload();
     }
 
-    public function testEmitirBuildsSignedSchemaValidRequestAndParsesSynchronousResponse(): void
+    public function test_emitir_builds_signed_schema_valid_request_and_parses_synchronous_response(): void
     {
-        $transport = new class(NFSeBelemMunicipalFixtures::successSoapResponse()) implements NFSeSoapTransportInterface {
+        $transport = new class(NFSeBelemMunicipalFixtures::successSoapResponse()) implements NFSeSoapTransportInterface
+        {
             public array $calls = [];
 
-            public function __construct(private readonly string $response)
-            {
-            }
+            public function __construct(private readonly string $response) {}
 
             public function send(string $endpoint, string $envelope, array $options = []): array
             {
@@ -55,13 +54,13 @@ final class BelemMunicipalProviderTest extends TestCase
         $this->assertStringContainsString('EnviarLoteRpsSincronoEnvio', $requestXml);
         $this->assertStringContainsString('http://www.w3.org/2000/09/xmldsig#', $requestXml);
 
-        $validation = (new NFSeSchemaValidator())->validate(
+        $validation = (new NFSeSchemaValidator)->validate(
             $this->schemaCompatibleXml($requestXml),
-            (new NFSeSchemaResolver())->resolve('BELEM_MUNICIPAL_2025', 'emitir')
+            (new NFSeSchemaResolver)->resolve('BELEM_MUNICIPAL_2025', 'emitir')
         );
         $this->assertTrue($validation['valid'], implode(PHP_EOL, $validation['errors']));
 
-        $dom = new DOMDocument();
+        $dom = new DOMDocument;
         $dom->loadXML($requestXml);
         $xpath = new DOMXPath($dom);
         $xpath->registerNamespace('ds', 'http://www.w3.org/2000/09/xmldsig#');
@@ -112,12 +111,11 @@ final class BelemMunicipalProviderTest extends TestCase
         $this->assertSame('TOMADOR SANITIZADO LTDA', $parsed['lista_nfse'][0]['tomador']);
     }
 
-    public function testEmitirPreservesTranslatedIssRetidoCodeInRequestXml(): void
+    public function test_emitir_preserves_translated_iss_retido_code_in_request_xml(): void
     {
-        $transport = new class(NFSeBelemMunicipalFixtures::successSoapResponse()) implements NFSeSoapTransportInterface {
-            public function __construct(private readonly string $response)
-            {
-            }
+        $transport = new class(NFSeBelemMunicipalFixtures::successSoapResponse()) implements NFSeSoapTransportInterface
+        {
+            public function __construct(private readonly string $response) {}
 
             public function send(string $endpoint, string $envelope, array $options = []): array
             {
@@ -141,12 +139,11 @@ final class BelemMunicipalProviderTest extends TestCase
         $this->assertStringContainsString('<IssRetido>2</IssRetido>', (string) $provider->getLastRequestXml());
     }
 
-    public function testEmitirPrioritizesExplicitProviderIssRetidoCode(): void
+    public function test_emitir_prioritizes_explicit_provider_iss_retido_code(): void
     {
-        $transport = new class(NFSeBelemMunicipalFixtures::successSoapResponse()) implements NFSeSoapTransportInterface {
-            public function __construct(private readonly string $response)
-            {
-            }
+        $transport = new class(NFSeBelemMunicipalFixtures::successSoapResponse()) implements NFSeSoapTransportInterface
+        {
+            public function __construct(private readonly string $response) {}
 
             public function send(string $endpoint, string $envelope, array $options = []): array
             {
@@ -170,14 +167,13 @@ final class BelemMunicipalProviderTest extends TestCase
         $this->assertStringContainsString('<IssRetido>1</IssRetido>', (string) $provider->getLastRequestXml());
     }
 
-    public function testConsultarLoteBuildsSchemaValidRequestAndParsesResponse(): void
+    public function test_consultar_lote_builds_schema_valid_request_and_parses_response(): void
     {
-        $transport = new class(NFSeBelemMunicipalFixtures::consultarLoteSoapResponse()) implements NFSeSoapTransportInterface {
+        $transport = new class(NFSeBelemMunicipalFixtures::consultarLoteSoapResponse()) implements NFSeSoapTransportInterface
+        {
             public array $calls = [];
 
-            public function __construct(private readonly string $response)
-            {
-            }
+            public function __construct(private readonly string $response) {}
 
             public function send(string $endpoint, string $envelope, array $options = []): array
             {
@@ -199,9 +195,9 @@ final class BelemMunicipalProviderTest extends TestCase
         $this->assertCount(1, $transport->calls);
         $this->assertStringContainsString('<svc:ConsultarLoteRps>', $provider->getLastSoapEnvelope());
 
-        $validation = (new NFSeSchemaValidator())->validate(
+        $validation = (new NFSeSchemaValidator)->validate(
             $this->schemaCompatibleXml((string) $provider->getLastRequestXml()),
-            (new NFSeSchemaResolver())->resolve('BELEM_MUNICIPAL_2025', 'consultar_lote')
+            (new NFSeSchemaResolver)->resolve('BELEM_MUNICIPAL_2025', 'consultar_lote')
         );
         $this->assertTrue($validation['valid'], implode(PHP_EOL, $validation['errors']));
         $this->assertSame('consultar_lote', $provider->getLastOperation());
@@ -211,7 +207,7 @@ final class BelemMunicipalProviderTest extends TestCase
         $this->assertSame('PROTOCOLO-BELEM-2026', $parsed['protocolo']);
         $this->assertSame('1105', $parsed['nfse']['numero']);
 
-        $dom = new DOMDocument();
+        $dom = new DOMDocument;
         $dom->loadXML((string) $provider->getLastRequestXml());
         $xpath = new DOMXPath($dom);
         $xpath->registerNamespace('ds', 'http://www.w3.org/2000/09/xmldsig#');
@@ -225,12 +221,11 @@ final class BelemMunicipalProviderTest extends TestCase
         );
     }
 
-    public function testConsultarNfsePorRpsBuildsSchemaValidRequestAndParsesResponse(): void
+    public function test_consultar_nfse_por_rps_builds_schema_valid_request_and_parses_response(): void
     {
-        $transport = new class(NFSeBelemMunicipalFixtures::consultarNfseRpsSoapResponse()) implements NFSeSoapTransportInterface {
-            public function __construct(private readonly string $response)
-            {
-            }
+        $transport = new class(NFSeBelemMunicipalFixtures::consultarNfseRpsSoapResponse()) implements NFSeSoapTransportInterface
+        {
+            public function __construct(private readonly string $response) {}
 
             public function send(string $endpoint, string $envelope, array $options = []): array
             {
@@ -248,9 +243,9 @@ final class BelemMunicipalProviderTest extends TestCase
 
         $this->assertStringContainsString('<svc:ConsultarNfsePorRps>', $provider->getLastSoapEnvelope());
 
-        $validation = (new NFSeSchemaValidator())->validate(
+        $validation = (new NFSeSchemaValidator)->validate(
             $this->schemaCompatibleXml((string) $provider->getLastRequestXml()),
-            (new NFSeSchemaResolver())->resolve('BELEM_MUNICIPAL_2025', 'consultar_nfse_rps')
+            (new NFSeSchemaResolver)->resolve('BELEM_MUNICIPAL_2025', 'consultar_nfse_rps')
         );
         $this->assertTrue($validation['valid'], implode(PHP_EOL, $validation['errors']));
 
@@ -258,7 +253,7 @@ final class BelemMunicipalProviderTest extends TestCase
         $this->assertSame('success', $parsed['status']);
         $this->assertSame('1105', $parsed['nfse']['numero']);
 
-        $dom = new DOMDocument();
+        $dom = new DOMDocument;
         $dom->loadXML((string) $provider->getLastRequestXml());
         $xpath = new DOMXPath($dom);
         $xpath->registerNamespace('ds', 'http://www.w3.org/2000/09/xmldsig#');
@@ -272,12 +267,11 @@ final class BelemMunicipalProviderTest extends TestCase
         );
     }
 
-    public function testConsultarByChaveBuildsSchemaValidRequestAndParsesResponse(): void
+    public function test_consultar_by_chave_builds_schema_valid_request_and_parses_response(): void
     {
-        $transport = new class(NFSeBelemMunicipalFixtures::consultarNfseServicoPrestadoSoapResponse()) implements NFSeSoapTransportInterface {
-            public function __construct(private readonly string $response)
-            {
-            }
+        $transport = new class(NFSeBelemMunicipalFixtures::consultarNfseServicoPrestadoSoapResponse()) implements NFSeSoapTransportInterface
+        {
+            public function __construct(private readonly string $response) {}
 
             public function send(string $endpoint, string $envelope, array $options = []): array
             {
@@ -295,9 +289,9 @@ final class BelemMunicipalProviderTest extends TestCase
 
         $this->assertStringContainsString('<svc:ConsultarNfseServicoPrestado>', $provider->getLastSoapEnvelope());
 
-        $validation = (new NFSeSchemaValidator())->validate(
+        $validation = (new NFSeSchemaValidator)->validate(
             $this->schemaCompatibleXml((string) $provider->getLastRequestXml()),
-            (new NFSeSchemaResolver())->resolve('BELEM_MUNICIPAL_2025', 'consultar_nfse_numero')
+            (new NFSeSchemaResolver)->resolve('BELEM_MUNICIPAL_2025', 'consultar_nfse_numero')
         );
         $this->assertTrue($validation['valid'], implode(PHP_EOL, $validation['errors']));
         $this->assertSame('consultar_nfse_numero', $provider->getLastOperation());
@@ -306,7 +300,7 @@ final class BelemMunicipalProviderTest extends TestCase
         $this->assertSame('success', $parsed['status']);
         $this->assertSame('1105', $parsed['nfse']['numero']);
 
-        $dom = new DOMDocument();
+        $dom = new DOMDocument;
         $dom->loadXML((string) $provider->getLastRequestXml());
         $xpath = new DOMXPath($dom);
         $xpath->registerNamespace('ds', 'http://www.w3.org/2000/09/xmldsig#');
@@ -318,12 +312,11 @@ final class BelemMunicipalProviderTest extends TestCase
         );
     }
 
-    public function testBaixarDanfseReturnsOfficialUrlByAccessKey(): void
+    public function test_baixar_danfse_returns_official_url_by_access_key(): void
     {
-        $transport = new class(NFSeBelemMunicipalFixtures::consultarNfseServicoPrestadoSoapResponse()) implements NFSeSoapTransportInterface {
-            public function __construct(private readonly string $response)
-            {
-            }
+        $transport = new class(NFSeBelemMunicipalFixtures::consultarNfseServicoPrestadoSoapResponse()) implements NFSeSoapTransportInterface
+        {
+            public function __construct(private readonly string $response) {}
 
             public function send(string $endpoint, string $envelope, array $options = []): array
             {
@@ -349,12 +342,11 @@ final class BelemMunicipalProviderTest extends TestCase
         $this->assertContains('baixar_danfse', $provider->getSupportedOperations());
     }
 
-    public function testBaixarDanfseAcceptsNumberOnlyKey(): void
+    public function test_baixar_danfse_accepts_number_only_key(): void
     {
-        $transport = new class(NFSeBelemMunicipalFixtures::consultarNfseServicoPrestadoSoapResponse()) implements NFSeSoapTransportInterface {
-            public function __construct(private readonly string $response)
-            {
-            }
+        $transport = new class(NFSeBelemMunicipalFixtures::consultarNfseServicoPrestadoSoapResponse()) implements NFSeSoapTransportInterface
+        {
+            public function __construct(private readonly string $response) {}
 
             public function send(string $endpoint, string $envelope, array $options = []): array
             {
@@ -374,7 +366,7 @@ final class BelemMunicipalProviderTest extends TestCase
         $this->assertStringContainsString('<NumeroNfse>1105</NumeroNfse>', (string) $provider->getLastRequestXml());
     }
 
-    public function testConsultarLoteRetriesWithAlternativeSignatureVariantWhenFaultMentionsAssinatura(): void
+    public function test_consultar_lote_retries_with_alternative_signature_variant_when_fault_mentions_assinatura(): void
     {
         $faultResponse = <<<'XML'
 <?xml version="1.0" encoding="UTF-8"?>
@@ -388,14 +380,14 @@ final class BelemMunicipalProviderTest extends TestCase
 </soap:Envelope>
 XML;
 
-        $transport = new class($faultResponse, NFSeBelemMunicipalFixtures::consultarLoteSoapResponse()) implements NFSeSoapTransportInterface {
+        $transport = new class($faultResponse, NFSeBelemMunicipalFixtures::consultarLoteSoapResponse()) implements NFSeSoapTransportInterface
+        {
             public array $calls = [];
 
             public function __construct(
                 private readonly string $firstResponse,
                 private readonly string $secondResponse
-            ) {
-            }
+            ) {}
 
             public function send(string $endpoint, string $envelope, array $options = []): array
             {
@@ -432,7 +424,7 @@ XML;
         );
     }
 
-    public function testConsultarNfsePorRpsRetriesAllSignatureVariantsAndKeepsFailureArtifacts(): void
+    public function test_consultar_nfse_por_rps_retries_all_signature_variants_and_keeps_failure_artifacts(): void
     {
         $faultResponse = <<<'XML'
 <?xml version="1.0" encoding="UTF-8"?>
@@ -446,12 +438,11 @@ XML;
 </soap:Envelope>
 XML;
 
-        $transport = new class($faultResponse) implements NFSeSoapTransportInterface {
+        $transport = new class($faultResponse) implements NFSeSoapTransportInterface
+        {
             public array $calls = [];
 
-            public function __construct(private readonly string $response)
-            {
-            }
+            public function __construct(private readonly string $response) {}
 
             public function send(string $endpoint, string $envelope, array $options = []): array
             {
@@ -512,7 +503,7 @@ XML;
         );
     }
 
-    public function testConsultarByChaveRetriesWithAlternativeSignatureVariantWhenFaultMentionsAssinatura(): void
+    public function test_consultar_by_chave_retries_with_alternative_signature_variant_when_fault_mentions_assinatura(): void
     {
         $faultResponse = <<<'XML'
 <?xml version="1.0" encoding="UTF-8"?>
@@ -526,14 +517,14 @@ XML;
 </soap:Envelope>
 XML;
 
-        $transport = new class($faultResponse, NFSeBelemMunicipalFixtures::consultarNfseServicoPrestadoSoapResponse()) implements NFSeSoapTransportInterface {
+        $transport = new class($faultResponse, NFSeBelemMunicipalFixtures::consultarNfseServicoPrestadoSoapResponse()) implements NFSeSoapTransportInterface
+        {
             public array $calls = [];
 
             public function __construct(
                 private readonly string $firstResponse,
                 private readonly string $secondResponse
-            ) {
-            }
+            ) {}
 
             public function send(string $endpoint, string $envelope, array $options = []): array
             {
@@ -558,12 +549,11 @@ XML;
         $this->assertCount(2, $artifacts['transport']['retry_attempts']);
     }
 
-    public function testCancelarNfseBuildsSchemaValidRequestAndParsesResponse(): void
+    public function test_cancelar_nfse_builds_schema_valid_request_and_parses_response(): void
     {
-        $transport = new class(NFSeBelemMunicipalFixtures::cancelarSoapSuccessResponse()) implements NFSeSoapTransportInterface {
-            public function __construct(private readonly string $response)
-            {
-            }
+        $transport = new class(NFSeBelemMunicipalFixtures::cancelarSoapSuccessResponse()) implements NFSeSoapTransportInterface
+        {
+            public function __construct(private readonly string $response) {}
 
             public function send(string $endpoint, string $envelope, array $options = []): array
             {
@@ -587,7 +577,7 @@ XML;
         $this->assertStringContainsString('<Numero>1105</Numero>', (string) $provider->getLastRequestXml());
         $this->assertStringNotContainsString(NFSeBelemMunicipalFixtures::chaveNfse(), (string) $provider->getLastRequestXml());
 
-        $dom = new DOMDocument();
+        $dom = new DOMDocument;
         $dom->loadXML((string) $provider->getLastRequestXml());
         $xpath = new DOMXPath($dom);
         $xpath->registerNamespace('ds', 'http://www.w3.org/2000/09/xmldsig#');
@@ -597,9 +587,9 @@ XML;
         );
         $this->assertSame('Pedido', $xpath->evaluate('local-name(//ds:Signature/parent::*)'));
 
-        $validation = (new NFSeSchemaValidator())->validate(
+        $validation = (new NFSeSchemaValidator)->validate(
             $this->schemaCompatibleXml((string) $provider->getLastRequestXml()),
-            (new NFSeSchemaResolver())->resolve('BELEM_MUNICIPAL_2025', 'cancelar_nfse')
+            (new NFSeSchemaResolver)->resolve('BELEM_MUNICIPAL_2025', 'cancelar_nfse')
         );
         $this->assertTrue($validation['valid'], implode(PHP_EOL, $validation['errors']));
 
@@ -610,12 +600,11 @@ XML;
         $this->assertSame('9', $parsed['cancelamento']['codigo_cancelamento']);
     }
 
-    public function testCancelarNfseNaoUsaProtocoloComoCodigoCancelamento(): void
+    public function test_cancelar_nfse_nao_usa_protocolo_como_codigo_cancelamento(): void
     {
-        $transport = new class(NFSeBelemMunicipalFixtures::cancelarSoapSuccessResponse()) implements NFSeSoapTransportInterface {
-            public function __construct(private readonly string $response)
-            {
-            }
+        $transport = new class(NFSeBelemMunicipalFixtures::cancelarSoapSuccessResponse()) implements NFSeSoapTransportInterface
+        {
+            public function __construct(private readonly string $response) {}
 
             public function send(string $endpoint, string $envelope, array $options = []): array
             {
@@ -640,9 +629,10 @@ XML;
         $this->assertStringNotContainsString('<CodigoCancelamento>062969277</CodigoCancelamento>', $requestXml);
     }
 
-    public function testCancelarNfseTentaCodigoAlternativoQuandoMunicipioRejeitaCodigoCancelamento(): void
+    public function test_cancelar_nfse_tenta_codigo_alternativo_quando_municipio_rejeita_codigo_cancelamento(): void
     {
-        $transport = new class implements NFSeSoapTransportInterface {
+        $transport = new class implements NFSeSoapTransportInterface
+        {
             public array $calls = [];
 
             public function send(string $endpoint, string $envelope, array $options = []): array
@@ -703,12 +693,11 @@ XML;
         $this->assertSame('2', $provider->getLastOperationArtifacts()['cancelamento_codigo'] ?? null);
     }
 
-    public function testCancelarNfseReturnsFalseOnBusinessRejection(): void
+    public function test_cancelar_nfse_returns_false_on_business_rejection(): void
     {
-        $transport = new class(NFSeBelemMunicipalFixtures::cancelarSoapRejectionResponse()) implements NFSeSoapTransportInterface {
-            public function __construct(private readonly string $response)
-            {
-            }
+        $transport = new class(NFSeBelemMunicipalFixtures::cancelarSoapRejectionResponse()) implements NFSeSoapTransportInterface
+        {
+            public function __construct(private readonly string $response) {}
 
             public function send(string $endpoint, string $envelope, array $options = []): array
             {
@@ -732,9 +721,10 @@ XML;
         $this->assertSame(['E301 NFSe ja se encontra cancelada.'], $provider->getLastResponseData()['mensagens']);
     }
 
-    public function testProcessaRespostaDaFixtureSanitizadaDeExportacao(): void
+    public function test_processa_resposta_da_fixture_sanitizada_de_exportacao(): void
     {
-        $provider = $this->makeProvider(new class implements NFSeSoapTransportInterface {
+        $provider = $this->makeProvider(new class implements NFSeSoapTransportInterface
+        {
             public function send(string $endpoint, string $envelope, array $options = []): array
             {
                 throw new RuntimeException('Transporte não deve ser usado neste teste.');
@@ -752,12 +742,11 @@ XML;
         $this->assertSame('1104', $parsed['lista_nfse'][1]['numero']);
     }
 
-    public function testProcessaRespostaComMensagemDeRejeicao(): void
+    public function test_processa_resposta_com_mensagem_de_rejeicao(): void
     {
-        $provider = $this->makeProvider(new class(NFSeBelemMunicipalFixtures::rejectionSoapResponse()) implements NFSeSoapTransportInterface {
-            public function __construct(private readonly string $response)
-            {
-            }
+        $provider = $this->makeProvider(new class(NFSeBelemMunicipalFixtures::rejectionSoapResponse()) implements NFSeSoapTransportInterface
+        {
+            public function __construct(private readonly string $response) {}
 
             public function send(string $endpoint, string $envelope, array $options = []): array
             {
@@ -777,9 +766,10 @@ XML;
         $this->assertSame(['E160 CNAE informado nao habilitado para o prestador.'], $parsed['mensagens']);
     }
 
-    public function testRejectsIncompatibleItemsForSingleBelmDocument(): void
+    public function test_rejects_incompatible_items_for_single_belm_document(): void
     {
-        $provider = $this->makeProvider(new class implements NFSeSoapTransportInterface {
+        $provider = $this->makeProvider(new class implements NFSeSoapTransportInterface
+        {
             public function send(string $endpoint, string $envelope, array $options = []): array
             {
                 return [
@@ -797,9 +787,10 @@ XML;
         $provider->emitir(NFSeBelemMunicipalFixtures::incompatibleItemsPayload());
     }
 
-    public function testRejectsMeiOnMunicipalProvider(): void
+    public function test_rejects_mei_on_municipal_provider(): void
     {
-        $provider = $this->makeProvider(new class implements NFSeSoapTransportInterface {
+        $provider = $this->makeProvider(new class implements NFSeSoapTransportInterface
+        {
             public function send(string $endpoint, string $envelope, array $options = []): array
             {
                 return [
@@ -817,9 +808,10 @@ XML;
         $provider->emitir(NFSeBelemMunicipalFixtures::meiPayload());
     }
 
-    public function testConsultaOperationsReusePrestadorContextFromPreviousEmission(): void
+    public function test_consulta_operations_reuse_prestador_context_from_previous_emission(): void
     {
-        $transport = new class implements NFSeSoapTransportInterface {
+        $transport = new class implements NFSeSoapTransportInterface
+        {
             private int $call = 0;
 
             public function send(string $endpoint, string $envelope, array $options = []): array
@@ -852,9 +844,10 @@ XML;
         $this->assertSame('success', $provider->getLastResponseData()['status']);
     }
 
-    public function testConsultarPorRpsRequiresRequiredFields(): void
+    public function test_consultar_por_rps_requires_required_fields(): void
     {
-        $provider = $this->makeProvider(new class implements NFSeSoapTransportInterface {
+        $provider = $this->makeProvider(new class implements NFSeSoapTransportInterface
+        {
             public function send(string $endpoint, string $envelope, array $options = []): array
             {
                 return [
@@ -875,15 +868,14 @@ XML;
         ]);
     }
 
-    public function testHomologationDebugMasksSensitiveData(): void
+    public function test_homologation_debug_masks_sensitive_data(): void
     {
-        $logFile = sys_get_temp_dir() . '/belem-provider-debug-' . uniqid('', true) . '.log';
+        $logFile = sys_get_temp_dir().'/belem-provider-debug-'.uniqid('', true).'.log';
         @unlink($logFile);
 
-        $transport = new class(NFSeBelemMunicipalFixtures::successSoapResponse()) implements NFSeSoapTransportInterface {
-            public function __construct(private readonly string $response)
-            {
-            }
+        $transport = new class(NFSeBelemMunicipalFixtures::successSoapResponse()) implements NFSeSoapTransportInterface
+        {
+            public function __construct(private readonly string $response) {}
 
             public function send(string $endpoint, string $envelope, array $options = []): array
             {

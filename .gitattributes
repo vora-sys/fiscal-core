@@ -1,0 +1,2 @@
+# Schemas oficiais devem permanecer byte a byte; não normalize whitespace interno.
+*.xsd whitespace=-blank-at-eol,-space-before-tab

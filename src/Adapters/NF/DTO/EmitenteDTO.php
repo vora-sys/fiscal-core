@@ -28,13 +28,13 @@ class EmitenteDTO
         public ?string $cnae = null,
         public ?int $crt = 1,                         // 1=Simples Nacional, 3=Normal
     ) {}
-    
+
     /**
      * Converte DTO para stdClass com nomes de propriedades conforme NFePHP/XML
      */
     public function toStdClass(): \stdClass
     {
-        $obj = new \stdClass();
+        $obj = new \stdClass;
         $obj->CNPJ = $this->cnpj;
         $obj->xNome = $this->razaoSocial;
         $obj->xFant = $this->nomeFantasia;
@@ -49,10 +49,19 @@ class EmitenteDTO
         $obj->cPais = $this->codigoPais;
         $obj->xPais = $this->nomePais;
         $obj->CRT = $this->crt;
-        if ($this->complemento !== null) $obj->xCpl = $this->complemento;
-        if ($this->telefone !== null) $obj->fone = $this->telefone;
-        if ($this->inscricaoMunicipal !== null) $obj->IM = $this->inscricaoMunicipal;
-        if ($this->cnae !== null) $obj->CNAE = $this->cnae;
+        if ($this->complemento !== null) {
+            $obj->xCpl = $this->complemento;
+        }
+        if ($this->telefone !== null) {
+            $obj->fone = $this->telefone;
+        }
+        if ($this->inscricaoMunicipal !== null) {
+            $obj->IM = $this->inscricaoMunicipal;
+        }
+        if ($this->cnae !== null) {
+            $obj->CNAE = $this->cnae;
+        }
+
         return $obj;
     }
 }

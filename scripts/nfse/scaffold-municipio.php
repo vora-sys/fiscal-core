@@ -14,7 +14,7 @@ if ($ibge === '') {
 }
 
 $root = dirname(__DIR__, 2);
-$catalogPath = $root . '/config/nfse/nfse-catalog-manifest.json';
+$catalogPath = $root.'/config/nfse/nfse-catalog-manifest.json';
 $catalog = is_file($catalogPath)
     ? json_decode((string) file_get_contents($catalogPath), true)
     : [];
@@ -43,6 +43,6 @@ echo json_encode([
     ],
     'generated_files' => [
         ['path' => "{$basePath}/examples/homologacao/{$slug}.php"],
-        ['path' => "{$basePath}/docs/NFSE-" . strtoupper(str_replace('-', '_', $slug)) . ".md"],
+        ['path' => "{$basePath}/docs/NFSE-".strtoupper(str_replace('-', '_', $slug)).'.md'],
     ],
-], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) . PHP_EOL;
+], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE).PHP_EOL;

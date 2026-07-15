@@ -2,14 +2,14 @@
 
 declare(strict_types=1);
 
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\TestCase;
 use sabbajohn\FiscalCore\Contracts\NFSeOperationalIntrospectionInterface;
 use sabbajohn\FiscalCore\Support\NFSeMunicipalPayloadFactory;
 use sabbajohn\FiscalCore\Support\NFSeMunicipalPreviewSupport;
 use sabbajohn\FiscalCore\Support\NFSeSchemaResolver;
 use sabbajohn\FiscalCore\Support\NFSeSchemaValidator;
 use sabbajohn\FiscalCore\Support\ProviderRegistry;
-use PHPUnit\Framework\Attributes\DataProvider;
-use PHPUnit\Framework\TestCase;
 
 final class NFSeMunicipalPayloadFactoryTest extends TestCase
 {
@@ -19,14 +19,14 @@ final class NFSeMunicipalPayloadFactoryTest extends TestCase
     }
 
     #[DataProvider('municipioProvider')]
-    public function testDemoPayloadsGenerateSchemaValidXml(string $municipio): void
+    public function test_demo_payloads_generate_schema_valid_xml(string $municipio): void
     {
-        $factory = new NFSeMunicipalPayloadFactory();
+        $factory = new NFSeMunicipalPayloadFactory;
         $meta = $factory->providerMeta($municipio);
         $payload = $factory->demo($municipio);
 
         $config = ProviderRegistry::getInstance()->getConfig($meta['provider_key']);
-        $config['certificate'] = NFSeMunicipalPreviewSupport::makeCertificate('Factory ' . ucfirst($municipio));
+        $config['certificate'] = NFSeMunicipalPreviewSupport::makeCertificate('Factory '.ucfirst($municipio));
         $config['prestador'] = $payload['prestador'];
         $config['soap_transport'] = NFSeMunicipalPreviewSupport::makeTransport($municipio);
 
@@ -41,18 +41,18 @@ final class NFSeMunicipalPayloadFactoryTest extends TestCase
             $requestXml = $this->schemaCompatibleXml($requestXml);
         }
 
-        $validation = (new NFSeSchemaValidator())->validate(
+        $validation = (new NFSeSchemaValidator)->validate(
             $requestXml,
-            (new NFSeSchemaResolver())->resolve($meta['provider_key'], 'emitir')
+            (new NFSeSchemaResolver)->resolve($meta['provider_key'], 'emitir')
         );
 
         $this->assertTrue($validation['valid'], implode(PHP_EOL, $validation['errors']));
         $this->assertSame('success', $provider->getLastResponseData()['status'] ?? null);
     }
 
-    public function testBuildPrestadorRequiresInscricaoMunicipal(): void
+    public function test_build_prestador_requires_inscricao_municipal(): void
     {
-        $factory = new NFSeMunicipalPayloadFactory();
+        $factory = new NFSeMunicipalPayloadFactory;
 
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('FISCAL_IM');
@@ -68,9 +68,9 @@ final class NFSeMunicipalPayloadFactoryTest extends TestCase
         );
     }
 
-    public function testRejectsJoinvilleAfterNationalMigration(): void
+    public function test_rejects_joinville_after_national_migration(): void
     {
-        $factory = new NFSeMunicipalPayloadFactory();
+        $factory = new NFSeMunicipalPayloadFactory;
 
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('fluxo NFSe nacional');
@@ -78,9 +78,9 @@ final class NFSeMunicipalPayloadFactoryTest extends TestCase
         $factory->demo('joinville');
     }
 
-    public function testDemoPayloadCanBeResolvedFromCatalogPayloadDefaultsForIsswebMunicipio(): void
+    public function test_demo_payload_can_be_resolved_from_catalog_payload_defaults_for_issweb_municipio(): void
     {
-        $factory = new NFSeMunicipalPayloadFactory();
+        $factory = new NFSeMunicipalPayloadFactory;
         $payload = $factory->demo('presidente-figueiredo');
 
         $this->assertSame('1303536', $payload['servico']['local_prestacao']['codigo_municipio']);
@@ -89,12 +89,12 @@ final class NFSeMunicipalPayloadFactoryTest extends TestCase
     }
 
     #[DataProvider('priorityMunicipioPayloadDefaultsProvider')]
-    public function testDemoPayloadUsesCanonizedDefaultsForPriorityMunicipios(
+    public function test_demo_payload_uses_canonized_defaults_for_priority_municipios(
         string $municipio,
         string $ibge,
         string $expectedDescricao
     ): void {
-        $factory = new NFSeMunicipalPayloadFactory();
+        $factory = new NFSeMunicipalPayloadFactory;
         $payload = $factory->demo($municipio);
 
         $this->assertSame('123', (string) ($payload['rps']['numero'] ?? ''));
@@ -135,26 +135,26 @@ final class NFSeMunicipalPayloadFactoryTest extends TestCase
 
     private function schemaCompatibleXml(string $xml): string
     {
-        $dom = new \DOMDocument('1.0', 'UTF-8');
+        $dom = new DOMDocument('1.0', 'UTF-8');
         $dom->preserveWhiteSpace = false;
         $dom->formatOutput = false;
 
         if (@$dom->loadXML($xml)) {
-            $xpath = new \DOMXPath($dom);
+            $xpath = new DOMXPath($dom);
             foreach ($xpath->query("//*[local-name()='Signature' and namespace-uri()='http://www.w3.org/2000/09/xmldsig#']") as $signatureNode) {
-                if ($signatureNode->parentNode instanceof \DOMNode) {
+                if ($signatureNode->parentNode instanceof DOMNode) {
                     $signatureNode->parentNode->removeChild($signatureNode);
                 }
             }
 
             foreach ($xpath->query("//*[local-name()='Prestador']/@Id") as $attributeNode) {
-                if ($attributeNode instanceof \DOMAttr) {
+                if ($attributeNode instanceof DOMAttr) {
                     $attributeNode->ownerElement?->removeAttributeNode($attributeNode);
                 }
             }
 
             $root = $dom->documentElement;
-            if ($root instanceof \DOMElement) {
+            if ($root instanceof DOMElement) {
                 $normalized = $dom->saveXML($root) ?: $xml;
                 if (str_contains($normalized, 'xmlns="http://www.abrasf.org.br/nfse.xsd"')) {
                     return $normalized;

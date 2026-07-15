@@ -20,14 +20,14 @@ class DestinatarioDTO
         public string $cep,
         public string $codigoPais = '1058',           // Brasil
         public string $nomePais = 'BRASIL',
-        
+
         public ?string $inscricaoEstadual = null,
         public ?string $complemento = null,
         public ?string $telefone = null,
         public ?string $email = null,
         public int $indIEDest = 9,                    // 9=Não contribuinte
     ) {}
-    
+
     /**
      * Cria DTO para consumidor final (CPF)
      */
@@ -50,10 +50,10 @@ class DestinatarioDTO
             indIEDest: 9  // Não contribuinte
         );
     }
-    
+
     public function toStdClass(): \stdClass
     {
-        $obj = new \stdClass();
+        $obj = new \stdClass;
         $obj->cpfCnpj = $this->cpfCnpj;
         $obj->nome = $this->nome;
         $obj->logradouro = $this->logradouro;
@@ -65,11 +65,20 @@ class DestinatarioDTO
         $obj->cep = $this->cep;
         $obj->codigoPais = $this->codigoPais;
         $obj->nomePais = $this->nomePais;
-        if ($this->inscricaoEstadual !== null) $obj->inscricaoEstadual = $this->inscricaoEstadual;
-        if ($this->complemento !== null) $obj->complemento = $this->complemento;
-        if ($this->telefone !== null) $obj->telefone = $this->telefone;
-        if ($this->email !== null) $obj->email = $this->email;
+        if ($this->inscricaoEstadual !== null) {
+            $obj->inscricaoEstadual = $this->inscricaoEstadual;
+        }
+        if ($this->complemento !== null) {
+            $obj->complemento = $this->complemento;
+        }
+        if ($this->telefone !== null) {
+            $obj->telefone = $this->telefone;
+        }
+        if ($this->email !== null) {
+            $obj->email = $this->email;
+        }
         $obj->indIEDest = $this->indIEDest;
+
         return $obj;
     }
 }

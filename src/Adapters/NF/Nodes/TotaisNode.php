@@ -2,10 +2,10 @@
 
 namespace sabbajohn\FiscalCore\Adapters\NF\Nodes;
 
+use NFePHP\NFe\Make;
 use sabbajohn\FiscalCore\Adapters\NF\Core\NotaNodeInterface;
 use sabbajohn\FiscalCore\Adapters\NF\DTO\TotaisDTO;
 use sabbajohn\FiscalCore\Adapters\NF\Helpers\StdClassBuilder;
-use NFePHP\NFe\Make;
 
 /**
  * Node para totais da NFe/NFCe
@@ -16,23 +16,23 @@ class TotaisNode implements NotaNodeInterface
     public function __construct(
         private TotaisDTO $totais
     ) {}
-    
+
     public function getNodeType(): string
     {
         return 'totais';
     }
-    
+
     public function validate(): bool
     {
         // Validar valores não negativos
         if ($this->totais->vNF < 0) {
             throw new \InvalidArgumentException('Valor total da nota não pode ser negativo');
         }
-        
+
         if ($this->totais->vProd < 0) {
             throw new \InvalidArgumentException('Valor total de produtos não pode ser negativo');
         }
-        
+
         // Validar coerência: vNF deve ser >= vProd - vDesc
         $valorMinimo = $this->totais->vProd - $this->totais->vDesc;
         if ($this->totais->vNF < $valorMinimo) {
@@ -42,10 +42,10 @@ class TotaisNode implements NotaNodeInterface
                 $valorMinimo
             ));
         }
-        
+
         return true;
     }
-    
+
     public function addToMake(Make $make): void
     {
         // Adicionar tag de totais do ICMS
@@ -69,9 +69,9 @@ class TotaisNode implements NotaNodeInterface
             'vCOFINS' => $this->totais->vCOFINS,
             'vOutro' => $this->totais->vOutro,
             'vNF' => $this->totais->vNF,
-            'vTotTrib' => $this->totais->vTotTrib ?? 0
+            'vTotTrib' => $this->totais->vTotTrib ?? 0,
         ]));
-        
+
         // Se houver valores de ICMS UF destino, adicionar tag específica
         if ($this->totais->vICMSUFDest > 0 || $this->totais->vICMSUFRemet > 0) {
             $make->tagICMSUFDest(StdClassBuilder::create([
@@ -81,10 +81,10 @@ class TotaisNode implements NotaNodeInterface
                 'pFCPUFDest' => $this->totais->pFCPUFDest ?? 0,
                 'vICMSUFDest' => $this->totais->vICMSUFDest,
                 'vICMSUFRemet' => $this->totais->vICMSUFRemet,
-                'pRedBC' => $this->totais->pRedBC ?? 0
+                'pRedBC' => $this->totais->pRedBC ?? 0,
             ]));
         }
-        
+
         // Se houver retenções de tributos, adicionar tag retTrib
         if ($this->temRetencoes()) {
             // Exemplo usando props() - captura nomes automaticamente!
@@ -99,7 +99,7 @@ class TotaisNode implements NotaNodeInterface
             ));
         }
     }
-    
+
     /**
      * Verifica se há retenções de tributos
      */
@@ -111,7 +111,7 @@ class TotaisNode implements NotaNodeInterface
             || $this->totais->vIRRF > 0
             || $this->totais->vRetPrev > 0;
     }
-    
+
     /**
      * Retorna o DTO encapsulado
      */

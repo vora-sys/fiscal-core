@@ -12,8 +12,8 @@ final class NFSeProviderResolver
         private ?NFSeMunicipalCatalog $catalog = null,
         private ?NFSeMunicipalProviderOverrides $providerOverrides = null
     ) {
-        $this->catalog ??= new NFSeMunicipalCatalog();
-        $this->providerOverrides ??= new NFSeMunicipalProviderOverrides();
+        $this->catalog ??= new NFSeMunicipalCatalog;
+        $this->providerOverrides ??= new NFSeMunicipalProviderOverrides;
     }
 
     public function resolveKey(?string $input): string
@@ -62,7 +62,7 @@ final class NFSeProviderResolver
             ];
 
             $override = $this->providerOverrides->resolveForMunicipio($resolved);
-            if (!is_array($override)) {
+            if (! is_array($override)) {
                 return $metadata;
             }
 

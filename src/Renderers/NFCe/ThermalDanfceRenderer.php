@@ -13,7 +13,7 @@ use sabbajohn\FiscalCore\Support\NfceThermalLayout;
 final class ThermalDanfceRenderer
 {
     /**
-     * @param array<string,mixed> $context
+     * @param  array<string,mixed>  $context
      */
     public function render(string $xmlNfce, array $context = []): string
     {
@@ -21,7 +21,7 @@ final class ThermalDanfceRenderer
         $data = $this->extractDocumentData($xmlNfce, $context, $layout);
         $html = $this->buildHtmlFromData($data, $layout);
 
-        $options = new Options();
+        $options = new Options;
         $options->set('isRemoteEnabled', false);
         $options->set('defaultFont', 'DejaVu Sans');
 
@@ -38,7 +38,7 @@ final class ThermalDanfceRenderer
     }
 
     /**
-     * @param array<string,mixed> $context
+     * @param  array<string,mixed>  $context
      */
     public function buildHtml(string $xmlNfce, array $context = []): string
     {
@@ -49,14 +49,14 @@ final class ThermalDanfceRenderer
     }
 
     /**
-     * @param array<string,mixed> $context
-     * @param array<string,mixed> $layout
+     * @param  array<string,mixed>  $context
+     * @param  array<string,mixed>  $layout
      * @return array<string,mixed>
      */
     private function extractDocumentData(string $xmlNfce, array $context, array $layout): array
     {
-        $dom = new \DOMDocument();
-        if (!@$dom->loadXML($xmlNfce)) {
+        $dom = new \DOMDocument;
+        if (! @$dom->loadXML($xmlNfce)) {
             throw new RuntimeException('XML final da NFC-e invalido para gerar o DANFCE termico.');
         }
 
@@ -262,8 +262,8 @@ final class ThermalDanfceRenderer
     }
 
     /**
-     * @param array<string,mixed> $data
-     * @param array<string,mixed> $layout
+     * @param  array<string,mixed>  $data
+     * @param  array<string,mixed>  $layout
      */
     private function buildHtmlFromData(array $data, array $layout): string
     {
@@ -277,7 +277,7 @@ final class ThermalDanfceRenderer
 
         $sectionHtml = [];
         foreach ($sections as $section) {
-            if (!is_array($section) || !($section['enabled'] ?? false)) {
+            if (! is_array($section) || ! ($section['enabled'] ?? false)) {
                 continue;
             }
 
@@ -312,7 +312,7 @@ final class ThermalDanfceRenderer
         }
 
         return sprintf(
-            <<<HTML
+            <<<'HTML'
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -395,12 +395,12 @@ HTML,
     }
 
     /**
-     * @param array<string,mixed> $data
+     * @param  array<string,mixed>  $data
      */
     private function renderLogo(array $data): string
     {
         $logoUrl = $data['logo_url'] ?? null;
-        if (!is_string($logoUrl) || $logoUrl === '') {
+        if (! is_string($logoUrl) || $logoUrl === '') {
             return '';
         }
 
@@ -411,7 +411,7 @@ HTML,
     }
 
     /**
-     * @param array<string,mixed> $data
+     * @param  array<string,mixed>  $data
      */
     private function renderHeader(array $data): string
     {
@@ -438,7 +438,7 @@ HTML,
     }
 
     /**
-     * @param array<string,mixed> $data
+     * @param  array<string,mixed>  $data
      */
     private function renderRecipient(array $data): string
     {
@@ -462,7 +462,7 @@ HTML,
     }
 
     /**
-     * @param array<string,mixed> $data
+     * @param  array<string,mixed>  $data
      */
     private function renderItems(array $data): string
     {
@@ -494,7 +494,7 @@ HTML,
     }
 
     /**
-     * @param array<string,mixed> $data
+     * @param  array<string,mixed>  $data
      */
     private function renderTotals(array $data, float $totalFont): string
     {
@@ -520,7 +520,7 @@ HTML,
     }
 
     /**
-     * @param array<string,mixed> $data
+     * @param  array<string,mixed>  $data
      */
     private function renderPayments(array $data): string
     {
@@ -552,12 +552,12 @@ HTML,
     }
 
     /**
-     * @param array<string,mixed> $data
+     * @param  array<string,mixed>  $data
      */
     private function renderIbpt(array $data): string
     {
         $ibpt = (array) ($data['ibpt'] ?? []);
-        if (!$this->hasMoneyValue($ibpt['value'] ?? null)) {
+        if (! $this->hasMoneyValue($ibpt['value'] ?? null)) {
             return '';
         }
 
@@ -568,7 +568,7 @@ HTML,
     }
 
     /**
-     * @param array<string,mixed> $data
+     * @param  array<string,mixed>  $data
      */
     private function renderMessages(array $data): string
     {
@@ -585,7 +585,7 @@ HTML,
     }
 
     /**
-     * @param array<string,mixed> $data
+     * @param  array<string,mixed>  $data
      */
     private function renderConsultation(array $data): string
     {
@@ -600,8 +600,8 @@ HTML,
     }
 
     /**
-     * @param array<string,mixed> $data
-     * @param array<string,mixed> $section
+     * @param  array<string,mixed>  $data
+     * @param  array<string,mixed>  $section
      */
     private function renderQrCode(array $data, array $section): string
     {
@@ -625,7 +625,7 @@ HTML,
     }
 
     /**
-     * @param array<string,mixed> $data
+     * @param  array<string,mixed>  $data
      */
     private function renderProtocolFooter(array $data): string
     {
@@ -640,7 +640,7 @@ HTML,
     }
 
     /**
-     * @param array<string,mixed> $section
+     * @param  array<string,mixed>  $section
      */
     private function sectionStyle(array $section): string
     {
@@ -676,8 +676,8 @@ HTML,
     }
 
     /**
-     * @param array<string,mixed> $data
-     * @param array<string,mixed> $layout
+     * @param  array<string,mixed>  $data
+     * @param  array<string,mixed>  $layout
      */
     private function estimatePaperHeightMm(array $data, array $layout): float
     {
@@ -704,7 +704,7 @@ HTML,
             return null;
         }
 
-        $barcode = new Barcode();
+        $barcode = new Barcode;
         $image = $barcode->getBarcodeObj('QRCODE,H', $trimmed, -4, -4, 'black', [0, 0, 0, 0])->getPngData(false);
 
         return 'data:image/png;base64,'.base64_encode($image);
@@ -732,7 +732,7 @@ HTML,
     }
 
     /**
-     * @param list<array<string,mixed>> $payments
+     * @param  list<array<string,mixed>>  $payments
      */
     private function sumPayments(array $payments): ?string
     {
@@ -741,7 +741,7 @@ HTML,
 
         foreach ($payments as $payment) {
             $amount = $payment['amount'] ?? null;
-            if (!is_string($amount) && !is_numeric($amount)) {
+            if (! is_string($amount) && ! is_numeric($amount)) {
                 continue;
             }
 
@@ -781,7 +781,7 @@ HTML,
 
     private function formatCpfCnpj(mixed $value): string
     {
-        if (!is_string($value) && !is_numeric($value)) {
+        if (! is_string($value) && ! is_numeric($value)) {
             return '-';
         }
 
@@ -799,7 +799,7 @@ HTML,
 
     private function formatDateTime(mixed $value): ?string
     {
-        if (!is_string($value) || trim($value) === '') {
+        if (! is_string($value) || trim($value) === '') {
             return null;
         }
 
@@ -811,7 +811,7 @@ HTML,
     }
 
     /**
-     * @param list<?string> $values
+     * @param  list<?string>  $values
      */
     private function firstNonEmpty(array $values): ?string
     {
@@ -825,7 +825,7 @@ HTML,
     }
 
     /**
-     * @param list<?string> $values
+     * @param  list<?string>  $values
      */
     private function joinNonEmpty(array $values, string $separator): ?string
     {
@@ -846,7 +846,7 @@ HTML,
 
     private function resolveLogoUrl(mixed $value): ?string
     {
-        if (!is_string($value)) {
+        if (! is_string($value)) {
             return null;
         }
 
@@ -870,13 +870,13 @@ HTML,
     }
 
     /**
-     * @param list<string> $queries
+     * @param  list<string>  $queries
      */
     private function firstNodeValue(\DOMXPath $xpath, array $queries): ?string
     {
         foreach ($queries as $query) {
             $nodes = $xpath->query($query);
-            if (!$nodes instanceof \DOMNodeList || $nodes->length === 0) {
+            if (! $nodes instanceof \DOMNodeList || $nodes->length === 0) {
                 continue;
             }
 
@@ -892,7 +892,7 @@ HTML,
     private function queryString(\DOMXPath $xpath, string $query, \DOMNode $contextNode): ?string
     {
         $nodes = $xpath->query($query, $contextNode);
-        if (!$nodes instanceof \DOMNodeList || $nodes->length === 0) {
+        if (! $nodes instanceof \DOMNodeList || $nodes->length === 0) {
             return null;
         }
 

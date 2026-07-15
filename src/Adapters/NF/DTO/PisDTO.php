@@ -13,7 +13,7 @@ class PisDTO
         public ?float $pPIS = null,  // Alíquota
         public ?float $vPIS = null,  // Valor do PIS
     ) {}
-    
+
     /**
      * PIS para regime de não cumulatividade (CST 01)
      */
@@ -26,7 +26,7 @@ class PisDTO
             vPIS: $vPIS
         );
     }
-    
+
     /**
      * PIS para operação tributável com alíquota zero (CST 04)
      */
@@ -34,7 +34,7 @@ class PisDTO
     {
         return new self(cst: '04');
     }
-    
+
     /**
      * PIS para outras operações (CST 49)
      */
@@ -42,7 +42,7 @@ class PisDTO
     {
         return new self(cst: '49');
     }
-    
+
     /**
      * PIS para operação sem incidência (CST 07)
      */
@@ -50,14 +50,21 @@ class PisDTO
     {
         return new self(cst: '07');
     }
-    
+
     public function toStdClass(): \stdClass
     {
-        $obj = new \stdClass();
+        $obj = new \stdClass;
         $obj->cst = $this->cst;
-        if ($this->vBC !== null) $obj->vBC = $this->vBC;
-        if ($this->pPIS !== null) $obj->pPIS = $this->pPIS;
-        if ($this->vPIS !== null) $obj->vPIS = $this->vPIS;
+        if ($this->vBC !== null) {
+            $obj->vBC = $this->vBC;
+        }
+        if ($this->pPIS !== null) {
+            $obj->pPIS = $this->pPIS;
+        }
+        if ($this->vPIS !== null) {
+            $obj->vPIS = $this->vPIS;
+        }
+
         return $obj;
     }
 }

@@ -31,14 +31,14 @@ class VeiculoDTO
         public string $espVeic,             // Espécie veículo (1=Passageiro, 2=Carga, etc)
         public string $vin,                 // VIN (Vehicle Identification Number) - OPCIONAL mas recomendado
         public string $condVeic,            // Condição veículo: 1=Acabado, 2=Inacabado, 3=Semi-acabado
-        
+
         // Dados opcionais
         public ?string $cMod = null,        // Código Marca/Modelo (Tabela RENAVAM)
         public ?string $cCorDENATRAN = null, // Código cor DENATRAN
         public ?int $lota = null,           // Lotação máxima
         public ?int $tpRest = null,         // Restrição: 0=Não, 1=Alienação, 2=Outras
     ) {}
-    
+
     /**
      * Cria DTO para veículo de passeio
      */
@@ -66,8 +66,8 @@ class VeiculoDTO
             nMotor: $motor,
             cmt: '0',
             dist: '2450',           // Distância típica entre eixos
-            anoMod: (int)$anoModelo,
-            anoFab: (int)$anoFabricacao,
+            anoMod: (int) $anoModelo,
+            anoFab: (int) $anoFabricacao,
             tpPint: 'M',            // Metálica
             tpVeic: '06',           // Automóvel
             espVeic: '1',           // Passageiro
@@ -75,7 +75,7 @@ class VeiculoDTO
             condVeic: '1'           // Acabado
         );
     }
-    
+
     /**
      * Códigos de tipo de combustível
      */
@@ -99,40 +99,40 @@ class VeiculoDTO
         '17' => 'Gasolina/Álcool/Gás Natural',
         '18' => 'Gasolina/Elétrico',
     ];
-    
+
     /**
      * Valida dados do veículo
      */
     public function validate(): array
     {
         $errors = [];
-        
+
         // Validar chassi (deve ter 17 caracteres)
         if (strlen($this->chassi) !== 17) {
             $errors[] = 'Chassi deve ter 17 caracteres';
         }
-        
+
         // Validar ano modelo/fabricação
-        $anoAtual = (int)date('Y');
+        $anoAtual = (int) date('Y');
         if ($this->anoMod < 1900 || $this->anoMod > ($anoAtual + 1)) {
             $errors[] = "Ano modelo inválido: {$this->anoMod}";
         }
-        
+
         if ($this->anoFab < 1900 || $this->anoFab > $anoAtual) {
             $errors[] = "Ano fabricação inválido: {$this->anoFab}";
         }
-        
+
         // Validar tipo combustível
-        if (!isset(self::COMBUSTIVEIS[$this->tpComb])) {
+        if (! isset(self::COMBUSTIVEIS[$this->tpComb])) {
             $errors[] = "Tipo combustível inválido: {$this->tpComb}";
         }
-        
+
         return $errors;
     }
-    
+
     public function toStdClass(): \stdClass
     {
-        $obj = new \stdClass();
+        $obj = new \stdClass;
         $obj->tpOp = $this->tpOp;
         $obj->chassi = $this->chassi;
         $obj->cCor = $this->cCor;
@@ -153,10 +153,19 @@ class VeiculoDTO
         $obj->espVeic = $this->espVeic;
         $obj->vin = $this->vin;
         $obj->condVeic = $this->condVeic;
-        if ($this->cMod !== null) $obj->cMod = $this->cMod;
-        if ($this->cCorDENATRAN !== null) $obj->cCorDENATRAN = $this->cCorDENATRAN;
-        if ($this->lota !== null) $obj->lota = $this->lota;
-        if ($this->tpRest !== null) $obj->tpRest = $this->tpRest;
+        if ($this->cMod !== null) {
+            $obj->cMod = $this->cMod;
+        }
+        if ($this->cCorDENATRAN !== null) {
+            $obj->cCorDENATRAN = $this->cCorDENATRAN;
+        }
+        if ($this->lota !== null) {
+            $obj->lota = $this->lota;
+        }
+        if ($this->tpRest !== null) {
+            $obj->tpRest = $this->tpRest;
+        }
+
         return $obj;
     }
 }

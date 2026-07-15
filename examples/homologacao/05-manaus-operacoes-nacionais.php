@@ -2,14 +2,14 @@
 
 declare(strict_types=1);
 
-require_once __DIR__ . '/../../vendor/autoload.php';
-require_once __DIR__ . '/common.php';
-require_once __DIR__ . '/manaus_nacional_common.php';
+require_once __DIR__.'/../../vendor/autoload.php';
+require_once __DIR__.'/common.php';
+require_once __DIR__.'/manaus_nacional_common.php';
 
 $projectRoot = dirname(__DIR__, 2);
 $options = manausNacionalParseOptions($argv);
 if (($options['help'] ?? false) === true) {
-    echo manausNacionalUsage(basename((string) $argv[0])) . PHP_EOL;
+    echo manausNacionalUsage(basename((string) $argv[0])).PHP_EOL;
     exit(0);
 }
 
@@ -17,7 +17,7 @@ if (($options['listar_codigos'] ?? false) === true) {
     echo json_encode(
         manausNacionalListarCodigos($options, $projectRoot),
         JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES
-    ) . PHP_EOL;
+    ).PHP_EOL;
     exit(0);
 }
 
@@ -60,30 +60,30 @@ if (isset($options['consultar_chave'])) {
 if ($response !== null) {
     $documento = is_array($response->getData('documento') ?? null) ? $response->getData('documento') : [];
     $impressao = is_array($response->getData('impressao') ?? null) ? $response->getData('impressao') : [];
-    $outputDir = $projectRoot . '/tmp/nfse';
+    $outputDir = $projectRoot.'/tmp/nfse';
 
-    if (!is_dir($outputDir)) {
+    if (! is_dir($outputDir)) {
         mkdir($outputDir, 0777, true);
     }
 
-    if (!empty($documento['xml'])) {
-        $xmlName = ($documento['chave_consulta'] ?? $documento['numero'] ?? 'nfse') . '.xml';
-        file_put_contents($outputDir . '/' . $xmlName, (string) $documento['xml']);
+    if (! empty($documento['xml'])) {
+        $xmlName = ($documento['chave_consulta'] ?? $documento['numero'] ?? 'nfse').'.xml';
+        file_put_contents($outputDir.'/'.$xmlName, (string) $documento['xml']);
     }
 
-    if (($impressao['modo'] ?? null) === 'pdf_base64' && !empty($impressao['pdf_base64'])) {
+    if (($impressao['modo'] ?? null) === 'pdf_base64' && ! empty($impressao['pdf_base64'])) {
         $pdfName = (string) ($impressao['filename'] ?? 'danfse.pdf');
-        file_put_contents($outputDir . '/' . $pdfName, base64_decode((string) $impressao['pdf_base64']));
+        file_put_contents($outputDir.'/'.$pdfName, base64_decode((string) $impressao['pdf_base64']));
     }
 
-    if (($impressao['modo'] ?? null) === 'url' && !empty($impressao['url'])) {
-        file_put_contents($outputDir . '/danfse.url.txt', (string) $impressao['url']);
+    if (($impressao['modo'] ?? null) === 'url' && ! empty($impressao['url'])) {
+        file_put_contents($outputDir.'/danfse.url.txt', (string) $impressao['url']);
     }
 
     echo json_encode([
         'provider' => $providerInfo->toArray(),
         'response' => $response->toArray(),
-    ], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) . PHP_EOL;
+    ], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES).PHP_EOL;
     exit(0);
 }
 
@@ -99,9 +99,9 @@ if (($options['send'] ?? false) !== true) {
         'layout' => $layout->toArray(),
         'payload' => $payload,
         'xml_preview' => $xml->getData('xml'),
-    ], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) . PHP_EOL;
+    ], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES).PHP_EOL;
     exit(0);
 }
 
 $resultado = $nfse->emitirCompleto($payload);
-echo $resultado->toJson(JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) . PHP_EOL;
+echo $resultado->toJson(JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES).PHP_EOL;

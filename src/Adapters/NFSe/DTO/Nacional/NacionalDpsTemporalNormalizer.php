@@ -10,8 +10,8 @@ final class NacionalDpsTemporalNormalizer
     public const DEFAULT_TIMEZONE = 'America/Sao_Paulo';
 
     /**
-     * @param array<string,mixed> $payload
-     * @param array<string,mixed> $context
+     * @param  array<string,mixed>  $payload
+     * @param  array<string,mixed>  $context
      * @return array<string,mixed>
      */
     public static function normalizePayload(array $payload, array $context = []): array

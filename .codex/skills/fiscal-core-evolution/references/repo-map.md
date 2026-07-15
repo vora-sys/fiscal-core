@@ -2,7 +2,7 @@
 
 Use este mapa para localizar o ponto de extensao certo antes de editar.
 
-Todos os caminhos relativos deste mapa pertencem agora a `fiscal-platform-api/app/Library/fiscal-core`. Esta pasta irma `Fiscal/fiscal-core` e apenas referencia historica e nao deve receber implementacoes novas.
+Todos os caminhos relativos deste mapa pertencem a `fiscal-platform-api/app/Library/fiscal-core`. A antiga pasta irma `Fiscal/fiscal-core` nao e fonte de implementacao e nao deve receber sincronizacao manual.
 
 ## Roteamento e configuracao NFSe
 

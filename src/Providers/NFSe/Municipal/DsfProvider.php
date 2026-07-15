@@ -10,6 +10,4 @@ namespace sabbajohn\FiscalCore\Providers\NFSe\Municipal;
  * DSF passa a reutilizar a base ABRASF compartilhada por compatibilidade
  * enquanto os municípios legados são migrados para a família canônica.
  */
-final class DsfProvider extends AbrasfSharedProvider
-{
-}
+final class DsfProvider extends AbrasfSharedProvider {}

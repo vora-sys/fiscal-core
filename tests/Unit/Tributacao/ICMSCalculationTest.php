@@ -15,7 +15,7 @@ class ICMSCalculationTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->tributacao = new TributacaoFacade();
+        $this->tributacao = new TributacaoFacade;
     }
 
     /** @test */
@@ -26,7 +26,7 @@ class ICMSCalculationTest extends TestCase
             'origem' => 'SP',
             'destino' => 'SP',
             'valor' => 1000.00,
-            'tipo_operacao' => 'venda'
+            'tipo_operacao' => 'venda',
         ];
 
         $resultado = $this->tributacao->calcularICMS($dados);
@@ -44,7 +44,7 @@ class ICMSCalculationTest extends TestCase
             'origem' => 'SP',
             'destino' => 'RJ',
             'valor' => 1000.00,
-            'tipo_operacao' => 'venda'
+            'tipo_operacao' => 'venda',
         ];
 
         $resultado = $this->tributacao->calcularICMS($dados);
@@ -62,7 +62,7 @@ class ICMSCalculationTest extends TestCase
             'origem' => 'SP',
             'destino' => 'RJ',
             'valor' => 1000.00,
-            'cst' => '60' // ST
+            'cst' => '60', // ST
         ];
 
         $resultado = $this->tributacao->calcularICMS($dados);
@@ -78,7 +78,7 @@ class ICMSCalculationTest extends TestCase
         $dados = [
             'origem' => 'SP',
             'destino' => 'RJ',
-            'valor' => 1000.00
+            'valor' => 1000.00,
         ];
 
         $resultado = $this->tributacao->calcularICMS($dados);
@@ -94,7 +94,7 @@ class ICMSCalculationTest extends TestCase
             'ncm' => '84715010',
             'origem' => 'XX',
             'destino' => 'SP',
-            'valor' => 1000.00
+            'valor' => 1000.00,
         ];
 
         $resultado = $this->tributacao->calcularICMS($dados);

@@ -4,13 +4,14 @@ declare(strict_types=1);
 
 namespace sabbajohn\FiscalCore\Support;
 
-use sabbajohn\FiscalCore\Contracts\NFSeOperationalIntrospectionInterface;
 use InvalidArgumentException;
 use NFePHP\Common\Certificate;
 use NFePHP\Common\Certificate\CertificationChain;
 use NFePHP\Common\Certificate\PrivateKey;
 use NFePHP\Common\Certificate\PublicKey;
 use RuntimeException;
+use sabbajohn\FiscalCore\Contracts\NFSeOperationalIntrospectionInterface;
+use sabbajohn\FiscalCore\Facade\UtilsFacade;
 
 final class NFSeMunicipalHomologationService
 {
@@ -39,7 +40,7 @@ final class NFSeMunicipalHomologationService
 
     public function bootstrapEnvironment(?string $envPath = null, array $envOverrides = []): array
     {
-        $envPath ??= $this->projectRoot . '/.env';
+        $envPath ??= $this->projectRoot.'/.env';
         $configManager = ConfigManager::getInstance();
         if (is_file($envPath)) {
             $this->resetManagedEnvironment();
@@ -54,13 +55,13 @@ final class NFSeMunicipalHomologationService
             }
 
             $_ENV[$key] = (string) $value;
-            putenv($key . '=' . (string) $value);
+            putenv($key.'='.(string) $value);
         }
 
         $resolved = [];
         foreach (['FISCAL_CERT_PATH', 'OPENSSL_CONF'] as $pathKey) {
             $value = $_ENV[$pathKey] ?? getenv($pathKey);
-            if (!is_string($value) || trim($value) === '') {
+            if (! is_string($value) || trim($value) === '') {
                 continue;
             }
 
@@ -70,7 +71,7 @@ final class NFSeMunicipalHomologationService
             }
 
             $_ENV[$pathKey] = $resolvedPath;
-            putenv($pathKey . '=' . $resolvedPath);
+            putenv($pathKey.'='.$resolvedPath);
             $resolved[$pathKey] = $resolvedPath;
         }
 
@@ -107,7 +108,7 @@ final class NFSeMunicipalHomologationService
 
     private function buildContext(string $municipio, string $tomadorDocumento, array $options): array
     {
-        $factory = $this->payloadFactory ?? new NFSeMunicipalPayloadFactory();
+        $factory = $this->payloadFactory ?? new NFSeMunicipalPayloadFactory;
         $meta = $factory->providerMeta($municipio);
         if ($meta['provider_key'] === ProviderRegistry::NFSE_NATIONAL_KEY) {
             throw new RuntimeException(
@@ -122,8 +123,8 @@ final class NFSeMunicipalHomologationService
 
         $configManager = ConfigManager::getInstance();
         if (
-            !$configManager->isHomologation()
-            && !($options['allow_production'] ?? false)
+            ! $configManager->isHomologation()
+            && ! ($options['allow_production'] ?? false)
         ) {
             throw new RuntimeException('Execucao em producao exige allow_production=true no script real.');
         }
@@ -184,7 +185,7 @@ final class NFSeMunicipalHomologationService
 
     private function buildResultPayload(array $context, object $provider, string $mode): array
     {
-        if (!$provider instanceof NFSeOperationalIntrospectionInterface) {
+        if (! $provider instanceof NFSeOperationalIntrospectionInterface) {
             throw new RuntimeException('Provider municipal sem suporte a introspeccao operacional.');
         }
 
@@ -235,7 +236,7 @@ final class NFSeMunicipalHomologationService
         }
 
         $providerClass = $config['provider_class'] ?? null;
-        if (!is_string($providerClass) || $providerClass === '' || !class_exists($providerClass)) {
+        if (! is_string($providerClass) || $providerClass === '' || ! class_exists($providerClass)) {
             throw new RuntimeException('Provider class municipal nao encontrada para execucao real.');
         }
 
@@ -245,7 +246,7 @@ final class NFSeMunicipalHomologationService
     private function lookupTomador(string $tomadorDocumento, array $defaults = []): array
     {
         $documento = preg_replace('/\D+/', '', $tomadorDocumento) ?? '';
-        if (!in_array(strlen($documento), [11, 14], true)) {
+        if (! in_array(strlen($documento), [11, 14], true)) {
             throw new InvalidArgumentException('O documento do tomador deve conter 11 digitos (CPF) ou 14 digitos (CNPJ).');
         }
 
@@ -259,23 +260,23 @@ final class NFSeMunicipalHomologationService
 
         if ($this->tomadorLookup !== null) {
             $result = ($this->tomadorLookup)($documento);
-            if (!is_array($result)) {
+            if (! is_array($result)) {
                 throw new RuntimeException('Tomador lookup customizado deve retornar array.');
             }
 
             $lookup = $this->mergeRecursiveDistinct($lookup, $result);
         }
 
-        $utils = new \sabbajohn\FiscalCore\Facade\UtilsFacade();
+        $utils = new UtilsFacade;
 
-        if (strlen($documento) === 14 && !$this->hasMinimumTomadorIdentity($lookup)) {
+        if (strlen($documento) === 14 && ! $this->hasMinimumTomadorIdentity($lookup)) {
             $response = $utils->consultarCNPJ($documento);
-            if (!$response->isSuccess()) {
-                throw new RuntimeException('Falha ao consultar CNPJ do tomador: ' . $response->getError());
+            if (! $response->isSuccess()) {
+                throw new RuntimeException('Falha ao consultar CNPJ do tomador: '.$response->getError());
             }
 
             $data = $response->getData();
-            if (!is_array($data)) {
+            if (! is_array($data)) {
                 throw new RuntimeException('Resposta invalida da consulta de CNPJ do tomador.');
             }
 
@@ -288,11 +289,11 @@ final class NFSeMunicipalHomologationService
             (string) (($lookup['endereco']['cep'] ?? '') !== '' ? $lookup['endereco']['cep'] : ($defaults['cep'] ?? ''))
         ) ?? '';
 
-        if ($cep !== '' && !$this->hasMinimumTomadorAddress($lookup)) {
+        if ($cep !== '' && ! $this->hasMinimumTomadorAddress($lookup)) {
             $cepResponse = $utils->consultarCEP($cep);
             if ($cepResponse->isSuccess()) {
                 $cepData = $cepResponse->getData();
-                if (!is_array($cepData)) {
+                if (! is_array($cepData)) {
                     throw new RuntimeException('Resposta invalida da consulta de CEP do tomador.');
                 }
 
@@ -308,14 +309,14 @@ final class NFSeMunicipalHomologationService
                 ]);
             }
 
-            if (!$this->hasMinimumTomadorAddress($lookup)) {
+            if (! $this->hasMinimumTomadorAddress($lookup)) {
                 $lookup = $this->mergeRecursiveDistinct($lookup, [
                     'endereco' => $this->knownAddressFallbackByCep($cep),
                 ]);
             }
 
-            if (!$this->hasMinimumTomadorAddress($lookup) && !$cepResponse->isSuccess()) {
-                throw new RuntimeException('Falha ao consultar CEP do tomador: ' . $cepResponse->getError());
+            if (! $this->hasMinimumTomadorAddress($lookup) && ! $cepResponse->isSuccess()) {
+                throw new RuntimeException('Falha ao consultar CEP do tomador: '.$cepResponse->getError());
             }
         }
 
@@ -332,13 +333,13 @@ final class NFSeMunicipalHomologationService
         $endereco = is_array($tomador['endereco'] ?? null) ? $tomador['endereco'] : [];
         foreach (['logradouro', 'bairro', 'cep'] as $field) {
             if (trim((string) ($endereco[$field] ?? '')) === '') {
-                $missing[] = 'endereco.' . $field;
+                $missing[] = 'endereco.'.$field;
             }
         }
 
         if ($missing !== []) {
             throw new InvalidArgumentException(
-                'Endereco minimo do tomador incompleto para homologacao: ' . implode(', ', $missing)
+                'Endereco minimo do tomador incompleto para homologacao: '.implode(', ', $missing)
             );
         }
 
@@ -360,7 +361,7 @@ final class NFSeMunicipalHomologationService
 
         $path = $preferredPath ?: ($_ENV['FISCAL_CERT_PATH'] ?? getenv('FISCAL_CERT_PATH'));
         $password = $preferredPassword ?: ($_ENV['FISCAL_CERT_PASSWORD'] ?? getenv('FISCAL_CERT_PASSWORD'));
-        if (!is_string($path) || trim($path) === '' || !is_string($password) || $password === '') {
+        if (! is_string($path) || trim($path) === '' || ! is_string($password) || $password === '') {
             throw new RuntimeException('Certificado digital obrigatorio para emissao NFSe municipal.');
         }
 
@@ -375,7 +376,7 @@ final class NFSeMunicipalHomologationService
         }
 
         $legacy = $this->loadLegacyCertificate($path, $password);
-        if (!$legacy instanceof Certificate || $legacy->isExpired()) {
+        if (! $legacy instanceof Certificate || $legacy->isExpired()) {
             throw new RuntimeException('Certificado digital expirado ou invalido para emissao NFSe municipal.');
         }
 
@@ -384,18 +385,18 @@ final class NFSeMunicipalHomologationService
 
     private function loadLegacyCertificate(string $path, string $password): Certificate
     {
-        if (!is_file($path)) {
+        if (! is_file($path)) {
             throw new RuntimeException("Arquivo de certificado nao encontrado: {$path}");
         }
 
         $publicCert = $this->runOpenSslPkcs12Command(
-            ['openssl', 'pkcs12', '-legacy', '-clcerts', '-nokeys', '-passin', 'pass:' . $password, '-in', $path]
+            ['openssl', 'pkcs12', '-legacy', '-clcerts', '-nokeys', '-passin', 'pass:'.$password, '-in', $path]
         );
         $privateKey = $this->runOpenSslPkcs12Command(
-            ['openssl', 'pkcs12', '-legacy', '-nocerts', '-nodes', '-passin', 'pass:' . $password, '-in', $path]
+            ['openssl', 'pkcs12', '-legacy', '-nocerts', '-nodes', '-passin', 'pass:'.$password, '-in', $path]
         );
         $chain = $this->runOpenSslPkcs12Command(
-            ['openssl', 'pkcs12', '-legacy', '-cacerts', '-nokeys', '-passin', 'pass:' . $password, '-in', $path],
+            ['openssl', 'pkcs12', '-legacy', '-cacerts', '-nokeys', '-passin', 'pass:'.$password, '-in', $path],
             true
         );
 
@@ -414,7 +415,7 @@ final class NFSeMunicipalHomologationService
         ];
 
         $process = proc_open($command, $descriptorSpec, $pipes);
-        if (!is_resource($process)) {
+        if (! is_resource($process)) {
             throw new RuntimeException('Nao foi possivel iniciar o comando openssl para ler o certificado legado.');
         }
 
@@ -426,12 +427,12 @@ final class NFSeMunicipalHomologationService
         $exitCode = proc_close($process);
         if ($exitCode !== 0) {
             throw new RuntimeException(
-                'Falha ao ler certificado legado com openssl: ' . trim((string) $stderr)
+                'Falha ao ler certificado legado com openssl: '.trim((string) $stderr)
             );
         }
 
         $output = trim((string) $stdout);
-        if ($output === '' && !$allowEmptyOutput) {
+        if ($output === '' && ! $allowEmptyOutput) {
             throw new RuntimeException('Saida vazia ao ler certificado legado com openssl.');
         }
 
@@ -476,12 +477,12 @@ final class NFSeMunicipalHomologationService
         );
 
         preg_match_all($pattern, $content, $matches);
-        if (!isset($matches[0]) || !is_array($matches[0])) {
+        if (! isset($matches[0]) || ! is_array($matches[0])) {
             return [];
         }
 
         return array_map(
-            static fn (string $block): string => trim($block) . PHP_EOL,
+            static fn (string $block): string => trim($block).PHP_EOL,
             array_values(array_filter($matches[0], static fn (string $block): bool => trim($block) !== ''))
         );
     }
@@ -491,6 +492,7 @@ final class NFSeMunicipalHomologationService
         foreach ($overrides as $key => $value) {
             if (is_array($value) && isset($base[$key]) && is_array($base[$key])) {
                 $base[$key] = $this->mergeRecursiveDistinct($base[$key], $value);
+
                 continue;
             }
 
@@ -554,14 +556,14 @@ final class NFSeMunicipalHomologationService
         if (str_starts_with($normalized, '/')) {
             $candidates[] = $normalized;
         } else {
-            $candidates[] = $envDirectory . '/' . $normalized;
-            $candidates[] = $this->projectRoot . '/' . ltrim($normalized, './');
-            $candidates[] = getcwd() . '/' . $normalized;
+            $candidates[] = $envDirectory.'/'.$normalized;
+            $candidates[] = $this->projectRoot.'/'.ltrim($normalized, './');
+            $candidates[] = getcwd().'/'.$normalized;
             if (str_contains($normalized, 'certs/')) {
-                $candidates[] = $this->projectRoot . '/certs/' . basename($normalized);
+                $candidates[] = $this->projectRoot.'/certs/'.basename($normalized);
             }
             if (basename($normalized) === 'openssl.cnf') {
-                $candidates[] = $this->projectRoot . '/openssl.cnf';
+                $candidates[] = $this->projectRoot.'/openssl.cnf';
             }
         }
 
@@ -579,20 +581,20 @@ final class NFSeMunicipalHomologationService
     {
         foreach (self::MANAGED_ENV_KEYS as $key) {
             $_ENV[$key] = '';
-            putenv($key . '=');
+            putenv($key.'=');
         }
     }
 
     private function applyEnvFile(string $envPath): void
     {
         $lines = file($envPath, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
-        if (!is_array($lines)) {
+        if (! is_array($lines)) {
             return;
         }
 
         foreach ($lines as $line) {
             $trimmed = trim($line);
-            if ($trimmed === '' || str_starts_with($trimmed, '#') || !str_contains($line, '=')) {
+            if ($trimmed === '' || str_starts_with($trimmed, '#') || ! str_contains($line, '=')) {
                 continue;
             }
 
@@ -611,7 +613,7 @@ final class NFSeMunicipalHomologationService
             }
 
             $_ENV[$key] = $value;
-            putenv($key . '=' . $value);
+            putenv($key.'='.$value);
         }
     }
 }

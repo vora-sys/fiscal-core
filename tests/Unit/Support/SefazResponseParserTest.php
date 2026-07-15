@@ -9,7 +9,7 @@ class SefazResponseParserTest extends TestCase
 {
     public function test_event_response_prefers_inner_event_status_over_batch_status(): void
     {
-        $parser = new SefazResponseParser();
+        $parser = new SefazResponseParser;
 
         $parsed = $parser->parseEventResponse($this->eventBatchXml('128', '135'));
 
@@ -23,8 +23,8 @@ class SefazResponseParserTest extends TestCase
 
     public function test_event_response_parses_multiple_events(): void
     {
-        $parser = new SefazResponseParser();
-        $xml = <<<XML
+        $parser = new SefazResponseParser;
+        $xml = <<<'XML'
 <retEnvEvento>
     <cStat>128</cStat>
     <xMotivo>Lote de Evento Processado</xMotivo>
@@ -60,7 +60,7 @@ XML;
 
     public function test_event_response_parses_soap_envelope(): void
     {
-        $parser = new SefazResponseParser();
+        $parser = new SefazResponseParser;
         $xml = <<<XML
 <soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope">
     <soap:Body>
@@ -80,7 +80,7 @@ XML;
 
     public function test_event_response_marks_rejection_as_not_ok(): void
     {
-        $parser = new SefazResponseParser();
+        $parser = new SefazResponseParser;
 
         $parsed = $parser->parseEventResponse($this->eventBatchXml('128', '573', 'Duplicidade de Evento'));
 

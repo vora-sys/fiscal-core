@@ -2,15 +2,15 @@
 
 declare(strict_types=1);
 
-require_once dirname(__DIR__, 2) . '/Fixtures/NFSeBelemMunicipalFixtures.php';
-require_once dirname(__DIR__, 2) . '/Fakes/RecordingNfseProvider.php';
+require_once dirname(__DIR__, 2).'/Fixtures/NFSeBelemMunicipalFixtures.php';
+require_once dirname(__DIR__, 2).'/Fakes/RecordingNfseProvider.php';
 
+use PHPUnit\Framework\TestCase;
 use sabbajohn\FiscalCore\Adapters\NF\NFSeAdapter;
 use sabbajohn\FiscalCore\Facade\NFSeFacade;
 use sabbajohn\FiscalCore\Providers\NFSe\Municipal\BelemMunicipalProvider;
 use sabbajohn\FiscalCore\Support\NFSeSoapTransportInterface;
 use sabbajohn\FiscalCore\Support\ProviderRegistry;
-use PHPUnit\Framework\TestCase;
 use Tests\Fakes\RecordingNfseProvider;
 
 final class NFSeBelemRoutingTest extends TestCase
@@ -21,7 +21,7 @@ final class NFSeBelemRoutingTest extends TestCase
         RecordingNfseProvider::reset();
     }
 
-    public function testBelemMeiRoutesAutomaticallyToNationalProvider(): void
+    public function test_belem_mei_routes_automatically_to_national_provider(): void
     {
         $registry = ProviderRegistry::getInstance();
         $registry->register('nfse_nacional', [
@@ -48,7 +48,7 @@ final class NFSeBelemRoutingTest extends TestCase
         );
     }
 
-    public function testBelemRejectsEmissionWhenMeiClassificationIsMissing(): void
+    public function test_belem_rejects_emission_when_mei_classification_is_missing(): void
     {
         $adapter = new NFSeAdapter('belem');
 
@@ -58,7 +58,7 @@ final class NFSeBelemRoutingTest extends TestCase
         $adapter->emitir(NFSeBelemMunicipalFixtures::payloadWithoutClassification());
     }
 
-    public function testAnyMunicipalProviderRoutesMeiEmissionToNationalProvider(): void
+    public function test_any_municipal_provider_routes_mei_emission_to_national_provider(): void
     {
         $registry = ProviderRegistry::getInstance();
         $registry->register('PUBLICA', [
@@ -88,9 +88,10 @@ final class NFSeBelemRoutingTest extends TestCase
         $this->assertSame('mei_nacional', $adapter->getLastEmissionInfo()['routing_mode'] ?? null);
     }
 
-    public function testBelemMunicipalConsultAndCancelUseMunicipalProviderCapabilities(): void
+    public function test_belem_municipal_consult_and_cancel_use_municipal_provider_capabilities(): void
     {
-        $transport = new class implements NFSeSoapTransportInterface {
+        $transport = new class implements NFSeSoapTransportInterface
+        {
             private int $call = 0;
 
             public function send(string $endpoint, string $envelope, array $options = []): array
@@ -140,9 +141,10 @@ final class NFSeBelemRoutingTest extends TestCase
         $this->assertSame('success', $adapter->getLastOperationInfo()['parsed_response']['status']);
     }
 
-    public function testBelemFacadeIncludesMunicipalOperationMetadata(): void
+    public function test_belem_facade_includes_municipal_operation_metadata(): void
     {
-        $transport = new class implements NFSeSoapTransportInterface {
+        $transport = new class implements NFSeSoapTransportInterface
+        {
             private int $call = 0;
 
             public function send(string $endpoint, string $envelope, array $options = []): array
@@ -179,9 +181,10 @@ final class NFSeBelemRoutingTest extends TestCase
         $this->assertSame('cancelar', $cancelamento->getData('cancelamento')['operation']);
     }
 
-    public function testBelemFacadeReturnsErrorWhenCancellationIsRejected(): void
+    public function test_belem_facade_returns_error_when_cancellation_is_rejected(): void
     {
-        $transport = new class implements NFSeSoapTransportInterface {
+        $transport = new class implements NFSeSoapTransportInterface
+        {
             public function send(string $endpoint, string $envelope, array $options = []): array
             {
                 return [
@@ -209,12 +212,11 @@ final class NFSeBelemRoutingTest extends TestCase
         $this->assertSame('cancelar', $cancelamento->getMetadata('cancelamento')['operation']);
     }
 
-    public function testBelemFacadeConsultarByChaveReturnsOfficialUrl(): void
+    public function test_belem_facade_consultar_by_chave_returns_official_url(): void
     {
-        $transport = new class(NFSeBelemMunicipalFixtures::consultarNfseServicoPrestadoSoapResponse()) implements NFSeSoapTransportInterface {
-            public function __construct(private readonly string $response)
-            {
-            }
+        $transport = new class(NFSeBelemMunicipalFixtures::consultarNfseServicoPrestadoSoapResponse()) implements NFSeSoapTransportInterface
+        {
+            public function __construct(private readonly string $response) {}
 
             public function send(string $endpoint, string $envelope, array $options = []): array
             {
@@ -247,9 +249,10 @@ final class NFSeBelemRoutingTest extends TestCase
         );
     }
 
-    public function testBelemFacadeEmitirCompletoFallsBackToConsultarLoteAndReturnsOfficialUrl(): void
+    public function test_belem_facade_emitir_completo_falls_back_to_consultar_lote_and_returns_official_url(): void
     {
-        $transport = new class implements NFSeSoapTransportInterface {
+        $transport = new class implements NFSeSoapTransportInterface
+        {
             private int $call = 0;
 
             public function send(string $endpoint, string $envelope, array $options = []): array
@@ -288,9 +291,10 @@ final class NFSeBelemRoutingTest extends TestCase
         );
     }
 
-    public function testBelemFacadeEmitirCompletoFallsBackToConsultarPorRpsWhenLoteHasNoNfseAndReturnsOfficialUrl(): void
+    public function test_belem_facade_emitir_completo_falls_back_to_consultar_por_rps_when_lote_has_no_nfse_and_returns_official_url(): void
     {
-        $transport = new class implements NFSeSoapTransportInterface {
+        $transport = new class implements NFSeSoapTransportInterface
+        {
             private int $call = 0;
 
             public function send(string $endpoint, string $envelope, array $options = []): array
@@ -327,9 +331,10 @@ final class NFSeBelemRoutingTest extends TestCase
         $this->assertNotEmpty($response->getData('impressao')['url'] ?? null);
     }
 
-    public function testBelemFacadeEmitirCompletoReturnsPartialWhenConsultationDoesNotResolveNfse(): void
+    public function test_belem_facade_emitir_completo_returns_partial_when_consultation_does_not_resolve_nfse(): void
     {
-        $transport = new class implements NFSeSoapTransportInterface {
+        $transport = new class implements NFSeSoapTransportInterface
+        {
             private int $call = 0;
 
             public function send(string $endpoint, string $envelope, array $options = []): array
@@ -364,12 +369,11 @@ final class NFSeBelemRoutingTest extends TestCase
         $this->assertNotEmpty($response->getData('warnings'));
     }
 
-    public function testBelemFacadeConsultarDisponibilidadeByProtocoloReturnsOfficialUrl(): void
+    public function test_belem_facade_consultar_disponibilidade_by_protocolo_returns_official_url(): void
     {
-        $transport = new class(NFSeBelemMunicipalFixtures::consultarLoteSoapResponse()) implements NFSeSoapTransportInterface {
-            public function __construct(private readonly string $response)
-            {
-            }
+        $transport = new class(NFSeBelemMunicipalFixtures::consultarLoteSoapResponse()) implements NFSeSoapTransportInterface
+        {
+            public function __construct(private readonly string $response) {}
 
             public function send(string $endpoint, string $envelope, array $options = []): array
             {
@@ -402,9 +406,10 @@ final class NFSeBelemRoutingTest extends TestCase
         );
     }
 
-    public function testBelemFacadeConsultarDisponibilidadeFallsBackToRpsWhenLoteHasNoNfse(): void
+    public function test_belem_facade_consultar_disponibilidade_falls_back_to_rps_when_lote_has_no_nfse(): void
     {
-        $transport = new class implements NFSeSoapTransportInterface {
+        $transport = new class implements NFSeSoapTransportInterface
+        {
             private int $call = 0;
 
             public function send(string $endpoint, string $envelope, array $options = []): array
@@ -443,12 +448,11 @@ final class NFSeBelemRoutingTest extends TestCase
         );
     }
 
-    public function testBelemFacadeConsultarDisponibilidadeReturnsPendenteWhenNoNfseIsAvailable(): void
+    public function test_belem_facade_consultar_disponibilidade_returns_pendente_when_no_nfse_is_available(): void
     {
-        $transport = new class(NFSeBelemRoutingTest::consultaSemNfseSoapResponse()) implements NFSeSoapTransportInterface {
-            public function __construct(private readonly string $response)
-            {
-            }
+        $transport = new class(NFSeBelemRoutingTest::consultaSemNfseSoapResponse()) implements NFSeSoapTransportInterface
+        {
+            public function __construct(private readonly string $response) {}
 
             public function send(string $endpoint, string $envelope, array $options = []): array
             {
@@ -476,7 +480,7 @@ final class NFSeBelemRoutingTest extends TestCase
         $this->assertNull($response->getData('danfse_url'));
     }
 
-    public function testBelemFacadeGerarDanfseRendersLocalPdfFromAuthorizedXml(): void
+    public function test_belem_facade_gerar_danfse_renders_local_pdf_from_authorized_xml(): void
     {
         $provider = new BelemMunicipalProvider(NFSeBelemMunicipalFixtures::belemConfig());
         $facade = new NFSeFacade('belem', new NFSeAdapter('belem', $provider));

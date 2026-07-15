@@ -2,8 +2,8 @@
 
 declare(strict_types=1);
 
-require_once __DIR__ . '/../../vendor/autoload.php';
-require_once __DIR__ . '/common.php';
+require_once __DIR__.'/../../vendor/autoload.php';
+require_once __DIR__.'/common.php';
 
 use sabbajohn\FiscalCore\Facade\FiscalFacade;
 
@@ -30,47 +30,55 @@ function belemXmlParseOptions(array $argv): array
         'im' => '4007197',
         'rps_serie' => 'RPS',
         'rps_tipo' => '1',
-        'output' => __DIR__ . '/../../tmp/belem-nfse-consulta-producao.xml',
+        'output' => __DIR__.'/../../tmp/belem-nfse-consulta-producao.xml',
     ];
 
     foreach (array_slice($argv, 1) as $arg) {
         if ($arg === '--help' || $arg === '-h') {
             $options['help'] = true;
+
             continue;
         }
 
         if (str_starts_with($arg, '--chave=')) {
             $options['chave'] = substr($arg, 8);
+
             continue;
         }
 
         if (str_starts_with($arg, '--im=')) {
             $options['im'] = substr($arg, 5);
+
             continue;
         }
 
         if (str_starts_with($arg, '--protocolo=')) {
             $options['protocolo'] = substr($arg, 12);
+
             continue;
         }
 
         if (str_starts_with($arg, '--rps-numero=')) {
             $options['rps_numero'] = substr($arg, 13);
+
             continue;
         }
 
         if (str_starts_with($arg, '--rps-serie=')) {
             $options['rps_serie'] = substr($arg, 12);
+
             continue;
         }
 
         if (str_starts_with($arg, '--rps-tipo=')) {
             $options['rps_tipo'] = substr($arg, 11);
+
             continue;
         }
 
         if (str_starts_with($arg, '--source-file=')) {
             $options['source_file'] = substr($arg, 14);
+
             continue;
         }
 
@@ -89,8 +97,8 @@ function belemExtractNfseXml(string $rawXml): ?string
         return null;
     }
 
-    $dom = new DOMDocument();
-    if (!@$dom->loadXML($rawXml)) {
+    $dom = new DOMDocument;
+    if (! @$dom->loadXML($rawXml)) {
         return null;
     }
 
@@ -117,12 +125,12 @@ function belemIsValidNfseChave(string $chave): bool
 
 $options = belemXmlParseOptions($argv);
 if (($options['help'] ?? false) === true) {
-    echo belemXmlUsage(basename((string) $argv[0])) . PHP_EOL;
+    echo belemXmlUsage(basename((string) $argv[0])).PHP_EOL;
     exit(0);
 }
 
 $chave = belemNormalizeChave((string) ($options['chave'] ?? '15014021241954766000192000000000109126034063508531'));
-if (!belemIsValidNfseChave($chave)) {
+if (! belemIsValidNfseChave($chave)) {
     throw new RuntimeException('Informe uma chave de acesso valida de NFS-e com 50 digitos em --chave.');
 }
 
@@ -137,12 +145,12 @@ $envOverrides = nfseMunicipalBuildEnvOverrides('belem', 'producao', $projectRoot
 ]);
 nfseMunicipalApplyEnvOverrides($envOverrides);
 
-$fiscal = new FiscalFacade();
+$fiscal = new FiscalFacade;
 $nfse = $fiscal->nfse('belem');
 $providerInfo = $nfse->getProviderInfo();
 
-if (!$providerInfo->isSuccess()) {
-    throw new RuntimeException('Erro ao inicializar o provider de Belem: ' . $providerInfo->getError());
+if (! $providerInfo->isSuccess()) {
+    throw new RuntimeException('Erro ao inicializar o provider de Belem: '.$providerInfo->getError());
 }
 
 $rawXml = null;
@@ -151,7 +159,7 @@ $fonte = null;
 
 if (trim((string) ($options['source_file'] ?? '')) !== '') {
     $sourceFile = trim((string) $options['source_file']);
-    if (!is_file($sourceFile)) {
+    if (! is_file($sourceFile)) {
         throw new RuntimeException('Arquivo informado em --source-file nao encontrado.');
     }
 
@@ -176,8 +184,8 @@ if (trim((string) ($options['source_file'] ?? '')) !== '') {
         }
 
         $consulta = $nfse->consultarDisponibilidade($criterios);
-        if (!$consulta->isSuccess()) {
-            throw new RuntimeException('Falha na consulta de Belém: ' . ($consulta->getError() ?? 'erro desconhecido'));
+        if (! $consulta->isSuccess()) {
+            throw new RuntimeException('Falha na consulta de Belém: '.($consulta->getError() ?? 'erro desconhecido'));
         }
 
         $consultaData = $consulta->getData();
@@ -188,8 +196,8 @@ if (trim((string) ($options['source_file'] ?? '')) !== '') {
         $rawXml = trim((string) ($parsedResponse['raw_xml'] ?? ''));
     } else {
         $consulta = $nfse->consultar($chave);
-        if (!$consulta->isSuccess()) {
-            throw new RuntimeException('Falha na consulta de Belém por chave: ' . ($consulta->getError() ?? 'erro desconhecido'));
+        if (! $consulta->isSuccess()) {
+            throw new RuntimeException('Falha na consulta de Belém por chave: '.($consulta->getError() ?? 'erro desconhecido'));
         }
 
         $fonte = 'chave';
@@ -216,20 +224,20 @@ if ($output === '') {
 }
 
 $outputDir = dirname($output);
-if (!is_dir($outputDir) && !mkdir($outputDir, 0777, true) && !is_dir($outputDir)) {
-    throw new RuntimeException('Nao foi possivel criar o diretorio de saida: ' . $outputDir);
+if (! is_dir($outputDir) && ! mkdir($outputDir, 0777, true) && ! is_dir($outputDir)) {
+    throw new RuntimeException('Nao foi possivel criar o diretorio de saida: '.$outputDir);
 }
 
 file_put_contents($output, $nfseXml);
 
-echo 'Ambiente: producao' . PHP_EOL;
-echo 'Municipio: belem' . PHP_EOL;
-echo 'IM prestador: ' . $inscricaoMunicipal . PHP_EOL;
-echo 'Chave alvo: ' . $chave . PHP_EOL;
-echo 'Fonte da consulta: ' . ($fonte ?? 'desconhecida') . PHP_EOL;
-echo 'XML salvo em: ' . $output . PHP_EOL;
+echo 'Ambiente: producao'.PHP_EOL;
+echo 'Municipio: belem'.PHP_EOL;
+echo 'IM prestador: '.$inscricaoMunicipal.PHP_EOL;
+echo 'Chave alvo: '.$chave.PHP_EOL;
+echo 'Fonte da consulta: '.($fonte ?? 'desconhecida').PHP_EOL;
+echo 'XML salvo em: '.$output.PHP_EOL;
 
 if ($consulta !== null) {
-    echo 'Resumo da consulta:' . PHP_EOL;
-    echo $consulta->toJson(JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) . PHP_EOL;
+    echo 'Resumo da consulta:'.PHP_EOL;
+    echo $consulta->toJson(JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES).PHP_EOL;
 }

@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace sabbajohn\FiscalCore\Providers\NFSe;
 
+use NFePHP\Common\Certificate;
 use sabbajohn\FiscalCore\Contracts\NFSeConsultaResultInterface;
 use sabbajohn\FiscalCore\Contracts\NFSeOperationalIntrospectionInterface;
 use sabbajohn\FiscalCore\Support\CertificateManager;
 use sabbajohn\FiscalCore\Support\NFSeResultNormalizer;
 use sabbajohn\FiscalCore\Support\NFSeSoapCurlTransport;
 use sabbajohn\FiscalCore\Support\NFSeSoapTransportInterface;
-use NFePHP\Common\Certificate;
 
 /**
  * Provider base para municipios que seguem ABRASF v2.02/v2.03.
@@ -21,23 +21,33 @@ use NFePHP\Common\Certificate;
 class AbrasfV2Provider extends AbstractNFSeProvider implements NFSeOperationalIntrospectionInterface
 {
     private const NFSE_NS = 'http://www.abrasf.org.br/nfse.xsd';
+
     private const DSIG_NS = 'http://www.w3.org/2000/09/xmldsig#';
+
     private const SERVICE_NS = 'http://nfse.abrasf.org.br';
 
     private NFSeSoapTransportInterface $transport;
+
     private ?string $lastRequestXml = null;
+
     private ?string $lastSoapEnvelope = null;
+
     private ?string $lastResponseXml = null;
+
     private array $lastResponseData = [];
+
     private array $lastOperationArtifacts = [];
+
     private array $lastTransportData = [];
+
     private ?string $lastOperation = null;
+
     private array $lastPrestadorContext = [];
 
     public function __construct(array $config)
     {
         parent::__construct($config);
-        $this->transport = $config['soap_transport'] ?? new NFSeSoapCurlTransport();
+        $this->transport = $config['soap_transport'] ?? new NFSeSoapCurlTransport;
     }
 
     public function emitir(array $dados): string
@@ -193,11 +203,11 @@ class AbrasfV2Provider extends AbstractNFSeProvider implements NFSeOperationalIn
         $this->appendPrestadorNode($dom, $infDeclaracao, $prestador);
         $this->appendTomadorNode($dom, $infDeclaracao, $tomador);
 
-        if (!empty($servico['intermediario'])) {
+        if (! empty($servico['intermediario'])) {
             $this->appendIntermediarioNode($dom, $infDeclaracao, (array) $servico['intermediario']);
         }
 
-        if (!empty($servico['construcao_civil'])) {
+        if (! empty($servico['construcao_civil'])) {
             $this->appendConstrucaoCivilNode($dom, $infDeclaracao, (array) $servico['construcao_civil']);
         }
 
@@ -234,8 +244,8 @@ class AbrasfV2Provider extends AbstractNFSeProvider implements NFSeOperationalIn
             ];
         }
 
-        $dom = new \DOMDocument();
-        if (!@$dom->loadXML($xmlResposta)) {
+        $dom = new \DOMDocument;
+        if (! @$dom->loadXML($xmlResposta)) {
             return [
                 'status' => 'invalid_xml',
                 'mensagens' => ['Resposta XML invalida do webservice ABRASF.'],
@@ -326,7 +336,7 @@ class AbrasfV2Provider extends AbstractNFSeProvider implements NFSeOperationalIn
     private function appendRpsNode(\DOMDocument $dom, \DOMElement $parent, array $rps, string $documentId): void
     {
         $infRps = $this->appendXmlNode($dom, $parent, 'Rps', null, self::NFSE_NS);
-        $infRps->setAttribute('Id', (string) ($rps['id'] ?? ($documentId . '-rps')));
+        $infRps->setAttribute('Id', (string) ($rps['id'] ?? ($documentId.'-rps')));
 
         $identificacaoRps = $this->appendXmlNode($dom, $infRps, 'IdentificacaoRps', null, self::NFSE_NS);
         $this->appendXmlNode($dom, $identificacaoRps, 'Numero', (string) ($rps['numero'] ?? '1'), self::NFSE_NS);
@@ -564,14 +574,14 @@ class AbrasfV2Provider extends AbstractNFSeProvider implements NFSeOperationalIn
         $cancelamentoDom = new \DOMDocument('1.0', 'UTF-8');
         $cancelamentoDom->preserveWhiteSpace = false;
         $cancelamentoDom->formatOutput = false;
-        if (!@$cancelamentoDom->loadXML($cancelamentoXml)) {
+        if (! @$cancelamentoDom->loadXML($cancelamentoXml)) {
             throw new \RuntimeException('XML de cancelamento invalido para substituicao ABRASF.');
         }
 
         $rpsDom = new \DOMDocument('1.0', 'UTF-8');
         $rpsDom->preserveWhiteSpace = false;
         $rpsDom->formatOutput = false;
-        if (!@$rpsDom->loadXML($rpsXml)) {
+        if (! @$rpsDom->loadXML($rpsXml)) {
             throw new \RuntimeException('XML de RPS invalido para substituicao ABRASF.');
         }
 
@@ -580,7 +590,7 @@ class AbrasfV2Provider extends AbstractNFSeProvider implements NFSeOperationalIn
         $pedido = $cancelamentoXpath->query("//*[local-name()='Pedido']")->item(0);
         $rps = $rpsXpath->query("//*[local-name()='ListaRps']/*[local-name()='Rps']")->item(0);
 
-        if (!$pedido instanceof \DOMElement || !$rps instanceof \DOMElement) {
+        if (! $pedido instanceof \DOMElement || ! $rps instanceof \DOMElement) {
             throw new \RuntimeException('Nos obrigatorios para substituicao ABRASF nao encontrados.');
         }
 
@@ -645,7 +655,7 @@ class AbrasfV2Provider extends AbstractNFSeProvider implements NFSeOperationalIn
     private function assinarXml(string $xml, string $operationKey): string
     {
         $certificate = $this->resolveCertificate();
-        if (!$certificate instanceof Certificate) {
+        if (! $certificate instanceof Certificate) {
             throw new \RuntimeException('Certificado digital requerido para assinatura ABRASF nao foi carregado.');
         }
 
@@ -660,12 +670,12 @@ class AbrasfV2Provider extends AbstractNFSeProvider implements NFSeOperationalIn
         $dom = new \DOMDocument('1.0', 'UTF-8');
         $dom->preserveWhiteSpace = false;
         $dom->formatOutput = false;
-        if (!@$dom->loadXML($xml)) {
+        if (! @$dom->loadXML($xml)) {
             throw new \RuntimeException('XML invalido para assinatura ABRASF.');
         }
 
         $root = $dom->documentElement;
-        if (!$root instanceof \DOMElement) {
+        if (! $root instanceof \DOMElement) {
             throw new \RuntimeException('Raiz do XML nao encontrada para assinatura ABRASF.');
         }
 
@@ -673,7 +683,7 @@ class AbrasfV2Provider extends AbstractNFSeProvider implements NFSeOperationalIn
         if ($operationKey === 'cancelar_nfse') {
             $pedido = $xpath->query("//*[local-name()='Pedido']")->item(0);
             $infPedido = $xpath->query("//*[local-name()='InfPedidoCancelamento']")->item(0);
-            if (!$pedido instanceof \DOMElement || !$infPedido instanceof \DOMElement) {
+            if (! $pedido instanceof \DOMElement || ! $infPedido instanceof \DOMElement) {
                 throw new \RuntimeException('Nos obrigatorios para assinatura ABRASF de cancelamento nao encontrados.');
             }
 
@@ -682,7 +692,7 @@ class AbrasfV2Provider extends AbstractNFSeProvider implements NFSeOperationalIn
             return $dom->saveXML($dom->documentElement) ?: '';
         }
 
-        if (!$root->hasAttribute('Id')) {
+        if (! $root->hasAttribute('Id')) {
             $root->setAttribute('Id', sprintf('AbrasfRequest%s', substr(sha1($operationKey), 0, 12)));
         }
 
@@ -696,12 +706,12 @@ class AbrasfV2Provider extends AbstractNFSeProvider implements NFSeOperationalIn
         $dom = new \DOMDocument('1.0', 'UTF-8');
         $dom->preserveWhiteSpace = false;
         $dom->formatOutput = false;
-        if (!@$dom->loadXML($xml)) {
+        if (! @$dom->loadXML($xml)) {
             throw new \RuntimeException('XML invalido para assinatura da emissao ABRASF.');
         }
 
         $root = $dom->documentElement;
-        if (!$root instanceof \DOMElement) {
+        if (! $root instanceof \DOMElement) {
             throw new \RuntimeException('Raiz do XML nao encontrada para assinatura da emissao ABRASF.');
         }
 
@@ -711,9 +721,9 @@ class AbrasfV2Provider extends AbstractNFSeProvider implements NFSeOperationalIn
         $infDeclaracao = $xpath->query("//*[local-name()='InfDeclaracaoPrestacaoServico']")->item(0);
 
         if (
-            !$loteRps instanceof \DOMElement
-            || !$rpsWrapper instanceof \DOMElement
-            || !$infDeclaracao instanceof \DOMElement
+            ! $loteRps instanceof \DOMElement
+            || ! $rpsWrapper instanceof \DOMElement
+            || ! $infDeclaracao instanceof \DOMElement
         ) {
             throw new \RuntimeException('Nos obrigatorios para assinatura da emissao ABRASF nao encontrados.');
         }
@@ -730,7 +740,7 @@ class AbrasfV2Provider extends AbstractNFSeProvider implements NFSeOperationalIn
         $dom = new \DOMDocument('1.0', 'UTF-8');
         $dom->preserveWhiteSpace = false;
         $dom->formatOutput = false;
-        if (!@$dom->loadXML($xml)) {
+        if (! @$dom->loadXML($xml)) {
             throw new \RuntimeException('XML invalido para assinatura da substituicao ABRASF.');
         }
 
@@ -741,10 +751,10 @@ class AbrasfV2Provider extends AbstractNFSeProvider implements NFSeOperationalIn
         $infDeclaracao = $xpath->query("//*[local-name()='InfDeclaracaoPrestacaoServico']")->item(0);
 
         if (
-            !$pedido instanceof \DOMElement
-            || !$infPedido instanceof \DOMElement
-            || !$rpsWrapper instanceof \DOMElement
-            || !$infDeclaracao instanceof \DOMElement
+            ! $pedido instanceof \DOMElement
+            || ! $infPedido instanceof \DOMElement
+            || ! $rpsWrapper instanceof \DOMElement
+            || ! $infDeclaracao instanceof \DOMElement
         ) {
             throw new \RuntimeException('Nos obrigatorios para assinatura da substituicao ABRASF nao encontrados.');
         }
@@ -795,7 +805,7 @@ class AbrasfV2Provider extends AbstractNFSeProvider implements NFSeOperationalIn
         $signedInfoNode->appendChild($referenceNode);
 
         $idSigned = trim($signedNode->getAttribute($mark));
-        $referenceNode->setAttribute('URI', $idSigned !== '' ? '#' . $idSigned : '');
+        $referenceNode->setAttribute('URI', $idSigned !== '' ? '#'.$idSigned : '');
 
         $transformsNode = $dom->createElement('Transforms');
         $referenceNode->appendChild($transformsNode);
@@ -844,13 +854,13 @@ class AbrasfV2Provider extends AbstractNFSeProvider implements NFSeOperationalIn
             $referenceDom->preserveWhiteSpace = false;
             $referenceDom->formatOutput = false;
             $referenceRoot = $referenceDom->importNode($node, true);
-            if (!$referenceRoot instanceof \DOMElement) {
+            if (! $referenceRoot instanceof \DOMElement) {
                 throw new \RuntimeException('Falha ao clonar no assinado ABRASF.');
             }
 
             $referenceDom->appendChild($referenceRoot);
             $referenceXPath = new \DOMXPath($referenceDom);
-            foreach ($referenceXPath->query("//*[local-name()='Signature' and namespace-uri()='" . self::DSIG_NS . "']") as $embeddedSignature) {
+            foreach ($referenceXPath->query("//*[local-name()='Signature' and namespace-uri()='".self::DSIG_NS."']") as $embeddedSignature) {
                 $embeddedSignature->parentNode?->removeChild($embeddedSignature);
             }
 
@@ -900,11 +910,11 @@ class AbrasfV2Provider extends AbstractNFSeProvider implements NFSeOperationalIn
     {
         return sprintf(
             '<?xml version="1.0" encoding="UTF-8"?>'
-            . '<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"'
-            . ' xmlns:svc="%s" xmlns:nfse="%s">'
-            . '<soapenv:Header><nfse:cabecalho><nfse:versaoDados>%s</nfse:versaoDados></nfse:cabecalho></soapenv:Header>'
-            . '<soapenv:Body><svc:%s>%s</svc:%s></soapenv:Body>'
-            . '</soapenv:Envelope>',
+            .'<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"'
+            .' xmlns:svc="%s" xmlns:nfse="%s">'
+            .'<soapenv:Header><nfse:cabecalho><nfse:versaoDados>%s</nfse:versaoDados></nfse:cabecalho></soapenv:Header>'
+            .'<soapenv:Body><svc:%s>%s</svc:%s></soapenv:Body>'
+            .'</soapenv:Envelope>',
             self::SERVICE_NS,
             self::NFSE_NS,
             htmlspecialchars((string) $this->getVersao(), ENT_XML1 | ENT_QUOTES, 'UTF-8'),
@@ -945,7 +955,7 @@ class AbrasfV2Provider extends AbstractNFSeProvider implements NFSeOperationalIn
 
     private function normalizeConsultaResult(string $operation, array $context = []): NFSeConsultaResultInterface
     {
-        return (new NFSeResultNormalizer())->normalizeConsulta(
+        return (new NFSeResultNormalizer)->normalizeConsulta(
             $operation,
             $this->lastResponseData,
             $this->lastOperationArtifacts,
@@ -965,7 +975,7 @@ class AbrasfV2Provider extends AbstractNFSeProvider implements NFSeOperationalIn
     }
 
     /**
-     * @param array<string,mixed> $override
+     * @param  array<string,mixed>  $override
      * @return array{cnpj:string,inscricao_municipal:string,codigo_municipio:string}
      */
     private function resolvePrestadorContext(array $override = []): array
@@ -1001,7 +1011,7 @@ class AbrasfV2Provider extends AbstractNFSeProvider implements NFSeOperationalIn
     }
 
     /**
-     * @param array<string,mixed> $prestador
+     * @param  array<string,mixed>  $prestador
      * @return array{cnpj:string,inscricao_municipal:string,codigo_municipio:string}
      */
     private function extractPrestadorContext(array $prestador): array
@@ -1101,12 +1111,12 @@ class AbrasfV2Provider extends AbstractNFSeProvider implements NFSeOperationalIn
     }
 
     /**
-     * @param list<string> $queries
+     * @param  list<string>  $queries
      */
     private function firstNodeValue(\DOMXPath $xpath, array $queries, ?\DOMNode $context = null): ?string
     {
         foreach ($queries as $query) {
-            $value = trim((string) $xpath->evaluate('string(' . $query . ')', $context));
+            $value = trim((string) $xpath->evaluate('string('.$query.')', $context));
             if ($value !== '') {
                 return $value;
             }

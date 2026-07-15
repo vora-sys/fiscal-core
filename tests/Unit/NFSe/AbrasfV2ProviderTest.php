@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\NFSe;
 
-require_once dirname(__DIR__, 2) . '/Support/TestCertificateFile.php';
+require_once dirname(__DIR__, 2).'/Support/TestCertificateFile.php';
 
 use DOMDocument;
 use DOMXPath;
@@ -16,13 +16,13 @@ use sabbajohn\FiscalCore\Support\NFSeSoapTransportInterface;
 
 final class AbrasfV2ProviderTest extends TestCase
 {
-    public function testMontaXmlRpsAbrasfComLoteServicoPrestadorETomador(): void
+    public function test_monta_xml_rps_abrasf_com_lote_servico_prestador_e_tomador(): void
     {
         $provider = new TestableAbrasfV2Provider($this->config());
 
         $xml = $provider->buildXml($this->payload());
 
-        $dom = new DOMDocument();
+        $dom = new DOMDocument;
         $this->assertTrue($dom->loadXML($xml));
         $xpath = new DOMXPath($dom);
 
@@ -37,7 +37,7 @@ final class AbrasfV2ProviderTest extends TestCase
         $this->assertSame('3550308', $xpath->evaluate("string(//*[local-name()='CodigoMunicipio'])"));
     }
 
-    public function testValidaCamposObrigatorios(): void
+    public function test_valida_campos_obrigatorios(): void
     {
         $provider = new TestableAbrasfV2Provider($this->config());
         $payload = $this->payload();
@@ -49,7 +49,7 @@ final class AbrasfV2ProviderTest extends TestCase
         $provider->buildXml($payload);
     }
 
-    public function testProcessaRespostaAbrasfComNfseAutorizada(): void
+    public function test_processa_resposta_abrasf_com_nfse_autorizada(): void
     {
         $provider = new TestableAbrasfV2Provider($this->config());
 
@@ -88,7 +88,7 @@ XML);
         $this->assertSame([], $parsed['mensagens']);
     }
 
-    public function testProcessaRespostaAbrasfComMensagemDeErro(): void
+    public function test_processa_resposta_abrasf_com_mensagem_de_erro(): void
     {
         $provider = new TestableAbrasfV2Provider($this->config());
 
@@ -108,7 +108,7 @@ XML);
         $this->assertSame(['E160 RPS ja informado. Informe outro numero.'], $parsed['mensagens']);
     }
 
-    public function testEmitirDespachaSoapEGuardaArtefatos(): void
+    public function test_emitir_despacha_soap_e_guarda_artefatos(): void
     {
         $transport = new RecordingSoapTransport(<<<'XML'
 <RecepcionarLoteRpsSincronoResposta xmlns="http://www.abrasf.org.br/nfse.xsd">
@@ -129,7 +129,7 @@ XML);
         $this->assertSame('success', $provider->getLastOperationArtifacts()['parsed_response']['status']);
     }
 
-    public function testOperacaoSoapPodeSerConfiguradaPorFamilia(): void
+    public function test_operacao_soap_pode_ser_configurada_por_familia(): void
     {
         $transport = new RecordingSoapTransport(<<<'XML'
 <RecepcionarLoteRpsResposta xmlns="http://www.abrasf.org.br/nfse.xsd">
@@ -154,7 +154,7 @@ XML);
         $this->assertSame('urn:RecepcionarLoteRps', $transport->lastOptions['soap_action']);
     }
 
-    public function testEmitirAssinaXmlQuandoOperacaoEstaConfigurada(): void
+    public function test_emitir_assina_xml_quando_operacao_esta_configurada(): void
     {
         $certificateFile = \TestCertificateFile::create('ABRASF Teste', 'secret', '11222333000181');
 
@@ -174,7 +174,7 @@ XML);
 
             $provider->emitir($this->payload());
 
-            $dom = new DOMDocument();
+            $dom = new DOMDocument;
             $this->assertTrue($dom->loadXML($transport->lastEnvelope));
             $xpath = new DOMXPath($dom);
             $signatures = $xpath->query("//*[local-name()='Signature' and namespace-uri()='http://www.w3.org/2000/09/xmldsig#']");
@@ -189,7 +189,7 @@ XML);
         }
     }
 
-    public function testConsultarPorRpsDespachaSoapERetornaResultadoNormalizado(): void
+    public function test_consultar_por_rps_despacha_soap_e_retorna_resultado_normalizado(): void
     {
         $transport = new RecordingSoapTransport(<<<'XML'
 <ConsultarNfseRpsResposta xmlns="http://www.abrasf.org.br/nfse.xsd">
@@ -215,7 +215,7 @@ XML);
         $this->assertSame('consultar_nfse_rps', $result->getConsulta()['operation']);
     }
 
-    public function testConsultarLoteDespachaSoapERetornaResultadoNormalizado(): void
+    public function test_consultar_lote_despacha_soap_e_retorna_resultado_normalizado(): void
     {
         $transport = new RecordingSoapTransport(<<<'XML'
 <ConsultarLoteRpsResposta xmlns="http://www.abrasf.org.br/nfse.xsd">
@@ -235,7 +235,7 @@ XML);
         $this->assertSame('consultar_lote', $result->getConsulta()['operation']);
     }
 
-    public function testCancelarDespachaSoapERetornaSucesso(): void
+    public function test_cancelar_despacha_soap_e_retorna_sucesso(): void
     {
         $transport = new RecordingSoapTransport(<<<'XML'
 <CancelarNfseResposta xmlns="http://www.abrasf.org.br/nfse.xsd">
@@ -263,7 +263,7 @@ XML);
         $this->assertSame('cancelar_nfse', $provider->getLastOperationArtifacts()['operation']);
     }
 
-    public function testSubstituirDespachaSoapComPedidoCancelamentoERpsSubstitutoAssinados(): void
+    public function test_substituir_despacha_soap_com_pedido_cancelamento_e_rps_substituto_assinados(): void
     {
         $certificateFile = \TestCertificateFile::create('ABRASF Substituicao Teste', 'secret', '11222333000181');
 
@@ -304,7 +304,7 @@ XML);
             $this->assertSame('substituir_nfse', $provider->getLastOperationArtifacts()['operation']);
             $this->assertSame('success', $provider->getLastOperationArtifacts()['parsed_response']['status']);
 
-            $dom = new DOMDocument();
+            $dom = new DOMDocument;
             $this->assertTrue($dom->loadXML($provider->getLastOperationArtifacts()['request_xml']));
             $xpath = new DOMXPath($dom);
             $signatures = $xpath->query("//*[local-name()='Signature' and namespace-uri()='http://www.w3.org/2000/09/xmldsig#']");
@@ -318,7 +318,7 @@ XML);
         }
     }
 
-    public function testAdapterExpoeResultadoNormalizadoDaSubstituicaoAbrasf(): void
+    public function test_adapter_expoe_resultado_normalizado_da_substituicao_abrasf(): void
     {
         $transport = new RecordingSoapTransport(<<<'XML'
 <SubstituirNfseResposta xmlns="http://www.abrasf.org.br/nfse.xsd">
@@ -407,12 +407,12 @@ XML);
 final class RecordingSoapTransport implements NFSeSoapTransportInterface
 {
     public string $lastEndpoint = '';
+
     public string $lastEnvelope = '';
+
     public array $lastOptions = [];
 
-    public function __construct(private readonly string $responseXml)
-    {
-    }
+    public function __construct(private readonly string $responseXml) {}
 
     public function send(string $endpoint, string $envelope, array $options = []): array
     {
@@ -432,7 +432,7 @@ final class RecordingSoapTransport implements NFSeSoapTransportInterface
 final class TestableAbrasfV2Provider extends AbrasfV2Provider
 {
     /**
-     * @param array<string,mixed> $dados
+     * @param  array<string,mixed>  $dados
      */
     public function buildXml(array $dados): string
     {

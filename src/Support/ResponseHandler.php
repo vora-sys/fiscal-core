@@ -2,13 +2,11 @@
 
 namespace sabbajohn\FiscalCore\Support;
 
-use sabbajohn\FiscalCore\Support\FiscalResponse;
-use sabbajohn\FiscalCore\Exceptions\FiscalException;
 use sabbajohn\FiscalCore\Exceptions\CertificateException;
+use sabbajohn\FiscalCore\Exceptions\FiscalException;
 use sabbajohn\FiscalCore\Exceptions\SefazException;
 use sabbajohn\FiscalCore\Exceptions\ValidationException;
 use sabbajohn\FiscalCore\Exceptions\XmlException;
-use sabbajohn\FiscalCore\Support\XmlUtils;
 
 /**
  * Handler centralizado para tratamento de exceções e responses
@@ -20,14 +18,14 @@ class ResponseHandler
         'RuntimeException' => 'RUNTIME_ERROR',
         'InvalidArgumentException' => 'INVALID_ARGUMENT',
         'LogicException' => 'LOGIC_ERROR',
-        'Exception' => 'GENERAL_ERROR'
+        'Exception' => 'GENERAL_ERROR',
     ];
 
     /**
      * Executa função e retorna FiscalResponse tratado
-     * 
-     * @param callable|\Exception $callbackOrException Função a ser executada OU exceção a ser processada
-     * @param string $operation Nome da operação (para logs/debug)
+     *
+     * @param  callable|\Exception  $callbackOrException  Função a ser executada OU exceção a ser processada
+     * @param  string  $operation  Nome da operação (para logs/debug)
      * @return FiscalResponse Response padronizado
      */
     public function handle($callbackOrException, string $operation = 'unknown'): FiscalResponse
@@ -42,19 +40,19 @@ class ResponseHandler
         // Caso contrário, trata como callable (comportamento original)
         try {
             $result = $callbackOrException();
-            
+
             // Se callback já retornou FiscalResponse, usa ele
             if ($result instanceof FiscalResponse) {
                 return $this->withDiagnostics($result, $operation, $start);
             }
-            
+
             // Se retornou array ou dados, cria resposta de sucesso
             return $this->withDiagnostics(FiscalResponse::success(
                 is_array($result) ? $result : ['result' => $result],
                 $operation,
                 ['execution_time' => $this->elapsed($start)]
             ), $operation, $start);
-            
+
         } catch (\Exception|\Throwable $e) {
             return $this->withDiagnostics($this->handleException($e, $operation), $operation, $start);
         }
@@ -99,7 +97,7 @@ class ResponseHandler
                 'severity' => 'error',
                 'recoverable' => true,
                 'category' => 'runtime',
-                'exception_type' => get_class($e)
+                'exception_type' => get_class($e),
             ], $e->getContext())
         );
     }
@@ -116,7 +114,7 @@ class ResponseHandler
             array_merge([
                 'severity' => 'critical',
                 'recoverable' => true,
-                'category' => 'certificate'
+                'category' => 'certificate',
             ], $e->getContext())
         );
     }
@@ -133,7 +131,7 @@ class ResponseHandler
             array_merge([
                 'severity' => 'error',
                 'recoverable' => true,
-                'category' => 'sefaz'
+                'category' => 'sefaz',
             ], $e->getContext())
         );
     }
@@ -151,7 +149,7 @@ class ResponseHandler
                 'severity' => 'warning',
                 'recoverable' => true,
                 'category' => 'validation',
-                'validation_errors' => $e->getValidationErrors()
+                'validation_errors' => $e->getValidationErrors(),
             ], $e->getContext())
         );
     }
@@ -168,7 +166,7 @@ class ResponseHandler
             array_merge([
                 'severity' => 'error',
                 'recoverable' => true,
-                'category' => 'xml'
+                'category' => 'xml',
             ], $e->getContext())
         );
     }
@@ -179,14 +177,14 @@ class ResponseHandler
     private function handleValidationError(\InvalidArgumentException $e, string $operation): FiscalResponse
     {
         return FiscalResponse::error(
-            'Dados inválidos: ' . $e->getMessage(),
+            'Dados inválidos: '.$e->getMessage(),
             'VALIDATION_ERROR',
             $operation,
             [
                 'severity' => 'warning',
                 'recoverable' => true,
                 'category' => 'validation',
-                'suggestions' => $this->getValidationSuggestions($e->getMessage())
+                'suggestions' => $this->getValidationSuggestions($e->getMessage()),
             ]
         );
     }
@@ -206,7 +204,7 @@ class ResponseHandler
             $metadata['suggestions'] = [
                 'Verifique se o certificado está carregado',
                 'Confirme se o certificado não expirou',
-                'Valide a senha do certificado'
+                'Valide a senha do certificado',
             ];
         } elseif (str_contains($e->getMessage(), 'SEFAZ')) {
             $errorCode = 'SEFAZ_ERROR';
@@ -214,7 +212,7 @@ class ResponseHandler
             $metadata['suggestions'] = [
                 'Verifique conexão com internet',
                 'Confirme se SEFAZ está operacional',
-                'Tente novamente em alguns minutos'
+                'Tente novamente em alguns minutos',
             ];
         } elseif (str_contains($e->getMessage(), 'XML')) {
             $errorCode = 'XML_ERROR';
@@ -222,7 +220,7 @@ class ResponseHandler
             $metadata['suggestions'] = [
                 'Verifique estrutura dos dados',
                 'Confirme campos obrigatórios',
-                'Valide formato dos valores'
+                'Valide formato dos valores',
             ];
         }
 
@@ -240,7 +238,7 @@ class ResponseHandler
     private function handleLogicError(\LogicException $e, string $operation): FiscalResponse
     {
         return FiscalResponse::error(
-            'Erro de fluxo: ' . $e->getMessage(),
+            'Erro de fluxo: '.$e->getMessage(),
             'LOGIC_ERROR',
             $operation,
             [
@@ -250,8 +248,8 @@ class ResponseHandler
                 'suggestions' => [
                     'Verifique sequência de operações',
                     'Confirme estado dos objetos',
-                    'Revise lógica de negócio'
-                ]
+                    'Revise lógica de negócio',
+                ],
             ]
         );
     }
@@ -262,7 +260,7 @@ class ResponseHandler
     private function handleGenericError(\Throwable $e, string $operation): FiscalResponse
     {
         return FiscalResponse::error(
-            'Erro na operação: ' . $e->getMessage(),
+            'Erro na operação: '.$e->getMessage(),
             'GENERAL_ERROR',
             $operation,
             [
@@ -270,7 +268,7 @@ class ResponseHandler
                 'recoverable' => false,
                 'category' => 'runtime',
                 'exception_type' => get_class($e),
-                'trace_summary' => $this->getTraceSummary($e)
+                'trace_summary' => $this->getTraceSummary($e),
             ]
         );
     }
@@ -291,7 +289,7 @@ class ResponseHandler
                 'message' => $e->getMessage(),
                 'trace_id' => $this->newTraceId('critical_'),
                 'category' => 'runtime',
-                'support_info' => 'Entre em contato com o suporte técnico'
+                'support_info' => 'Entre em contato com o suporte técnico',
             ]
         );
     }
@@ -306,11 +304,11 @@ class ResponseHandler
         if (str_contains($message, 'chave')) {
             $suggestions[] = 'Chave de acesso deve ter exatamente 44 dígitos';
         }
-        
+
         if (str_contains($message, 'CNPJ')) {
             $suggestions[] = 'CNPJ deve ter 14 dígitos';
         }
-        
+
         if (str_contains($message, 'motivo') || str_contains($message, 'justificativa')) {
             $suggestions[] = 'Motivo deve ter pelo menos 15 caracteres';
         }
@@ -329,17 +327,17 @@ class ResponseHandler
     {
         $trace = $e->getTrace();
         $summary = [];
-        
+
         // Pega apenas os 3 primeiros níveis do trace
         for ($i = 0; $i < min(3, count($trace)); $i++) {
             $frame = $trace[$i];
             $summary[] = [
                 'file' => basename($frame['file'] ?? 'unknown'),
                 'line' => $frame['line'] ?? 0,
-                'function' => $frame['function'] ?? 'unknown'
+                'function' => $frame['function'] ?? 'unknown',
             ];
         }
-        
+
         return $summary;
     }
 
@@ -381,7 +379,7 @@ class ResponseHandler
     private function newTraceId(string $prefix = 'fc_'): string
     {
         try {
-            return $prefix . bin2hex(random_bytes(8));
+            return $prefix.bin2hex(random_bytes(8));
         } catch (\Throwable) {
             return uniqid($prefix, true);
         }
@@ -390,7 +388,7 @@ class ResponseHandler
     private function logResponse(FiscalResponse $response): void
     {
         $enabled = $_ENV['FISCAL_CORE_LOG_DIAGNOSTICS'] ?? getenv('FISCAL_CORE_LOG_DIAGNOSTICS') ?: '0';
-        if (!in_array(strtolower((string) $enabled), ['1', 'true', 'yes', 'on'], true)) {
+        if (! in_array(strtolower((string) $enabled), ['1', 'true', 'yes', 'on'], true)) {
             return;
         }
 
@@ -408,32 +406,27 @@ class ResponseHandler
 
     /**
      * Executa callback com timeout
-     * 
-     * @param callable $callback
-     * @param int $timeoutSeconds
-     * @param string $operation
-     * @return FiscalResponse
      */
     public function handleWithTimeout(callable $callback, int $timeoutSeconds, string $operation): FiscalResponse
     {
         $startTime = time();
-        
+
         try {
             // PHP não tem timeout nativo para operações, mas podemos simular
             $result = $callback();
-            
+
             if (time() - $startTime > $timeoutSeconds) {
                 return FiscalResponse::error(
-                    'Operação excedeu tempo limite de ' . $timeoutSeconds . ' segundos',
+                    'Operação excedeu tempo limite de '.$timeoutSeconds.' segundos',
                     'TIMEOUT_ERROR',
                     $operation
                 );
             }
-            
-            return $this->handle(fn() => $result, $operation);
-            
+
+            return $this->handle(fn () => $result, $operation);
+
         } catch (\Throwable $e) {
-            return $this->handle(fn() => throw $e, $operation);
+            return $this->handle(fn () => throw $e, $operation);
         }
     }
 
@@ -452,8 +445,8 @@ class ResponseHandler
             }
 
             // Verifica se é XML válido
-            $dom = new \DOMDocument();
-            if (!$dom->loadXML($xmlResponse)) {
+            $dom = new \DOMDocument;
+            if (! $dom->loadXML($xmlResponse)) {
                 return FiscalResponse::error(
                     'Resposta inválida da API (XML malformado)',
                     'INVALID_XML_RESPONSE',
@@ -464,11 +457,12 @@ class ResponseHandler
             // Verifica se tem erro na resposta
             $xpath = new \DOMXPath($dom);
             $errorNodes = $xpath->query('//erro | //error | //fault');
-            
+
             if ($errorNodes->length > 0) {
                 $errorMessage = $errorNodes->item(0)->textContent;
+
                 return FiscalResponse::error(
-                    'Erro retornado pela API: ' . $errorMessage,
+                    'Erro retornado pela API: '.$errorMessage,
                     'API_ERROR',
                     $operation
                 );
@@ -476,7 +470,7 @@ class ResponseHandler
 
             return FiscalResponse::success([
                 'xml' => $xmlResponse,
-                'validated' => true
+                'validated' => true,
             ], $operation);
 
         } catch (\Throwable $e) {
@@ -487,7 +481,6 @@ class ResponseHandler
     /**
      * Normaliza retorno XML da SEFAZ para estrutura amigável.
      *
-     * @param string $xml
      * @return array{
      *   lote: ?array{cStat:?string,xMotivo:?string,cUF:?string,dhRecbto:?string},
      *   protocolo: ?array{cStat:?string,xMotivo:?string,chNFe:?string,nProt:?string,dhRecbto:?string},
@@ -514,23 +507,23 @@ class ResponseHandler
     public function convertToFiscalException(\Exception $e): FiscalException
     {
         $message = $e->getMessage();
-        
+
         if (str_contains($message, 'certificado') || str_contains($message, 'certificate')) {
             return CertificateException::notLoaded()->withContext(['original_exception' => get_class($e)]);
         }
-        
+
         if (str_contains($message, 'SEFAZ') || str_contains($message, 'webservice')) {
             return SefazException::connectionFailed()->withContext(['original_exception' => get_class($e)]);
         }
-        
+
         if (str_contains($message, 'XML') || str_contains($message, 'malformed')) {
             return XmlException::malformed($message)->withContext(['original_exception' => get_class($e)]);
         }
-        
+
         if (str_contains($message, 'chave') || str_contains($message, 'CNPJ') || str_contains($message, 'CPF')) {
             return ValidationException::invalidValue('unknown', $message)->withContext(['original_exception' => get_class($e)]);
         }
-        
+
         // Se não conseguir mapear, retorna FiscalException genérica
         return (new class($message, $e->getCode(), $e) extends FiscalException {})
             ->setErrorCode('UNKNOWN_ERROR')
@@ -551,21 +544,21 @@ class ResponseHandler
     public function executeWithTimeout(callable $callback, int $timeoutSeconds): FiscalResponse
     {
         $startTime = microtime(true);
-        
+
         // Usar pcntl_alarm se disponível
         if (function_exists('pcntl_alarm')) {
             pcntl_alarm($timeoutSeconds);
         }
-        
+
         try {
             $result = $callback();
-            
+
             if (function_exists('pcntl_alarm')) {
                 pcntl_alarm(0); // Cancela o alarm
             }
-            
+
             $executionTime = microtime(true) - $startTime;
-            
+
             if ($executionTime > $timeoutSeconds) {
                 return FiscalResponse::error(
                     "Operação excedeu tempo limite de {$timeoutSeconds}s",
@@ -574,14 +567,14 @@ class ResponseHandler
                     ['execution_time' => $executionTime]
                 );
             }
-            
+
             return FiscalResponse::success($result, 'executeWithTimeout', ['execution_time' => $executionTime]);
-            
+
         } catch (\Exception $e) {
             if (function_exists('pcntl_alarm')) {
                 pcntl_alarm(0);
             }
-            
+
             if (strpos($e->getMessage(), 'timeout') !== false) {
                 return FiscalResponse::error(
                     "Timeout de {$timeoutSeconds}s excedido",
@@ -590,7 +583,7 @@ class ResponseHandler
                     ['execution_time' => microtime(true) - $startTime]
                 );
             }
-            
+
             return $this->handleException($e, 'executeWithTimeout');
         }
     }
@@ -602,29 +595,30 @@ class ResponseHandler
     {
         $attempts = 0;
         $lastException = null;
-        
+
         while ($attempts < $maxAttempts) {
             $attempts++;
-            
+
             try {
                 $result = $callback();
+
                 return FiscalResponse::success($result, 'executeWithRetry', ['retry_attempts' => $attempts]);
-                
+
             } catch (\Exception $e) {
                 $lastException = $e;
-                
+
                 // Se não há mais tentativas, falha
                 if ($attempts >= $maxAttempts) {
                     break;
                 }
-                
+
                 // Delay antes da próxima tentativa
                 if ($delaySec > 0) {
                     usleep($delaySec * 1000000);
                 }
             }
         }
-        
+
         return FiscalResponse::error(
             $lastException->getMessage(),
             'RETRY_EXHAUSTED',
@@ -632,7 +626,7 @@ class ResponseHandler
             [
                 'retry_attempts' => $attempts,
                 'max_attempts' => $maxAttempts,
-                'last_error' => $lastException->getMessage()
+                'last_error' => $lastException->getMessage(),
             ]
         );
     }
@@ -644,7 +638,7 @@ class ResponseHandler
     {
         static $cache = [];
         static $cacheTimestamps = [];
-        
+
         // Verifica se existe cache válido
         if (isset($cache[$cacheKey]) && isset($cacheTimestamps[$cacheKey])) {
             $age = time() - $cacheTimestamps[$cacheKey];
@@ -656,16 +650,16 @@ class ResponseHandler
                 );
             }
         }
-        
+
         try {
             $result = $callback();
-            
+
             // Armazena no cache
             $cache[$cacheKey] = $result;
             $cacheTimestamps[$cacheKey] = time();
-            
+
             return FiscalResponse::success($result, 'executeWithCache', ['from_cache' => false]);
-            
+
         } catch (\Exception $e) {
             return $this->handleException($e, 'executeWithCache');
         }

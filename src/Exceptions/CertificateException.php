@@ -19,8 +19,8 @@ class CertificateException extends FiscalException
                 'suggestions' => [
                     'Carregue o certificado antes de usar operações fiscais',
                     'Verifique se o arquivo .pfx existe',
-                    'Confirme se a senha está correta'
-                ]
+                    'Confirme se a senha está correta',
+                ],
             ]
         );
     }
@@ -35,8 +35,8 @@ class CertificateException extends FiscalException
                 'suggestions' => [
                     'Renove seu certificado digital',
                     'Entre em contato com a Autoridade Certificadora',
-                    'Verifique a data de validade'
-                ]
+                    'Verifique a data de validade',
+                ],
             ]
         );
     }
@@ -51,8 +51,8 @@ class CertificateException extends FiscalException
                 'suggestions' => [
                     'Verifique a senha do certificado',
                     'Confirme se não há caracteres especiais',
-                    'Tente digitar a senha novamente'
-                ]
+                    'Tente digitar a senha novamente',
+                ],
             ]
         );
     }
@@ -68,8 +68,8 @@ class CertificateException extends FiscalException
                 'suggestions' => [
                     'Verifique se o caminho está correto',
                     'Confirme se o arquivo existe',
-                    'Verifique as permissões de leitura'
-                ]
+                    'Verifique as permissões de leitura',
+                ],
             ]
         );
     }

@@ -7,7 +7,7 @@ use sabbajohn\FiscalCore\Adapters\NF\DTO\IdentificacaoDTO;
 
 class IdentificacaoDTOTest extends TestCase
 {
-    public function testCriarIdentificacaoNFe()
+    public function test_criar_identificacao_n_fe()
     {
         $dto = new IdentificacaoDTO(
             cUF: 41,
@@ -35,7 +35,7 @@ class IdentificacaoDTOTest extends TestCase
         $this->assertEquals(123, $dto->nNF);
     }
 
-    public function testFactoryMethodForNFe()
+    public function test_factory_method_for_n_fe()
     {
         $dto = IdentificacaoDTO::forNFe(
             cUF: 41,
@@ -52,7 +52,7 @@ class IdentificacaoDTOTest extends TestCase
         $this->assertEquals(0, $dto->indFinal);
     }
 
-    public function testFactoryMethodForNFCe()
+    public function test_factory_method_for_nf_ce()
     {
         $dto = IdentificacaoDTO::forNFCe(
             cUF: 41,
@@ -68,10 +68,10 @@ class IdentificacaoDTOTest extends TestCase
         $this->assertEquals(1, $dto->indPres);
     }
 
-    public function testCNFGeradoAutomaticamente()
+    public function test_cnf_gerado_automaticamente()
     {
         $dto = IdentificacaoDTO::forNFCe(41, 'VENDA', 100, 4106902);
-        
+
         $this->assertIsInt($dto->cNF);
         $this->assertGreaterThanOrEqual(10000000, $dto->cNF);
         $this->assertLessThanOrEqual(99999999, $dto->cNF);

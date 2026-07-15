@@ -10,7 +10,4 @@ namespace sabbajohn\FiscalCore\Providers\NFSe\Municipal;
  * Mantemos o comportamento ABRASF compartilhado como fallback operacional
  * ate a especializacao por municipio quando houver homologacao real.
  */
-class IpmProvider extends AbrasfSharedProvider
-{
-}
-
+class IpmProvider extends AbrasfSharedProvider {}

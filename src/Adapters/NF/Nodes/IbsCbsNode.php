@@ -8,13 +8,12 @@ use sabbajohn\FiscalCore\Adapters\NF\Core\NotaNodeInterface;
 class IbsCbsNode implements NotaNodeInterface
 {
     /**
-     * @param array<string,mixed> $data
+     * @param  array<string,mixed>  $data
      */
     public function __construct(
         private int $item,
         private array $data,
-    ) {
-    }
+    ) {}
 
     public function addToMake(Make $make): void
     {
@@ -387,7 +386,7 @@ class IbsCbsNode implements NotaNodeInterface
     }
 
     /**
-     * @param list<string> $paths
+     * @param  list<string>  $paths
      */
     private function stringValue(array $paths): ?string
     {
@@ -395,8 +394,8 @@ class IbsCbsNode implements NotaNodeInterface
     }
 
     /**
-     * @param array<string,mixed> $source
-     * @param list<string> $paths
+     * @param  array<string,mixed>  $source
+     * @param  list<string>  $paths
      */
     private function stringValueFrom(array $source, array $paths): ?string
     {
@@ -411,7 +410,7 @@ class IbsCbsNode implements NotaNodeInterface
     }
 
     /**
-     * @param list<string> $paths
+     * @param  list<string>  $paths
      */
     private function numberValue(array $paths): ?float
     {
@@ -419,8 +418,8 @@ class IbsCbsNode implements NotaNodeInterface
     }
 
     /**
-     * @param array<string,mixed> $source
-     * @param list<string> $paths
+     * @param  array<string,mixed>  $source
+     * @param  list<string>  $paths
      */
     private function numberValueFrom(array $source, array $paths): ?float
     {
@@ -435,7 +434,7 @@ class IbsCbsNode implements NotaNodeInterface
     }
 
     /**
-     * @param list<string> $paths
+     * @param  list<string>  $paths
      * @return array<string,mixed>
      */
     private function arrayValue(array $paths): array
@@ -444,8 +443,8 @@ class IbsCbsNode implements NotaNodeInterface
     }
 
     /**
-     * @param array<string,mixed> $source
-     * @param list<string> $paths
+     * @param  array<string,mixed>  $source
+     * @param  list<string>  $paths
      * @return array<string,mixed>
      */
     private function arrayValueFrom(array $source, array $paths): array
@@ -461,7 +460,7 @@ class IbsCbsNode implements NotaNodeInterface
     }
 
     /**
-     * @param array<string,mixed> $payload
+     * @param  array<string,mixed>  $payload
      */
     private function hasAnyNumericValue(array $payload): bool
     {
@@ -479,7 +478,7 @@ class IbsCbsNode implements NotaNodeInterface
     }
 
     /**
-     * @param array<string,mixed> $payload
+     * @param  array<string,mixed>  $payload
      */
     private function hasAnyPositiveNumericValue(array $payload): bool
     {
@@ -497,7 +496,7 @@ class IbsCbsNode implements NotaNodeInterface
     }
 
     /**
-     * @param array<string,mixed> $payload
+     * @param  array<string,mixed>  $payload
      * @return array<string,mixed>
      */
     private function withoutNulls(array $payload): array
@@ -513,7 +512,7 @@ class IbsCbsNode implements NotaNodeInterface
     }
 
     /**
-     * @param array<string,mixed> $source
+     * @param  array<string,mixed>  $source
      */
     private function valueAtPath(array $source, string $path): mixed
     {

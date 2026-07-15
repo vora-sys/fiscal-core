@@ -46,12 +46,12 @@ final class NfceThermalLayout
     }
 
     /**
-     * @param array<string,mixed>|null $raw
+     * @param  array<string,mixed>|null  $raw
      * @return array<string,mixed>
      */
     public static function normalize(?array $raw): array
     {
-        if (!is_array($raw) || $raw === []) {
+        if (! is_array($raw) || $raw === []) {
             return self::normalizeV2([]);
         }
 
@@ -66,7 +66,7 @@ final class NfceThermalLayout
     }
 
     /**
-     * @param array<string,mixed> $raw
+     * @param  array<string,mixed>  $raw
      * @return array<string,mixed>
      */
     private static function normalizeV2(array $raw): array
@@ -79,7 +79,7 @@ final class NfceThermalLayout
         $providedOrder = [];
 
         foreach ($rawSections as $index => $entry) {
-            if (!is_array($entry)) {
+            if (! is_array($entry)) {
                 continue;
             }
 
@@ -104,7 +104,7 @@ final class NfceThermalLayout
         });
 
         foreach (self::SECTION_ORDER as $type) {
-            if (!in_array($type, $orderedTypes, true)) {
+            if (! in_array($type, $orderedTypes, true)) {
                 $orderedTypes[] = $type;
             }
         }
@@ -150,7 +150,7 @@ final class NfceThermalLayout
     }
 
     /**
-     * @param array<string,mixed> $raw
+     * @param  array<string,mixed>  $raw
      * @return array<string,mixed>
      */
     private static function normalizeLegacy(array $raw): array
@@ -160,7 +160,7 @@ final class NfceThermalLayout
         $orderedTypes = [];
 
         foreach ($legacySections as $index => $entry) {
-            if (!is_array($entry)) {
+            if (! is_array($entry)) {
                 continue;
             }
 
@@ -182,7 +182,7 @@ final class NfceThermalLayout
         usort($seenTypes, static fn (string $left, string $right): int => ($orderedTypes[$left] ?? 0) <=> ($orderedTypes[$right] ?? 0));
 
         foreach (self::SECTION_ORDER as $type) {
-            if (!in_array($type, $seenTypes, true)) {
+            if (! in_array($type, $seenTypes, true)) {
                 $seenTypes[] = $type;
             }
         }
@@ -271,7 +271,7 @@ final class NfceThermalLayout
 
     private static function sanitizeSectionType(mixed $type): ?string
     {
-        if (!is_string($type)) {
+        if (! is_string($type)) {
             return null;
         }
 
@@ -284,7 +284,7 @@ final class NfceThermalLayout
 
     private static function sanitizeAlign(mixed $align, string $fallback): string
     {
-        if (!is_string($align)) {
+        if (! is_string($align)) {
             return $fallback;
         }
 
@@ -297,7 +297,7 @@ final class NfceThermalLayout
 
     private static function sanitizeEmphasis(mixed $emphasis, string $fallback): string
     {
-        if (!is_string($emphasis)) {
+        if (! is_string($emphasis)) {
             return $fallback;
         }
 

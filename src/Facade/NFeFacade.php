@@ -2,20 +2,20 @@
 
 namespace sabbajohn\FiscalCore\Facade;
 
-use sabbajohn\FiscalCore\Adapters\NF\NFeAdapter;
+use NFePHP\NFe\Complements;
 use sabbajohn\FiscalCore\Adapters\ImpressaoAdapter;
-use sabbajohn\FiscalCore\Support\ResponseHandler;
-use sabbajohn\FiscalCore\Support\FiscalResponse;
-use sabbajohn\FiscalCore\Support\ManifestationType;
 use sabbajohn\FiscalCore\Adapters\NF\Builder\NotaFiscalBuilder;
 use sabbajohn\FiscalCore\Adapters\NF\Core\NotaFiscal;
-use sabbajohn\FiscalCore\Support\ToolsFactory;
-use NFePHP\NFe\Tools;
-use NFePHP\NFe\Complements;
+use sabbajohn\FiscalCore\Adapters\NF\NFeAdapter;
 use sabbajohn\FiscalCore\Support\FiscalDocumentResultNormalizer;
+use sabbajohn\FiscalCore\Support\FiscalResponse;
 use sabbajohn\FiscalCore\Support\FiscalResponseNormalizer;
+use sabbajohn\FiscalCore\Support\ManifestationType;
+use sabbajohn\FiscalCore\Support\ResponseHandler;
 use sabbajohn\FiscalCore\Support\SefazAdvancedMethodRegistry;
 use sabbajohn\FiscalCore\Support\SefazResponseParser;
+use sabbajohn\FiscalCore\Support\ToolsFactory;
+use sabbajohn\FiscalCore\Support\XmlUtils;
 
 /**
  * Facade para NFe - Interface simplificada e com tratamento de erros
@@ -24,22 +24,28 @@ use sabbajohn\FiscalCore\Support\SefazResponseParser;
 class NFeFacade
 {
     private ?NFeAdapter $nfe = null;
+
     private ?ImpressaoAdapter $impressao = null;
+
     private ResponseHandler $responseHandler;
+
     private FiscalDocumentResultNormalizer $resultNormalizer;
+
     private FiscalResponseNormalizer $publicNormalizer;
+
     private SefazResponseParser $sefazParser;
+
     private ?FiscalResponse $initializationError = null;
 
     public function __construct(
         ?NFeAdapter $nfe = null,
         ?ImpressaoAdapter $impressao = null
     ) {
-        $this->responseHandler = new ResponseHandler();
-        $this->resultNormalizer = new FiscalDocumentResultNormalizer();
-        $this->publicNormalizer = new FiscalResponseNormalizer();
-        $this->sefazParser = new SefazResponseParser();
-        
+        $this->responseHandler = new ResponseHandler;
+        $this->resultNormalizer = new FiscalDocumentResultNormalizer;
+        $this->publicNormalizer = new FiscalResponseNormalizer;
+        $this->sefazParser = new SefazResponseParser;
+
         if ($nfe !== null) {
             $this->nfe = $nfe;
         } else {
@@ -52,12 +58,12 @@ class NFeFacade
                 $this->initializationError = $toolsResponse;
             }
         }
-        
+
         if ($impressao !== null) {
             $this->impressao = $impressao;
         } else {
             try {
-                $this->impressao = new ImpressaoAdapter();
+                $this->impressao = new ImpressaoAdapter;
             } catch (\Exception $e) {
                 // Se falhar, impressao fica null
             }
@@ -78,13 +84,14 @@ class NFeFacade
                 ['category' => 'configuration']
             );
         }
+
         return null;
     }
 
     /**
      * Emite uma NFe com tratamento completo de erros
-     * 
-     * @param array $dados Dados da nota fiscal
+     *
+     * @param  array  $dados  Dados da nota fiscal
      * @return FiscalResponse Response padronizado com sucesso/erro
      */
     public function emitir(array $dados): FiscalResponse
@@ -94,19 +101,19 @@ class NFeFacade
         if ($initError !== null) {
             return $initError;
         }
-        
-        return $this->responseHandler->handle(function() use ($dados) {
+
+        return $this->responseHandler->handle(function () use ($dados) {
             // Garante que é modelo 55 (NFe)
-            if (!isset($dados['identificacao']['mod'])) {
+            if (! isset($dados['identificacao']['mod'])) {
                 $dados['identificacao']['mod'] = 55;
             }
-            
+
             $result = $this->nfe->emitir($dados);
 
             $xmlAssinado = $this->nfe->getLastSignedXml();
             $xmlRetorno = $this->nfe->getLastResponseXml() ?? $result;
             $xmlAutorizado = $this->buildAuthorizedXml($xmlAssinado, $xmlRetorno);
-            $sefazRetorno = \sabbajohn\FiscalCore\Support\XmlUtils::parseSefazRetorno($xmlRetorno);
+            $sefazRetorno = XmlUtils::parseSefazRetorno($xmlRetorno);
             $protocolo = $sefazRetorno['protocolo']['nProt'] ?? null;
             $chaveAcesso = $this->extrairChaveAcesso($xmlAutorizado ?? $result);
             $situacao = $this->extrairSituacao($xmlAutorizado ?? $xmlRetorno);
@@ -130,8 +137,8 @@ class NFeFacade
 
     /**
      * Consulta uma NFe pelo número da chave
-     * 
-     * @param string $chave Chave de acesso da NFe
+     *
+     * @param  string  $chave  Chave de acesso da NFe
      * @return FiscalResponse Response padronizado
      */
     public function consultar(string $chave): FiscalResponse
@@ -141,12 +148,12 @@ class NFeFacade
         if ($initError !== null) {
             return $initError;
         }
-        
-        return $this->responseHandler->handle(function() use ($chave) {
+
+        return $this->responseHandler->handle(function () use ($chave) {
             if (strlen($chave) !== 44) {
                 throw new \InvalidArgumentException('Chave de acesso deve ter 44 dígitos');
             }
-            
+
             $result = $this->nfe->consultar($chave);
 
             return $this->resultNormalizer->normalizeConsulta(
@@ -161,10 +168,10 @@ class NFeFacade
 
     /**
      * Cancela uma NFe
-     * 
-     * @param string $chave Chave de acesso
-     * @param string $motivo Motivo do cancelamento
-     * @param string $protocolo Protocolo de autorização
+     *
+     * @param  string  $chave  Chave de acesso
+     * @param  string  $motivo  Motivo do cancelamento
+     * @param  string  $protocolo  Protocolo de autorização
      * @return FiscalResponse Response padronizado
      */
     public function cancelar(string $chave, string $motivo, string $protocolo): FiscalResponse
@@ -174,16 +181,16 @@ class NFeFacade
         if ($initError !== null) {
             return $initError;
         }
-        
-        return $this->responseHandler->handle(function() use ($chave, $motivo, $protocolo) {
+
+        return $this->responseHandler->handle(function () use ($chave, $motivo, $protocolo) {
             if (strlen($motivo) < 15) {
                 throw new \InvalidArgumentException('Motivo deve ter pelo menos 15 caracteres');
             }
-            
+
             $xmlResponse = $this->nfe->cancelar($chave, $motivo, $protocolo);
             $parsed = $this->parseEventResponse($xmlResponse);
             $ok = $this->isSefazOperationSuccessful($xmlResponse);
-            
+
             return $this->publicNormalizer->normalizeFiscalOperation('nfe', 'cancelamento_nfe', [
                 'status' => $parsed['xmotivo'] ?? null,
                 'ok' => $ok,
@@ -203,7 +210,7 @@ class NFeFacade
                 'cstat' => $parsed['cstat'] ?? null,
                 'chave_acesso' => $chave,
                 'motivo' => $motivo,
-                'protocolo' => $protocolo
+                'protocolo' => $protocolo,
             ]);
         }, 'cancelamento_nfe');
     }
@@ -212,11 +219,11 @@ class NFeFacade
      * Inutiliza numeração da NFe
      */
     public function inutilizar(
-        int $ano, 
-        int $cnpj, 
-        int $serie, 
-        int $numeroInicial, 
-        int $numeroFinal, 
+        int $ano,
+        int $cnpj,
+        int $serie,
+        int $numeroInicial,
+        int $numeroFinal,
         string $justificativa
     ): FiscalResponse {
         // Verifica inicialização primeiro
@@ -224,21 +231,21 @@ class NFeFacade
         if ($initError !== null) {
             return $initError;
         }
-        
-        return $this->responseHandler->handle(function() use (
+
+        return $this->responseHandler->handle(function () use (
             $ano, $cnpj, $serie, $numeroInicial, $numeroFinal, $justificativa
         ) {
             if (strlen($justificativa) < 15) {
                 throw new \InvalidArgumentException('Justificativa deve ter pelo menos 15 caracteres');
             }
-            
+
             $xmlResponse = $this->nfe->inutilizar(
-                $ano, $cnpj, 55, $serie, 
+                $ano, $cnpj, 55, $serie,
                 $numeroInicial, $numeroFinal, $justificativa
             );
             $parsed = $this->parseEventResponse($xmlResponse);
             $ok = $this->isSefazOperationSuccessful($xmlResponse);
-            
+
             return $this->publicNormalizer->normalizeFiscalOperation('nfe', 'inutilizacao_nfe', [
                 'status' => $parsed['xmotivo'] ?? null,
                 'ok' => $ok,
@@ -258,18 +265,18 @@ class NFeFacade
                 'serie' => $serie,
                 'numeros' => [
                     'inicial' => $numeroInicial,
-                    'final' => $numeroFinal
+                    'final' => $numeroFinal,
                 ],
-                'justificativa' => $justificativa
+                'justificativa' => $justificativa,
             ]);
         }, 'inutilizacao_nfe');
     }
 
     /**
      * Verifica status do serviço SEFAZ
-     * 
-     * @param string $uf UF para consulta
-     * @param int|null $ambiente Ambiente (1=produção, 2=homologação)
+     *
+     * @param  string  $uf  UF para consulta
+     * @param  int|null  $ambiente  Ambiente (1=produção, 2=homologação)
      * @return FiscalResponse Response com status do serviço
      */
     public function verificarStatusSefaz(string $uf = '', ?int $ambiente = null): FiscalResponse
@@ -279,13 +286,13 @@ class NFeFacade
         if ($initError !== null) {
             return $initError;
         }
-        
-        return $this->responseHandler->handle(function() use ($uf, $ambiente) {
+
+        return $this->responseHandler->handle(function () use ($uf, $ambiente) {
             $result = $this->nfe->sefazStatus($uf, $ambiente);
-            $parsed = \sabbajohn\FiscalCore\Support\XmlUtils::parseSefazRetorno($result);
+            $parsed = XmlUtils::parseSefazRetorno($result);
             $cstat = $parsed['lote']['cStat'] ?? $this->extractTagValue($result, ['cStat']);
             $xmotivo = $parsed['lote']['xMotivo'] ?? $this->extractTagValue($result, ['xMotivo']);
-            
+
             return $this->publicNormalizer->normalizeFiscalOperation('nfe', 'status_sefaz', [
                 'status' => $xmotivo,
                 'ok' => in_array((string) $cstat, ['107', '108', '109'], true),
@@ -300,7 +307,7 @@ class NFeFacade
                 'xml_response' => $result,
                 'uf' => $uf ?: 'SC',
                 'ambiente' => $ambiente ?: 2,
-                'status' => $this->extrairStatusSefaz($result)
+                'status' => $this->extrairStatusSefaz($result),
             ]);
         }, 'status_sefaz');
     }
@@ -463,7 +470,7 @@ class NFeFacade
             return $initError;
         }
 
-        if (!SefazAdvancedMethodRegistry::isAllowedForModel($metodo, 55)) {
+        if (! SefazAdvancedMethodRegistry::isAllowedForModel($metodo, 55)) {
             return FiscalResponse::error(
                 "Método SEFAZ não suportado para NFe: {$metodo}",
                 'UNSUPPORTED_SEFAZ_METHOD',
@@ -585,12 +592,12 @@ class NFeFacade
                 'response_xml' => $xmlResponse,
                 'parsed_response' => $parsed,
             ], array_merge([
-                    'chave_acesso' => $chave,
-                    'manifestation_type' => $manifestationType->value,
-                    'justificativa' => $justificativa,
-                    'sequencia' => $sequencia,
-                    'xml_response' => $xmlResponse,
-                ],
+                'chave_acesso' => $chave,
+                'manifestation_type' => $manifestationType->value,
+                'justificativa' => $justificativa,
+                'sequencia' => $sequencia,
+                'xml_response' => $xmlResponse,
+            ],
                 $parsed
             ));
         }, 'manifestacao_destinatario_nfe');
@@ -640,21 +647,21 @@ class NFeFacade
 
     /**
      * Gera DANFE da NFe
-     * 
-     * @param string $xmlAutorizado XML da NFe autorizada
+     *
+     * @param  string  $xmlAutorizado  XML da NFe autorizada
      * @return FiscalResponse Response com o PDF ou erro
      */
     public function gerarDanfe(string $xmlAutorizado): FiscalResponse
     {
-        return $this->responseHandler->handle(function() use ($xmlAutorizado) {
-            if (!isset($this->impressao)) {
+        return $this->responseHandler->handle(function () use ($xmlAutorizado) {
+            if (! isset($this->impressao)) {
                 throw new \RuntimeException('Impressao adapter não disponível.');
             }
-            
+
             if (empty($xmlAutorizado)) {
                 throw new \InvalidArgumentException('XML autorizado é obrigatório');
             }
-            
+
             $pdf = $this->impressao->gerarDanfe($xmlAutorizado);
 
             return $this->resultNormalizer->normalizePdfBase64(
@@ -662,26 +669,26 @@ class NFeFacade
                 'geracao_danfe',
                 $xmlAutorizado,
                 base64_encode($pdf),
-                'danfe_' . date('Ymd_His') . '.pdf'
+                'danfe_'.date('Ymd_His').'.pdf'
             );
         }, 'geracao_danfe');
     }
 
     /**
      * Construtor fluente para NFe
-     * 
+     *
      * @return NotaFiscalBuilder Builder para construção type-safe
      */
     public static function builder(): NotaFiscalBuilder
     {
-        return new NotaFiscalBuilder();
+        return new NotaFiscalBuilder;
     }
 
     /**
      * Cria NFe a partir de array (sem emitir)
      * Útil para validação prévia
-     * 
-     * @param array $dados Dados da nota
+     *
+     * @param  array  $dados  Dados da nota
      * @return FiscalResponse Response com objeto NotaFiscal
      */
     public function criarNota(array $dados): FiscalResponse
@@ -691,26 +698,26 @@ class NFeFacade
         if ($initError !== null) {
             return $initError;
         }
-        
-        return $this->responseHandler->handle(function() use ($dados) {
-            if (!isset($dados['identificacao']['mod'])) {
+
+        return $this->responseHandler->handle(function () use ($dados) {
+            if (! isset($dados['identificacao']['mod'])) {
                 $dados['identificacao']['mod'] = 55;
             }
-            
+
             $nota = $this->nfe->criarNota($dados);
             $nota->validate();
-            
+
             return [
                 'nota_fiscal' => $nota,
                 'modelo' => 55,
                 'validada' => true,
-                'chave_simulada' => $this->simularChaveAcesso($dados)
+                'chave_simulada' => $this->simularChaveAcesso($dados),
             ];
         }, 'criacao_nota');
     }
 
     // Métodos auxiliares para extrair informações dos XMLs
-    
+
     private function extrairChaveAcesso(string $xml): ?string
     {
         if ($xml === '') {
@@ -718,11 +725,11 @@ class NFeFacade
         }
 
         try {
-            $dom = new \DOMDocument();
+            $dom = new \DOMDocument;
             $dom->loadXML($xml);
             $xpath = new \DOMXPath($dom);
             $node = $xpath->query("//*[local-name()='chNFe']")->item(0);
-            if (!$node instanceof \DOMNode) {
+            if (! $node instanceof \DOMNode) {
                 $node = $xpath->query("//*[local-name()='infNFe']")->item(0);
                 if ($node instanceof \DOMElement) {
                     $id = (string) $node->getAttribute('Id');
@@ -731,12 +738,13 @@ class NFeFacade
                     }
                 }
             }
+
             return $node ? $node->nodeValue : null;
         } catch (\Exception $e) {
             return null;
         }
     }
-    
+
     private function extrairSituacao(string $xml): string
     {
         if ($xml === '') {
@@ -744,7 +752,7 @@ class NFeFacade
         }
 
         try {
-            $dom = new \DOMDocument();
+            $dom = new \DOMDocument;
             $dom->loadXML($xml);
             $xpath = new \DOMXPath($dom);
             $queries = [
@@ -761,6 +769,7 @@ class NFeFacade
                     break;
                 }
             }
+
             return $node ? $node->nodeValue : 'Status não identificado';
         } catch (\Exception $e) {
             return 'Erro ao extrair situação';
@@ -769,11 +778,11 @@ class NFeFacade
 
     private function buildAuthorizedXml(?string $xmlAssinado, string $xmlRetorno): ?string
     {
-        if (!is_string($xmlAssinado) || trim($xmlAssinado) === '') {
+        if (! is_string($xmlAssinado) || trim($xmlAssinado) === '') {
             return null;
         }
 
-        $parsed = \sabbajohn\FiscalCore\Support\XmlUtils::parseSefazRetorno($xmlRetorno);
+        $parsed = XmlUtils::parseSefazRetorno($xmlRetorno);
         if (($parsed['autorizado'] ?? false) !== true) {
             return null;
         }
@@ -784,19 +793,20 @@ class NFeFacade
             return null;
         }
     }
-    
+
     private function extrairStatusSefaz(string $xml): string
     {
         try {
-            $dom = new \DOMDocument();
+            $dom = new \DOMDocument;
             $dom->loadXML($xml);
             $xpath = new \DOMXPath($dom);
             $cStat = $xpath->query('//cStat')->item(0);
             $xMotivo = $xpath->query('//xMotivo')->item(0);
-            
+
             if ($cStat && $xMotivo) {
-                return $cStat->nodeValue . ' - ' . $xMotivo->nodeValue;
+                return $cStat->nodeValue.' - '.$xMotivo->nodeValue;
             }
+
             return 'Status não identificado';
         } catch (\Exception $e) {
             return 'Erro ao extrair status';
@@ -890,7 +900,7 @@ class NFeFacade
     private function validateEventBatchTags(array|\stdClass $eventos): void
     {
         $items = $eventos instanceof \stdClass ? ($eventos->evento ?? []) : $eventos;
-        if (!is_iterable($items)) {
+        if (! is_iterable($items)) {
             throw new \InvalidArgumentException('Lote de eventos inválido.');
         }
 
@@ -910,7 +920,7 @@ class NFeFacade
 
     private function parseDistDFeResponse(string $xml): array
     {
-        $dom = new \DOMDocument();
+        $dom = new \DOMDocument;
         $dom->loadXML($xml);
         $xpath = new \DOMXPath($dom);
 
@@ -918,7 +928,7 @@ class NFeFacade
         $docNodes = $xpath->query("//*[local-name()='docZip']");
         if ($docNodes !== false) {
             foreach ($docNodes as $docNode) {
-                if (!$docNode instanceof \DOMElement) {
+                if (! $docNode instanceof \DOMElement) {
                     continue;
                 }
 
@@ -958,7 +968,7 @@ class NFeFacade
             $xml = @gzinflate(substr($decoded, 10));
         }
 
-        if (!is_string($xml) || trim($xml) === '') {
+        if (! is_string($xml) || trim($xml) === '') {
             return null;
         }
 
@@ -968,7 +978,7 @@ class NFeFacade
     private function extractTagValue(string $xml, array $tagNames): ?string
     {
         try {
-            $dom = new \DOMDocument();
+            $dom = new \DOMDocument;
             $dom->loadXML($xml);
             $xpath = new \DOMXPath($dom);
             foreach ($tagNames as $tagName) {
@@ -994,11 +1004,11 @@ class NFeFacade
         }
 
         try {
-            $dom = new \DOMDocument();
+            $dom = new \DOMDocument;
             $dom->loadXML($xml);
             $xpath = new \DOMXPath($dom);
             $node = $xpath->query("//*[local-name()='infNFe']")->item(0);
-            if (!$node instanceof \DOMElement) {
+            if (! $node instanceof \DOMElement) {
                 return null;
             }
 
@@ -1013,10 +1023,11 @@ class NFeFacade
     private function extrairCStat(string $xml): ?string
     {
         try {
-            $dom = new \DOMDocument();
+            $dom = new \DOMDocument;
             $dom->loadXML($xml);
             $xpath = new \DOMXPath($dom);
             $cStat = $xpath->query('//cStat')->item(0);
+
             return $cStat ? trim((string) $cStat->nodeValue) : null;
         } catch (\Exception $e) {
             return null;
@@ -1027,62 +1038,62 @@ class NFeFacade
     {
         return $this->sefazParser->isSuccessfulEventResponse($xml);
     }
-    
+
     /**
      * Valida XML NFe
      */
     public function validarXML(string $xml): FiscalResponse
     {
-        return $this->responseHandler->execute(function() use ($xml) {
+        return $this->responseHandler->execute(function () use ($xml) {
             if (empty($xml)) {
-                throw new \InvalidArgumentException("XML não pode estar vazio");
+                throw new \InvalidArgumentException('XML não pode estar vazio');
             }
-            
+
             // Validação básica de XML
-            $dom = new \DOMDocument();
+            $dom = new \DOMDocument;
             libxml_use_internal_errors(true);
-            
-            if (!$dom->loadXML($xml)) {
+
+            if (! $dom->loadXML($xml)) {
                 $errors = libxml_get_errors();
-                $errorMsg = "XML inválido: " . $errors[0]->message ?? 'Erro desconhecido';
+                $errorMsg = 'XML inválido: '.$errors[0]->message ?? 'Erro desconhecido';
                 libxml_clear_errors();
                 throw new \InvalidArgumentException($errorMsg);
             }
-            
+
             // Valida se é uma NFe
             $infNFe = $dom->getElementsByTagName('infNFe');
             if ($infNFe->length === 0) {
-                throw new \InvalidArgumentException("infNFe obrigatório");
+                throw new \InvalidArgumentException('infNFe obrigatório');
             }
-            
+
             $chave = $infNFe->item(0)->getAttribute('Id');
             $chave = str_replace('NFe', '', $chave);
-            
+
             return [
                 'xml_valido' => true,
                 'chave_acesso' => $chave,
                 'tipo_documento' => 'NFe',
-                'tamanho_xml' => strlen($xml)
+                'tamanho_xml' => strlen($xml),
             ];
         }, 'validacao_xml_nfe');
     }
-    
+
     /**
      * Valida chave de acesso NFe
      */
     public function validarChaveAcesso(string $chave): FiscalResponse
     {
-        return $this->responseHandler->execute(function() use ($chave) {
+        return $this->responseHandler->execute(function () use ($chave) {
             $chave = trim($chave);
-            
-            if (!preg_match('/^\d{44}$/', $chave)) {
-                throw new \InvalidArgumentException("Chave de acesso deve ter 44 dígitos");
+
+            if (! preg_match('/^\d{44}$/', $chave)) {
+                throw new \InvalidArgumentException('Chave de acesso deve ter 44 dígitos');
             }
 
             if ($chave === str_repeat('0', 44)) {
-                throw new \InvalidArgumentException("Chave de acesso inválida");
+                throw new \InvalidArgumentException('Chave de acesso inválida');
             }
-            
+
             // Extrai informações da chave
             $uf = substr($chave, 0, 2);
             $aamm = substr($chave, 2, 4);
@@ -1093,9 +1104,9 @@ class NFeFacade
             $tipo_emissao = substr($chave, 34, 1);
             $codigo_numerico = substr($chave, 35, 8);
             $dv = substr($chave, 43, 1);
-            
+
             $dv_calculado = $this->calcularDV(substr($chave, 0, 43));
-            
+
             return [
                 'chave_valida' => true,
                 'uf' => $uf,
@@ -1108,7 +1119,7 @@ class NFeFacade
                 'codigo_numerico' => $codigo_numerico,
                 'digito_verificador' => $dv,
                 'digito_verificador_calculado' => $dv_calculado,
-                'digito_verificador_consistente' => $dv === $dv_calculado
+                'digito_verificador_consistente' => $dv === $dv_calculado,
             ];
         }, 'validacao_chave_nfe');
     }
@@ -1126,52 +1137,62 @@ class NFeFacade
      */
     public function validarEmitente(array $emitente): FiscalResponse
     {
-        return $this->responseHandler->execute(function() use ($emitente) {
+        return $this->responseHandler->execute(function () use ($emitente) {
             $erros = [];
-            
+
             // Valida campos obrigatórios
             if (empty($emitente['CNPJ'])) {
                 $erros[] = 'CNPJ obrigatório';
             } else {
                 $cnpj = preg_replace('/\D/', '', $emitente['CNPJ']);
-                if (strlen($cnpj) !== 14 || !$this->validarDigitosCNPJ($cnpj)) {
+                if (strlen($cnpj) !== 14 || ! $this->validarDigitosCNPJ($cnpj)) {
                     $erros[] = 'CNPJ inválido';
                 }
             }
-            
+
             if (empty($emitente['xNome'])) {
                 $erros[] = 'Razão Social obrigatória';
             }
-            
+
             if (empty($emitente['IE'])) {
                 $erros[] = 'Inscrição Estadual obrigatória';
             }
-            
+
             // Valida endereço
             if (empty($emitente['endereco'])) {
                 $erros[] = 'Endereço obrigatório';
             } else {
                 $endereco = $emitente['endereco'];
-                if (empty($endereco['xLgr'])) $erros[] = 'Logradouro obrigatório';
-                if (empty($endereco['nro'])) $erros[] = 'Número obrigatório';
-                if (empty($endereco['xMun'])) $erros[] = 'Município obrigatório';
-                if (empty($endereco['UF'])) $erros[] = 'UF obrigatória';
-                if (empty($endereco['CEP'])) $erros[] = 'CEP obrigatório';
+                if (empty($endereco['xLgr'])) {
+                    $erros[] = 'Logradouro obrigatório';
+                }
+                if (empty($endereco['nro'])) {
+                    $erros[] = 'Número obrigatório';
+                }
+                if (empty($endereco['xMun'])) {
+                    $erros[] = 'Município obrigatório';
+                }
+                if (empty($endereco['UF'])) {
+                    $erros[] = 'UF obrigatória';
+                }
+                if (empty($endereco['CEP'])) {
+                    $erros[] = 'CEP obrigatório';
+                }
             }
-            
-            if (!empty($erros)) {
+
+            if (! empty($erros)) {
                 throw new \InvalidArgumentException(implode(', ', $erros));
             }
-            
+
             return [
                 'emitente_valido' => true,
                 'cnpj_formatado' => preg_replace('/\D/', '', $emitente['CNPJ']),
                 'validacoes' => [
-                    'cnpj' => !empty($emitente['CNPJ']),
-                    'razao_social' => !empty($emitente['xNome']),
-                    'ie' => !empty($emitente['IE']),
-                    'endereco' => !empty($emitente['endereco'])
-                ]
+                    'cnpj' => ! empty($emitente['CNPJ']),
+                    'razao_social' => ! empty($emitente['xNome']),
+                    'ie' => ! empty($emitente['IE']),
+                    'endereco' => ! empty($emitente['endereco']),
+                ],
             ];
         }, 'validacao_emitente_nfe');
     }
@@ -1181,38 +1202,38 @@ class NFeFacade
      */
     public function validarTotais(array $totais): FiscalResponse
     {
-        return $this->responseHandler->execute(function() use ($totais) {
+        return $this->responseHandler->execute(function () use ($totais) {
             $erros = [];
-            
+
             // Campos obrigatórios de totais
             $required = ['vBC', 'vICMS', 'vBCST', 'vST', 'vProd', 'vFrete', 'vSeg', 'vDesc', 'vII', 'vIPI', 'vPIS', 'vCOFINS', 'vOutro', 'vNF'];
-            
+
             foreach ($required as $campo) {
-                if (!isset($totais[$campo])) {
+                if (! isset($totais[$campo])) {
                     $totais[$campo] = 0;
                 }
             }
-            
+
             // Validação da soma
-            $somaCalculada = 
-                $totais['vProd'] + 
-                $totais['vFrete'] + 
-                $totais['vSeg'] + 
-                $totais['vOutro'] + 
-                $totais['vII'] + 
-                $totais['vIPI'] - 
+            $somaCalculada =
+                $totais['vProd'] +
+                $totais['vFrete'] +
+                $totais['vSeg'] +
+                $totais['vOutro'] +
+                $totais['vII'] +
+                $totais['vIPI'] -
                 $totais['vDesc'];
-            
+
             $diferenca = abs($somaCalculada - $totais['vNF']);
-            
+
             if ($diferenca > 0.02) { // Tolerância de 2 centavos
                 $erros[] = 'Total inconsistente';
             }
-            
-            if (!empty($erros)) {
+
+            if (! empty($erros)) {
                 throw new \InvalidArgumentException(implode(', ', $erros));
             }
-            
+
             return [
                 'totais_validos' => true,
                 'valor_total_nfe' => $totais['vNF'],
@@ -1225,8 +1246,8 @@ class NFeFacade
                     'desconto' => $totais['vDesc'],
                     'outros' => $totais['vOutro'],
                     'ipi' => $totais['vIPI'],
-                    'icms' => $totais['vICMS']
-                ]
+                    'icms' => $totais['vICMS'],
+                ],
             ];
         }, 'validacao_totais_nfe');
     }
@@ -1236,32 +1257,32 @@ class NFeFacade
      */
     public function validarCST(string $cst): FiscalResponse
     {
-        return $this->responseHandler->execute(function() use ($cst) {
+        return $this->responseHandler->execute(function () use ($cst) {
             // Remove caracteres não numéricos
             $cst = preg_replace('/\D/', '', $cst);
-            
+
             // CSTs válidos para ICMS
             $cstsValidos = [
                 '00', '10', '20', '30', '40', '41', '50', '51', '60', '70', '90',
-                '101', '102', '103', '201', '202', '203', '300', '400', '500'
+                '101', '102', '103', '201', '202', '203', '300', '400', '500',
             ];
-            
-            if (!in_array($cst, $cstsValidos)) {
-                throw new \InvalidArgumentException('CST inválido: ' . $cst);
+
+            if (! in_array($cst, $cstsValidos)) {
+                throw new \InvalidArgumentException('CST inválido: '.$cst);
             }
-            
+
             // Determina regime tributário pelo CST
             $regime = strlen($cst) === 2 ? 'normal' : 'simples_nacional';
-            
+
             // Determina se há tributação
             $semTributacao = in_array($cst, ['40', '41', '50', '51', '103', '203', '300', '400', '500']);
-            
+
             return [
                 'cst' => $cst,
                 'cst_valido' => true,
                 'regime_tributario' => $regime,
-                'com_tributacao' => !$semTributacao,
-                'descricao' => $this->getDescricaoCST($cst)
+                'com_tributacao' => ! $semTributacao,
+                'descricao' => $this->getDescricaoCST($cst),
             ];
         }, 'validacao_cst');
     }
@@ -1291,9 +1312,9 @@ class NFeFacade
             '203' => 'Isenção do ICMS no Simples Nacional e com cobrança do ICMS por substituição tributária',
             '300' => 'Imune',
             '400' => 'Não tributada pelo Simples Nacional',
-            '500' => 'ICMS cobrado anteriormente por substituição tributária (substituído) ou por antecipação'
+            '500' => 'ICMS cobrado anteriormente por substituição tributária (substituído) ou por antecipação',
         ];
-        
+
         return $descricoes[$cst] ?? 'CST não mapeado';
     }
 
@@ -1306,25 +1327,26 @@ class NFeFacade
         $serie = str_pad($dados['identificacao']['serie'] ?? '1', 3, '0', STR_PAD_LEFT);
         $numero = str_pad($dados['identificacao']['nNF'] ?? '1', 9, '0', STR_PAD_LEFT);
         $codigo = str_pad(rand(10000000, 99999999), 8, '0');
-        
-        $chave = $uf . date('ym') . $cnpj . $modelo . $serie . $numero . '1' . $codigo;
+
+        $chave = $uf.date('ym').$cnpj.$modelo.$serie.$numero.'1'.$codigo;
         $dv = $this->calcularDV($chave);
-        
-        return $chave . $dv;
+
+        return $chave.$dv;
     }
-    
+
     private function calcularDV(string $chave): string
     {
         $soma = 0;
         $peso = 2;
-        
+
         for ($i = strlen($chave) - 1; $i >= 0; $i--) {
-            $soma += (int)$chave[$i] * $peso;
+            $soma += (int) $chave[$i] * $peso;
             $peso = $peso == 9 ? 2 : $peso + 1;
         }
-        
+
         $dv = 11 - ($soma % 11);
-        return $dv >= 10 ? '0' : (string)$dv;
+
+        return $dv >= 10 ? '0' : (string) $dv;
     }
 
     private function validarDigitosCNPJ(string $cnpj): bool

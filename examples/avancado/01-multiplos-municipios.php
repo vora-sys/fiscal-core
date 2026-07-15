@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-require_once __DIR__ . '/../../vendor/autoload.php';
+require_once __DIR__.'/../../vendor/autoload.php';
 
 use sabbajohn\FiscalCore\Contracts\NFSeOperationalIntrospectionInterface;
 use sabbajohn\FiscalCore\Facade\FiscalFacade;
@@ -13,12 +13,12 @@ use sabbajohn\FiscalCore\Support\ProviderRegistry;
 
 function previewMunicipalProvider(string $municipio): array
 {
-    $factory = new NFSeMunicipalPayloadFactory();
+    $factory = new NFSeMunicipalPayloadFactory;
     $meta = $factory->providerMeta($municipio);
     $payload = $factory->demo($municipio);
 
     $config = ProviderRegistry::getInstance()->getConfig($meta['provider_key']);
-    $config['certificate'] = NFSeMunicipalPreviewSupport::makeCertificate('Preview ' . ucfirst($municipio));
+    $config['certificate'] = NFSeMunicipalPreviewSupport::makeCertificate('Preview '.ucfirst($municipio));
     $config['prestador'] = $payload['prestador'];
     $config['soap_transport'] = NFSeMunicipalPreviewSupport::makeTransport($municipio);
 
@@ -26,7 +26,7 @@ function previewMunicipalProvider(string $municipio): array
     $provider = new $providerClass($config);
     $provider->emitir($payload);
 
-    if (!$provider instanceof NFSeOperationalIntrospectionInterface) {
+    if (! $provider instanceof NFSeOperationalIntrospectionInterface) {
         throw new RuntimeException("Provider {$providerClass} nao suporta introspeccao.");
     }
 
@@ -41,27 +41,28 @@ function previewMunicipalProvider(string $municipio): array
 echo "NFSe MULTI-MUNICIPIO - EXEMPLO CONSISTENTE\n";
 echo "=========================================\n\n";
 
-$fiscal = new FiscalFacade();
+$fiscal = new FiscalFacade;
 $municipios = $fiscal->nfse()->listarMunicipios();
 
 echo "1. Municipios configurados\n";
 echo "--------------------------\n";
 
-if (!$municipios->isSuccess()) {
-    echo "Erro ao listar municipios: " . $municipios->getError() . PHP_EOL;
+if (! $municipios->isSuccess()) {
+    echo 'Erro ao listar municipios: '.$municipios->getError().PHP_EOL;
     exit(1);
 }
 
 $lista = $municipios->getData('municipios') ?? [];
-echo "Municipios ativos: " . implode(', ', $lista) . PHP_EOL . PHP_EOL;
+echo 'Municipios ativos: '.implode(', ', $lista).PHP_EOL.PHP_EOL;
 
 echo "2. Providers resolvidos\n";
 echo "-----------------------\n";
 
 foreach ($lista as $municipio) {
     $info = (new NFSeFacade($municipio))->getProviderInfo();
-    if (!$info->isSuccess()) {
-        echo "[ERRO] {$municipio}: " . $info->getError() . PHP_EOL;
+    if (! $info->isSuccess()) {
+        echo "[ERRO] {$municipio}: ".$info->getError().PHP_EOL;
+
         continue;
     }
 
@@ -80,31 +81,32 @@ echo "----------------------------------\n";
 
 $previewMunicipios = ['belem', 'joinville'];
 foreach ($previewMunicipios as $municipio) {
-    echo PHP_EOL . strtoupper($municipio) . PHP_EOL;
-    echo str_repeat('-', strlen($municipio)) . PHP_EOL;
+    echo PHP_EOL.strtoupper($municipio).PHP_EOL;
+    echo str_repeat('-', strlen($municipio)).PHP_EOL;
 
     try {
         $preview = previewMunicipalProvider($municipio);
     } catch (InvalidArgumentException $e) {
-        echo "Preview municipal ignorado: " . $e->getMessage() . PHP_EOL;
+        echo 'Preview municipal ignorado: '.$e->getMessage().PHP_EOL;
+
         continue;
     }
 
     $payload = $preview['payload'];
     $response = $preview['parsed_response'];
 
-    echo "Provider: " . $preview['provider_class'] . PHP_EOL;
-    echo "Prestador: " . $payload['prestador']['cnpj'] . " / IM " . $payload['prestador']['inscricaoMunicipal'] . PHP_EOL;
-    echo "Servico: " . $payload['servico']['descricao'] . PHP_EOL;
-    echo "Valor: R$ " . number_format((float) $payload['valor_servicos'], 2, ',', '.') . PHP_EOL;
-    echo "Status preview: " . ($response['status'] ?? 'desconhecido') . PHP_EOL;
+    echo 'Provider: '.$preview['provider_class'].PHP_EOL;
+    echo 'Prestador: '.$payload['prestador']['cnpj'].' / IM '.$payload['prestador']['inscricaoMunicipal'].PHP_EOL;
+    echo 'Servico: '.$payload['servico']['descricao'].PHP_EOL;
+    echo 'Valor: R$ '.number_format((float) $payload['valor_servicos'], 2, ',', '.').PHP_EOL;
+    echo 'Status preview: '.($response['status'] ?? 'desconhecido').PHP_EOL;
 
     if (isset($response['nfse']['numero'])) {
-        echo "Numero preview: " . $response['nfse']['numero'] . PHP_EOL;
+        echo 'Numero preview: '.$response['nfse']['numero'].PHP_EOL;
     }
 
     if (isset($response['protocolo'])) {
-        echo "Protocolo preview: " . $response['protocolo'] . PHP_EOL;
+        echo 'Protocolo preview: '.$response['protocolo'].PHP_EOL;
     }
 }
 

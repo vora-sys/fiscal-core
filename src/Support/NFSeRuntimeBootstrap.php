@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace sabbajohn\FiscalCore\Support;
 
-use sabbajohn\FiscalCore\Contracts\NFSeProviderConfigInterface;
 use NFePHP\Common\Certificate;
 use RuntimeException;
+use sabbajohn\FiscalCore\Contracts\NFSeProviderConfigInterface;
 
 final class NFSeRuntimeBootstrap
 {
@@ -15,8 +15,7 @@ final class NFSeRuntimeBootstrap
         private readonly ?NFSeProviderResolver $resolver = null,
         private readonly ?ConfigManager $configManager = null,
         private readonly ?CertificateManager $certificateManager = null
-    ) {
-    }
+    ) {}
 
     public function makeProvider(string $municipio, bool $requireOperationalCredentials = true): array
     {
@@ -24,14 +23,14 @@ final class NFSeRuntimeBootstrap
 
         $certificateManager = $this->certificateManager ?? CertificateManager::getInstance();
         $certificate = $certificateManager->getCertificate();
-        if (!$certificate instanceof Certificate) {
+        if (! $certificate instanceof Certificate) {
             CertificateManager::reload();
             $certificateManager = $this->certificateManager ?? CertificateManager::getInstance();
             $certificate = $certificateManager->getCertificate();
         }
 
         $registry = $this->registry ?? ProviderRegistry::getInstance();
-        $resolver = $this->resolver ?? new NFSeProviderResolver();
+        $resolver = $this->resolver ?? new NFSeProviderResolver;
         $providerKey = $resolver->resolveKey($municipio);
         $metadata = $resolver->buildMetadata($municipio);
         $config = $registry->getConfigForMunicipio($municipio);
@@ -49,11 +48,11 @@ final class NFSeRuntimeBootstrap
 
         $signatureMode = strtolower((string) ($config['signature_mode'] ?? 'optional'));
         if ($signatureMode === 'required' && $requireOperationalCredentials) {
-            if (!$certificate instanceof Certificate) {
+            if (! $certificate instanceof Certificate) {
                 throw new RuntimeException("Provider '{$providerKey}' requer certificado digital valido.");
             }
 
-            if (!$certificateManager->isValid()) {
+            if (! $certificateManager->isValid()) {
                 throw new RuntimeException("Certificado digital invalido ou expirado para provider '{$providerKey}'.");
             }
         }
@@ -78,12 +77,12 @@ final class NFSeRuntimeBootstrap
         }
 
         $providerClass = $config['provider_class'] ?? null;
-        if (!is_string($providerClass) || $providerClass === '' || !class_exists($providerClass)) {
+        if (! is_string($providerClass) || $providerClass === '' || ! class_exists($providerClass)) {
             throw new RuntimeException("Provider class nao encontrada para '{$providerKey}'.");
         }
 
         $provider = new $providerClass($config);
-        if (!$provider instanceof NFSeProviderConfigInterface) {
+        if (! $provider instanceof NFSeProviderConfigInterface) {
             throw new RuntimeException("Provider '{$providerClass}' deve implementar NFSeProviderConfigInterface.");
         }
 
@@ -141,7 +140,7 @@ final class NFSeRuntimeBootstrap
             ? substr($configured, 0, 8) === substr($certificate, 0, 8)
             : $configured === $certificate;
 
-        if (!$matches) {
+        if (! $matches) {
             throw new RuntimeException(
                 "CNPJ configurado ({$configured}) diverge do certificado carregado ({$certificate}) no modo {$matchMode}."
             );

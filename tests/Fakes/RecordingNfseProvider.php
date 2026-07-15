@@ -10,7 +10,7 @@ use sabbajohn\FiscalCore\Contracts\NFSeNacionalCapabilitiesInterface;
 use sabbajohn\FiscalCore\Contracts\NFSeProviderConfigInterface;
 use sabbajohn\FiscalCore\Support\NFSeResultNormalizer;
 
-final class RecordingNfseProvider implements NFSeProviderConfigInterface, NFSeNacionalCapabilitiesInterface
+final class RecordingNfseProvider implements NFSeNacionalCapabilitiesInterface, NFSeProviderConfigInterface
 {
     public static ?array $lastPayload = null;
 
@@ -28,12 +28,12 @@ final class RecordingNfseProvider implements NFSeProviderConfigInterface, NFSeNa
 
     public function consultar(string $chave): NFSeConsultaResultInterface
     {
-        return (new NFSeResultNormalizer())->normalizeConsulta('consultar', [
+        return (new NFSeResultNormalizer)->normalizeConsulta('consultar', [
             'status' => 'success',
             'numero' => '1',
             'codigo_verificacao' => 'ABC',
             'raw_xml' => '<consulta />',
-        ], [], ['provider_class' => static::class, 'chave_consulta' => $chave]);
+        ], [], ['provider_class' => self::class, 'chave_consulta' => $chave]);
     }
 
     public function cancelar(string $chave, string $motivo, ?string $protocolo = null): bool
@@ -108,22 +108,22 @@ final class RecordingNfseProvider implements NFSeProviderConfigInterface, NFSeNa
 
     public function consultarPorRps(array $identificacaoRps): NFSeConsultaResultInterface
     {
-        return (new NFSeResultNormalizer())->normalizeConsulta('consultar_rps', [
+        return (new NFSeResultNormalizer)->normalizeConsulta('consultar_rps', [
             'status' => 'success',
             'numero' => '1',
             'codigo_verificacao' => 'ABC',
             'raw_xml' => '<rps />',
-        ], [], ['provider_class' => static::class, 'chave_consulta' => (string) ($identificacaoRps['numero'] ?? '')]);
+        ], [], ['provider_class' => self::class, 'chave_consulta' => (string) ($identificacaoRps['numero'] ?? '')]);
     }
 
     public function consultarLote(string $protocolo): NFSeConsultaResultInterface
     {
-        return (new NFSeResultNormalizer())->normalizeConsulta('consultar_lote', [
+        return (new NFSeResultNormalizer)->normalizeConsulta('consultar_lote', [
             'status' => 'success',
             'numero' => '1',
             'codigo_verificacao' => 'ABC',
             'raw_xml' => '<lote />',
-        ], [], ['provider_class' => static::class, 'chave_consulta' => $protocolo]);
+        ], [], ['provider_class' => self::class, 'chave_consulta' => $protocolo]);
     }
 
     public function baixarXml(string $chave): string
@@ -133,9 +133,9 @@ final class RecordingNfseProvider implements NFSeProviderConfigInterface, NFSeNa
 
     public function baixarDanfse(string $chave): NFSeImpressaoResultInterface
     {
-        return (new NFSeResultNormalizer())->normalizePdfBase64(
+        return (new NFSeResultNormalizer)->normalizePdfBase64(
             base64_encode('pdf'),
-            ['provider_class' => static::class, 'filename' => 'danfse.pdf'],
+            ['provider_class' => self::class, 'filename' => 'danfse.pdf'],
             ['response_body' => '<danfse />']
         );
     }

@@ -7,7 +7,7 @@ use sabbajohn\FiscalCore\Adapters\NF\DTO\ProdutoDTO;
 
 class ProdutoDTOTest extends TestCase
 {
-    public function testCriarProduto()
+    public function test_criar_produto()
     {
         $dto = new ProdutoDTO(
             item: 1,
@@ -33,7 +33,7 @@ class ProdutoDTOTest extends TestCase
         $this->assertEquals(255.00, $dto->valorTotal);
     }
 
-    public function testFactoryMethodSimple()
+    public function test_factory_method_simple()
     {
         $dto = ProdutoDTO::simple(
             item: 1,
@@ -54,7 +54,7 @@ class ProdutoDTOTest extends TestCase
         $this->assertEquals('SEM GTIN', $dto->cean);
     }
 
-    public function testCalculoValorTotal()
+    public function test_calculo_valor_total()
     {
         $dto = ProdutoDTO::simple(
             1, 'PROD', 'DESC', '12345678', '5102', 3, 15.50
@@ -63,7 +63,7 @@ class ProdutoDTOTest extends TestCase
         $this->assertEquals(46.50, $dto->valorTotal);
     }
 
-    public function testUnidadePersonalizada()
+    public function test_unidade_personalizada()
     {
         $dto = ProdutoDTO::simple(
             1, 'PROD', 'DESC', '12345678', '5102', 2.5, 20.00,
@@ -74,7 +74,7 @@ class ProdutoDTOTest extends TestCase
         $this->assertEquals('KG', $dto->unidadeTributavel);
     }
 
-    public function testEANPersonalizado()
+    public function test_ean_personalizado()
     {
         $dto = ProdutoDTO::simple(
             1, 'PROD', 'DESC', '12345678', '5102', 1, 10.00,

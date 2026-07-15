@@ -8,7 +8,7 @@ use sabbajohn\FiscalCore\Support\NFSeResultNormalizer;
 
 /**
  * Provider base abstrato para NFSe
- * 
+ *
  * Implementa funcionalidades comuns a todos os providers.
  * Providers específicos herdam desta classe e implementam apenas
  * as particularidades do município.
@@ -16,26 +16,25 @@ use sabbajohn\FiscalCore\Support\NFSeResultNormalizer;
 abstract class AbstractNFSeProvider implements NFSeProviderConfigInterface
 {
     protected array $config;
+
     protected string $ambiente; // 'producao' ou 'homologacao'
-    
+
     public function __construct(array $config)
     {
         $this->config = $config;
         $this->ambiente = $config['ambiente'] ?? 'homologacao';
     }
-    
+
     /**
      * Monta o XML da RPS (Recibo Provisório de Serviços)
-     * 
-     * @param array $dados
+     *
      * @return string XML montado
      */
     abstract protected function montarXmlRps(array $dados): string;
-    
+
     /**
      * Processa a resposta do webservice
-     * 
-     * @param string $xmlResposta
+     *
      * @return array Dados normalizados
      */
     abstract protected function processarResposta(string $xmlResposta): array;
@@ -49,7 +48,7 @@ abstract class AbstractNFSeProvider implements NFSeProviderConfigInterface
 
         return $this->montarXmlRps($dados);
     }
-    
+
     /**
      * {@inheritDoc}
      */
@@ -61,23 +60,23 @@ abstract class AbstractNFSeProvider implements NFSeProviderConfigInterface
         // 3. Assinar XML
         // 4. Enviar para webservice
         // 5. Retornar XML da resposta
-        
+
         $this->validarDados($dados);
-        
+
         $xml = $this->montarXmlRps($dados);
-        
+
         // TODO: Integrar com SOAP/REST para envio
         // Por enquanto retorna XML montado
-        
+
         return $xml;
     }
-    
+
     /**
      * {@inheritDoc}
      */
     public function consultar(string $chave): NFSeConsultaResultInterface
     {
-        return (new NFSeResultNormalizer())->normalizeConsulta('consultar', [
+        return (new NFSeResultNormalizer)->normalizeConsulta('consultar', [
             'status' => 'unknown',
             'mensagens' => ['Implementação pendente'],
             'raw_xml' => '<?xml version="1.0"?><consultaNfseResposta><mensagem>Implementação pendente</mensagem></consultaNfseResposta>',
@@ -85,7 +84,7 @@ abstract class AbstractNFSeProvider implements NFSeProviderConfigInterface
             'provider_class' => static::class,
         ]);
     }
-    
+
     /**
      * {@inheritDoc}
      */
@@ -101,7 +100,7 @@ abstract class AbstractNFSeProvider implements NFSeProviderConfigInterface
     {
         throw new \BadMethodCallException('NFSE_OPERATION_NOT_SUPPORTED: substituir');
     }
-    
+
     /**
      * {@inheritDoc}
      */
@@ -110,12 +109,12 @@ abstract class AbstractNFSeProvider implements NFSeProviderConfigInterface
         $defaultWsdl = $this->config['wsdl'] ?? '';
         $urls = [
             'producao' => $this->config['wsdl_producao'] ?? $defaultWsdl,
-            'homologacao' => $this->config['wsdl_homologacao'] ?? $defaultWsdl
+            'homologacao' => $this->config['wsdl_homologacao'] ?? $defaultWsdl,
         ];
-        
+
         return (string) ($urls[$this->ambiente] ?? '');
     }
-    
+
     /**
      * {@inheritDoc}
      */
@@ -123,7 +122,7 @@ abstract class AbstractNFSeProvider implements NFSeProviderConfigInterface
     {
         return $this->config['versao'] ?? '2.02';
     }
-    
+
     /**
      * {@inheritDoc}
      */
@@ -131,7 +130,7 @@ abstract class AbstractNFSeProvider implements NFSeProviderConfigInterface
     {
         return $this->config['aliquota_format'] ?? 'decimal';
     }
-    
+
     /**
      * {@inheritDoc}
      */
@@ -153,7 +152,8 @@ abstract class AbstractNFSeProvider implements NFSeProviderConfigInterface
      */
     public function getTimeout(): int
     {
-        $timeout = (int)($this->config['timeout'] ?? 180);
+        $timeout = (int) ($this->config['timeout'] ?? 180);
+
         return $timeout > 0 ? $timeout : 180;
     }
 
@@ -172,13 +172,13 @@ abstract class AbstractNFSeProvider implements NFSeProviderConfigInterface
     {
         return rtrim((string) ($this->config['api_base_url'] ?? $this->config['wsdl'] ?? ''), '/');
     }
-    
+
     /**
      * {@inheritDoc}
      */
     public function getSefinApiBaseUrl(): string
     {
-        return rtrim((string)($this->config['services']['sefin'][$this->ambiente] ?? ''), '/');
+        return rtrim((string) ($this->config['services']['sefin'][$this->ambiente] ?? ''), '/');
     }
 
     public function getConfig(): array
@@ -196,30 +196,29 @@ abstract class AbstractNFSeProvider implements NFSeProviderConfigInterface
             'prestador',
             'tomador',
             'servico',
-            'valor_servicos'
+            'valor_servicos',
         ];
-        
+
         foreach ($camposObrigatorios as $campo) {
-            if (!isset($dados[$campo])) {
+            if (! isset($dados[$campo])) {
                 throw new \InvalidArgumentException("Campo obrigatório ausente: {$campo}");
             }
         }
-        
+
         return true;
     }
-    
+
     /**
      * Formata alíquota conforme padrão do município
-     * 
-     * @param float $aliquota Alíquota em formato decimal (ex: 0.02)
-     * @return string|float
+     *
+     * @param  float  $aliquota  Alíquota em formato decimal (ex: 0.02)
      */
     protected function formatarAliquota(float $aliquota): string|float
     {
         if ($this->getAliquotaFormat() === 'percentual') {
             return $aliquota * 100; // 0.02 -> 2
         }
-        
+
         return $aliquota; // 0.02
     }
 
@@ -264,7 +263,7 @@ abstract class AbstractNFSeProvider implements NFSeProviderConfigInterface
             return (new \DateTimeImmutable($value))->format(DATE_ATOM);
         }
 
-        return (new \DateTimeImmutable())->format(DATE_ATOM);
+        return (new \DateTimeImmutable)->format(DATE_ATOM);
     }
 
     protected function xmlDate(?string $value = null): string
@@ -273,7 +272,7 @@ abstract class AbstractNFSeProvider implements NFSeProviderConfigInterface
             return (new \DateTimeImmutable($value))->format('Y-m-d');
         }
 
-        return (new \DateTimeImmutable())->format('Y-m-d');
+        return (new \DateTimeImmutable)->format('Y-m-d');
     }
 
     protected function gYearMonth(?string $value = null): string
@@ -282,20 +281,20 @@ abstract class AbstractNFSeProvider implements NFSeProviderConfigInterface
             return (new \DateTimeImmutable($value))->format('Y-m');
         }
 
-        return (new \DateTimeImmutable())->format('Y-m');
+        return (new \DateTimeImmutable)->format('Y-m');
     }
 
     public function consultarContribuinteCnc(string $cnc): array
     {
         throw new \BadMethodCallException(
-            static::class . ' não suporta consultarContribuinteCnc.'
+            static::class.' não suporta consultarContribuinteCnc.'
         );
     }
 
     public function verificarHabilitacaoCnc(string $cnc): bool
     {
         throw new \BadMethodCallException(
-            static::class . ' não suporta verificarHabilitacaoCnc.'
+            static::class.' não suporta verificarHabilitacaoCnc.'
         );
     }
 }

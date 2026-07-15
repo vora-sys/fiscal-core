@@ -26,8 +26,8 @@ class XmlException extends FiscalException
                     'Verifique a estrutura do XML',
                     'Confirme se todas as tags estão fechadas',
                     'Valide caracteres especiais (encode)',
-                    'Use um validador XML'
-                ]
+                    'Use um validador XML',
+                ],
             ]
         );
     }
@@ -49,8 +49,8 @@ class XmlException extends FiscalException
                     'Verifique se o certificado está carregado',
                     'Confirme se o XML está bem formado',
                     'Valide as configurações de assinatura',
-                    'Verifique se o certificado não expirou'
-                ]
+                    'Verifique se o certificado não expirou',
+                ],
             ]
         );
     }
@@ -68,8 +68,8 @@ class XmlException extends FiscalException
                     'Corrija os erros do schema listados',
                     'Verifique a versão do layout',
                     'Confirme se todos campos obrigatórios estão presentes',
-                    'Valide tipos de dados'
-                ]
+                    'Valide tipos de dados',
+                ],
             ]
         );
     }
@@ -86,8 +86,8 @@ class XmlException extends FiscalException
                     'Verifique se o conteúdo é um XML válido',
                     'Confirme a codificação (UTF-8)',
                     'Valide caracteres especiais',
-                    'Remova caracteres de controle'
-                ]
+                    'Remova caracteres de controle',
+                ],
             ]
         );
     }
@@ -104,8 +104,8 @@ class XmlException extends FiscalException
                     'Converta o arquivo para UTF-8',
                     'Remova caracteres especiais inválidos',
                     'Valide acentos e símbolos',
-                    'Use mb_convert_encoding se necessário'
-                ]
+                    'Use mb_convert_encoding se necessário',
+                ],
             ]
         );
     }

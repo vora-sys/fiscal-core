@@ -12,7 +12,7 @@ class SefazException extends FiscalException
     public static function connectionFailed(string $uf = ''): self
     {
         return new self(
-            "Falha na conexão com SEFAZ" . ($uf ? " - UF: {$uf}" : ''),
+            'Falha na conexão com SEFAZ'.($uf ? " - UF: {$uf}" : ''),
             0,
             null,
             [
@@ -21,8 +21,8 @@ class SefazException extends FiscalException
                     'Verifique sua conexão com internet',
                     'Confirme se SEFAZ não está em manutenção',
                     'Tente novamente em alguns minutos',
-                    'Verifique se URLs de webservice estão corretas'
-                ]
+                    'Verifique se URLs de webservice estão corretas',
+                ],
             ]
         );
     }
@@ -36,7 +36,7 @@ class SefazException extends FiscalException
 
         return new self(
             $message,
-            (int)$cStat,
+            (int) $cStat,
             null,
             [
                 'cStat' => $cStat,
@@ -45,8 +45,8 @@ class SefazException extends FiscalException
                     'SEFAZ pode estar em manutenção',
                     'Aguarde e tente novamente',
                     'Verifique avisos no portal da SEFAZ',
-                    'Use modo de contingência se disponível'
-                ]
+                    'Use modo de contingência se disponível',
+                ],
             ]
         );
     }
@@ -62,8 +62,8 @@ class SefazException extends FiscalException
                 'suggestions' => [
                     'Verifique se os dados enviados estão corretos',
                     'Confirme se o ambiente (produção/homologação) está certo',
-                    'Valide o XML antes do envio'
-                ]
+                    'Valide o XML antes do envio',
+                ],
             ]
         );
     }
@@ -79,8 +79,8 @@ class SefazException extends FiscalException
                     'Sua conexão pode estar lenta',
                     'SEFAZ pode estar com alta demanda',
                     'Tente novamente em alguns minutos',
-                    'Considere aumentar o timeout'
-                ]
+                    'Considere aumentar o timeout',
+                ],
             ]
         );
     }

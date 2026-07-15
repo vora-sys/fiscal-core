@@ -52,7 +52,7 @@ final class SefazAdvancedMethodRegistry
 
     public static function isAllowedForModel(string $method, int $model): bool
     {
-        if (!isset(self::STRATEGIES[$method])) {
+        if (! isset(self::STRATEGIES[$method])) {
             return false;
         }
 

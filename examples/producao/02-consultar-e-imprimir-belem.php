@@ -2,11 +2,12 @@
 
 declare(strict_types=1);
 
-require_once __DIR__ . '/../../vendor/autoload.php';
-require_once __DIR__ . '/../homologacao/common.php';
+require_once __DIR__.'/../../vendor/autoload.php';
+require_once __DIR__.'/../homologacao/common.php';
 
 use sabbajohn\FiscalCore\Facade\FiscalFacade;
 use sabbajohn\FiscalCore\Support\BelemMunicipalDocumentUrlBuilder;
+use sabbajohn\FiscalCore\Support\FiscalResponse;
 
 function belemConsultaUsage(string $scriptName): string
 {
@@ -37,26 +38,31 @@ function belemConsultaParseOptions(array $argv): array
     foreach (array_slice($argv, 1) as $arg) {
         if ($arg === '--help' || $arg === '-h') {
             $options['help'] = true;
+
             continue;
         }
 
         if (str_starts_with($arg, '--protocolo=')) {
             $options['protocolo'] = substr($arg, 12);
+
             continue;
         }
 
         if (str_starts_with($arg, '--rps-numero=')) {
             $options['rps_numero'] = substr($arg, 13);
+
             continue;
         }
 
         if (str_starts_with($arg, '--rps-serie=')) {
             $options['rps_serie'] = substr($arg, 12);
+
             continue;
         }
 
         if (str_starts_with($arg, '--rps-tipo=')) {
             $options['rps_tipo'] = substr($arg, 11);
+
             continue;
         }
 
@@ -75,8 +81,8 @@ function belemExtractNfseXml(array $parsedResponse): ?string
         return null;
     }
 
-    $dom = new DOMDocument();
-    if (!@$dom->loadXML($rawXml)) {
+    $dom = new DOMDocument;
+    if (! @$dom->loadXML($rawXml)) {
         return null;
     }
 
@@ -98,8 +104,8 @@ function belemExtractAvailabilityFromXml(string $content, string $cpfOuCnpj, str
         return null;
     }
 
-    $dom = new DOMDocument();
-    if (!@$dom->loadXML($xml)) {
+    $dom = new DOMDocument;
+    if (! @$dom->loadXML($xml)) {
         return null;
     }
 
@@ -130,7 +136,7 @@ function belemExtractAvailabilityFromXml(string $content, string $cpfOuCnpj, str
 
 $options = belemConsultaParseOptions($argv);
 if (($options['help'] ?? false) === true) {
-    echo belemConsultaUsage(basename((string) $argv[0])) . PHP_EOL;
+    echo belemConsultaUsage(basename((string) $argv[0])).PHP_EOL;
     exit(0);
 }
 
@@ -147,13 +153,13 @@ $projectRoot = dirname(__DIR__, 2);
 $envOverrides = nfseMunicipalBuildEnvOverrides('belem', 'producao', $projectRoot);
 nfseMunicipalApplyEnvOverrides($envOverrides);
 
-$fiscal = new FiscalFacade();
+$fiscal = new FiscalFacade;
 $nfse = $fiscal->nfse('belem');
 $providerInfo = $nfse->getProviderInfo();
 
-if (!$providerInfo->isSuccess()) {
+if (! $providerInfo->isSuccess()) {
     fwrite(STDERR, "Erro ao inicializar o provider de Belém.\n");
-    fwrite(STDERR, $providerInfo->toJson(JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) . PHP_EOL);
+    fwrite(STDERR, $providerInfo->toJson(JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES).PHP_EOL);
     exit(1);
 }
 
@@ -166,7 +172,7 @@ $prestadorIm = nfseMunicipalRequiredEnvValue('FISCAL_IM');
 
 if (trim((string) ($options['source_file'] ?? '')) !== '') {
     $sourceFile = trim((string) $options['source_file']);
-    if (!is_file($sourceFile)) {
+    if (! is_file($sourceFile)) {
         fwrite(STDERR, "Erro: arquivo informado em --source-file nao encontrado.\n");
         exit(1);
     }
@@ -198,14 +204,14 @@ if ($availability === null) {
     $availability = $consulta->isSuccess() ? $consulta->getData() : null;
 }
 
-echo 'Provider pronto: ' . ($providerInfo->isSuccess() ? 'sim' : 'nao') . PHP_EOL;
-echo 'Fonte da consulta: ' . ($fonteConsulta ?? 'nenhuma') . PHP_EOL;
+echo 'Provider pronto: '.($providerInfo->isSuccess() ? 'sim' : 'nao').PHP_EOL;
+echo 'Fonte da consulta: '.($fonteConsulta ?? 'nenhuma').PHP_EOL;
 if ($consulta !== null) {
     echo "Consulta Belém:\n";
-    echo $consulta->toJson(JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) . PHP_EOL;
+    echo $consulta->toJson(JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES).PHP_EOL;
 }
 
-if ($availability === null && (!$consulta instanceof \sabbajohn\FiscalCore\Support\FiscalResponse || !$consulta->isSuccess())) {
+if ($availability === null && (! $consulta instanceof FiscalResponse || ! $consulta->isSuccess())) {
     fwrite(STDERR, "Erro: a consulta nao retornou sucesso operacional.\n");
     exit(1);
 }
@@ -216,7 +222,7 @@ if ($availability === null) {
 }
 
 echo "Disponibilidade Belém:\n";
-echo json_encode($availability, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) . PHP_EOL;
+echo json_encode($availability, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES).PHP_EOL;
 
 $danfseUrl = trim((string) ($availability['danfse_url'] ?? ''));
 if ($danfseUrl === '') {
@@ -224,4 +230,4 @@ if ($danfseUrl === '') {
     exit(1);
 }
 
-echo 'URL oficial do DANFSe: ' . $danfseUrl . PHP_EOL;
+echo 'URL oficial do DANFSe: '.$danfseUrl.PHP_EOL;

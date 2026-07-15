@@ -1,12 +1,12 @@
 <?php
-namespace sabbajohn\FiscalCore\Support;
 
+namespace sabbajohn\FiscalCore\Support;
 
 final class NFSeSchemaValidator
 {
     public function validate(string $xml, string $schemaPath): array
     {
-        if (!is_file($schemaPath)) {
+        if (! is_file($schemaPath)) {
             return [
                 'valid' => false,
                 'schema' => $schemaPath,
@@ -17,7 +17,7 @@ final class NFSeSchemaValidator
         $previous = libxml_use_internal_errors(true);
         libxml_clear_errors();
 
-        $dom = new \DOMDocument();
+        $dom = new \DOMDocument;
         $loaded = $dom->loadXML($xml, LIBXML_NONET);
 
         $errors = $this->normalizeErrors(libxml_get_errors());
@@ -42,7 +42,7 @@ final class NFSeSchemaValidator
     }
 
     /**
-     * @param \LibXMLError[] $errors
+     * @param  \LibXMLError[]  $errors
      * @return string[]
      */
     private function normalizeErrors(array $errors): array

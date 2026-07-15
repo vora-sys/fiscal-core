@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-use sabbajohn\FiscalCore\Support\BelemMunicipalDocumentUrlBuilder;
 use PHPUnit\Framework\TestCase;
+use sabbajohn\FiscalCore\Support\BelemMunicipalDocumentUrlBuilder;
 
 final class BelemMunicipalDocumentUrlBuilderTest extends TestCase
 {
-    public function testBuildCreatesOfficialBelemDanfseUrl(): void
+    public function test_build_creates_official_belem_danfse_url(): void
     {
         $url = BelemMunicipalDocumentUrlBuilder::build(
             '12.345.678/0001-95',

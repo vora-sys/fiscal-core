@@ -17,17 +17,23 @@ use sabbajohn\FiscalCore\Support\NFSeSoapTransportInterface;
 class IsswebProvider extends AbstractNFSeProvider implements NFSeOperationalIntrospectionInterface
 {
     private ?string $lastRequestXml = null;
+
     private ?string $lastSoapEnvelope = null;
+
     private ?string $lastResponseXml = null;
+
     private array $lastResponseData = [];
+
     private array $lastOperationArtifacts = [];
+
     private ?string $lastOperation = null;
+
     private NFSeSoapTransportInterface $transport;
 
     public function __construct(array $config)
     {
         parent::__construct($config);
-        $this->transport = $config['soap_transport'] ?? new NFSeSoapCurlTransport();
+        $this->transport = $config['soap_transport'] ?? new NFSeSoapCurlTransport;
 
         $envKey = $_ENV['NFSE_ISSWEB_CHAVE'] ?? getenv('NFSE_ISSWEB_CHAVE') ?: '';
         if ($envKey !== '' && trim((string) ($this->config['auth']['chave'] ?? '')) === '') {
@@ -53,7 +59,7 @@ class IsswebProvider extends AbstractNFSeProvider implements NFSeOperationalIntr
 
         $this->dispatchOperation('consultar', $requestXml);
 
-        return (new NFSeResultNormalizer())->normalizeConsulta(
+        return (new NFSeResultNormalizer)->normalizeConsulta(
             'consultar',
             $this->lastResponseData,
             $this->lastOperationArtifacts,
@@ -91,7 +97,7 @@ class IsswebProvider extends AbstractNFSeProvider implements NFSeOperationalIntr
         $impressao = $consulta->getImpressao();
 
         if (($impressao['disponivel'] ?? false) === true && is_string($impressao['url'] ?? null)) {
-            return (new NFSeResultNormalizer())->normalizeUrl($impressao['url'], [
+            return (new NFSeResultNormalizer)->normalizeUrl($impressao['url'], [
                 'provider_key' => 'ISSWEB_AM',
                 'provider_class' => static::class,
                 'municipio' => (string) ($this->config['municipio_nome'] ?? ''),
@@ -99,7 +105,7 @@ class IsswebProvider extends AbstractNFSeProvider implements NFSeOperationalIntr
             ], $consulta->getRaw());
         }
 
-        return (new NFSeResultNormalizer())->normalizeIndisponivel([
+        return (new NFSeResultNormalizer)->normalizeIndisponivel([
             'provider_key' => 'ISSWEB_AM',
             'provider_class' => static::class,
             'municipio' => (string) ($this->config['municipio_nome'] ?? ''),
@@ -164,11 +170,11 @@ class IsswebProvider extends AbstractNFSeProvider implements NFSeOperationalIntr
         $this->appendXmlNode($dom, $item, 'TextoItem', $this->normalizeTextoItem((string) ($servico['descricao'] ?? $servico['discriminacao'] ?? '')));
         $this->appendXmlNode($dom, $item, 'ValorItem', $this->decimal((float) ($dados['valor_servicos'] ?? 0), 2));
         $this->appendXmlNode($dom, $item, 'ValorDeducao', $this->decimal((float) ($servico['valor_deducao'] ?? 0), 2));
-        $this->appendXmlNode($dom, $item, 'Retido', !empty($servico['iss_retido']) ? 'S' : 'N');
+        $this->appendXmlNode($dom, $item, 'Retido', ! empty($servico['iss_retido']) ? 'S' : 'N');
         $this->appendXmlNode($dom, $item, 'Pais', $this->truncate((string) ($tomador['pais'] ?? 'Brasil'), 50));
 
         foreach ((array) ($servico['impostos'] ?? []) as $imposto) {
-            if (!is_array($imposto)) {
+            if (! is_array($imposto)) {
                 continue;
             }
 
@@ -198,8 +204,8 @@ class IsswebProvider extends AbstractNFSeProvider implements NFSeOperationalIntr
             ];
         }
 
-        $dom = new \DOMDocument();
-        if (!@$dom->loadXML($xml)) {
+        $dom = new \DOMDocument;
+        if (! @$dom->loadXML($xml)) {
             return [
                 'status' => 'invalid_xml',
                 'mensagens' => ['XML de resposta inválido do ISSWEB.'],
@@ -215,7 +221,7 @@ class IsswebProvider extends AbstractNFSeProvider implements NFSeOperationalIntr
         foreach ($xpath->query('//*[local-name()="Retorno"]/*[local-name()="Erro"]') ?: [] as $erroNode) {
             $id = trim((string) $xpath->evaluate('string(./*[local-name()="ID"][1])', $erroNode));
             $message = trim((string) $xpath->evaluate('string(./*[local-name()="Erro"][1])', $erroNode));
-            $messages[] = trim(($id !== '' ? "[{$id}] " : '') . $message);
+            $messages[] = trim(($id !== '' ? "[{$id}] " : '').$message);
         }
 
         foreach ($xpath->query('//*[local-name()="Retorno"]/*[local-name()="NotaFiscal"]') ?: [] as $notaNode) {
@@ -274,7 +280,7 @@ class IsswebProvider extends AbstractNFSeProvider implements NFSeOperationalIntr
         }
 
         $tomadorDoc = $required['tomador.documento'];
-        if (!in_array(strlen($tomadorDoc), [11, 14], true)) {
+        if (! in_array(strlen($tomadorDoc), [11, 14], true)) {
             throw new \InvalidArgumentException('Documento do tomador deve conter 11 ou 14 dígitos.');
         }
 
@@ -401,7 +407,7 @@ class IsswebProvider extends AbstractNFSeProvider implements NFSeOperationalIntr
         $endpoint = trim((string) (
             ($this->config['operation_endpoints'][$operation][$this->ambiente] ?? '')
             ?: ($this->config['operation_endpoints'][$operation] ?? '')
-            ?: ($this->config['service_base_' . $this->ambiente] ?? '')
+            ?: ($this->config['service_base_'.$this->ambiente] ?? '')
             ?: ($this->ambiente === 'producao'
                 ? ($this->config['wsdl_producao'] ?? '')
                 : ($this->config['wsdl_homologacao'] ?? ''))
@@ -411,7 +417,7 @@ class IsswebProvider extends AbstractNFSeProvider implements NFSeOperationalIntr
         if ($endpoint === '') {
             throw new \RuntimeException(
                 "Endpoint ISSWEB de {$this->ambiente} não configurado para '{$operation}'. "
-                . 'Preencha wsdl_homologacao/wsdl_producao ou service_base_* na família do provider.'
+                .'Preencha wsdl_homologacao/wsdl_producao ou service_base_* na família do provider.'
             );
         }
 
@@ -449,12 +455,12 @@ class IsswebProvider extends AbstractNFSeProvider implements NFSeOperationalIntr
 
     private function validateSchema(string $operation, string $xml): void
     {
-        $resolver = new NFSeSchemaResolver();
+        $resolver = new NFSeSchemaResolver;
         $schemaPath = $resolver->resolve('ISSWEB_AM', $operation);
-        $validation = (new NFSeSchemaValidator())->validate($xml, $schemaPath);
+        $validation = (new NFSeSchemaValidator)->validate($xml, $schemaPath);
         if (($validation['valid'] ?? false) !== true) {
             throw new \InvalidArgumentException(
-                'XML ISSWEB inválido para ' . $operation . ': ' . implode(' | ', $validation['errors'] ?? [])
+                'XML ISSWEB inválido para '.$operation.': '.implode(' | ', $validation['errors'] ?? [])
             );
         }
     }
@@ -480,12 +486,14 @@ class IsswebProvider extends AbstractNFSeProvider implements NFSeOperationalIntr
     private function normalizePositiveInteger(string $value): string
     {
         $digits = ltrim($this->normalizeDigits($value), '0');
+
         return $digits !== '' ? $digits : '1';
     }
 
     private function normalizeIbge(string $value): string
     {
         $digits = $this->normalizeDigits($value);
+
         return strlen($digits) === 7 ? $digits : $this->getCodigoMunicipio();
     }
 
@@ -496,18 +504,20 @@ class IsswebProvider extends AbstractNFSeProvider implements NFSeOperationalIntr
             return '00000-000';
         }
 
-        return substr($digits, 0, 5) . '-' . substr($digits, 5, 3);
+        return substr($digits, 0, 5).'-'.substr($digits, 5, 3);
     }
 
     private function normalizeUf(string $value): string
     {
         $uf = strtoupper(trim($value));
+
         return preg_match('/^[A-Z]{2}$/', $uf) === 1 ? $uf : '';
     }
 
     private function normalizeTipoDocumento(string $value): string
     {
         $digits = str_pad(substr($this->normalizeDigits($value), 0, 3), 3, '0', STR_PAD_LEFT);
+
         return $digits;
     }
 

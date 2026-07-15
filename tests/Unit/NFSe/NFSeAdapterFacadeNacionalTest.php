@@ -2,6 +2,7 @@
 
 namespace Tests\Unit\NFSe;
 
+use PHPUnit\Framework\TestCase;
 use sabbajohn\FiscalCore\Adapters\NF\NFSeAdapter;
 use sabbajohn\FiscalCore\Contracts\NFSeConsultaResultInterface;
 use sabbajohn\FiscalCore\Contracts\NFSeImpressaoResultInterface;
@@ -12,15 +13,14 @@ use sabbajohn\FiscalCore\Facade\NFSeFacade;
 use sabbajohn\FiscalCore\Providers\NFSe\NacionalProvider;
 use sabbajohn\FiscalCore\Support\NFSeResultNormalizer;
 use Tests\Fakes\FakeNfseProvider;
-use PHPUnit\Framework\TestCase;
 
-require_once dirname(__DIR__, 2) . '/Fakes/FakeNfseProvider.php';
+require_once dirname(__DIR__, 2).'/Fakes/FakeNfseProvider.php';
 
 class NFSeAdapterFacadeNacionalTest extends TestCase
 {
     public function test_policy_nacional_nao_exige_codigo_municipal(): void
     {
-        $adapter = new NFSeAdapter('nfse_nacional', new FakeNfseProvider());
+        $adapter = new NFSeAdapter('nfse_nacional', new FakeNfseProvider);
 
         $policy = $adapter->getProviderInfo()['form_policy'];
 
@@ -33,61 +33,213 @@ class NFSeAdapterFacadeNacionalTest extends TestCase
         $this->assertSame('select', $policy['field_schema']['prestador.opSimpNac']['control']);
     }
 
-    public function test_adapter_lanca_erro_quando_provider_nao_suporta_capability_nacional(): void
+    public function test_facade_expoe_diagnostico_xsd_nacional_em_metadados_de_erro(): void
     {
-        $provider = new class () implements NFSeProviderConfigInterface {
+        $schemaValidation = [
+            'ok' => false,
+            'schema' => 'src/Providers/NFSe/Xsd/1.01/DPS_v1.01.xsd',
+            'errors' => [[
+                'type' => 'XSD',
+                'message' => 'Element cTribNac nao atende ao schema.',
+                'line' => 2,
+                'column' => 0,
+                'campo_provavel' => 'cTribNac',
+                'payload_path' => 'servico.cTribNac',
+            ]],
+        ];
+        $provider = new class($schemaValidation) implements NFSeOperationalIntrospectionInterface, NFSeProviderConfigInterface
+        {
+            public function __construct(private array $schemaValidation) {}
+
             public function emitir(array $dados): string
             {
-                return '<ok />';
+                throw new \RuntimeException('XML DPS nacional invalido para XSD antes do envio.');
             }
+
             public function consultar(string $chave): NFSeConsultaResultInterface
             {
-                return (new NFSeResultNormalizer())->normalizeConsulta('consultar', ['status' => 'success', 'numero' => '1', 'codigo_verificacao' => 'ABC', 'raw_xml' => '<ok />'], [], ['chave_consulta' => $chave]);
+                return (new NFSeResultNormalizer)->normalizeConsulta('consultar', ['status' => 'empty'], [], ['chave_consulta' => $chave]);
             }
+
             public function cancelar(string $chave, string $motivo, ?string $protocolo = null): bool
             {
-                return true;
+                return false;
             }
+
             public function substituir(string $chave, array $dados): string
             {
-                return '<ok />';
+                return '';
             }
+
             public function getWsdlUrl(): string
             {
-                return 'https://example.test';
+                return '';
             }
+
             public function getVersao(): string
             {
-                return '2.02';
+                return '1.01';
             }
+
             public function getAliquotaFormat(): string
             {
                 return 'decimal';
             }
+
             public function getCodigoMunicipio(): string
             {
-                return '4106902';
+                return '1302603';
             }
+
             public function getAmbiente(): string
             {
                 return 'homologacao';
             }
+
             public function getTimeout(): int
             {
                 return 30;
             }
+
             public function getAuthConfig(): array
             {
                 return [];
             }
+
             public function getNationalApiBaseUrl(): string
             {
-                return '';
+                return 'https://example.test';
             }
+
             public function validarDados(array $dados): bool
             {
                 return true;
             }
+
+            public function consultarContribuinteCnc(string $cnc): array
+            {
+                return [];
+            }
+
+            public function verificarHabilitacaoCnc(string $cnc): bool
+            {
+                return false;
+            }
+
+            public function getConfig(): array
+            {
+                return [];
+            }
+
+            public function getLastResponseData(): array
+            {
+                return [
+                    'status' => 'error',
+                    'mensagens' => ['XML DPS nacional invalido para XSD antes do envio.'],
+                    'errors' => [[
+                        'code' => 'DPS_XML_SCHEMA_INVALID',
+                        'message' => 'Element cTribNac nao atende ao schema.',
+                    ]],
+                    'schema_validation' => $this->schemaValidation,
+                ];
+            }
+
+            public function getLastOperationArtifacts(): array
+            {
+                return [
+                    'operation' => 'emitir',
+                    'request_xml' => '<DPS />',
+                    'parsed_response' => $this->getLastResponseData(),
+                ];
+            }
+
+            public function getSupportedOperations(): array
+            {
+                return ['emitir'];
+            }
+        };
+
+        $facade = new NFSeFacade('nfse_nacional', new NFSeAdapter('nfse_nacional', $provider));
+
+        $response = $facade->emitir(['servico' => ['cTribNac' => 'ABC']]);
+
+        $this->assertTrue($response->isError());
+        $this->assertSame('DPS_XML_SCHEMA_INVALID', $response->getErrorCode());
+        $diagnostic = $response->getMetadata('diagnostico_validacao_xml');
+        $this->assertSame('src/Providers/NFSe/Xsd/1.01/DPS_v1.01.xsd', $diagnostic['schema']);
+        $this->assertSame('cTribNac', $diagnostic['erros'][0]['campo_provavel']);
+        $this->assertSame('servico.cTribNac', $diagnostic['erros'][0]['payload_path']);
+    }
+
+    public function test_adapter_lanca_erro_quando_provider_nao_suporta_capability_nacional(): void
+    {
+        $provider = new class implements NFSeProviderConfigInterface
+        {
+            public function emitir(array $dados): string
+            {
+                return '<ok />';
+            }
+
+            public function consultar(string $chave): NFSeConsultaResultInterface
+            {
+                return (new NFSeResultNormalizer)->normalizeConsulta('consultar', ['status' => 'success', 'numero' => '1', 'codigo_verificacao' => 'ABC', 'raw_xml' => '<ok />'], [], ['chave_consulta' => $chave]);
+            }
+
+            public function cancelar(string $chave, string $motivo, ?string $protocolo = null): bool
+            {
+                return true;
+            }
+
+            public function substituir(string $chave, array $dados): string
+            {
+                return '<ok />';
+            }
+
+            public function getWsdlUrl(): string
+            {
+                return 'https://example.test';
+            }
+
+            public function getVersao(): string
+            {
+                return '2.02';
+            }
+
+            public function getAliquotaFormat(): string
+            {
+                return 'decimal';
+            }
+
+            public function getCodigoMunicipio(): string
+            {
+                return '4106902';
+            }
+
+            public function getAmbiente(): string
+            {
+                return 'homologacao';
+            }
+
+            public function getTimeout(): int
+            {
+                return 30;
+            }
+
+            public function getAuthConfig(): array
+            {
+                return [];
+            }
+
+            public function getNationalApiBaseUrl(): string
+            {
+                return '';
+            }
+
+            public function validarDados(array $dados): bool
+            {
+                return true;
+            }
+
             public function consultarContribuinteCnc(string $cnc): array
             {
                 return ['status' => 'ok'];
@@ -103,9 +255,10 @@ class NFSeAdapterFacadeNacionalTest extends TestCase
                 return [
                     'provider' => 'nfse_nacional',
                     'timeout' => 30,
-                    'endpoints' => []
+                    'endpoints' => [],
                 ];
             }
+
             public function consultarConvenioMunicipio(string $codigoMunicipio, bool $forceRefresh = false): array
             {
                 return ['data' => [], 'metadata' => ['source' => 'test']];
@@ -170,75 +323,93 @@ class NFSeAdapterFacadeNacionalTest extends TestCase
 
     public function test_facade_retorna_fiscal_response_para_operacoes_nacionais(): void
     {
-        $provider = new class () implements NFSeProviderConfigInterface, NFSeNacionalCapabilitiesInterface {
+        $provider = new class implements NFSeNacionalCapabilitiesInterface, NFSeProviderConfigInterface
+        {
             public function emitir(array $dados): string
             {
                 return '<ok />';
             }
+
             public function consultar(string $chave): NFSeConsultaResultInterface
             {
-                return (new NFSeResultNormalizer())->normalizeConsulta('consultar', ['status' => 'success', 'numero' => '1', 'codigo_verificacao' => 'ABC', 'raw_xml' => '<consulta />'], [], ['chave_consulta' => $chave]);
+                return (new NFSeResultNormalizer)->normalizeConsulta('consultar', ['status' => 'success', 'numero' => '1', 'codigo_verificacao' => 'ABC', 'raw_xml' => '<consulta />'], [], ['chave_consulta' => $chave]);
             }
+
             public function cancelar(string $chave, string $motivo, ?string $protocolo = null): bool
             {
                 return true;
             }
+
             public function substituir(string $chave, array $dados): string
             {
                 return '<substituicao />';
             }
+
             public function getWsdlUrl(): string
             {
                 return 'https://example.test';
             }
+
             public function getVersao(): string
             {
                 return '1.00';
             }
+
             public function getAliquotaFormat(): string
             {
                 return 'decimal';
             }
+
             public function getCodigoMunicipio(): string
             {
                 return '0000000';
             }
+
             public function getAmbiente(): string
             {
                 return 'homologacao';
             }
+
             public function getTimeout(): int
             {
                 return 30;
             }
+
             public function getAuthConfig(): array
             {
                 return [];
             }
+
             public function getNationalApiBaseUrl(): string
             {
                 return 'https://api.local';
             }
+
             public function validarDados(array $dados): bool
             {
                 return true;
             }
+
             public function consultarPorRps(array $identificacaoRps): NFSeConsultaResultInterface
             {
-                return (new NFSeResultNormalizer())->normalizeConsulta('consultar_rps', ['status' => 'success', 'numero' => '1', 'codigo_verificacao' => 'ABC', 'raw_xml' => '<consulta-rps />'], [], ['chave_consulta' => (string) ($identificacaoRps['numero'] ?? '')]);
+                return (new NFSeResultNormalizer)->normalizeConsulta('consultar_rps', ['status' => 'success', 'numero' => '1', 'codigo_verificacao' => 'ABC', 'raw_xml' => '<consulta-rps />'], [], ['chave_consulta' => (string) ($identificacaoRps['numero'] ?? '')]);
             }
+
             public function consultarLote(string $protocolo): NFSeConsultaResultInterface
             {
-                return (new NFSeResultNormalizer())->normalizeConsulta('consultar_lote', ['status' => 'success', 'numero' => '1', 'codigo_verificacao' => 'ABC', 'raw_xml' => '<consulta-lote />'], [], ['chave_consulta' => $protocolo]);
+                return (new NFSeResultNormalizer)->normalizeConsulta('consultar_lote', ['status' => 'success', 'numero' => '1', 'codigo_verificacao' => 'ABC', 'raw_xml' => '<consulta-lote />'], [], ['chave_consulta' => $protocolo]);
             }
+
             public function baixarXml(string $chave): string
             {
                 return '<xml-download />';
             }
+
             public function baixarDanfse(string $chave): NFSeImpressaoResultInterface
             {
-                return (new NFSeResultNormalizer())->normalizePdfBase64(base64_encode('pdf'));
+                return (new NFSeResultNormalizer)->normalizePdfBase64(base64_encode('pdf'));
             }
+
             public function listarMunicipiosNacionais(bool $forceRefresh = false): array
             {
                 return [
@@ -246,6 +417,7 @@ class NFSeAdapterFacadeNacionalTest extends TestCase
                     'metadata' => ['source' => 'cache', 'stale' => false],
                 ];
             }
+
             public function consultarAliquotasMunicipio(string $codigoMunicipio, ?string $codigoServico = null, ?string $competencia = null, bool $forceRefresh = false): array
             {
                 return [
@@ -271,6 +443,7 @@ class NFSeAdapterFacadeNacionalTest extends TestCase
             {
                 return [];
             }
+
             public function consultarConvenioMunicipio(string $codigoMunicipio, bool $forceRefresh = false): array
             {
                 return ['data' => [], 'metadata' => ['source' => 'test']];
@@ -333,7 +506,8 @@ class NFSeAdapterFacadeNacionalTest extends TestCase
 
     public function test_facade_bloqueia_emissao_legada_de_manaus_no_fluxo_nacional(): void
     {
-        $provider = new class () implements NFSeProviderConfigInterface, NFSeNacionalCapabilitiesInterface {
+        $provider = new class implements NFSeNacionalCapabilitiesInterface, NFSeProviderConfigInterface
+        {
             public function emitir(array $dados): string
             {
                 return '<ok />';
@@ -341,7 +515,7 @@ class NFSeAdapterFacadeNacionalTest extends TestCase
 
             public function consultar(string $chave): NFSeConsultaResultInterface
             {
-                return (new NFSeResultNormalizer())->normalizeConsulta('consultar', ['status' => 'success', 'numero' => '1', 'codigo_verificacao' => 'ABC', 'raw_xml' => '<consulta />'], [], ['chave_consulta' => $chave]);
+                return (new NFSeResultNormalizer)->normalizeConsulta('consultar', ['status' => 'success', 'numero' => '1', 'codigo_verificacao' => 'ABC', 'raw_xml' => '<consulta />'], [], ['chave_consulta' => $chave]);
             }
 
             public function cancelar(string $chave, string $motivo, ?string $protocolo = null): bool
@@ -401,12 +575,12 @@ class NFSeAdapterFacadeNacionalTest extends TestCase
 
             public function consultarPorRps(array $identificacaoRps): NFSeConsultaResultInterface
             {
-                return (new NFSeResultNormalizer())->normalizeConsulta('consultar_rps', ['status' => 'success', 'numero' => '1', 'codigo_verificacao' => 'ABC', 'raw_xml' => '<consulta-rps />'], [], ['chave_consulta' => (string) ($identificacaoRps['numero'] ?? '')]);
+                return (new NFSeResultNormalizer)->normalizeConsulta('consultar_rps', ['status' => 'success', 'numero' => '1', 'codigo_verificacao' => 'ABC', 'raw_xml' => '<consulta-rps />'], [], ['chave_consulta' => (string) ($identificacaoRps['numero'] ?? '')]);
             }
 
             public function consultarLote(string $protocolo): NFSeConsultaResultInterface
             {
-                return (new NFSeResultNormalizer())->normalizeConsulta('consultar_lote', ['status' => 'success', 'numero' => '1', 'codigo_verificacao' => 'ABC', 'raw_xml' => '<consulta-lote />'], [], ['chave_consulta' => $protocolo]);
+                return (new NFSeResultNormalizer)->normalizeConsulta('consultar_lote', ['status' => 'success', 'numero' => '1', 'codigo_verificacao' => 'ABC', 'raw_xml' => '<consulta-lote />'], [], ['chave_consulta' => $protocolo]);
             }
 
             public function baixarXml(string $chave): string
@@ -416,7 +590,7 @@ class NFSeAdapterFacadeNacionalTest extends TestCase
 
             public function baixarDanfse(string $chave): NFSeImpressaoResultInterface
             {
-                return (new NFSeResultNormalizer())->normalizePdfBase64(base64_encode('pdf'));
+                return (new NFSeResultNormalizer)->normalizePdfBase64(base64_encode('pdf'));
             }
 
             public function listarMunicipiosNacionais(bool $forceRefresh = false): array
@@ -490,7 +664,7 @@ class NFSeAdapterFacadeNacionalTest extends TestCase
 
     public function test_facade_bloqueia_emissao_pre_corte_generica_para_municipio_nacional(): void
     {
-        $facade = new NFSeFacade('recife', new NFSeAdapter('recife', new FakeNfseProvider()));
+        $facade = new NFSeFacade('recife', new NFSeAdapter('recife', new FakeNfseProvider));
 
         $response = $facade->emitir([
             'dCompet' => '2025-10-14',
@@ -507,7 +681,7 @@ class NFSeAdapterFacadeNacionalTest extends TestCase
 
     public function test_facade_permite_emissao_nacional_na_data_de_vigencia_da_migracao(): void
     {
-        $facade = new NFSeFacade('recife', new NFSeAdapter('recife', new FakeNfseProvider()));
+        $facade = new NFSeFacade('recife', new NFSeAdapter('recife', new FakeNfseProvider));
 
         $response = $facade->emitir([
             'dCompet' => '2025-10-15',
@@ -522,34 +696,90 @@ class NFSeAdapterFacadeNacionalTest extends TestCase
     {
         $xml = $this->nfseNacionalFixture('nfse_nacional_completa.xml');
 
-        $provider = new class ($xml) implements NFSeProviderConfigInterface, NFSeNacionalCapabilitiesInterface {
-            public function __construct(private readonly string $xml)
+        $provider = new class($xml) implements NFSeNacionalCapabilitiesInterface, NFSeProviderConfigInterface
+        {
+            public function __construct(private readonly string $xml) {}
+
+            public function emitir(array $dados): string
             {
+                return '<ok />';
             }
 
-            public function emitir(array $dados): string { return '<ok />'; }
             public function consultar(string $chave): NFSeConsultaResultInterface
             {
-                return (new NFSeResultNormalizer())->normalizeConsulta('consultar', [
+                return (new NFSeResultNormalizer)->normalizeConsulta('consultar', [
                     'status' => 'success',
                     'numero' => '202600001234',
                     'codigo_verificacao' => 'ABC',
                     'raw_xml' => $this->xml,
                 ], [], ['chave_consulta' => $chave]);
             }
-            public function cancelar(string $chave, string $motivo, ?string $protocolo = null): bool { return true; }
-            public function substituir(string $chave, array $dados): string { return '<ok />'; }
-            public function getWsdlUrl(): string { return 'https://example.test'; }
-            public function getVersao(): string { return '1.00'; }
-            public function getAliquotaFormat(): string { return 'decimal'; }
-            public function getCodigoMunicipio(): string { return '1302603'; }
-            public function getAmbiente(): string { return 'homologacao'; }
-            public function getTimeout(): int { return 30; }
-            public function getAuthConfig(): array { return []; }
-            public function getNationalApiBaseUrl(): string { return 'https://api.local'; }
-            public function validarDados(array $dados): bool { return true; }
-            public function consultarPorRps(array $identificacaoRps): NFSeConsultaResultInterface { return $this->consultar((string) ($identificacaoRps['numero'] ?? '')); }
-            public function consultarLote(string $protocolo): NFSeConsultaResultInterface { return $this->consultar($protocolo); }
+
+            public function cancelar(string $chave, string $motivo, ?string $protocolo = null): bool
+            {
+                return true;
+            }
+
+            public function substituir(string $chave, array $dados): string
+            {
+                return '<ok />';
+            }
+
+            public function getWsdlUrl(): string
+            {
+                return 'https://example.test';
+            }
+
+            public function getVersao(): string
+            {
+                return '1.00';
+            }
+
+            public function getAliquotaFormat(): string
+            {
+                return 'decimal';
+            }
+
+            public function getCodigoMunicipio(): string
+            {
+                return '1302603';
+            }
+
+            public function getAmbiente(): string
+            {
+                return 'homologacao';
+            }
+
+            public function getTimeout(): int
+            {
+                return 30;
+            }
+
+            public function getAuthConfig(): array
+            {
+                return [];
+            }
+
+            public function getNationalApiBaseUrl(): string
+            {
+                return 'https://api.local';
+            }
+
+            public function validarDados(array $dados): bool
+            {
+                return true;
+            }
+
+            public function consultarPorRps(array $identificacaoRps): NFSeConsultaResultInterface
+            {
+                return $this->consultar((string) ($identificacaoRps['numero'] ?? ''));
+            }
+
+            public function consultarLote(string $protocolo): NFSeConsultaResultInterface
+            {
+                return $this->consultar($protocolo);
+            }
+
             public function baixarXml(string $chave): string
             {
                 return json_encode([
@@ -558,22 +788,59 @@ class NFSeAdapterFacadeNacionalTest extends TestCase
                     'nfseXmlGZipB64' => base64_encode(gzencode($this->xml)),
                 ], JSON_THROW_ON_ERROR);
             }
+
             public function baixarDanfse(string $chave): NFSeImpressaoResultInterface
             {
-                return (new NFSeResultNormalizer())->normalizeIndisponivel(
+                return (new NFSeResultNormalizer)->normalizeIndisponivel(
                     ['source' => 'download_danfse'],
                     ['parsed_response' => ['status' => 'success']]
                 );
             }
-            public function listarMunicipiosNacionais(bool $forceRefresh = false): array { return ['data' => [], 'metadata' => []]; }
-            public function consultarAliquotasMunicipio(string $codigoMunicipio, ?string $codigoServico = null, ?string $competencia = null, bool $forceRefresh = false): array { return ['data' => [], 'metadata' => []]; }
-            public function consultarContribuinteCnc(string $cnc): array { return []; }
-            public function verificarHabilitacaoCnc(string $cnc): bool { return true; }
-            public function getConfig(): array { return []; }
-            public function consultarConvenioMunicipio(string $codigoMunicipio, bool $forceRefresh = false): array { return ['data' => [], 'metadata' => []]; }
-            public function validarLayoutDps(array $payload, bool $checkCatalog = true): array { return ['valid' => true, 'errors' => [], 'warnings' => []]; }
-            public function gerarXmlDpsPreview(array $payload): string { return '<preview/>'; }
-            public function validarXmlDps(array $payload): array { return ['valid' => true, 'errors' => []]; }
+
+            public function listarMunicipiosNacionais(bool $forceRefresh = false): array
+            {
+                return ['data' => [], 'metadata' => []];
+            }
+
+            public function consultarAliquotasMunicipio(string $codigoMunicipio, ?string $codigoServico = null, ?string $competencia = null, bool $forceRefresh = false): array
+            {
+                return ['data' => [], 'metadata' => []];
+            }
+
+            public function consultarContribuinteCnc(string $cnc): array
+            {
+                return [];
+            }
+
+            public function verificarHabilitacaoCnc(string $cnc): bool
+            {
+                return true;
+            }
+
+            public function getConfig(): array
+            {
+                return [];
+            }
+
+            public function consultarConvenioMunicipio(string $codigoMunicipio, bool $forceRefresh = false): array
+            {
+                return ['data' => [], 'metadata' => []];
+            }
+
+            public function validarLayoutDps(array $payload, bool $checkCatalog = true): array
+            {
+                return ['valid' => true, 'errors' => [], 'warnings' => []];
+            }
+
+            public function gerarXmlDpsPreview(array $payload): string
+            {
+                return '<preview/>';
+            }
+
+            public function validarXmlDps(array $payload): array
+            {
+                return ['valid' => true, 'errors' => []];
+            }
         };
 
         $facade = new NFSeFacade('nfse_nacional', new NFSeAdapter('nfse_nacional', $provider));
@@ -591,13 +858,13 @@ class NFSeAdapterFacadeNacionalTest extends TestCase
     {
         $xml = $this->nfseNacionalFixture('nfse_nacional_completa.xml');
 
-        $provider = new class ($xml) implements NFSeProviderConfigInterface, NFSeNacionalCapabilitiesInterface, NFSeOperationalIntrospectionInterface {
+        $provider = new class($xml) implements NFSeNacionalCapabilitiesInterface, NFSeOperationalIntrospectionInterface, NFSeProviderConfigInterface
+        {
             private array $lastResponseData = [];
+
             private array $lastArtifacts = [];
 
-            public function __construct(private readonly string $xml)
-            {
-            }
+            public function __construct(private readonly string $xml) {}
 
             public function emitir(array $dados): string
             {
@@ -616,42 +883,151 @@ class NFSeAdapterFacadeNacionalTest extends TestCase
 
                 return '<ok />';
             }
+
             public function consultar(string $chave): NFSeConsultaResultInterface
             {
-                return (new NFSeResultNormalizer())->normalizeConsulta('consultar', [
+                return (new NFSeResultNormalizer)->normalizeConsulta('consultar', [
                     'status' => 'success',
                     'numero' => '202600001234',
                     'codigo_verificacao' => 'ABC',
                     'raw_xml' => $this->xml,
                 ], [], ['chave_consulta' => $chave]);
             }
-            public function cancelar(string $chave, string $motivo, ?string $protocolo = null): bool { return true; }
-            public function substituir(string $chave, array $dados): string { return '<ok />'; }
-            public function getWsdlUrl(): string { return 'https://example.test'; }
-            public function getVersao(): string { return '1.00'; }
-            public function getAliquotaFormat(): string { return 'decimal'; }
-            public function getCodigoMunicipio(): string { return '1302603'; }
-            public function getAmbiente(): string { return 'homologacao'; }
-            public function getTimeout(): int { return 30; }
-            public function getAuthConfig(): array { return []; }
-            public function getNationalApiBaseUrl(): string { return 'https://api.local'; }
-            public function validarDados(array $dados): bool { return true; }
-            public function consultarPorRps(array $identificacaoRps): NFSeConsultaResultInterface { return $this->consultar((string) ($identificacaoRps['numero'] ?? '')); }
-            public function consultarLote(string $protocolo): NFSeConsultaResultInterface { return $this->consultar($protocolo); }
-            public function baixarXml(string $chave): string { return json_encode(['status' => 'success', 'nfseXmlGZipB64' => base64_encode(gzencode($this->xml))], JSON_THROW_ON_ERROR); }
-            public function baixarDanfse(string $chave): NFSeImpressaoResultInterface { return (new NFSeResultNormalizer())->normalizeIndisponivel(); }
-            public function listarMunicipiosNacionais(bool $forceRefresh = false): array { return ['data' => [], 'metadata' => []]; }
-            public function consultarAliquotasMunicipio(string $codigoMunicipio, ?string $codigoServico = null, ?string $competencia = null, bool $forceRefresh = false): array { return ['data' => [], 'metadata' => []]; }
-            public function consultarContribuinteCnc(string $cnc): array { return []; }
-            public function verificarHabilitacaoCnc(string $cnc): bool { return true; }
-            public function getConfig(): array { return []; }
-            public function consultarConvenioMunicipio(string $codigoMunicipio, bool $forceRefresh = false): array { return ['data' => [], 'metadata' => []]; }
-            public function validarLayoutDps(array $payload, bool $checkCatalog = true): array { return ['valid' => true, 'errors' => [], 'warnings' => []]; }
-            public function gerarXmlDpsPreview(array $payload): string { return '<preview/>'; }
-            public function validarXmlDps(array $payload): array { return ['valid' => true, 'errors' => []]; }
-            public function getLastResponseData(): array { return $this->lastResponseData; }
-            public function getLastOperationArtifacts(): array { return $this->lastArtifacts; }
-            public function getSupportedOperations(): array { return ['emitir', 'consultar', 'baixar_xml', 'baixar_danfse']; }
+
+            public function cancelar(string $chave, string $motivo, ?string $protocolo = null): bool
+            {
+                return true;
+            }
+
+            public function substituir(string $chave, array $dados): string
+            {
+                return '<ok />';
+            }
+
+            public function getWsdlUrl(): string
+            {
+                return 'https://example.test';
+            }
+
+            public function getVersao(): string
+            {
+                return '1.00';
+            }
+
+            public function getAliquotaFormat(): string
+            {
+                return 'decimal';
+            }
+
+            public function getCodigoMunicipio(): string
+            {
+                return '1302603';
+            }
+
+            public function getAmbiente(): string
+            {
+                return 'homologacao';
+            }
+
+            public function getTimeout(): int
+            {
+                return 30;
+            }
+
+            public function getAuthConfig(): array
+            {
+                return [];
+            }
+
+            public function getNationalApiBaseUrl(): string
+            {
+                return 'https://api.local';
+            }
+
+            public function validarDados(array $dados): bool
+            {
+                return true;
+            }
+
+            public function consultarPorRps(array $identificacaoRps): NFSeConsultaResultInterface
+            {
+                return $this->consultar((string) ($identificacaoRps['numero'] ?? ''));
+            }
+
+            public function consultarLote(string $protocolo): NFSeConsultaResultInterface
+            {
+                return $this->consultar($protocolo);
+            }
+
+            public function baixarXml(string $chave): string
+            {
+                return json_encode(['status' => 'success', 'nfseXmlGZipB64' => base64_encode(gzencode($this->xml))], JSON_THROW_ON_ERROR);
+            }
+
+            public function baixarDanfse(string $chave): NFSeImpressaoResultInterface
+            {
+                return (new NFSeResultNormalizer)->normalizeIndisponivel();
+            }
+
+            public function listarMunicipiosNacionais(bool $forceRefresh = false): array
+            {
+                return ['data' => [], 'metadata' => []];
+            }
+
+            public function consultarAliquotasMunicipio(string $codigoMunicipio, ?string $codigoServico = null, ?string $competencia = null, bool $forceRefresh = false): array
+            {
+                return ['data' => [], 'metadata' => []];
+            }
+
+            public function consultarContribuinteCnc(string $cnc): array
+            {
+                return [];
+            }
+
+            public function verificarHabilitacaoCnc(string $cnc): bool
+            {
+                return true;
+            }
+
+            public function getConfig(): array
+            {
+                return [];
+            }
+
+            public function consultarConvenioMunicipio(string $codigoMunicipio, bool $forceRefresh = false): array
+            {
+                return ['data' => [], 'metadata' => []];
+            }
+
+            public function validarLayoutDps(array $payload, bool $checkCatalog = true): array
+            {
+                return ['valid' => true, 'errors' => [], 'warnings' => []];
+            }
+
+            public function gerarXmlDpsPreview(array $payload): string
+            {
+                return '<preview/>';
+            }
+
+            public function validarXmlDps(array $payload): array
+            {
+                return ['valid' => true, 'errors' => []];
+            }
+
+            public function getLastResponseData(): array
+            {
+                return $this->lastResponseData;
+            }
+
+            public function getLastOperationArtifacts(): array
+            {
+                return $this->lastArtifacts;
+            }
+
+            public function getSupportedOperations(): array
+            {
+                return ['emitir', 'consultar', 'baixar_xml', 'baixar_danfse'];
+            }
         };
 
         $facade = new NFSeFacade('nfse_nacional', new NFSeAdapter('nfse_nacional', $provider));
@@ -666,7 +1042,7 @@ class NFSeAdapterFacadeNacionalTest extends TestCase
 
     public function test_facade_bloqueia_emissao_pre_corte_para_natal_migrado_nacional(): void
     {
-        $facade = new NFSeFacade('natal', new NFSeAdapter('natal', new FakeNfseProvider()));
+        $facade = new NFSeFacade('natal', new NFSeAdapter('natal', new FakeNfseProvider));
 
         $response = $facade->emitir([
             'dCompet' => '2025-12-31',
@@ -683,7 +1059,7 @@ class NFSeAdapterFacadeNacionalTest extends TestCase
 
     public function test_facade_bloqueia_emissao_pre_corte_para_joinville_migrado_nacional(): void
     {
-        $facade = new NFSeFacade('joinville', new NFSeAdapter('joinville', new FakeNfseProvider()));
+        $facade = new NFSeFacade('joinville', new NFSeAdapter('joinville', new FakeNfseProvider));
 
         $response = $facade->emitir([
             'dCompet' => '2026-07-19',
@@ -700,7 +1076,7 @@ class NFSeAdapterFacadeNacionalTest extends TestCase
 
     public function test_facade_permite_preparacao_nacional_de_joinville_em_homologacao(): void
     {
-        $facade = new NFSeFacade('joinville', new NFSeAdapter('joinville', new FakeNfseProvider()));
+        $facade = new NFSeFacade('joinville', new NFSeAdapter('joinville', new FakeNfseProvider));
 
         $response = $facade->emitir([
             'tpAmb' => '2',
@@ -740,7 +1116,7 @@ class NFSeAdapterFacadeNacionalTest extends TestCase
                 'substituir' => 'POST',
             ],
             'http_client' => $httpClient,
-            'cache_dir' => sys_get_temp_dir() . '/fiscal-core-provider-' . uniqid(),
+            'cache_dir' => sys_get_temp_dir().'/fiscal-core-provider-'.uniqid(),
         ];
     }
 
@@ -769,7 +1145,7 @@ class NFSeAdapterFacadeNacionalTest extends TestCase
 
     private function nfseNacionalFixture(string $name): string
     {
-        $contents = file_get_contents(dirname(__DIR__, 2) . '/Fixtures/' . $name);
+        $contents = file_get_contents(dirname(__DIR__, 2).'/Fixtures/'.$name);
         $this->assertNotFalse($contents);
 
         return (string) $contents;

@@ -31,7 +31,7 @@ class IdentificacaoDTO
         public ?string $dhSaiEnt = null,    // Data/hora saída/entrada (opcional)
         public ?int $indIntermed = null,    // Indicador intermediador (opcional)
     ) {}
-    
+
     /**
      * Cria DTO para NFCe (modelo 65) com valores padrão
      */
@@ -64,7 +64,7 @@ class IdentificacaoDTO
             indPres: 1,           // Presencial
         );
     }
-    
+
     /**
      * Cria DTO para NFe (modelo 55) com valores padrão
      */
@@ -98,13 +98,13 @@ class IdentificacaoDTO
             indPres: 1,           // Presencial
         );
     }
-    
+
     /**
      * Converte para stdClass (formato esperado pelo NFePHP Make)
      */
     public function toStdClass(): \stdClass
     {
-        $obj = new \stdClass();
+        $obj = new \stdClass;
         $obj->cUF = $this->cUF;
         $obj->cNF = $this->cNF;
         $obj->natOp = $this->natOp;
@@ -124,8 +124,13 @@ class IdentificacaoDTO
         $obj->indPres = $this->indPres;
         $obj->procEmi = $this->procEmi;
         $obj->verProc = $this->verProc;
-        if ($this->dhSaiEnt) $obj->dhSaiEnt = $this->dhSaiEnt;
-        if ($this->indIntermed !== null) $obj->indIntermed = $this->indIntermed;
+        if ($this->dhSaiEnt) {
+            $obj->dhSaiEnt = $this->dhSaiEnt;
+        }
+        if ($this->indIntermed !== null) {
+            $obj->indIntermed = $this->indIntermed;
+        }
+
         return $obj;
     }
 }

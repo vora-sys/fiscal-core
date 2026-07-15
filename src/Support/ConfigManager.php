@@ -4,18 +4,22 @@ namespace sabbajohn\FiscalCore\Support;
 
 /**
  * Singleton para gerenciamento de configurações fiscais
- * 
+ *
  * Centraliza configurações compartilhadas entre adapters e carrega
  * automaticamente certificados e configurações de diferentes fontes.
  */
 class ConfigManager
 {
     const AMBIENTE_PRODUCAO = 1;
+
     const AMBIENTE_HOMOLOGACAO = 2;
 
     private static ?self $instance = null;
+
     private array $config = [];
+
     private bool $autoLoaded = false;
+
     private array $defaults = [
         'ambiente' => self::AMBIENTE_PRODUCAO, // 2=homologação, 1=produção
         'timeout' => 60,
@@ -23,7 +27,7 @@ class ConfigManager
             'ip' => '',
             'port' => '',
             'user' => '',
-            'pass' => ''
+            'pass' => '',
         ],
         'versao_nfe' => NFeCompatibility::DEFAULT_XML_VERSION,
         'versao_nfce' => NFeCompatibility::DEFAULT_XML_VERSION,
@@ -41,7 +45,7 @@ class ConfigManager
         'nfse' => [
             'provider' => 'abrasf-v2-soap',
             'versao' => '2.02',
-            'timeout' => 30
+            'timeout' => 30,
         ],
     ];
 
@@ -54,8 +58,9 @@ class ConfigManager
     public static function getInstance(): self
     {
         if (self::$instance === null) {
-            self::$instance = new self();
+            self::$instance = new self;
         }
+
         return self::$instance;
     }
 
@@ -68,10 +73,10 @@ class ConfigManager
         $current = &$this->config;
 
         foreach ($keys as $k) {
-            if (!is_array($current)) {
+            if (! is_array($current)) {
                 $current = [];
             }
-            if (!array_key_exists($k, $current)) {
+            if (! array_key_exists($k, $current)) {
                 $current[$k] = [];
             }
             $current = &$current[$k];
@@ -89,7 +94,7 @@ class ConfigManager
         $value = $this->config;
 
         foreach ($keys as $k) {
-            if (!is_array($value) || !array_key_exists($k, $value)) {
+            if (! is_array($value) || ! array_key_exists($k, $value)) {
                 return $default;
             }
             $value = $value[$k];
@@ -114,7 +119,7 @@ class ConfigManager
         $schema = $model === 65
             ? ($this->get('schema_nfce') ?: $this->get('schemas'))
             : ($this->get('schema_nfe') ?: $this->get('schemas'));
-        
+
         return [
             'tpAmb' => $this->get('ambiente'),
             'versao' => NFeCompatibility::xmlVersionForModel(
@@ -164,7 +169,7 @@ class ConfigManager
             'provider' => $this->get('nfse.provider'),
             'versao' => $this->get('nfse.versao'),
             'proxy' => $this->get('proxy'),
-            'municipio_ibge' => $this->get('municipio_ibge')
+            'municipio_ibge' => $this->get('municipio_ibge'),
         ];
     }
 
@@ -192,22 +197,22 @@ class ConfigManager
         if ($this->autoLoaded) {
             return;
         }
-        
+
         // 0. Carregar arquivo .env primeiro
         $this->loadEnvFile();
-        
+
         // 1. Carregar de variáveis de ambiente
         $this->loadFromEnvironment();
-        
+
         // 2. Carregar de arquivo de configuração Laravel (se existir)
         $this->loadFromLaravelConfig();
-        
+
         // 3. Carregar certificado automaticamente
         $this->autoLoadCertificate();
-        
+
         $this->autoLoaded = true;
     }
-    
+
     /**
      * Carrega configurações das variáveis de ambiente
      */
@@ -234,9 +239,9 @@ class ConfigManager
             'FISCAL_NFCE_QRCODE_VERSION' => 'nfce_qrcode_version',
             'FISCAL_UF' => 'uf',
             'FISCAL_CERT_PATH' => 'certificado.cert_path',
-            'FISCAL_CERT_PASSWORD' => 'certificado.cert_password'
+            'FISCAL_CERT_PASSWORD' => 'certificado.cert_password',
         ];
-        
+
         foreach ($envMappings as $envKey => $configKey) {
             $value = $_ENV[$envKey] ?? getenv($envKey);
             if ($value !== false && $value !== '') {
@@ -250,7 +255,7 @@ class ConfigManager
             }
         }
     }
-    
+
     /**
      * Carrega configurações do Laravel (se disponível)
      * TODO: Implementar quando necessário
@@ -260,7 +265,7 @@ class ConfigManager
         // Implementação futura para integração Laravel
         // Por enquanto, usa apenas .env e variáveis de ambiente
     }
-    
+
     /**
      * Carrega certificado automaticamente se configurado
      */
@@ -268,7 +273,7 @@ class ConfigManager
     {
         $certPath = $_ENV['FISCAL_CERT_PATH'] ?? getenv('FISCAL_CERT_PATH');
         $certPassword = $_ENV['FISCAL_CERT_PASSWORD'] ?? getenv('FISCAL_CERT_PASSWORD');
-        
+
         // Sempre armazenar o caminho e senha se disponíveis
         // if ($certPath) {
         //     $this->set('certificado.cert_path', $certPath);
@@ -276,29 +281,29 @@ class ConfigManager
         // if ($certPassword) {
         //     $this->set('certificado.cert_password', $certPassword);
         // }
-        
+
         if ($certPath && $certPassword && file_exists($certPath)) {
             try {
                 // Usar CertificateManager para carregar o certificado
                 $certManager = CertificateManager::getInstance();
                 $certManager->loadFromFile($certPath, $certPassword);
-                
+
                 // Certificado carregado com sucesso
                 // $this->set('certificado.carregado', true);
                 // $this->set('certificado.erro', null);
-                
+
                 // Armazenar informações do certificado
                 // $this->set('certificado.cnpj', $certManager->getCnpj());
                 // $this->set('certificado.razao_social', $certManager->getRazaoSocial());
-                
+
                 $expirationDate = $certManager->getExpirationDate();
                 if ($expirationDate) {
                     // $this->set('certificado.valido_ate', $expirationDate->format('Y-m-d'));
                     // $this->set('certificado.dias_restantes', $certManager->getDaysUntilExpiration());
                 }
-                
+
                 $this->set('certificado.valido', $certManager->isValid());
-                
+
             } catch (\Exception $e) {
                 // Log silencioso do erro - não quebra a aplicação
                 // $this->set('certificado.erro', $e->getMessage());
@@ -316,7 +321,7 @@ class ConfigManager
             // $this->set('certificado.carregado', false);
         }
     }
-    
+
     /**
      * Verifica se o certificado foi carregado com sucesso
      */
@@ -324,7 +329,7 @@ class ConfigManager
     // {
     //     return (bool) $this->get('certificado.carregado', false);
     // }
-    
+
     /**
      * Obtém erro do certificado, se houver
      */
@@ -332,21 +337,21 @@ class ConfigManager
     // {
     //     return $this->get('certificado.erro');
     // }
-    
+
     public function load(array $config = []): void
     {
         $this->autoLoaded = false;
         $this->defaults = array_merge($this->defaults, $config);
         // $this->config = $this->defaults;
-        if (!empty($config)) {
+        if (! empty($config)) {
             foreach ($config as $key => $value) {
                 $this->set($key, $value);
             }
+
             return;
         }
         $this->autoLoadConfiguration();
     }
-    
 
     /**
      * Força recarregamento das configurações
@@ -367,7 +372,7 @@ class ConfigManager
         $this->autoLoadCertificate();
         $this->autoLoaded = true;
     }
-    
+
     /**
      * Obtém a instância do CertificateManager pronta para uso
      */
@@ -376,10 +381,10 @@ class ConfigManager
     //     if (!$this->isCertificateLoaded()) {
     //         return null;
     //     }
-        
+
     //     return CertificateManager::getInstance();
     // }
-    
+
     /**
      * Obtém informações completas do certificado
      */
@@ -392,7 +397,7 @@ class ConfigManager
     //             'erro' => $this->getCertificateError()
     //         ];
     //     }
-        
+
     //     return [
     //         'carregado' => true,
     //         'cnpj' => $certManager->getCnpj(),
@@ -403,7 +408,7 @@ class ConfigManager
     //         'emissor' => $certManager->getCertificateInfo()['issuer'] ?? null
     //     ];
     // }
-    
+
     /**
      * Obtém configurações da empresa
      */
@@ -416,20 +421,20 @@ class ConfigManager
             'inscricao_municipal' => $this->get('empresa.inscricao_municipal'),
         ];
     }
-    
+
     /**
      * Carrega arquivo .env automaticamente
      */
     private function loadEnvFile(): void
     {
         $possiblePaths = [
-            getcwd() . '/.env',                    // Diretório atual
-            dirname(__DIR__, 3) . '/.env',         // 3 níveis acima (projeto)
-            dirname(__DIR__, 4) . '/.env',         // 4 níveis acima (Laravel)
-            dirname(__DIR__, 2) . '/.env',         // 2 níveis acima
-            __DIR__ . '/../../.env',               // Relativo ao Support
+            getcwd().'/.env',                    // Diretório atual
+            dirname(__DIR__, 3).'/.env',         // 3 níveis acima (projeto)
+            dirname(__DIR__, 4).'/.env',         // 4 níveis acima (Laravel)
+            dirname(__DIR__, 2).'/.env',         // 2 níveis acima
+            __DIR__.'/../../.env',               // Relativo ao Support
         ];
-        
+
         foreach ($possiblePaths as $envPath) {
             if (file_exists($envPath)) {
                 $this->parseEnvFile($envPath);
@@ -437,56 +442,56 @@ class ConfigManager
             }
         }
     }
-    
+
     /**
      * Parse do arquivo .env
      */
     private function parseEnvFile(string $envPath): void
     {
         $lines = file($envPath, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
-        
+
         foreach ($lines as $line) {
             // Pular comentários
             if (strpos(trim($line), '#') === 0) {
                 continue;
             }
-            
+
             // Encontrar variáveis no formato KEY=VALUE
             if (strpos($line, '=') !== false) {
                 [$key, $value] = explode('=', $line, 2);
                 $key = trim($key);
                 $value = trim($value);
-                
+
                 // Remover aspas se existirem
                 if ((substr($value, 0, 1) === '"' && substr($value, -1) === '"') ||
                     (substr($value, 0, 1) === "'" && substr($value, -1) === "'")) {
                     $value = substr($value, 1, -1);
                 }
-                
+
                 // Definir como variável de ambiente se ainda não existe
-                if (!isset($_ENV[$key]) && getenv($key) === false) {
+                if (! isset($_ENV[$key]) && getenv($key) === false) {
                     $_ENV[$key] = $value;
                     putenv("{$key}={$value}");
                 }
             }
         }
     }
-    
+
     /**
      * Carrega arquivo .env específico manualmente
      */
     public function loadEnv(string $envPath): bool
     {
-        if (!file_exists($envPath)) {
+        if (! file_exists($envPath)) {
             return false;
         }
-        
+
         $this->parseEnvFile($envPath);
-        
+
         // Recarregar configurações após carregar .env
         $this->autoLoaded = false;
         $this->autoLoadConfiguration();
-        
+
         return true;
     }
 }

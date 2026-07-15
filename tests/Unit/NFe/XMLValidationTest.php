@@ -15,14 +15,14 @@ class XMLValidationTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->nfe = new NFeFacade();
+        $this->nfe = new NFeFacade;
     }
 
     /** @test */
     public function deve_validar_xml_nfe_estrutura_basica(): void
     {
         $xml = $this->criarXMLNFeValido();
-        
+
         $resultado = $this->nfe->validarXML($xml);
         $this->assertTrue($resultado->isSuccess());
     }
@@ -31,7 +31,7 @@ class XMLValidationTest extends TestCase
     public function deve_rejeitar_xml_sem_elementos_obrigatorios(): void
     {
         $xml = '<?xml version="1.0" encoding="UTF-8"?><NFe></NFe>';
-        
+
         $resultado = $this->nfe->validarXML($xml);
         $this->assertFalse($resultado->isSuccess());
         $this->assertStringContainsString('infNFe obrigatório', $resultado->getError());
@@ -42,7 +42,7 @@ class XMLValidationTest extends TestCase
     {
         $chaves_validas = [
             '35210315123456789012345678901234567890123456',
-            '43200211222333000181550010000000011123456789'
+            '43200211222333000181550010000000011123456789',
         ];
 
         foreach ($chaves_validas as $chave) {
@@ -58,7 +58,7 @@ class XMLValidationTest extends TestCase
             '123456789',                                    // muito curta
             '35210315123456789012345678901234567890123456a', // letra
             '',                                             // vazia
-            '00000000000000000000000000000000000000000000'   // zeros
+            '00000000000000000000000000000000000000000000',   // zeros
         ];
 
         foreach ($chaves_invalidas as $chave) {
@@ -79,10 +79,10 @@ class XMLValidationTest extends TestCase
                 'nro' => '123',
                 'xMun' => 'São Paulo',
                 'UF' => 'SP',
-                'CEP' => '01234567'
-            ]
+                'CEP' => '01234567',
+            ],
         ];
-        
+
         $resultado = $this->nfe->validarEmitente($emitente);
         $this->assertTrue($resultado->isSuccess());
     }
@@ -99,10 +99,10 @@ class XMLValidationTest extends TestCase
                 'nro' => '123',
                 'xMun' => 'São Paulo',
                 'UF' => 'SP',
-                'CEP' => '01234567'
-            ]
+                'CEP' => '01234567',
+            ],
         ];
-        
+
         $resultado = $this->nfe->validarEmitente($emitente);
         $this->assertFalse($resultado->isSuccess());
         $this->assertStringContainsString('CNPJ inválido', $resultado->getError());
@@ -122,9 +122,9 @@ class XMLValidationTest extends TestCase
             'vBC' => 0, 'vICMS' => 45, 'vBCST' => 0, 'vST' => 0,
             'vProd' => 250, 'vFrete' => 0, 'vSeg' => 0, 'vDesc' => 0,
             'vII' => 0, 'vIPI' => 0, 'vPIS' => 0, 'vCOFINS' => 0,
-            'vOutro' => 0, 'vNF' => 250
+            'vOutro' => 0, 'vNF' => 250,
         ];
-        
+
         $resultado = $this->nfe->validarTotais($totais);
         $this->assertTrue($resultado->isSuccess());
     }
@@ -136,9 +136,9 @@ class XMLValidationTest extends TestCase
             'vBC' => 0, 'vICMS' => 45, 'vBCST' => 0, 'vST' => 0,
             'vProd' => 250, 'vFrete' => 0, 'vSeg' => 0, 'vDesc' => 0,
             'vII' => 0, 'vIPI' => 0, 'vPIS' => 0, 'vCOFINS' => 0,
-            'vOutro' => 0, 'vNF' => 300 // Total inconsistente
+            'vOutro' => 0, 'vNF' => 300, // Total inconsistente
         ];
-        
+
         $resultado = $this->nfe->validarTotais($totais);
         $this->assertFalse($resultado->isSuccess());
         $this->assertStringContainsString('Total inconsistente', $resultado->getError());
@@ -193,7 +193,7 @@ class XMLValidationTest extends TestCase
             <NFe>
                 <infNFe>
                     <emit>
-                        <CNPJ>' . $cnpj . '</CNPJ>
+                        <CNPJ>'.$cnpj.'</CNPJ>
                         <xNome>Empresa Teste</xNome>
                     </emit>
                 </infNFe>
@@ -217,10 +217,10 @@ class XMLValidationTest extends TestCase
         return '<?xml version="1.0" encoding="UTF-8"?>
             <NFe>
                 <infNFe>
-                    ' . $itensXML . '
+                    '.$itensXML.'
                     <total>
                         <ICMSTot>
-                            <vNF>' . $total . '</vNF>
+                            <vNF>'.$total.'</vNF>
                         </ICMSTot>
                     </total>
                 </infNFe>

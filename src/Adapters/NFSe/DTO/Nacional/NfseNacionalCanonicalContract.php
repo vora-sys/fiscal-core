@@ -15,7 +15,7 @@ final class NfseNacionalCanonicalContract
     }
 
     /**
-     * @param array<string,mixed> $payload
+     * @param  array<string,mixed>  $payload
      */
     public static function assertCanonical(array $payload): void
     {
@@ -32,7 +32,7 @@ final class NfseNacionalCanonicalContract
     }
 
     /**
-     * @param array<string,mixed> $policy
+     * @param  array<string,mixed>  $policy
      * @return array<string,mixed>
      */
     public static function canonicalizeProviderPolicy(array $policy): array

@@ -6,7 +6,6 @@ use PHPUnit\Framework\TestCase;
 use sabbajohn\FiscalCore\Adapters\ImpressaoAdapter;
 use sabbajohn\FiscalCore\Adapters\NF\NFCe\NFCeAdapter;
 use sabbajohn\FiscalCore\Facade\NFCeFacade;
-use sabbajohn\FiscalCore\Renderers\NFCe\ThermalDanfceRenderer;
 
 class NFCeFacadeResponseShapeTest extends TestCase
 {

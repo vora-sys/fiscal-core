@@ -2,8 +2,8 @@
 
 declare(strict_types=1);
 
-require_once __DIR__ . '/../../vendor/autoload.php';
-require_once __DIR__ . '/../homologacao/common.php';
+require_once __DIR__.'/../../vendor/autoload.php';
+require_once __DIR__.'/../homologacao/common.php';
 
 use sabbajohn\FiscalCore\Facade\FiscalFacade;
 use sabbajohn\FiscalCore\Support\BelemMunicipalDocumentUrlBuilder;
@@ -30,11 +30,13 @@ function parseOptions(array $argv): array
     foreach (array_slice($argv, 1) as $arg) {
         if ($arg === '--help' || $arg === '-h') {
             $options['help'] = true;
+
             continue;
         }
 
         if (str_starts_with($arg, '--source-file=')) {
             $options['source_file'] = substr($arg, 14);
+
             continue;
         }
 
@@ -65,8 +67,8 @@ function extractNfseXml(string $content): ?string
         return null;
     }
 
-    $dom = new DOMDocument();
-    if (!@$dom->loadXML($content)) {
+    $dom = new DOMDocument;
+    if (! @$dom->loadXML($content)) {
         return null;
     }
 
@@ -83,12 +85,12 @@ function extractNfseXml(string $content): ?string
 
 $options = parseOptions($argv);
 if (($options['help'] ?? false) === true) {
-    echo usage(basename((string) $argv[0])) . PHP_EOL;
+    echo usage(basename((string) $argv[0])).PHP_EOL;
     exit(0);
 }
 
 $sourceFile = trim((string) ($options['source_file'] ?? ''));
-if ($sourceFile === '' || !is_file($sourceFile)) {
+if ($sourceFile === '' || ! is_file($sourceFile)) {
     fwrite(STDERR, "Erro: informe um --source-file valido.\n");
     exit(1);
 }
@@ -103,8 +105,8 @@ if ($xml === null) {
     exit(1);
 }
 
-$dom = new DOMDocument();
-if (!@$dom->loadXML($xml)) {
+$dom = new DOMDocument;
+if (! @$dom->loadXML($xml)) {
     fwrite(STDERR, "Erro: XML da NFSe invalido.\n");
     exit(1);
 }
@@ -118,10 +120,10 @@ if ($numero === '' || $codigo === '') {
     exit(1);
 }
 
-$fiscal = new FiscalFacade();
+$fiscal = new FiscalFacade;
 $providerInfo = $fiscal->nfse('belem')->getProviderInfo();
 
-if (!$providerInfo->isSuccess()) {
+if (! $providerInfo->isSuccess()) {
     fwrite(STDERR, "Erro ao inicializar provider de Belem.\n");
     exit(1);
 }
@@ -133,4 +135,4 @@ $url = BelemMunicipalDocumentUrlBuilder::build(
     $codigo
 );
 
-echo 'URL oficial do DANFSe: ' . $url . PHP_EOL;
+echo 'URL oficial do DANFSe: '.$url.PHP_EOL;

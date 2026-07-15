@@ -2,22 +2,26 @@
 
 declare(strict_types=1);
 
-require_once dirname(__DIR__, 2) . '/Support/TestCertificateFile.php';
+require_once dirname(__DIR__, 2).'/Support/TestCertificateFile.php';
 
+use PHPUnit\Framework\TestCase;
 use sabbajohn\FiscalCore\Facade\NFSeFacade;
 use sabbajohn\FiscalCore\Support\CertificateManager;
 use sabbajohn\FiscalCore\Support\ConfigManager;
 use sabbajohn\FiscalCore\Support\ProviderRegistry;
-use PHPUnit\Framework\TestCase;
 
 final class NFSeFacadeBootstrapTest extends TestCase
 {
     private string $projectRoot;
+
     private string $originalCwd;
+
     /** @var array{path:string,password:string} */
     private array $certificateFile;
+
     /** @var array{path:string,password:string} */
     private array $runtimeCertificateFile;
+
     /** @var string[] */
     private array $managedEnvKeys = [
         'FISCAL_ENVIRONMENT',
@@ -59,7 +63,7 @@ final class NFSeFacadeBootstrapTest extends TestCase
         ProviderRegistry::getInstance()->reload();
     }
 
-    public function testFacadeBootstrapsMunicipalRuntimeFromConfigAndCertificate(): void
+    public function test_facade_bootstraps_municipal_runtime_from_config_and_certificate(): void
     {
         $this->bootstrapEnvironment([
             'FISCAL_ENVIRONMENT=homologacao',
@@ -67,8 +71,8 @@ final class NFSeFacadeBootstrapTest extends TestCase
             'FISCAL_CNPJ=83188342000104',
             'FISCAL_RAZAO_SOCIAL="FREELINE INFORMATICA LTDA"',
             'FISCAL_UF=SC',
-            'FISCAL_CERT_PATH="' . $this->certificateFile['path'] . '"',
-            'FISCAL_CERT_PASSWORD="' . $this->certificateFile['password'] . '"',
+            'FISCAL_CERT_PATH="'.$this->certificateFile['path'].'"',
+            'FISCAL_CERT_PASSWORD="'.$this->certificateFile['password'].'"',
         ]);
 
         $facade = new NFSeFacade('itajai');
@@ -81,15 +85,15 @@ final class NFSeFacadeBootstrapTest extends TestCase
         $this->assertSame('987654321', $response->getData('prestador_runtime')['inscricaoMunicipal'] ?? null);
     }
 
-    public function testFacadeFailsClearlyWhenFiscalImIsMissingForMunicipalProvider(): void
+    public function test_facade_fails_clearly_when_fiscal_im_is_missing_for_municipal_provider(): void
     {
         $this->bootstrapEnvironment([
             'FISCAL_ENVIRONMENT=homologacao',
             'FISCAL_CNPJ=83188342000104',
             'FISCAL_RAZAO_SOCIAL="FREELINE INFORMATICA LTDA"',
             'FISCAL_UF=SC',
-            'FISCAL_CERT_PATH="' . $this->certificateFile['path'] . '"',
-            'FISCAL_CERT_PASSWORD="' . $this->certificateFile['password'] . '"',
+            'FISCAL_CERT_PATH="'.$this->certificateFile['path'].'"',
+            'FISCAL_CERT_PASSWORD="'.$this->certificateFile['password'].'"',
         ]);
 
         $facade = new NFSeFacade('itajai');
@@ -99,7 +103,7 @@ final class NFSeFacadeBootstrapTest extends TestCase
         $this->assertStringContainsString('FISCAL_IM', (string) $response->getError());
     }
 
-    public function testFacadeFailsClearlyWhenConfiguredCnpjDiffersFromCertificate(): void
+    public function test_facade_fails_clearly_when_configured_cnpj_differs_from_certificate(): void
     {
         $this->bootstrapEnvironment([
             'FISCAL_ENVIRONMENT=homologacao',
@@ -107,8 +111,8 @@ final class NFSeFacadeBootstrapTest extends TestCase
             'FISCAL_CNPJ=11111111111111',
             'FISCAL_RAZAO_SOCIAL="FREELINE INFORMATICA LTDA"',
             'FISCAL_UF=SC',
-            'FISCAL_CERT_PATH="' . $this->certificateFile['path'] . '"',
-            'FISCAL_CERT_PASSWORD="' . $this->certificateFile['password'] . '"',
+            'FISCAL_CERT_PATH="'.$this->certificateFile['path'].'"',
+            'FISCAL_CERT_PASSWORD="'.$this->certificateFile['password'].'"',
         ]);
 
         $facade = new NFSeFacade('itajai');
@@ -118,15 +122,15 @@ final class NFSeFacadeBootstrapTest extends TestCase
         $this->assertStringContainsString('diverge do certificado', (string) $response->getError());
     }
 
-    public function testFacadePreservesRuntimeCertificateAlreadyLoadedBeforeBootstrap(): void
+    public function test_facade_preserves_runtime_certificate_already_loaded_before_bootstrap(): void
     {
         $this->bootstrapEnvironment([
             'FISCAL_ENVIRONMENT=homologacao',
             'FISCAL_CNPJ=01824852000166',
             'FISCAL_RAZAO_SOCIAL="AGROAM - AGRICOLA AMAZONAS COMERCIAL LTDA"',
             'FISCAL_UF=AM',
-            'FISCAL_CERT_PATH="' . $this->certificateFile['path'] . '"',
-            'FISCAL_CERT_PASSWORD="' . $this->certificateFile['password'] . '"',
+            'FISCAL_CERT_PATH="'.$this->certificateFile['path'].'"',
+            'FISCAL_CERT_PASSWORD="'.$this->certificateFile['password'].'"',
         ]);
 
         $runtimeRaw = file_get_contents($this->runtimeCertificateFile['path']);
@@ -147,9 +151,9 @@ final class NFSeFacadeBootstrapTest extends TestCase
 
     private function bootstrapEnvironment(array $lines): void
     {
-        $tempDir = sys_get_temp_dir() . '/nfse-facade-bootstrap-' . uniqid('', true);
+        $tempDir = sys_get_temp_dir().'/nfse-facade-bootstrap-'.uniqid('', true);
         mkdir($tempDir, 0777, true);
-        file_put_contents($tempDir . '/.env', implode(PHP_EOL, $lines) . PHP_EOL);
+        file_put_contents($tempDir.'/.env', implode(PHP_EOL, $lines).PHP_EOL);
         chdir($tempDir);
 
         $this->clearEnvironment();

@@ -12,8 +12,7 @@ final class NFSeImpressaoResult implements NFSeImpressaoResultInterface
         private readonly array $impressao,
         private readonly array $provider = [],
         private readonly array $raw = []
-    ) {
-    }
+    ) {}
 
     public function getImpressao(): array
     {

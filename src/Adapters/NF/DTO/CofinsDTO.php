@@ -13,7 +13,7 @@ class CofinsDTO
         public ?float $pCOFINS = null,  // Alíquota
         public ?float $vCOFINS = null,  // Valor do COFINS
     ) {}
-    
+
     /**
      * COFINS para regime de não cumulatividade (CST 01)
      */
@@ -26,7 +26,7 @@ class CofinsDTO
             vCOFINS: $vCOFINS
         );
     }
-    
+
     /**
      * COFINS para operação tributável com alíquota zero (CST 04)
      */
@@ -34,7 +34,7 @@ class CofinsDTO
     {
         return new self(cst: '04');
     }
-    
+
     /**
      * COFINS para outras operações (CST 49)
      */
@@ -42,7 +42,7 @@ class CofinsDTO
     {
         return new self(cst: '49');
     }
-    
+
     /**
      * COFINS para operação sem incidência (CST 07)
      */
@@ -50,14 +50,21 @@ class CofinsDTO
     {
         return new self(cst: '07');
     }
-    
+
     public function toStdClass(): \stdClass
     {
-        $obj = new \stdClass();
+        $obj = new \stdClass;
         $obj->cst = $this->cst;
-        if ($this->vBC !== null) $obj->vBC = $this->vBC;
-        if ($this->pCOFINS !== null) $obj->pCOFINS = $this->pCOFINS;
-        if ($this->vCOFINS !== null) $obj->vCOFINS = $this->vCOFINS;
+        if ($this->vBC !== null) {
+            $obj->vBC = $this->vBC;
+        }
+        if ($this->pCOFINS !== null) {
+            $obj->pCOFINS = $this->pCOFINS;
+        }
+        if ($this->vCOFINS !== null) {
+            $obj->vCOFINS = $this->vCOFINS;
+        }
+
         return $obj;
     }
 }

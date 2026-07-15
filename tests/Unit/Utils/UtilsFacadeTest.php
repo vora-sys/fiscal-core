@@ -15,7 +15,7 @@ class UtilsFacadeTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->utils = new UtilsFacade();
+        $this->utils = new UtilsFacade;
     }
 
     /** @test */
@@ -23,16 +23,16 @@ class UtilsFacadeTest extends TestCase
     {
         $cpfs_validos = [
             '11144477735',
-            '22233344456', 
-            '12345678909'
+            '22233344456',
+            '12345678909',
         ];
 
         foreach ($cpfs_validos as $cpf) {
             $resultado = $this->utils->validarCPF($cpf);
-            
+
             if ($resultado->isSuccess()) {
                 $this->assertTrue($resultado->getData()['valido']);
-                $this->assertMatchesRegularExpression('/\d{3}\.\d{3}\.\d{3}-\d{2}/', 
+                $this->assertMatchesRegularExpression('/\d{3}\.\d{3}\.\d{3}-\d{2}/',
                     $resultado->getData()['cpf']);
             }
         }
@@ -45,7 +45,7 @@ class UtilsFacadeTest extends TestCase
             '11111111111', // Todos iguais
             '123456789',   // Muito curto
             '1234567890a', // Com letra
-            '00000000000'  // Zeros
+            '00000000000',  // Zeros
         ];
 
         foreach ($cpfs_invalidos as $cpf) {
@@ -59,15 +59,15 @@ class UtilsFacadeTest extends TestCase
     {
         $cnpjs_validos = [
             '11222333000181',
-            '11444777000161'
+            '11444777000161',
         ];
 
         foreach ($cnpjs_validos as $cnpj) {
             $resultado = $this->utils->validarCNPJ($cnpj);
-            
+
             if ($resultado->isSuccess()) {
                 $this->assertTrue($resultado->getData()['valido']);
-                $this->assertMatchesRegularExpression('/\d{2}\.\d{3}\.\d{3}\/\d{4}-\d{2}/', 
+                $this->assertMatchesRegularExpression('/\d{2}\.\d{3}\.\d{3}\/\d{4}-\d{2}/',
                     $resultado->getData()['cnpj']);
             }
         }
@@ -79,7 +79,7 @@ class UtilsFacadeTest extends TestCase
         $cnpjs_invalidos = [
             '11111111111111', // Todos iguais
             '1234567890123',  // Muito curto
-            '00000000000000'  // Zeros
+            '00000000000000',  // Zeros
         ];
 
         foreach ($cnpjs_invalidos as $cnpj) {
@@ -94,12 +94,12 @@ class UtilsFacadeTest extends TestCase
         $ceps_validos = [
             '01310-100',
             '01310100',
-            '04567-890'
+            '04567-890',
         ];
 
         foreach ($ceps_validos as $cep) {
             $resultado = $this->utils->consultarCEP($cep);
-            
+
             // Se API externa estiver disponível
             if ($resultado->isSuccess()) {
                 $dados = $resultado->getData();
@@ -115,7 +115,7 @@ class UtilsFacadeTest extends TestCase
     {
         $resultado = $this->utils->listarBancos();
 
-        if (!$resultado->isSuccess()) {
+        if (! $resultado->isSuccess()) {
             $this->markTestSkipped('BrasilAPI indisponível para listar bancos.');
         }
 
@@ -136,7 +136,7 @@ class UtilsFacadeTest extends TestCase
     {
         $resultado = $this->utils->consultarBanco('001'); // Banco do Brasil
 
-        if (!$resultado->isSuccess()) {
+        if (! $resultado->isSuccess()) {
             $this->markTestSkipped('BrasilAPI indisponível para consultar banco.');
         }
 
@@ -151,12 +151,12 @@ class UtilsFacadeTest extends TestCase
         $resultado = $this->utils->verificarStatusAPIs();
 
         $this->assertTrue($resultado->isSuccess());
-        
+
         $dados = $resultado->getData();
         $this->assertArrayHasKey('apis', $dados);
         $this->assertArrayHasKey('timestamp', $dados);
         $this->assertArrayHasKey('total_disponivel', $dados);
-        
+
         // Deve verificar pelo menos BrasilAPI
         $this->assertArrayHasKey('brasilapi', $dados['apis']);
     }
@@ -184,8 +184,8 @@ class UtilsFacadeTest extends TestCase
 
         foreach ($ufs_teste as $uf) {
             $resultado = $this->utils->listarMunicipios($uf);
-            
-            if (!$resultado->isSuccess()) {
+
+            if (! $resultado->isSuccess()) {
                 $this->markTestSkipped("BrasilAPI indisponível para listar municípios de {$uf}.");
             }
 
@@ -207,7 +207,7 @@ class UtilsFacadeTest extends TestCase
 
         foreach ($ddds_teste as $ddd) {
             $resultado = $this->utils->consultarDDD($ddd);
-            
+
             if ($resultado->isSuccess()) {
                 $dados = $resultado->getData();
                 $this->assertEquals($ddd, $dados['ddd']);
@@ -227,8 +227,8 @@ class UtilsFacadeTest extends TestCase
         if ($resultado->isSuccess()) {
             $feriados = $resultado->getData();
             $this->assertIsArray($feriados);
-            
-            if (!empty($feriados)) {
+
+            if (! empty($feriados)) {
                 $feriado = $feriados[0];
                 $this->assertArrayHasKey('data', $feriado);
                 $this->assertArrayHasKey('nome', $feriado);

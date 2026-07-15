@@ -7,7 +7,7 @@ use sabbajohn\FiscalCore\Adapters\NF\DTO\EmitenteDTO;
 
 class EmitenteDTOTest extends TestCase
 {
-    public function testCriarEmitente()
+    public function test_criar_emitente()
     {
         $dto = new EmitenteDTO(
             cnpj: '12345678000190',
@@ -30,7 +30,7 @@ class EmitenteDTOTest extends TestCase
         $this->assertEquals(1, $dto->crt);
     }
 
-    public function testValoresPadrao()
+    public function test_valores_padrao()
     {
         $dto = new EmitenteDTO(
             '12345678000190', 'EMPRESA', '', '123',
@@ -42,7 +42,7 @@ class EmitenteDTOTest extends TestCase
         $this->assertEquals(1, $dto->crt);
     }
 
-    public function testCamposOpcionais()
+    public function test_campos_opcionais()
     {
         $dto = new EmitenteDTO(
             '12345678000190', 'EMPRESA', '', '123',

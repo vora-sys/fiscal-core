@@ -8,10 +8,11 @@ namespace sabbajohn\FiscalCore\Exceptions;
 abstract class FiscalException extends \RuntimeException
 {
     protected array $context = [];
+
     protected ?string $errorCode = null;
 
     public function __construct(
-        string $message = "",
+        string $message = '',
         int $code = 0,
         ?\Throwable $previous = null,
         array $context = []
@@ -33,12 +34,14 @@ abstract class FiscalException extends \RuntimeException
     public function setErrorCode(string $code): self
     {
         $this->errorCode = $code;
+
         return $this;
     }
 
     public function withContext(array $context): self
     {
         $this->context = array_merge($this->context, $context);
+
         return $this;
     }
 }

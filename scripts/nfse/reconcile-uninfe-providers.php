@@ -11,21 +11,25 @@ $options = getopt('', [
     'catalog::',
     'format::',
     'output::',
+    'generated-at::',
+    'dry-run',
     'fail-on-unexpected',
 ]);
 
-$csvPath = trim((string) ($options['csv'] ?? ($root . '/Uninfe/source/NFe.Components.Wsdl/NFse/WSDL/provedores_municipios_por_estado.csv')));
-$catalogPath = trim((string) ($options['catalog'] ?? ($root . '/config/nfse/providers-catalog.json')));
+$csvPath = trim((string) ($options['csv'] ?? ($root.'/Uninfe/source/NFe.Components.Wsdl/NFse/WSDL/provedores_municipios_por_estado.csv')));
+$catalogPath = trim((string) ($options['catalog'] ?? ($root.'/config/nfse/providers-catalog.json')));
 $format = strtolower(trim((string) ($options['format'] ?? 'json')));
 $outputPath = trim((string) ($options['output'] ?? ''));
+$generatedAt = trim((string) ($options['generated-at'] ?? gmdate('c')));
+$dryRun = array_key_exists('dry-run', $options);
 $failOnUnexpected = array_key_exists('fail-on-unexpected', $options);
 
-if (!is_file($csvPath)) {
+if (! is_file($csvPath)) {
     fwrite(STDERR, "CSV do Uninfe nao encontrado: {$csvPath}\n");
     exit(1);
 }
 
-if (!is_file($catalogPath)) {
+if (! is_file($catalogPath)) {
     fwrite(STDERR, "Catalogo NFSe nao encontrado: {$catalogPath}\n");
     exit(1);
 }
@@ -38,8 +42,9 @@ $divergences = [];
 $matched = 0;
 
 foreach ($uninfeByIbge as $ibge => $uninfe) {
-    if (!isset($catalogByIbge[$ibge])) {
+    if (! isset($catalogByIbge[$ibge])) {
         $missing[$ibge] = $uninfe;
+
         continue;
     }
 
@@ -49,6 +54,7 @@ foreach ($uninfeByIbge as $ibge => $uninfe) {
 
     if ($catalogFamily === $uninfeProvider) {
         $matched++;
+
         continue;
     }
 
@@ -76,13 +82,15 @@ usort(
 ksort($missing);
 
 $expectedDivergences = array_values(array_filter($divergences, static fn (array $d): bool => (bool) ($d['expected'] ?? false)));
-$unexpectedDivergences = array_values(array_filter($divergences, static fn (array $d): bool => !($d['expected'] ?? false)));
+$unexpectedDivergences = array_values(array_filter($divergences, static fn (array $d): bool => ! ($d['expected'] ?? false)));
 
 $report = [
-    'generated_at' => gmdate('c'),
+    'generated_at' => $generatedAt,
+    'dry_run' => $dryRun,
     'input' => [
         'csv' => $csvPath,
         'catalog' => $catalogPath,
+        'output' => $outputPath,
     ],
     'summary' => [
         'uninfe_rows' => count($uninfeByIbge),
@@ -109,9 +117,10 @@ $report = [
 
 $output = $format === 'md'
     ? renderMarkdownReport($report)
-    : json_encode($report, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR) . PHP_EOL;
+    : json_encode($report, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR).PHP_EOL;
 
-if ($outputPath !== '') {
+if ($outputPath !== '' && ! $dryRun) {
+    ensureDirectory(dirname($outputPath));
     file_put_contents($outputPath, $output);
 } else {
     echo $output;
@@ -122,6 +131,17 @@ if ($failOnUnexpected && $report['summary']['divergences_unexpected'] > 0) {
 }
 
 exit(0);
+
+function ensureDirectory(string $directory): void
+{
+    if (is_dir($directory)) {
+        return;
+    }
+
+    if (! mkdir($directory, 0775, true) && ! is_dir($directory)) {
+        throw new RuntimeException("Falha ao criar diretorio: {$directory}");
+    }
+}
 
 /**
  * @return array<string, array{provider:string,uf:string,municipio:string,id:string}>
@@ -169,11 +189,11 @@ function loadCatalogByIbge(string $catalogPath): array
 
     $result = [];
     foreach ($municipios as $ibge => $municipio) {
-        if (!is_array($municipio)) {
+        if (! is_array($municipio)) {
             continue;
         }
 
-        if (!($municipio['active'] ?? true)) {
+        if (! ($municipio['active'] ?? true)) {
             continue;
         }
 
@@ -200,7 +220,7 @@ function classifyDivergence(string $catalogFamily, string $uninfeProvider): arra
 }
 
 /**
- * @param array<string, mixed> $report
+ * @param  array<string, mixed>  $report
  */
 function renderMarkdownReport(array $report): string
 {
@@ -214,14 +234,14 @@ function renderMarkdownReport(array $report): string
     $lines[] = '';
     $lines[] = '## Resumo';
     $lines[] = '';
-    $lines[] = '- Gerado em: `' . (string) ($report['generated_at'] ?? '') . '`';
-    $lines[] = '- Registros Uninfe (IBGE unico): `' . (string) ($summary['uninfe_rows'] ?? 0) . '`';
-    $lines[] = '- Municipios ativos no catalogo: `' . (string) ($summary['catalog_active'] ?? 0) . '`';
-    $lines[] = '- Match exato provider: `' . (string) ($summary['matched'] ?? 0) . '`';
-    $lines[] = '- Ausentes no catalogo: `' . (string) ($summary['missing_in_catalog'] ?? 0) . '`';
-    $lines[] = '- Divergencias totais: `' . (string) ($summary['divergences_total'] ?? 0) . '`';
-    $lines[] = '- Divergencias esperadas: `' . (string) ($summary['divergences_expected'] ?? 0) . '`';
-    $lines[] = '- Divergencias inesperadas: `' . (string) ($summary['divergences_unexpected'] ?? 0) . '`';
+    $lines[] = '- Gerado em: `'.(string) ($report['generated_at'] ?? '').'`';
+    $lines[] = '- Registros Uninfe (IBGE unico): `'.(string) ($summary['uninfe_rows'] ?? 0).'`';
+    $lines[] = '- Municipios ativos no catalogo: `'.(string) ($summary['catalog_active'] ?? 0).'`';
+    $lines[] = '- Match exato provider: `'.(string) ($summary['matched'] ?? 0).'`';
+    $lines[] = '- Ausentes no catalogo: `'.(string) ($summary['missing_in_catalog'] ?? 0).'`';
+    $lines[] = '- Divergencias totais: `'.(string) ($summary['divergences_total'] ?? 0).'`';
+    $lines[] = '- Divergencias esperadas: `'.(string) ($summary['divergences_expected'] ?? 0).'`';
+    $lines[] = '- Divergencias inesperadas: `'.(string) ($summary['divergences_unexpected'] ?? 0).'`';
     $lines[] = '';
 
     $lines[] = '## Ausentes no Catalogo';
@@ -230,7 +250,7 @@ function renderMarkdownReport(array $report): string
         $lines[] = '- Nenhum municipio ausente.';
     } else {
         foreach ($missing as $item) {
-            if (!is_array($item)) {
+            if (! is_array($item)) {
                 continue;
             }
 
@@ -251,7 +271,7 @@ function renderMarkdownReport(array $report): string
         $lines[] = '- Nenhuma divergencia inesperada.';
     } else {
         foreach ($unexpected as $item) {
-            if (!is_array($item)) {
+            if (! is_array($item)) {
                 continue;
             }
 
@@ -273,7 +293,7 @@ function renderMarkdownReport(array $report): string
         $lines[] = '- Sem divergencias esperadas na amostra.';
     } else {
         foreach ($expectedSample as $item) {
-            if (!is_array($item)) {
+            if (! is_array($item)) {
                 continue;
             }
 
@@ -290,5 +310,5 @@ function renderMarkdownReport(array $report): string
     }
     $lines[] = '';
 
-    return implode(PHP_EOL, $lines) . PHP_EOL;
+    return implode(PHP_EOL, $lines).PHP_EOL;
 }

@@ -2,17 +2,17 @@
 
 namespace sabbajohn\FiscalCore\Adapters\NFSe\DTO\Nacional;
 
+use sabbajohn\FiscalCore\Support\NfseNacionalIbscbsClassificationRules;
+
 final class IbsCbsDTO
 {
     /**
-     * @param array<string,mixed> $data
+     * @param  array<string,mixed>  $data
      */
-    private function __construct(private array $data)
-    {
-    }
+    private function __construct(private array $data) {}
 
     /**
-     * @param array<string,mixed> $payload
+     * @param  array<string,mixed>  $payload
      */
     public static function fromArray(array $payload): self
     {
@@ -135,8 +135,8 @@ final class IbsCbsDTO
     }
 
     /**
-     * @param array<string,mixed> $input
-     * @param array<string,mixed> $valores
+     * @param  array<string,mixed>  $input
+     * @param  array<string,mixed>  $valores
      * @return array<string,mixed>
      */
     private static function resolveTributosSitClas(array $input, array $valores): array
@@ -155,8 +155,9 @@ final class IbsCbsDTO
         }
 
         $data = $gIbscbs;
-        $data['CST'] = str_pad(substr(DpsPayloadHelper::onlyDigits($cst), 0, 3), 3, '0', STR_PAD_LEFT);
-        $data['cClassTrib'] = str_pad(substr(DpsPayloadHelper::onlyDigits($cClassTrib), 0, 6), 6, '0', STR_PAD_LEFT);
+        unset($data['gTribRegular'], $data['gDif']);
+        $data['CST'] = NfseNacionalIbscbsClassificationRules::normalizeCst($cst);
+        $data['cClassTrib'] = NfseNacionalIbscbsClassificationRules::normalizeClass($cClassTrib);
 
         $cCredPres = DpsPayloadHelper::firstString([$gIbscbs['cCredPres'] ?? null, $gIbscbs['codigo_credito_presumido'] ?? null]);
         if ($cCredPres !== null && DpsPayloadHelper::onlyDigits($cCredPres) !== '') {
@@ -164,7 +165,7 @@ final class IbsCbsDTO
         }
 
         $regular = DpsPayloadHelper::firstArray([$gIbscbs['gTribRegular'] ?? null]);
-        if ($regular !== []) {
+        if ($regular !== [] && NfseNacionalIbscbsClassificationRules::allowsTribRegular($data['cClassTrib'], $data['CST'])) {
             $cstReg = DpsPayloadHelper::firstString([$regular['CSTReg'] ?? null, $regular['cstReg'] ?? null, $regular['CST'] ?? null]);
             $cClassReg = DpsPayloadHelper::firstString([
                 $regular['cClassTribReg'] ?? null,
@@ -181,11 +182,16 @@ final class IbsCbsDTO
         }
 
         $dif = DpsPayloadHelper::firstArray([$gIbscbs['gDif'] ?? null]);
-        if ($dif !== []) {
+        if ($dif !== [] && NfseNacionalIbscbsClassificationRules::allowsDiferimento($data['cClassTrib'], $data['CST'])) {
             $pDifUf = DpsPayloadHelper::firstDecimal([$dif['pDifUF'] ?? null]);
             $pDifMun = DpsPayloadHelper::firstDecimal([$dif['pDifMun'] ?? null]);
             $pDifCbs = DpsPayloadHelper::firstDecimal([$dif['pDifCBS'] ?? null]);
-            if ($pDifUf !== null && $pDifMun !== null && $pDifCbs !== null) {
+            if (
+                $pDifUf !== null
+                && $pDifMun !== null
+                && $pDifCbs !== null
+                && NfseNacionalIbscbsClassificationRules::hasEffectiveDiferimento($pDifUf, $pDifMun, $pDifCbs)
+            ) {
                 $data['gDif'] = [
                     'pDifUF' => $pDifUf,
                     'pDifMun' => $pDifMun,
@@ -198,20 +204,23 @@ final class IbsCbsDTO
     }
 
     /**
-     * @param array<string,mixed> $pessoa
+     * @param  array<string,mixed>  $pessoa
      * @return array<string,mixed>
      */
     private static function normalizePessoa(array $pessoa, bool $withEndereco): array
     {
         $data = $pessoa;
-        $documento = DpsPayloadHelper::onlyDigits(DpsPayloadHelper::firstString([
+        $documentoRaw = strtoupper(preg_replace('/[^A-Za-z0-9]+/', '', DpsPayloadHelper::firstString([
             $pessoa['CNPJ'] ?? null,
             $pessoa['cnpj'] ?? null,
             $pessoa['CPF'] ?? null,
             $pessoa['cpf'] ?? null,
             $pessoa['documento'] ?? null,
-        ]) ?? '');
-        if (strlen($documento) === 14) {
+        ]) ?? '') ?? '');
+        $documento = DpsPayloadHelper::onlyDigits($documentoRaw);
+        if (strlen($documentoRaw) === 14) {
+            $data['CNPJ'] = $documentoRaw;
+        } elseif (strlen($documento) === 14) {
             $data['CNPJ'] = $documento;
         } elseif ($documento !== '') {
             $data['CPF'] = str_pad(substr($documento, 0, 11), 11, '0', STR_PAD_LEFT);
@@ -249,7 +258,7 @@ final class IbsCbsDTO
     }
 
     /**
-     * @param array<string,mixed> $endereco
+     * @param  array<string,mixed>  $endereco
      * @return array<string,mixed>
      */
     private static function normalizeEndereco(array $endereco): array
@@ -292,7 +301,7 @@ final class IbsCbsDTO
     }
 
     /**
-     * @param array<string,mixed> $imovel
+     * @param  array<string,mixed>  $imovel
      * @return array<string,mixed>
      */
     private static function normalizeImovel(array $imovel): array
@@ -316,7 +325,7 @@ final class IbsCbsDTO
     }
 
     /**
-     * @param array<string,mixed> $reeRepRes
+     * @param  array<string,mixed>  $reeRepRes
      * @return array<string,mixed>
      */
     private static function normalizeReeRepRes(array $reeRepRes): array
@@ -327,7 +336,7 @@ final class IbsCbsDTO
             ?? $reeRepRes;
         $documentos = [];
         foreach (DpsPayloadHelper::normalizeArrayList($documentosPayload) as $documento) {
-            if (!is_array($documento)) {
+            if (! is_array($documento)) {
                 continue;
             }
             $documentos[] = self::normalizeDocumento($documento);
@@ -337,7 +346,7 @@ final class IbsCbsDTO
     }
 
     /**
-     * @param array<string,mixed> $documento
+     * @param  array<string,mixed>  $documento
      * @return array<string,mixed>
      */
     private static function normalizeDocumento(array $documento): array

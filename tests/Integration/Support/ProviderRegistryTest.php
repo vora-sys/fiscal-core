@@ -2,18 +2,18 @@
 
 declare(strict_types=1);
 
-use sabbajohn\FiscalCore\Providers\NFSe\Municipal\BelemMunicipalProvider;
+use PHPUnit\Framework\TestCase;
 use sabbajohn\FiscalCore\Providers\NFSe\Municipal\AbrasfSharedProvider;
+use sabbajohn\FiscalCore\Providers\NFSe\Municipal\BelemMunicipalProvider;
 use sabbajohn\FiscalCore\Providers\NFSe\Municipal\ElProvider;
 use sabbajohn\FiscalCore\Providers\NFSe\Municipal\IsswebProvider;
 use sabbajohn\FiscalCore\Providers\NFSe\Municipal\WebissProvider;
 use sabbajohn\FiscalCore\Providers\NFSe\NacionalProvider;
 use sabbajohn\FiscalCore\Support\ProviderRegistry;
-use PHPUnit\Framework\TestCase;
 
 final class ProviderRegistryTest extends TestCase
 {
-    public function testGetByMunicipioJoinvilleReturnsNacionalProvider(): void
+    public function test_get_by_municipio_joinville_returns_nacional_provider(): void
     {
         $registry = ProviderRegistry::getInstance();
 
@@ -23,7 +23,7 @@ final class ProviderRegistryTest extends TestCase
         $this->assertSame('4209102', $provider->getCodigoMunicipio());
     }
 
-    public function testGetByMunicipioBelemReturnsCurrentMunicipalProvider(): void
+    public function test_get_by_municipio_belem_returns_current_municipal_provider(): void
     {
         $registry = ProviderRegistry::getInstance();
 
@@ -32,7 +32,7 @@ final class ProviderRegistryTest extends TestCase
         $this->assertInstanceOf(BelemMunicipalProvider::class, $provider);
     }
 
-    public function testGetByMunicipioManausReturnsNacionalProvider(): void
+    public function test_get_by_municipio_manaus_returns_nacional_provider(): void
     {
         $registry = ProviderRegistry::getInstance();
 
@@ -41,7 +41,7 @@ final class ProviderRegistryTest extends TestCase
         $this->assertInstanceOf(NacionalProvider::class, $provider);
     }
 
-    public function testGetByMunicipioSaoLuisReturnsNacionalProvider(): void
+    public function test_get_by_municipio_sao_luis_returns_nacional_provider(): void
     {
         $registry = ProviderRegistry::getInstance();
 
@@ -50,7 +50,7 @@ final class ProviderRegistryTest extends TestCase
         $this->assertInstanceOf(NacionalProvider::class, $provider);
     }
 
-    public function testGetByMunicipioCampoGrandeReturnsAbrasfSharedProvider(): void
+    public function test_get_by_municipio_campo_grande_returns_abrasf_shared_provider(): void
     {
         $registry = ProviderRegistry::getInstance();
 
@@ -60,7 +60,7 @@ final class ProviderRegistryTest extends TestCase
         $this->assertSame('5002704', $provider->getCodigoMunicipio());
     }
 
-    public function testGetByMunicipioCastanhalReturnsAbrasfSharedProvider(): void
+    public function test_get_by_municipio_castanhal_returns_abrasf_shared_provider(): void
     {
         $registry = ProviderRegistry::getInstance();
 
@@ -70,7 +70,7 @@ final class ProviderRegistryTest extends TestCase
         $this->assertSame('1502400', $provider->getCodigoMunicipio());
     }
 
-    public function testGetByMunicipioPresidenteFigueiredoReturnsIsswebProvider(): void
+    public function test_get_by_municipio_presidente_figueiredo_returns_issweb_provider(): void
     {
         $registry = ProviderRegistry::getInstance();
 
@@ -84,7 +84,7 @@ final class ProviderRegistryTest extends TestCase
         );
     }
 
-    public function testGetByMunicipioRioPretoDaEvaReturnsIsswebProvider(): void
+    public function test_get_by_municipio_rio_preto_da_eva_returns_issweb_provider(): void
     {
         $registry = ProviderRegistry::getInstance();
 
@@ -94,7 +94,7 @@ final class ProviderRegistryTest extends TestCase
         $this->assertSame('1303569', $provider->getCodigoMunicipio());
     }
 
-    public function testGetByMunicipioWave4NordesteCitiesReturnSharedProviders(): void
+    public function test_get_by_municipio_wave4_nordeste_cities_return_shared_providers(): void
     {
         $registry = ProviderRegistry::getInstance();
 
@@ -115,7 +115,7 @@ final class ProviderRegistryTest extends TestCase
         $this->assertSame('2933307', $provider->getCodigoMunicipio());
     }
 
-    public function testGetConfigForMunicipioAppliesMunicipalOverridesWithoutAffectingSharedFamily(): void
+    public function test_get_config_for_municipio_applies_municipal_overrides_without_affecting_shared_family(): void
     {
         $registry = ProviderRegistry::getInstance();
 
@@ -132,7 +132,7 @@ final class ProviderRegistryTest extends TestCase
         $this->assertArrayNotHasKey('official_validation_url_template', $rioPreto);
     }
 
-    public function testGetConfigForMunicipioIncludesWave4PayloadDefaults(): void
+    public function test_get_config_for_municipio_includes_wave4_payload_defaults(): void
     {
         $registry = ProviderRegistry::getInstance();
 
@@ -154,7 +154,7 @@ final class ProviderRegistryTest extends TestCase
         }
     }
 
-    public function testGetByUnknownMunicipioReturnsNacionalProvider(): void
+    public function test_get_by_unknown_municipio_returns_nacional_provider(): void
     {
         $registry = ProviderRegistry::getInstance();
 

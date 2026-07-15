@@ -5,12 +5,12 @@ declare(strict_types=1);
 namespace sabbajohn\FiscalCore\Renderers\NFSe;
 
 use Com\Tecnick\Barcode\Barcode;
-use Dompdf\Dompdf;
-use Dompdf\Options;
 use DOMAttr;
 use DOMDocument;
 use DOMNode;
 use DOMNodeList;
+use Dompdf\Dompdf;
+use Dompdf\Options;
 use DOMXPath;
 use RuntimeException;
 use sabbajohn\FiscalCore\Contracts\MunicipalDanfseRendererInterface;
@@ -24,7 +24,7 @@ final class NacionalDanfseRenderer implements MunicipalDanfseRendererInterface
         $data = $this->extractDocumentData($xmlNfse);
         $html = $this->buildHtml($data);
 
-        $options = new Options();
+        $options = new Options;
         $options->set('isRemoteEnabled', false);
         $options->set('defaultFont', 'DejaVu Sans');
         $options->set('isHtml5ParserEnabled', true);
@@ -39,8 +39,8 @@ final class NacionalDanfseRenderer implements MunicipalDanfseRendererInterface
 
     private function extractDocumentData(string $xmlNfse): array
     {
-        $dom = new DOMDocument();
-        if (!@$dom->loadXML($xmlNfse)) {
+        $dom = new DOMDocument;
+        if (! @$dom->loadXML($xmlNfse)) {
             throw new RuntimeException('XML final da NFSe invalido para gerar o DANFSe nacional.');
         }
 
@@ -418,53 +418,53 @@ HTML;
     {
         $base = "//*[local-name()='{$nodeName}']";
 
-        $municipio = $this->nodeValue($xpath, $base . "/*[local-name()='end']/*[local-name()='xMun']")
-            ?? $this->nodeValue($xpath, $base . "/*[local-name()='endNac']/*[local-name()='xMun']")
-            ?? $this->nodeValue($xpath, $base . "/*[local-name()='xMun']");
-        $uf = $this->nodeValue($xpath, $base . "/*[local-name()='end']/*[local-name()='UF']")
-            ?? $this->nodeValue($xpath, $base . "/*[local-name()='endNac']/*[local-name()='UF']")
-            ?? $this->nodeValue($xpath, $base . "/*[local-name()='UF']");
-        $codigoMunicipio = $this->nodeValue($xpath, $base . "/*[local-name()='endNac']/*[local-name()='cMun']")
-            ?? $this->nodeValue($xpath, $base . "/*[local-name()='cMun']");
-        $cep = $this->formatCep($this->nodeValue($xpath, $base . "/*[local-name()='endNac']/*[local-name()='CEP']"))
-            ?? $this->formatCep($this->nodeValue($xpath, $base . "/*[local-name()='end']/*[local-name()='CEP']"));
+        $municipio = $this->nodeValue($xpath, $base."/*[local-name()='end']/*[local-name()='xMun']")
+            ?? $this->nodeValue($xpath, $base."/*[local-name()='endNac']/*[local-name()='xMun']")
+            ?? $this->nodeValue($xpath, $base."/*[local-name()='xMun']");
+        $uf = $this->nodeValue($xpath, $base."/*[local-name()='end']/*[local-name()='UF']")
+            ?? $this->nodeValue($xpath, $base."/*[local-name()='endNac']/*[local-name()='UF']")
+            ?? $this->nodeValue($xpath, $base."/*[local-name()='UF']");
+        $codigoMunicipio = $this->nodeValue($xpath, $base."/*[local-name()='endNac']/*[local-name()='cMun']")
+            ?? $this->nodeValue($xpath, $base."/*[local-name()='cMun']");
+        $cep = $this->formatCep($this->nodeValue($xpath, $base."/*[local-name()='endNac']/*[local-name()='CEP']"))
+            ?? $this->formatCep($this->nodeValue($xpath, $base."/*[local-name()='end']/*[local-name()='CEP']"));
 
         $data = [
             'documento' => $this->firstNodeValue($xpath, [
-                $base . "/*[local-name()='CNPJ']",
-                $base . "/*[local-name()='CPF']",
-                $base . "/*[local-name()='NIF']",
+                $base."/*[local-name()='CNPJ']",
+                $base."/*[local-name()='CPF']",
+                $base."/*[local-name()='NIF']",
             ]),
             'indicador_municipal' => $includeMunicipalIndicator
                 ? $this->firstNodeValue($xpath, [
-                    $base . "/*[local-name()='IM']",
-                    $base . "/*[local-name()='IMTomador']",
-                    $base . "/*[local-name()='IMIntermed']",
+                    $base."/*[local-name()='IM']",
+                    $base."/*[local-name()='IMTomador']",
+                    $base."/*[local-name()='IMIntermed']",
                 ])
                 : null,
             'telefone' => $this->firstNodeValue($xpath, [
-                $base . "/*[local-name()='fone']",
-                $base . "/*[local-name()='telefone']",
+                $base."/*[local-name()='fone']",
+                $base."/*[local-name()='telefone']",
             ]),
             'nome' => $this->firstNodeValue($xpath, [
-                $base . "/*[local-name()='xNome']",
-                $base . "/*[local-name()='xRazao']",
+                $base."/*[local-name()='xNome']",
+                $base."/*[local-name()='xRazao']",
             ]),
             'municipio_uf' => $this->joinNonEmpty(' / ', [$municipio, $uf]),
             'codigo_ibge_cep' => $this->joinNonEmpty(' / ', [$codigoMunicipio, $cep]),
             'endereco' => $this->joinNonEmpty(', ', array_filter([
-                $this->nodeValue($xpath, $base . "/*[local-name()='end']/*[local-name()='xLgr']"),
-                $this->nodeValue($xpath, $base . "/*[local-name()='end']/*[local-name()='nro']"),
-                $this->nodeValue($xpath, $base . "/*[local-name()='end']/*[local-name()='xCpl']"),
-                $this->nodeValue($xpath, $base . "/*[local-name()='end']/*[local-name()='xBairro']"),
+                $this->nodeValue($xpath, $base."/*[local-name()='end']/*[local-name()='xLgr']"),
+                $this->nodeValue($xpath, $base."/*[local-name()='end']/*[local-name()='nro']"),
+                $this->nodeValue($xpath, $base."/*[local-name()='end']/*[local-name()='xCpl']"),
+                $this->nodeValue($xpath, $base."/*[local-name()='end']/*[local-name()='xBairro']"),
             ], static fn (?string $value): bool => $value !== null)),
             'email' => $this->firstNodeValue($xpath, [
-                $base . "/*[local-name()='email']",
-                $base . "/*[local-name()='xEmail']",
+                $base."/*[local-name()='email']",
+                $base."/*[local-name()='xEmail']",
             ]),
         ];
 
-        if (!$includeMunicipalIndicator) {
+        if (! $includeMunicipalIndicator) {
             unset($data['indicador_municipal']);
         }
 
@@ -487,7 +487,7 @@ HTML;
             $rawValue = $this->nodeValue($xpath, $query);
             $value = $this->formatDecimal($rawValue);
             if ($value !== null) {
-                $items[] = $label . ': ' . $value;
+                $items[] = $label.': '.$value;
                 $total += $this->parseDecimal($rawValue);
             }
         }
@@ -534,7 +534,7 @@ HTML;
             'three' => 'three',
         ];
         $tableClass = $classMap[$gridClass] ?? 'three';
-        $html = '<div class="section"><div class="section-title">' . $this->escape($title) . '</div><table class="grid ' . $tableClass . '">';
+        $html = '<div class="section"><div class="section-title">'.$this->escape($title).'</div><table class="grid '.$tableClass.'">';
 
         foreach ($rows as $rowIndex => $row) {
             $html .= '<tr>';
@@ -546,11 +546,11 @@ HTML;
                 if ($field['highlight'] || ($highlightLastField && $rowIndex === array_key_last($rows) && $fieldIndex === array_key_last($row))) {
                     $classes[] = 'highlight';
                 }
-                $classAttr = $classes !== [] ? ' class="' . implode(' ', $classes) . '"' : '';
+                $classAttr = $classes !== [] ? ' class="'.implode(' ', $classes).'"' : '';
 
-                $html .= '<td' . $classAttr . '>';
-                $html .= '<span class="field-label">' . $this->escape($field['label']) . '</span>';
-                $html .= '<div class="field-value">' . $this->escape($field['value']) . '</div>';
+                $html .= '<td'.$classAttr.'>';
+                $html .= '<span class="field-label">'.$this->escape($field['label']).'</span>';
+                $html .= '<div class="field-value">'.$this->escape($field['value']).'</div>';
                 $html .= '</td>';
             }
             $html .= '</tr>';
@@ -570,7 +570,7 @@ HTML;
         $html = '<div class="status-badges">';
         foreach ($badges as $badge) {
             $class = str_contains($badge, 'SEM VALIDADE') ? 'status-badge homologacao' : 'status-badge';
-            $html .= '<span class="' . $class . '">' . $this->escape($badge) . '</span>';
+            $html .= '<span class="'.$class.'">'.$this->escape($badge).'</span>';
         }
         $html .= '</div>';
 
@@ -584,7 +584,7 @@ HTML;
         }
 
         try {
-            $barcode = new Barcode();
+            $barcode = new Barcode;
             $qr = $barcode->getBarcodeObj('QRCODE,H', $contents, -4, -4, 'black');
 
             return $qr->getSvgCode();
@@ -612,7 +612,7 @@ HTML;
             return self::NATIONAL_PUBLIC_QUERY_URL;
         }
 
-        return self::NATIONAL_PUBLIC_QUERY_URL . '?' . http_build_query($params);
+        return self::NATIONAL_PUBLIC_QUERY_URL.'?'.http_build_query($params);
     }
 
     private function firstNodeValue(DOMXPath $xpath, array $queries): ?string
@@ -630,12 +630,12 @@ HTML;
     private function nodeValue(DOMXPath $xpath, string $query): ?string
     {
         $nodes = $xpath->query($query);
-        if (!$nodes instanceof DOMNodeList || $nodes->length === 0) {
+        if (! $nodes instanceof DOMNodeList || $nodes->length === 0) {
             return null;
         }
 
         $node = $nodes->item(0);
-        if (!$node instanceof DOMNode) {
+        if (! $node instanceof DOMNode) {
             return null;
         }
 
@@ -647,12 +647,12 @@ HTML;
     private function attributeValue(DOMXPath $xpath, string $query): ?string
     {
         $nodes = $xpath->query($query);
-        if (!$nodes instanceof DOMNodeList || $nodes->length === 0) {
+        if (! $nodes instanceof DOMNodeList || $nodes->length === 0) {
             return null;
         }
 
         $node = $nodes->item(0);
-        if (!$node instanceof DOMAttr) {
+        if (! $node instanceof DOMAttr) {
             return null;
         }
 
@@ -737,7 +737,7 @@ HTML;
     private function joinNonEmpty(string $separator, array $values): ?string
     {
         $values = array_values(array_filter(array_map(static function (mixed $value): ?string {
-            if (!is_scalar($value)) {
+            if (! is_scalar($value)) {
                 return null;
             }
 
@@ -848,7 +848,7 @@ HTML;
         }
 
         if (strlen($digits) === 8) {
-            return substr($digits, 0, 5) . '-' . substr($digits, 5);
+            return substr($digits, 0, 5).'-'.substr($digits, 5);
         }
 
         return $digits;

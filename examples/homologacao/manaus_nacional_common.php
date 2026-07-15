@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use sabbajohn\FiscalCore\Facade\FiscalFacade;
+use sabbajohn\FiscalCore\Facade\NFSeFacade;
 
 function manausNacionalApplyEnvOverrides(string $projectRoot): void
 {
@@ -86,26 +87,31 @@ function manausNacionalParseOptions(array $argv): array
     foreach (array_slice($argv, 1) as $arg) {
         if ($arg === '--send') {
             $options['send'] = true;
+
             continue;
         }
 
         if ($arg === '--help' || $arg === '-h') {
             $options['help'] = true;
+
             continue;
         }
 
         if ($arg === '--aliquotas') {
             $options['aliquotas'] = true;
+
             continue;
         }
 
         if ($arg === '--listar-codigos') {
             $options['listar_codigos'] = true;
+
             continue;
         }
 
         if ($arg === '--convenio') {
             $options['convenio'] = true;
+
             continue;
         }
 
@@ -133,6 +139,7 @@ function manausNacionalParseOptions(array $argv): array
         ] as $prefix => $key) {
             if (str_starts_with($arg, $prefix)) {
                 $options[$key] = substr($arg, strlen($prefix));
+
                 continue 2;
             }
         }
@@ -147,10 +154,10 @@ function manausNacionalBuildPayload(array $options): array
     $inscricaoMunicipal = nfseMunicipalRequiredEnvValue('FISCAL_IM');
     $razaoSocial = nfseMunicipalRequiredEnvValue('FISCAL_RAZAO_SOCIAL');
     $competencia = (string) ($options['competencia'] ?? date('Y-m-d'));
-    $dhEmi = $competencia . 'T10:00:00-04:00';
+    $dhEmi = $competencia.'T10:00:00-04:00';
     $serie = str_pad('1', 5, '0', STR_PAD_LEFT);
     $numero = str_pad(date('His'), 15, '0', STR_PAD_LEFT);
-    $dpsId = 'DPS13026032' . $cnpj . $serie . $numero;
+    $dpsId = 'DPS13026032'.$cnpj.$serie.$numero;
     $nbs = '120018900';
 
     $cTribNac = (string) ($options['c_trib_nac'] ?? '140101');
@@ -212,7 +219,7 @@ function manausNacionalHasOperationFlags(array $options): bool
         'aliquotas',
         'convenio',
     ] as $key) {
-        if (!empty($options[$key])) {
+        if (! empty($options[$key])) {
             return true;
         }
     }
@@ -223,9 +230,9 @@ function manausNacionalHasOperationFlags(array $options): bool
 function manausNacionalListarCodigos(array $options, ?string $projectRoot = null): array
 {
     $projectRoot ??= dirname(__DIR__, 2);
-    $catalogPath = $projectRoot . '/docs_nfse_nacional/MUN.INCID_INFO.SERV.-Table 1.csv';
-    if (!is_file($catalogPath)) {
-        throw new RuntimeException('Tabela nacional de servicos nao encontrada: ' . $catalogPath);
+    $catalogPath = $projectRoot.'/docs_nfse_nacional/MUN.INCID_INFO.SERV.-Table 1.csv';
+    if (! is_file($catalogPath)) {
+        throw new RuntimeException('Tabela nacional de servicos nao encontrada: '.$catalogPath);
     }
 
     $search = manausNacionalNormalizeSearchText((string) ($options['buscar_codigo'] ?? ''));
@@ -262,13 +269,13 @@ function manausNacionalListarCodigos(array $options, ?string $projectRoot = null
                 ],
             ];
 
-            if ($prefix !== '' && !str_starts_with($codigo, $prefix)) {
+            if ($prefix !== '' && ! str_starts_with($codigo, $prefix)) {
                 continue;
             }
 
             if ($search !== '') {
-                $haystack = manausNacionalNormalizeSearchText($codigo . ' ' . $descricao);
-                if (!str_contains($haystack, $search)) {
+                $haystack = manausNacionalNormalizeSearchText($codigo.' '.$descricao);
+                if (! str_contains($haystack, $search)) {
                     continue;
                 }
             }
@@ -340,8 +347,9 @@ function manausNacionalCodigoExigeObra(string $cTribNac): bool
     ], true);
 }
 
-function manausNacionalFacade(): \sabbajohn\FiscalCore\Facade\NFSeFacade
+function manausNacionalFacade(): NFSeFacade
 {
-    $fiscal = new FiscalFacade();
+    $fiscal = new FiscalFacade;
+
     return $fiscal->nfse('manaus');
 }

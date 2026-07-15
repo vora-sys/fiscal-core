@@ -14,8 +14,7 @@ final class NFSeConsultaResult implements NFSeConsultaResultInterface
         private readonly array $impressao,
         private readonly array $provider = [],
         private readonly array $raw = []
-    ) {
-    }
+    ) {}
 
     public function getConsulta(): array
     {

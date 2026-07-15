@@ -174,10 +174,9 @@ XML;
 
     public static function makeTransport(string $responseXml): NFSeSoapTransportInterface
     {
-        return new class($responseXml) implements NFSeSoapTransportInterface {
-            public function __construct(private readonly string $responseXml)
-            {
-            }
+        return new class($responseXml) implements NFSeSoapTransportInterface
+        {
+            public function __construct(private readonly string $responseXml) {}
 
             public function send(string $endpoint, string $envelope, array $options = []): array
             {

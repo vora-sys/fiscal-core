@@ -156,12 +156,45 @@ class DpsNacionalDtoTest extends TestCase
 
         $this->assertIsString($xml);
         $this->assertStringContainsString('<CNPJ>11222333000181</CNPJ>', $xml);
-        $this->assertStringContainsString('<IM>000000000012345</IM>', $xml);
+        $this->assertStringContainsString('<IM>12345</IM>', $xml);
         $this->assertStringContainsString('<CPF>12345678901</CPF>', $xml);
         $this->assertStringContainsString('<xNome>Tomador Teste</xNome>', $xml);
         $this->assertStringContainsString('<cTribNac>010701</cTribNac>', $xml);
         $this->assertStringContainsString('<tpRetISSQN>2</tpRetISSQN>', $xml);
         $this->assertStringContainsString('<pAliq>2.00</pAliq>', $xml);
+    }
+
+    public function test_provider_preserva_representacao_exata_da_im_oficial_do_cnc(): void
+    {
+        $provider = new NacionalProvider([
+            'codigo_municipio' => '1302603',
+            'versao' => '1.01',
+            'dps_versao' => '1.01',
+            'ambiente' => 'homologacao',
+        ]);
+
+        $xml = $provider->gerarXmlDpsPreview([
+            'cLocEmi' => '1302603',
+            'prestador' => [
+                'cnpj' => '01824852000832',
+                'inscricaoMunicipal' => '      665940001',
+                'opSimpNac' => '3',
+                'regApTribSN' => '1',
+                'regEspTrib' => '0',
+            ],
+            'tomador' => [
+                'cpf' => '78648998204',
+                'razaoSocial' => 'TIAGO QUEIROZ DE OLIVEIRA',
+            ],
+            'servico' => [
+                'cLocPrestacao' => '1302603',
+                'cTribNac' => '140101',
+                'descricao' => 'Revisão geral',
+            ],
+            'valor_servicos' => 180,
+        ]);
+
+        $this->assertStringContainsString('<IM>      665940001</IM>', $xml);
     }
 
     public function test_provider_omite_im_do_prestador_para_municipio_configurado(): void
@@ -207,7 +240,7 @@ class DpsNacionalDtoTest extends TestCase
         $this->assertStringNotContainsString('1618414', $xml);
     }
 
-    public function test_provider_envia_im_do_prestador_para_joinville_sem_configuracao_de_omissao(): void
+    public function test_provider_envia_im_do_prestador_para_joinville_homologacao_sem_configuracao_de_omissao(): void
     {
         $provider = new NacionalProvider([
             'codigo_municipio' => '4209102',
@@ -243,10 +276,10 @@ class DpsNacionalDtoTest extends TestCase
         ]);
 
         $this->assertStringContainsString('<CNPJ>83188342000104</CNPJ>', $xml);
-        $this->assertStringContainsString('<IM>000000000033061</IM>', $xml);
+        $this->assertStringContainsString('<IM>33061</IM>', $xml);
     }
 
-    public function test_provider_trata_im_do_prestador_conforme_ambiente(): void
+    public function test_provider_preserva_im_do_prestador_em_ambos_os_ambientes(): void
     {
         $baseConfig = [
             'codigo_municipio' => '4209102',
@@ -286,7 +319,7 @@ class DpsNacionalDtoTest extends TestCase
             'ambiente' => 'producao',
         ]))->gerarXmlDpsPreview($payload);
 
-        $this->assertStringContainsString('<IM>000000000033061</IM>', $homologacaoXml);
+        $this->assertStringContainsString('<IM>33061</IM>', $homologacaoXml);
         $this->assertStringContainsString('<IM>33061</IM>', $producaoXml);
     }
 
@@ -297,6 +330,38 @@ class DpsNacionalDtoTest extends TestCase
             'prestador' => [
                 'cnpj' => '83.188.342/0001-04',
                 'opSimpNac' => '3',
+                'regEspTrib' => '0',
+            ],
+            'tomador' => [
+                'documento' => '03.364.685/0001-43',
+                'razaoSocial' => 'PISCINAS H2O LTDA',
+            ],
+            'servico' => [
+                'cLocPrestacao' => '4209102',
+                'cTribNac' => '010701',
+                'descricao' => 'Servico de desenvolvimento',
+                'aliquota' => 2,
+            ],
+            'valor_servicos' => 254,
+        ], [
+            'codigo_municipio' => '4209102',
+            'ambiente' => 'homologacao',
+            'ver_aplic' => 'invoiceflow-1.0',
+        ]);
+
+        $payload = $dto->toArray();
+
+        $this->assertSame('3', $payload['prestador']['opSimpNac']);
+        $this->assertSame('1', $payload['prestador']['regApTribSN']);
+    }
+
+    public function test_dps_dto_resolve_simples_nacional_a_partir_do_crt(): void
+    {
+        $dto = DpsDTO::fromArray([
+            'cLocEmi' => '4209102',
+            'prestador' => [
+                'cnpj' => '83.188.342/0001-04',
+                'crt' => '1',
                 'regEspTrib' => '0',
             ],
             'tomador' => [
@@ -443,6 +508,46 @@ class DpsNacionalDtoTest extends TestCase
             'valor_servicos' => 100,
         ]);
 
-        $this->assertStringContainsString('<IM>000000001618414</IM>', $xml);
+        $this->assertStringContainsString('<IM>1618414</IM>', $xml);
+    }
+
+    public function test_provider_omite_im_quando_preflight_cnc_desabilita_envio(): void
+    {
+        $provider = new NacionalProvider([
+            'codigo_municipio' => '4209102',
+            'versao' => '1.01',
+            'dps_versao' => '1.01',
+            'ambiente' => 'homologacao',
+            'api_base_url' => 'https://api.local',
+            'timeout' => 10,
+            'auth' => ['token' => 'abc'],
+            'endpoints' => ['emitir' => '/nfse'],
+        ]);
+
+        $xml = $provider->gerarXmlDpsPreview([
+            'cLocEmi' => '4209102',
+            'prestador' => [
+                'cnpj' => '83.188.342/0001-04',
+                'inscricaoMunicipal' => '33061',
+                'enviarIM' => false,
+                'opSimpNac' => '1',
+                'regEspTrib' => '0',
+                'codigoMunicipio' => '4209102',
+            ],
+            'tomador' => [
+                'documento' => '03.364.685/0001-43',
+                'razaoSocial' => 'PISCINAS H2O LTDA',
+            ],
+            'servico' => [
+                'cLocPrestacao' => '4209102',
+                'cTribNac' => '010701',
+                'descricao' => 'Servico de desenvolvimento',
+                'aliquota' => 2,
+            ],
+            'valor_servicos' => 254,
+        ]);
+
+        $this->assertStringContainsString('<CNPJ>83188342000104</CNPJ>', $xml);
+        $this->assertStringNotContainsString('<IM>', $xml);
     }
 }

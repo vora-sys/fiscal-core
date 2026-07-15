@@ -5,15 +5,13 @@ namespace sabbajohn\FiscalCore\Adapters\NFSe\DTO\Nacional;
 final class ServicoDTO
 {
     /**
-     * @param array<string,mixed> $data
+     * @param  array<string,mixed>  $data
      */
-    private function __construct(private array $data)
-    {
-    }
+    private function __construct(private array $data) {}
 
     /**
-     * @param array<string,mixed> $payload
-     * @param array<string,mixed> $context
+     * @param  array<string,mixed>  $payload
+     * @param  array<string,mixed>  $context
      */
     public static function fromArray(array $payload, array $context = []): self
     {
@@ -70,6 +68,14 @@ final class ServicoDTO
             $data['cNBS'] = $cNbs;
         }
 
+        $cAtvSn = DpsPayloadHelper::firstString([
+            $payload['cAtvSN'] ?? null,
+            $payload['codigo_atividade_simples_nacional'] ?? null,
+        ]);
+        if ($cAtvSn !== null) {
+            $data['cAtvSN'] = $cAtvSn;
+        }
+
         $aliquota = DpsPayloadHelper::firstDecimal([
             $payload['pAliq'] ?? null,
             $payload['aliquota'] ?? null,
@@ -106,12 +112,16 @@ final class ServicoDTO
             $errors[] = 'servico.descricao deve ter no máximo 2000 caracteres.';
         }
 
-        if (!in_array((string) ($this->data['tpRetISSQN'] ?? ''), ['1', '2', '3'], true)) {
+        if (! in_array((string) ($this->data['tpRetISSQN'] ?? ''), ['1', '2', '3'], true)) {
             $errors[] = 'servico.tpRetISSQN deve ser 1, 2 ou 3.';
         }
         $cNbs = DpsPayloadHelper::onlyDigits((string) ($this->data['cNBS'] ?? ''));
         if ($cNbs !== '' && strlen($cNbs) !== 9) {
             $errors[] = 'servico.cNBS deve conter exatamente 9 dígitos.';
+        }
+        $cAtvSn = trim((string) ($this->data['cAtvSN'] ?? ''));
+        if ($cAtvSn !== '' && ! in_array($cAtvSn, ['7', '8', '9', '10', '11', '12', '13', '14', '90'], true)) {
+            $errors[] = 'servico.cAtvSN deve ser 7, 8, 9, 10, 11, 12, 13, 14 ou 90.';
         }
 
         return $errors;

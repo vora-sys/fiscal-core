@@ -2,16 +2,16 @@
 
 declare(strict_types=1);
 
-require_once dirname(__DIR__, 2) . '/Fixtures/NFSeJoinvilleMunicipalFixtures.php';
+require_once dirname(__DIR__, 2).'/Fixtures/NFSeJoinvilleMunicipalFixtures.php';
 
-use sabbajohn\FiscalCore\Providers\NFSe\Municipal\PublicaProvider;
+use PHPUnit\Framework\TestCase;
 use sabbajohn\FiscalCore\Adapters\NF\NFSeAdapter;
 use sabbajohn\FiscalCore\Facade\NFSeFacade;
+use sabbajohn\FiscalCore\Providers\NFSe\Municipal\PublicaProvider;
 use sabbajohn\FiscalCore\Support\NFSeSchemaResolver;
 use sabbajohn\FiscalCore\Support\NFSeSchemaValidator;
 use sabbajohn\FiscalCore\Support\NFSeSoapTransportInterface;
 use sabbajohn\FiscalCore\Support\ProviderRegistry;
-use PHPUnit\Framework\TestCase;
 
 final class JoinvilleMunicipalProviderTest extends TestCase
 {
@@ -20,14 +20,13 @@ final class JoinvilleMunicipalProviderTest extends TestCase
         ProviderRegistry::getInstance()->reload();
     }
 
-    public function testEmitirBuildsSignedSchemaValidRequestAndParsesSoapResponse(): void
+    public function test_emitir_builds_signed_schema_valid_request_and_parses_soap_response(): void
     {
-        $transport = new class(NFSeJoinvilleMunicipalFixtures::asyncEnviarLoteSoapResponse()) implements NFSeSoapTransportInterface {
+        $transport = new class(NFSeJoinvilleMunicipalFixtures::asyncEnviarLoteSoapResponse()) implements NFSeSoapTransportInterface
+        {
             public array $calls = [];
 
-            public function __construct(private readonly string $response)
-            {
-            }
+            public function __construct(private readonly string $response) {}
 
             public function send(string $endpoint, string $envelope, array $options = []): array
             {
@@ -57,13 +56,13 @@ final class JoinvilleMunicipalProviderTest extends TestCase
         $this->assertStringContainsString('EnviarLoteRpsEnvio', $requestXml);
         $this->assertStringContainsString('http://www.w3.org/2000/09/xmldsig#', $requestXml);
 
-        $validation = (new NFSeSchemaValidator())->validate(
+        $validation = (new NFSeSchemaValidator)->validate(
             $requestXml,
-            (new NFSeSchemaResolver())->resolve('PUBLICA', 'enviar_lote_rps')
+            (new NFSeSchemaResolver)->resolve('PUBLICA', 'enviar_lote_rps')
         );
         $this->assertTrue($validation['valid'], implode(PHP_EOL, $validation['errors']));
 
-        $dom = new DOMDocument();
+        $dom = new DOMDocument;
         $dom->loadXML($requestXml);
         $xpath = new DOMXPath($dom);
         $xpath->registerNamespace('ds', 'http://www.w3.org/2000/09/xmldsig#');
@@ -81,9 +80,10 @@ final class JoinvilleMunicipalProviderTest extends TestCase
         $this->assertNull($parsed['nfse']);
     }
 
-    public function testEmitirFallsBackToAsyncLoteWhenGerarNfseIsDiscontinued(): void
+    public function test_emitir_falls_back_to_async_lote_when_gerar_nfse_is_discontinued(): void
     {
-        $transport = new class implements NFSeSoapTransportInterface {
+        $transport = new class implements NFSeSoapTransportInterface
+        {
             public array $calls = [];
 
             public function send(string $endpoint, string $envelope, array $options = []): array
@@ -113,9 +113,10 @@ final class JoinvilleMunicipalProviderTest extends TestCase
         $this->assertSame('PROTOCOLO-JOINVILLE-2026', $provider->getLastResponseData()['protocolo']);
     }
 
-    public function testConsultarLoteBuildsSignedSchemaValidRequestAndParsesResponse(): void
+    public function test_consultar_lote_builds_signed_schema_valid_request_and_parses_response(): void
     {
-        $transport = new class implements NFSeSoapTransportInterface {
+        $transport = new class implements NFSeSoapTransportInterface
+        {
             public array $calls = [];
 
             public function send(string $endpoint, string $envelope, array $options = []): array
@@ -147,9 +148,9 @@ final class JoinvilleMunicipalProviderTest extends TestCase
         $this->assertStringContainsString('<svc:ConsultarLoteRps>', $transport->calls[1]['envelope']);
         $this->assertStringContainsString('<svc:ConsultarLoteRps>', (string) $provider->getLastSoapEnvelope());
 
-        $validation = (new NFSeSchemaValidator())->validate(
+        $validation = (new NFSeSchemaValidator)->validate(
             (string) $provider->getLastRequestXml(),
-            (new NFSeSchemaResolver())->resolve('PUBLICA', 'consultar_lote')
+            (new NFSeSchemaResolver)->resolve('PUBLICA', 'consultar_lote')
         );
         $this->assertTrue($validation['valid'], implode(PHP_EOL, $validation['errors']));
         $this->assertSame('consultar_lote', $provider->getLastOperationArtifacts()['operation']);
@@ -158,12 +159,11 @@ final class JoinvilleMunicipalProviderTest extends TestCase
         $this->assertSame('202600000000123', $provider->getLastResponseData()['nfse']['numero']);
     }
 
-    public function testConsultarPorRpsBuildsSignedSchemaValidRequestAndParsesResponse(): void
+    public function test_consultar_por_rps_builds_signed_schema_valid_request_and_parses_response(): void
     {
-        $transport = new class(NFSeJoinvilleMunicipalFixtures::consultarNfseRpsSoapResponse()) implements NFSeSoapTransportInterface {
-            public function __construct(private readonly string $response)
-            {
-            }
+        $transport = new class(NFSeJoinvilleMunicipalFixtures::consultarNfseRpsSoapResponse()) implements NFSeSoapTransportInterface
+        {
+            public function __construct(private readonly string $response) {}
 
             public function send(string $endpoint, string $envelope, array $options = []): array
             {
@@ -181,21 +181,20 @@ final class JoinvilleMunicipalProviderTest extends TestCase
 
         $this->assertStringContainsString('<svc:ConsultarNfsePorRps>', (string) $provider->getLastSoapEnvelope());
 
-        $validation = (new NFSeSchemaValidator())->validate(
+        $validation = (new NFSeSchemaValidator)->validate(
             (string) $provider->getLastRequestXml(),
-            (new NFSeSchemaResolver())->resolve('PUBLICA', 'consultar_nfse_rps')
+            (new NFSeSchemaResolver)->resolve('PUBLICA', 'consultar_nfse_rps')
         );
         $this->assertTrue($validation['valid'], implode(PHP_EOL, $validation['errors']));
         $this->assertSame('success', $provider->getLastResponseData()['status']);
         $this->assertSame('202600000000123', $provider->getLastResponseData()['nfse']['numero']);
     }
 
-    public function testCancelarBuildsSignedSchemaValidRequestAndParsesResponse(): void
+    public function test_cancelar_builds_signed_schema_valid_request_and_parses_response(): void
     {
-        $transport = new class(NFSeJoinvilleMunicipalFixtures::cancelarSoapSuccessResponse()) implements NFSeSoapTransportInterface {
-            public function __construct(private readonly string $response)
-            {
-            }
+        $transport = new class(NFSeJoinvilleMunicipalFixtures::cancelarSoapSuccessResponse()) implements NFSeSoapTransportInterface
+        {
+            public function __construct(private readonly string $response) {}
 
             public function send(string $endpoint, string $envelope, array $options = []): array
             {
@@ -217,9 +216,9 @@ final class JoinvilleMunicipalProviderTest extends TestCase
         $this->assertTrue($result);
         $this->assertStringContainsString('<svc:CancelarNfse>', (string) $provider->getLastSoapEnvelope());
 
-        $validation = (new NFSeSchemaValidator())->validate(
+        $validation = (new NFSeSchemaValidator)->validate(
             (string) $provider->getLastRequestXml(),
-            (new NFSeSchemaResolver())->resolve('PUBLICA', 'cancelar_nfse')
+            (new NFSeSchemaResolver)->resolve('PUBLICA', 'cancelar_nfse')
         );
         $this->assertTrue($validation['valid'], implode(PHP_EOL, $validation['errors']));
         $this->assertSame('success', $provider->getLastResponseData()['status']);
@@ -227,12 +226,11 @@ final class JoinvilleMunicipalProviderTest extends TestCase
         $this->assertSame('C001', $provider->getLastResponseData()['cancelamento']['codigo_cancelamento']);
     }
 
-    public function testCancelarReturnsFalseOnBusinessRejection(): void
+    public function test_cancelar_returns_false_on_business_rejection(): void
     {
-        $transport = new class(NFSeJoinvilleMunicipalFixtures::cancelarSoapRejectionResponse()) implements NFSeSoapTransportInterface {
-            public function __construct(private readonly string $response)
-            {
-            }
+        $transport = new class(NFSeJoinvilleMunicipalFixtures::cancelarSoapRejectionResponse()) implements NFSeSoapTransportInterface
+        {
+            public function __construct(private readonly string $response) {}
 
             public function send(string $endpoint, string $envelope, array $options = []): array
             {
@@ -256,9 +254,10 @@ final class JoinvilleMunicipalProviderTest extends TestCase
         $this->assertSame(['E301 NFSe ja se encontra cancelada.'], $provider->getLastResponseData()['mensagens']);
     }
 
-    public function testProcessaRespostaDaFixtureSanitizada(): void
+    public function test_processa_resposta_da_fixture_sanitizada(): void
     {
-        $provider = $this->makeProvider(new class implements NFSeSoapTransportInterface {
+        $provider = $this->makeProvider(new class implements NFSeSoapTransportInterface
+        {
             public function send(string $endpoint, string $envelope, array $options = []): array
             {
                 throw new RuntimeException('Transporte não deve ser usado neste teste.');
@@ -274,12 +273,11 @@ final class JoinvilleMunicipalProviderTest extends TestCase
         $this->assertSame('TOMADOR SANITIZADO LTDA', $parsed['nfse']['tomador']);
     }
 
-    public function testProcessaRespostaComMensagemDeRejeicao(): void
+    public function test_processa_resposta_com_mensagem_de_rejeicao(): void
     {
-        $provider = $this->makeProvider(new class(NFSeJoinvilleMunicipalFixtures::rejectionSoapResponse()) implements NFSeSoapTransportInterface {
-            public function __construct(private readonly string $response)
-            {
-            }
+        $provider = $this->makeProvider(new class(NFSeJoinvilleMunicipalFixtures::rejectionSoapResponse()) implements NFSeSoapTransportInterface
+        {
+            public function __construct(private readonly string $response) {}
 
             public function send(string $endpoint, string $envelope, array $options = []): array
             {
@@ -299,9 +297,10 @@ final class JoinvilleMunicipalProviderTest extends TestCase
         $this->assertSame(['E201 Item de serviço inválido para o prestador.'], $parsed['mensagens']);
     }
 
-    public function testEmitirComHtmlDeGatewayRetornaDiagnosticoDeTransporte(): void
+    public function test_emitir_com_html_de_gateway_retorna_diagnostico_de_transporte(): void
     {
-        $transport = new class implements NFSeSoapTransportInterface {
+        $transport = new class implements NFSeSoapTransportInterface
+        {
             public function send(string $endpoint, string $envelope, array $options = []): array
             {
                 return [
@@ -334,13 +333,12 @@ final class JoinvilleMunicipalProviderTest extends TestCase
         $this->assertSame(['Content-Type: text/xml; charset=utf-8'], $parsed['request_headers']);
     }
 
-    public function testEmitirComRedirectHttpRetornaDiagnosticoDeTransporte(): void
+    public function test_emitir_com_redirect_http_retorna_diagnostico_de_transporte(): void
     {
         $location = 'https://nfsehomologacao.joinville.sc.gov.br/nfse_integracao/Services';
-        $transport = new class($location) implements NFSeSoapTransportInterface {
-            public function __construct(private readonly string $location)
-            {
-            }
+        $transport = new class($location) implements NFSeSoapTransportInterface
+        {
+            public function __construct(private readonly string $location) {}
 
             public function send(string $endpoint, string $envelope, array $options = []): array
             {
@@ -351,13 +349,13 @@ final class JoinvilleMunicipalProviderTest extends TestCase
                     'headers' => [
                         'HTTP/1.1 301 Moved Permanently',
                         'Content-Type: text/html',
-                        'Location: ' . $this->location,
+                        'Location: '.$this->location,
                     ],
                     'request_headers' => ['Content-Type: text/xml; charset=utf-8'],
                     'response_headers' => [
                         'HTTP/1.1 301 Moved Permanently',
                         'Content-Type: text/html',
-                        'Location: ' . $this->location,
+                        'Location: '.$this->location,
                     ],
                 ];
             }
@@ -381,14 +379,15 @@ final class JoinvilleMunicipalProviderTest extends TestCase
         $this->assertSame([
             'HTTP/1.1 301 Moved Permanently',
             'Content-Type: text/html',
-            'Location: ' . $location,
+            'Location: '.$location,
         ], $parsed['response_headers']);
         $this->assertSame(['Content-Type: text/xml; charset=utf-8'], $parsed['request_headers']);
     }
 
-    public function testFacadeEmitirReturnsErrorOnJoinvilleGatewayHtml(): void
+    public function test_facade_emitir_returns_error_on_joinville_gateway_html(): void
     {
-        $transport = new class implements NFSeSoapTransportInterface {
+        $transport = new class implements NFSeSoapTransportInterface
+        {
             public function send(string $endpoint, string $envelope, array $options = []): array
             {
                 return [
@@ -416,13 +415,12 @@ final class JoinvilleMunicipalProviderTest extends TestCase
         $this->assertSame('gateway_unavailable', $response->getMetadata('transport_error'));
     }
 
-    public function testFacadeEmitirReturnsErrorOnJoinvilleHttpRedirect(): void
+    public function test_facade_emitir_returns_error_on_joinville_http_redirect(): void
     {
         $location = 'https://nfsehomologacao.joinville.sc.gov.br/nfse_integracao/Services';
-        $transport = new class($location) implements NFSeSoapTransportInterface {
-            public function __construct(private readonly string $location)
-            {
-            }
+        $transport = new class($location) implements NFSeSoapTransportInterface
+        {
+            public function __construct(private readonly string $location) {}
 
             public function send(string $endpoint, string $envelope, array $options = []): array
             {
@@ -434,7 +432,7 @@ final class JoinvilleMunicipalProviderTest extends TestCase
                     'response_headers' => [
                         'HTTP/1.1 301 Moved Permanently',
                         'Content-Type: text/html',
-                        'Location: ' . $this->location,
+                        'Location: '.$this->location,
                     ],
                 ];
             }
@@ -455,9 +453,10 @@ final class JoinvilleMunicipalProviderTest extends TestCase
         $this->assertSame($location, $response->getMetadata('redirect_location'));
     }
 
-    public function testRejectsIncompatibleItems(): void
+    public function test_rejects_incompatible_items(): void
     {
-        $provider = $this->makeProvider(new class implements NFSeSoapTransportInterface {
+        $provider = $this->makeProvider(new class implements NFSeSoapTransportInterface
+        {
             public function send(string $endpoint, string $envelope, array $options = []): array
             {
                 return [
@@ -475,9 +474,10 @@ final class JoinvilleMunicipalProviderTest extends TestCase
         $provider->emitir(NFSeJoinvilleMunicipalFixtures::incompatibleItemsPayload());
     }
 
-    public function testConsultarPorRpsRequiresRequiredFields(): void
+    public function test_consultar_por_rps_requires_required_fields(): void
     {
-        $provider = $this->makeProvider(new class implements NFSeSoapTransportInterface {
+        $provider = $this->makeProvider(new class implements NFSeSoapTransportInterface
+        {
             public function send(string $endpoint, string $envelope, array $options = []): array
             {
                 return [
@@ -498,15 +498,14 @@ final class JoinvilleMunicipalProviderTest extends TestCase
         ]);
     }
 
-    public function testHomologationDebugMasksSensitiveData(): void
+    public function test_homologation_debug_masks_sensitive_data(): void
     {
-        $logFile = sys_get_temp_dir() . '/joinville-provider-debug-' . uniqid('', true) . '.log';
+        $logFile = sys_get_temp_dir().'/joinville-provider-debug-'.uniqid('', true).'.log';
         @unlink($logFile);
 
-        $transport = new class(NFSeJoinvilleMunicipalFixtures::successSoapResponse()) implements NFSeSoapTransportInterface {
-            public function __construct(private readonly string $response)
-            {
-            }
+        $transport = new class(NFSeJoinvilleMunicipalFixtures::successSoapResponse()) implements NFSeSoapTransportInterface
+        {
+            public function __construct(private readonly string $response) {}
 
             public function send(string $endpoint, string $envelope, array $options = []): array
             {
@@ -534,12 +533,11 @@ final class JoinvilleMunicipalProviderTest extends TestCase
         $this->assertStringNotContainsString('47999991234', $contents);
     }
 
-    public function testFacadeEmitirCompletoReturnsAuthorizedJoinvilleDocumentAndLocalDanfse(): void
+    public function test_facade_emitir_completo_returns_authorized_joinville_document_and_local_danfse(): void
     {
-        $transport = new class(NFSeJoinvilleMunicipalFixtures::successSoapResponse()) implements NFSeSoapTransportInterface {
-            public function __construct(private readonly string $response)
-            {
-            }
+        $transport = new class(NFSeJoinvilleMunicipalFixtures::successSoapResponse()) implements NFSeSoapTransportInterface
+        {
+            public function __construct(private readonly string $response) {}
 
             public function send(string $endpoint, string $envelope, array $options = []): array
             {

@@ -303,7 +303,7 @@ final class NfseNacionalCanonicalPayload
     }
 
     /**
-     * @param array<string,mixed> $payload
+     * @param  array<string,mixed>  $payload
      * @return list<string>
      */
     public static function unexpectedPaths(array $payload): array
@@ -312,7 +312,7 @@ final class NfseNacionalCanonicalPayload
     }
 
     /**
-     * @param array<string,mixed> $payload
+     * @param  array<string,mixed>  $payload
      * @return list<array{
      *     path:string,
      *     reason:string,
@@ -332,8 +332,8 @@ final class NfseNacionalCanonicalPayload
     }
 
     /**
-     * @param array<string,mixed> $payload
-     * @param array<string,mixed> $schema
+     * @param  array<string,mixed>  $payload
+     * @param  array<string,mixed>  $schema
      * @return array<string,array{
      *     path:string,
      *     reason:string,
@@ -349,9 +349,10 @@ final class NfseNacionalCanonicalPayload
         $invalid = [];
 
         foreach ($payload as $key => $value) {
-            $path = $prefix === '' ? (string) $key : $prefix . '.' . $key;
-            if (!array_key_exists($key, $schema)) {
+            $path = $prefix === '' ? (string) $key : $prefix.'.'.$key;
+            if (! array_key_exists($key, $schema)) {
                 $invalid[$path] = self::buildUnexpectedFieldIssue($path, $value, $schema, $prefix);
+
                 continue;
             }
 
@@ -360,8 +361,9 @@ final class NfseNacionalCanonicalPayload
                 continue;
             }
 
-            if (!is_array($value) || array_is_list($value)) {
+            if (! is_array($value) || array_is_list($value)) {
                 $invalid[$path] = self::buildInvalidStructureIssue($path, $value, $childSchema);
+
                 continue;
             }
 
@@ -372,7 +374,7 @@ final class NfseNacionalCanonicalPayload
     }
 
     /**
-     * @param array<string,mixed> $parentSchema
+     * @param  array<string,mixed>  $parentSchema
      * @return array{
      *     path:string,
      *     reason:string,
@@ -399,7 +401,7 @@ final class NfseNacionalCanonicalPayload
     }
 
     /**
-     * @param array<string,mixed> $childSchema
+     * @param  array<string,mixed>  $childSchema
      * @return array{
      *     path:string,
      *     reason:string,
@@ -431,7 +433,7 @@ final class NfseNacionalCanonicalPayload
     }
 
     /**
-     * @param array<string,mixed> $parentSchema
+     * @param  array<string,mixed>  $parentSchema
      * @return list<string>
      */
     private static function expectedPathsForUnexpectedField(string $path, array $parentSchema, string $prefix): array
@@ -442,7 +444,7 @@ final class NfseNacionalCanonicalPayload
 
         $paths = [];
         foreach (array_keys($parentSchema) as $field) {
-            $paths[] = $prefix === '' ? (string) $field : $prefix . '.' . $field;
+            $paths[] = $prefix === '' ? (string) $field : $prefix.'.'.$field;
         }
 
         sort($paths);
@@ -451,7 +453,7 @@ final class NfseNacionalCanonicalPayload
     }
 
     /**
-     * @param list<string> $expected
+     * @param  list<string>  $expected
      */
     private static function buildIssueMessage(string $path, mixed $value, array $expected): string
     {
@@ -472,14 +474,14 @@ final class NfseNacionalCanonicalPayload
     }
 
     /**
-     * @param array<string,mixed> $schema
+     * @param  array<string,mixed>  $schema
      * @return list<string>
      */
     private static function schemaPaths(array $schema, string $prefix): array
     {
         $paths = [];
         foreach (array_keys($schema) as $field) {
-            $paths[] = $prefix . '.' . $field;
+            $paths[] = $prefix.'.'.$field;
         }
 
         sort($paths);
@@ -490,7 +492,7 @@ final class NfseNacionalCanonicalPayload
     private static function normalizeReceivedValue(mixed $value): mixed
     {
         if (is_string($value)) {
-            return mb_strlen($value) > 180 ? mb_substr($value, 0, 177) . '...' : $value;
+            return mb_strlen($value) > 180 ? mb_substr($value, 0, 177).'...' : $value;
         }
 
         if (is_array($value)) {
@@ -531,23 +533,23 @@ final class NfseNacionalCanonicalPayload
             is_null($value) => 'null',
             is_bool($value) => $value ? 'true' : 'false',
             is_int($value), is_float($value) => (string) $value,
-            is_string($value) => '"' . (mb_strlen($value) > 60 ? mb_substr($value, 0, 57) . '...' : $value) . '"',
+            is_string($value) => '"'.(mb_strlen($value) > 60 ? mb_substr($value, 0, 57).'...' : $value).'"',
             is_array($value) && array_is_list($value) => sprintf('lista com %d item(ns)', count($value)),
             is_array($value) => sprintf(
                 'objeto com chaves [%s]',
                 implode(', ', array_slice(array_map('strval', array_keys($value)), 0, 6))
             ),
-            is_object($value) => 'objeto ' . $value::class,
+            is_object($value) => 'objeto '.$value::class,
             default => self::valueType($value),
         };
     }
 
     /**
-     * @param list<string> $expected
+     * @param  list<string>  $expected
      */
     private static function joinExpectedFields(array $expected): string
     {
-        $quoted = array_map(static fn (string $field): string => '"' . $field . '"', $expected);
+        $quoted = array_map(static fn (string $field): string => '"'.$field.'"', $expected);
         $count = count($quoted);
 
         if ($count === 0) {
@@ -559,9 +561,9 @@ final class NfseNacionalCanonicalPayload
         }
 
         if ($count === 2) {
-            return $quoted[0] . ' ou ' . $quoted[1];
+            return $quoted[0].' ou '.$quoted[1];
         }
 
-        return implode(', ', array_slice($quoted, 0, -1)) . ' ou ' . $quoted[$count - 1];
+        return implode(', ', array_slice($quoted, 0, -1)).' ou '.$quoted[$count - 1];
     }
 }

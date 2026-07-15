@@ -2,8 +2,8 @@
 
 declare(strict_types=1);
 
-require_once __DIR__ . '/../../vendor/autoload.php';
-require_once __DIR__ . '/common.php';
+require_once __DIR__.'/../../vendor/autoload.php';
+require_once __DIR__.'/common.php';
 
 use RuntimeException;
 use sabbajohn\FiscalCore\Facade\FiscalFacade;
@@ -16,7 +16,6 @@ use sabbajohn\FiscalCore\Facade\FiscalFacade;
  *   php examples/homologacao/consulta.php belem lote 123
  *   php examples/homologacao/consulta.php manaus dps ABC123
  */
-
 $projectRoot = dirname(__DIR__, 2);
 $municipio = strtolower($argv[1] ?? 'belem');
 $tipoConsulta = strtolower($argv[2] ?? 'lote');
@@ -33,7 +32,7 @@ $referencia = $referencia ?? match ($tipoConsulta) {
     default => throw new RuntimeException(sprintf('Tipo de consulta não suportado: %s', $tipoConsulta)),
 };
 
-$fiscalFacade = new FiscalFacade();
+$fiscalFacade = new FiscalFacade;
 $nfse = $fiscalFacade->nfse($municipio);
 $providerInfo = $nfse->getProviderInfo();
 
@@ -51,9 +50,9 @@ $resultado = match ($tipoConsulta) {
     default => throw new RuntimeException(sprintf('Tipo de consulta não suportado: %s', $tipoConsulta)),
 };
 
-echo 'Provider pronto: ' . ($providerInfo->isSuccess() ? 'sim' : 'nao') . PHP_EOL;
-echo 'Municipio: ' . $municipio . PHP_EOL;
-echo 'Tipo de consulta: ' . $tipoConsulta . PHP_EOL;
-echo 'Referencia: ' . $referencia . PHP_EOL;
-echo 'Consulta ' . ucfirst($tipoConsulta) . ' ' . ucfirst($municipio) . ':' . PHP_EOL;
-echo $resultado->toJson(JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) . PHP_EOL;
+echo 'Provider pronto: '.($providerInfo->isSuccess() ? 'sim' : 'nao').PHP_EOL;
+echo 'Municipio: '.$municipio.PHP_EOL;
+echo 'Tipo de consulta: '.$tipoConsulta.PHP_EOL;
+echo 'Referencia: '.$referencia.PHP_EOL;
+echo 'Consulta '.ucfirst($tipoConsulta).' '.ucfirst($municipio).':'.PHP_EOL;
+echo $resultado->toJson(JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES).PHP_EOL;

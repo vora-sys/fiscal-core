@@ -12,7 +12,4 @@ use sabbajohn\FiscalCore\Providers\NFSe\AbrasfV2Provider;
  * A diferenciação municipal deve ocorrer por catálogo/overrides, mantendo
  * uma base técnica única sem acoplamento a um município específico.
  */
-class AbrasfSharedProvider extends AbrasfV2Provider
-{
-}
-
+class AbrasfSharedProvider extends AbrasfV2Provider {}

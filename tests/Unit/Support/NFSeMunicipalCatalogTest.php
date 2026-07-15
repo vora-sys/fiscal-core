@@ -2,17 +2,17 @@
 
 declare(strict_types=1);
 
-use sabbajohn\FiscalCore\Support\NFSeMunicipalCatalog;
 use PHPUnit\Framework\TestCase;
+use sabbajohn\FiscalCore\Support\NFSeMunicipalCatalog;
 
 final class NFSeMunicipalCatalogTest extends TestCase
 {
     private function fixturePath(): string
     {
-        return dirname(__DIR__, 3) . '/config/nfse/providers-catalog.json';
+        return dirname(__DIR__, 3).'/config/nfse/providers-catalog.json';
     }
 
-    public function testResolveJoinvilleBySlug(): void
+    public function test_resolve_joinville_by_slug(): void
     {
         $catalog = new NFSeMunicipalCatalog($this->fixturePath());
 
@@ -24,7 +24,7 @@ final class NFSeMunicipalCatalogTest extends TestCase
         $this->assertSame('2026-07-20', $result['national_migration_policy']['effective_from'] ?? null);
     }
 
-    public function testResolveBelemByAccentedName(): void
+    public function test_resolve_belem_by_accented_name(): void
     {
         $catalog = new NFSeMunicipalCatalog($this->fixturePath());
 
@@ -35,7 +35,7 @@ final class NFSeMunicipalCatalogTest extends TestCase
         $this->assertSame('BELEM_MUNICIPAL_2025', $result['provider_family_key']);
     }
 
-    public function testResolveManausByIbge(): void
+    public function test_resolve_manaus_by_ibge(): void
     {
         $catalog = new NFSeMunicipalCatalog($this->fixturePath());
 
@@ -45,7 +45,7 @@ final class NFSeMunicipalCatalogTest extends TestCase
         $this->assertSame('nfse_nacional', $result['provider_family_key']);
     }
 
-    public function testResolveRioBrancoBySlug(): void
+    public function test_resolve_rio_branco_by_slug(): void
     {
         $catalog = new NFSeMunicipalCatalog($this->fixturePath());
 
@@ -56,7 +56,7 @@ final class NFSeMunicipalCatalogTest extends TestCase
         $this->assertSame('nfse_nacional', $result['provider_family_key']);
     }
 
-    public function testResolveAnanindeuaBySlug(): void
+    public function test_resolve_ananindeua_by_slug(): void
     {
         $catalog = new NFSeMunicipalCatalog($this->fixturePath());
 
@@ -68,7 +68,7 @@ final class NFSeMunicipalCatalogTest extends TestCase
         $this->assertSame('2026-01-01', $result['national_migration_policy']['effective_from'] ?? null);
     }
 
-    public function testResolveMarabaBySlug(): void
+    public function test_resolve_maraba_by_slug(): void
     {
         $catalog = new NFSeMunicipalCatalog($this->fixturePath());
 
@@ -80,7 +80,7 @@ final class NFSeMunicipalCatalogTest extends TestCase
         $this->assertSame('2023-01-23', $result['national_migration_policy']['effective_from'] ?? null);
     }
 
-    public function testResolveMacapaBySlug(): void
+    public function test_resolve_macapa_by_slug(): void
     {
         $catalog = new NFSeMunicipalCatalog($this->fixturePath());
 
@@ -91,7 +91,7 @@ final class NFSeMunicipalCatalogTest extends TestCase
         $this->assertSame('ABRASF_SHARED', $result['provider_family_key']);
     }
 
-    public function testResolveJoaoPessoaBySlug(): void
+    public function test_resolve_joao_pessoa_by_slug(): void
     {
         $catalog = new NFSeMunicipalCatalog($this->fixturePath());
 
@@ -102,7 +102,7 @@ final class NFSeMunicipalCatalogTest extends TestCase
         $this->assertSame('ABRASF_SHARED', $result['provider_family_key']);
     }
 
-    public function testResolveCastanhalByNameAndIbge(): void
+    public function test_resolve_castanhal_by_name_and_ibge(): void
     {
         $catalog = new NFSeMunicipalCatalog($this->fixturePath());
 
@@ -117,7 +117,7 @@ final class NFSeMunicipalCatalogTest extends TestCase
         $this->assertSame('ABRASF_SHARED', $byIbge['provider_family_key']);
     }
 
-    public function testResolveNatalBySlug(): void
+    public function test_resolve_natal_by_slug(): void
     {
         $catalog = new NFSeMunicipalCatalog($this->fixturePath());
 
@@ -129,7 +129,7 @@ final class NFSeMunicipalCatalogTest extends TestCase
         $this->assertSame('2026-01-01', $result['national_migration_policy']['effective_from'] ?? null);
     }
 
-    public function testResolveCampoAlegreScBySlug(): void
+    public function test_resolve_campo_alegre_sc_by_slug(): void
     {
         $catalog = new NFSeMunicipalCatalog($this->fixturePath());
 
@@ -140,7 +140,7 @@ final class NFSeMunicipalCatalogTest extends TestCase
         $this->assertSame('IPM', $result['provider_family_key']);
     }
 
-    public function testResolveJaraguaShortAliasToJaraguaDoSul(): void
+    public function test_resolve_jaragua_short_alias_to_jaragua_do_sul(): void
     {
         $catalog = new NFSeMunicipalCatalog($this->fixturePath());
 
@@ -152,7 +152,7 @@ final class NFSeMunicipalCatalogTest extends TestCase
         $this->assertSame('2025-12-10', $result['national_migration_policy']['effective_from'] ?? null);
     }
 
-    public function testResolveNorthCoastScMunicipiosBySlug(): void
+    public function test_resolve_north_coast_sc_municipios_by_slug(): void
     {
         $catalog = new NFSeMunicipalCatalog($this->fixturePath());
 
@@ -173,7 +173,7 @@ final class NFSeMunicipalCatalogTest extends TestCase
         }
     }
 
-    public function testResolveFortalezaBySlug(): void
+    public function test_resolve_fortaleza_by_slug(): void
     {
         $catalog = new NFSeMunicipalCatalog($this->fixturePath());
 
@@ -184,7 +184,7 @@ final class NFSeMunicipalCatalogTest extends TestCase
         $this->assertSame('GINFES', $result['provider_family_key']);
     }
 
-    public function testResolveMaceioBySlug(): void
+    public function test_resolve_maceio_by_slug(): void
     {
         $catalog = new NFSeMunicipalCatalog($this->fixturePath());
 
@@ -195,7 +195,7 @@ final class NFSeMunicipalCatalogTest extends TestCase
         $this->assertSame('GINFES', $result['provider_family_key']);
     }
 
-    public function testResolveBrasiliaBySlug(): void
+    public function test_resolve_brasilia_by_slug(): void
     {
         $catalog = new NFSeMunicipalCatalog($this->fixturePath());
 
@@ -206,7 +206,7 @@ final class NFSeMunicipalCatalogTest extends TestCase
         $this->assertSame('ISSNET', $result['provider_family_key']);
     }
 
-    public function testResolveGoianiaBySlug(): void
+    public function test_resolve_goiania_by_slug(): void
     {
         $catalog = new NFSeMunicipalCatalog($this->fixturePath());
 
@@ -217,7 +217,7 @@ final class NFSeMunicipalCatalogTest extends TestCase
         $this->assertSame('ISSNET', $result['provider_family_key']);
     }
 
-    public function testResolveCuiabaBySlug(): void
+    public function test_resolve_cuiaba_by_slug(): void
     {
         $catalog = new NFSeMunicipalCatalog($this->fixturePath());
 
@@ -228,7 +228,7 @@ final class NFSeMunicipalCatalogTest extends TestCase
         $this->assertSame('ISSNET', $result['provider_family_key']);
     }
 
-    public function testResolvePresidenteFigueiredoBySlug(): void
+    public function test_resolve_presidente_figueiredo_by_slug(): void
     {
         $catalog = new NFSeMunicipalCatalog($this->fixturePath());
 
@@ -239,7 +239,7 @@ final class NFSeMunicipalCatalogTest extends TestCase
         $this->assertSame('ISSWEB_AM', $result['provider_family_key']);
     }
 
-    public function testResolveRioPretoDaEvaBySlug(): void
+    public function test_resolve_rio_preto_da_eva_by_slug(): void
     {
         $catalog = new NFSeMunicipalCatalog($this->fixturePath());
 
@@ -250,7 +250,7 @@ final class NFSeMunicipalCatalogTest extends TestCase
         $this->assertSame('ISSWEB_AM', $result['provider_family_key']);
     }
 
-    public function testUnknownMunicipioReturnsNull(): void
+    public function test_unknown_municipio_returns_null(): void
     {
         $catalog = new NFSeMunicipalCatalog($this->fixturePath());
 

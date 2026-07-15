@@ -5,16 +5,22 @@ namespace sabbajohn\FiscalCore\Adapters\NFSe\DTO\Nacional;
 final class DpsDTO
 {
     private PrestadorDTO $prestador;
+
     private TomadorDTO $tomador;
+
     private ServicoDTO $servico;
+
     private ValoresDTO $valores;
+
     private TributacaoMunicipalDTO $tributacaoMunicipal;
+
     private TributacaoFederalDTO $tributacaoFederal;
+
     private IbsCbsDTO $ibscbs;
 
     /**
-     * @param array<string,mixed> $data
-     * @param array<string,mixed> $context
+     * @param  array<string,mixed>  $data
+     * @param  array<string,mixed>  $context
      */
     private function __construct(
         private array $data,
@@ -34,8 +40,8 @@ final class DpsDTO
     }
 
     /**
-     * @param array<string,mixed> $payload
-     * @param array<string,mixed> $context
+     * @param  array<string,mixed>  $payload
+     * @param  array<string,mixed>  $context
      */
     public static function fromArray(array $payload, array $context = []): self
     {
@@ -89,13 +95,13 @@ final class DpsDTO
     {
         $errors = [];
 
-        if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', (string) ($this->data['dCompet'] ?? ''))) {
+        if (! preg_match('/^\d{4}-\d{2}-\d{2}$/', (string) ($this->data['dCompet'] ?? ''))) {
             $errors[] = 'dCompet deve estar no formato YYYY-MM-DD.';
         }
-        if (!in_array((string) ($this->data['tpAmb'] ?? ''), ['1', '2'], true)) {
+        if (! in_array((string) ($this->data['tpAmb'] ?? ''), ['1', '2'], true)) {
             $errors[] = 'tpAmb deve ser 1 (producao) ou 2 (homologacao).';
         }
-        if (!preg_match('/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(Z|[+\-]\d{2}:\d{2})$/', (string) ($this->data['dhEmi'] ?? ''))) {
+        if (! preg_match('/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(Z|[+\-]\d{2}:\d{2})$/', (string) ($this->data['dhEmi'] ?? ''))) {
             $errors[] = 'dhEmi deve estar no formato UTC (YYYY-MM-DDThh:mm:ssZ ou com timezone).';
         }
         $verAplic = trim((string) ($this->data['verAplic'] ?? ''));
@@ -108,7 +114,7 @@ final class DpsDTO
         if (strlen(DpsPayloadHelper::onlyDigits((string) ($this->data['nDPS'] ?? ''))) > 15) {
             $errors[] = 'nDPS deve conter de 1 a 15 dígitos numéricos.';
         }
-        if (!in_array((string) ($this->data['tpEmit'] ?? ''), ['1', '2', '3'], true)) {
+        if (! in_array((string) ($this->data['tpEmit'] ?? ''), ['1', '2', '3'], true)) {
             $errors[] = 'tpEmit deve ser 1, 2 ou 3.';
         }
         if (strlen(DpsPayloadHelper::onlyDigits((string) ($this->data['cLocEmi'] ?? ''))) !== 7) {
@@ -120,7 +126,7 @@ final class DpsDTO
             if (strlen(DpsPayloadHelper::onlyDigits((string) ($subst['chSubstda'] ?? ''))) !== 50) {
                 $errors[] = 'subst.chSubstda deve conter 50 dígitos.';
             }
-            if (!in_array((string) ($subst['cMotivo'] ?? ''), ['01', '02', '03', '04', '05', '99'], true)) {
+            if (! in_array((string) ($subst['cMotivo'] ?? ''), ['01', '02', '03', '04', '05', '99'], true)) {
                 $errors[] = 'subst.cMotivo deve ser 01, 02, 03, 04, 05 ou 99.';
             }
             $xMotivo = trim((string) ($subst['xMotivo'] ?? ''));

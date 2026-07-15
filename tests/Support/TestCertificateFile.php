@@ -58,7 +58,7 @@ final class TestCertificateFile
             }
 
             $pkcs12 = '';
-            if (!@openssl_pkcs12_export($x509, $pkcs12, $privateKey, $password)) {
+            if (! @openssl_pkcs12_export($x509, $pkcs12, $privateKey, $password)) {
                 throw new RuntimeException('Falha ao exportar certificado PKCS#12 de teste.');
             }
 
@@ -107,9 +107,9 @@ extendedKeyUsage = clientAuth
 CFG;
 
         if ($cnpj !== null && trim($cnpj) !== '') {
-            $config .= PHP_EOL . 'cnpj = ASN1:PRINTABLESTRING:' . preg_replace('/\D+/', '', $cnpj) . PHP_EOL;
+            $config .= PHP_EOL.'cnpj = ASN1:PRINTABLESTRING:'.preg_replace('/\D+/', '', $cnpj).PHP_EOL;
         }
 
-        return $config . PHP_EOL;
+        return $config.PHP_EOL;
     }
 }

@@ -14,19 +14,19 @@ class FiscalDocumentResultNormalizer
         array $extra = []
     ): array {
         $normalizedDocumento = array_merge([
-                'modelo' => $modelo,
-                'xml' => null,
-                'chave_acesso' => null,
-                'situacao' => null,
-                'protocolo' => null,
-            ], $documento);
+            'modelo' => $modelo,
+            'xml' => null,
+            'chave_acesso' => null,
+            'situacao' => null,
+            'protocolo' => null,
+        ], $documento);
         $normalizedRaw = array_merge([
-                'request_payload' => null,
-                'request_xml' => null,
-                'response_body' => null,
-                'response_xml' => null,
-                'parsed_response' => null,
-            ], $raw);
+            'request_payload' => null,
+            'request_xml' => null,
+            'response_body' => null,
+            'response_xml' => null,
+            'parsed_response' => null,
+        ], $raw);
 
         return array_merge([
             'operacao' => [

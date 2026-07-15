@@ -4,30 +4,38 @@ declare(strict_types=1);
 
 namespace sabbajohn\FiscalCore\Providers\NFSe\Municipal;
 
+use NFePHP\Common\Certificate;
+use NFePHP\Common\Signer;
 use sabbajohn\FiscalCore\Contracts\NFSeConsultaResultInterface;
 use sabbajohn\FiscalCore\Contracts\NFSeOperationalIntrospectionInterface;
 use sabbajohn\FiscalCore\Providers\NFSe\AbstractNFSeProvider;
 use sabbajohn\FiscalCore\Support\CertificateManager;
+use sabbajohn\FiscalCore\Support\NFSeResultNormalizer;
 use sabbajohn\FiscalCore\Support\NFSeSchemaResolver;
 use sabbajohn\FiscalCore\Support\NFSeSchemaValidator;
-use sabbajohn\FiscalCore\Support\NFSeResultNormalizer;
 use sabbajohn\FiscalCore\Support\NFSeSoapCurlTransport;
 use sabbajohn\FiscalCore\Support\NFSeSoapTransportInterface;
-use NFePHP\Common\Certificate;
-use NFePHP\Common\Signer;
 
 class PublicaProvider extends AbstractNFSeProvider implements NFSeOperationalIntrospectionInterface
 {
     private const NFSE_NS = 'http://www.publica.inf.br';
+
     private const SERVICE_NS = 'http://service.nfse.integracao.ws.publica/';
 
     private ?string $lastRequestXml = null;
+
     private ?string $lastSoapEnvelope = null;
+
     private ?string $lastResponseXml = null;
+
     private array $lastResponseData = [];
+
     private array $lastTransportData = [];
+
     private ?string $lastOperation = null;
+
     private array $lastOperationArtifacts = [];
+
     private array $lastPrestadorContext = [];
 
     private NFSeSoapTransportInterface $transport;
@@ -35,7 +43,7 @@ class PublicaProvider extends AbstractNFSeProvider implements NFSeOperationalInt
     public function __construct(array $config)
     {
         parent::__construct($config);
-        $this->transport = $config['soap_transport'] ?? new NFSeSoapCurlTransport();
+        $this->transport = $config['soap_transport'] ?? new NFSeSoapCurlTransport;
     }
 
     public function emitir(array $dados): string
@@ -249,7 +257,7 @@ class PublicaProvider extends AbstractNFSeProvider implements NFSeOperationalInt
             (string) $servico['discriminacao'],
             self::NFSE_NS
         );
-        if (!empty($servico['informacoes_complementares'])) {
+        if (! empty($servico['informacoes_complementares'])) {
             $this->appendXmlNode(
                 $dom,
                 $servicoNode,
@@ -265,7 +273,7 @@ class PublicaProvider extends AbstractNFSeProvider implements NFSeOperationalInt
             (string) $servico['codigo_municipio'],
             self::NFSE_NS
         );
-        if (!empty($servico['codigo_pais'])) {
+        if (! empty($servico['codigo_pais'])) {
             $this->appendXmlNode(
                 $dom,
                 $servicoNode,
@@ -274,7 +282,7 @@ class PublicaProvider extends AbstractNFSeProvider implements NFSeOperationalInt
                 self::NFSE_NS
             );
         }
-        if (!empty($servico['codigo_municipio_local_prestacao'])) {
+        if (! empty($servico['codigo_municipio_local_prestacao'])) {
             $this->appendXmlNode(
                 $dom,
                 $servicoNode,
@@ -345,8 +353,8 @@ class PublicaProvider extends AbstractNFSeProvider implements NFSeOperationalInt
         }
 
         $payloadXml = $this->extractSoapPayload($xmlResposta);
-        $dom = new \DOMDocument();
-        if (!@$dom->loadXML($payloadXml)) {
+        $dom = new \DOMDocument;
+        if (! @$dom->loadXML($payloadXml)) {
             return [
                 'status' => 'invalid_xml',
                 'mensagens' => ['Resposta XML inválida do webservice de Joinville.'],
@@ -466,7 +474,7 @@ class PublicaProvider extends AbstractNFSeProvider implements NFSeOperationalInt
 
     private function normalizeConsultaResult(string $operation, array $context = []): NFSeConsultaResultInterface
     {
-        return (new NFSeResultNormalizer())->normalizeConsulta(
+        return (new NFSeResultNormalizer)->normalizeConsulta(
             $operation,
             $this->lastResponseData,
             $this->lastOperationArtifacts,
@@ -556,13 +564,13 @@ class PublicaProvider extends AbstractNFSeProvider implements NFSeOperationalInt
     {
         $servico = $dados['servico'];
 
-        if (!empty($dados['itens']) && is_array($dados['itens'])) {
+        if (! empty($dados['itens']) && is_array($dados['itens'])) {
             $descricao = [];
             $valorTotal = 0.0;
             $firstItem = null;
 
             foreach ($dados['itens'] as $index => $item) {
-                if (!is_array($item)) {
+                if (! is_array($item)) {
                     throw new \InvalidArgumentException("Item {$index} inválido para emissão de Joinville.");
                 }
 
@@ -621,13 +629,13 @@ class PublicaProvider extends AbstractNFSeProvider implements NFSeOperationalInt
         $lote = $dados['lote'] ?? [];
         $gerarNfseXml = $this->montarXmlRps($dados);
 
-        $source = new \DOMDocument();
-        if (!@$source->loadXML($gerarNfseXml)) {
+        $source = new \DOMDocument;
+        if (! @$source->loadXML($gerarNfseXml)) {
             throw new \RuntimeException('Falha ao preparar o XML base do RPS para envio em lote.');
         }
 
         $rpsNode = $source->documentElement?->getElementsByTagNameNS(self::NFSE_NS, 'Rps')->item(0);
-        if (!$rpsNode instanceof \DOMElement) {
+        if (! $rpsNode instanceof \DOMElement) {
             throw new \RuntimeException('Falha ao localizar o nó Rps no XML base de emissão PUBLICA.');
         }
 
@@ -743,7 +751,7 @@ class PublicaProvider extends AbstractNFSeProvider implements NFSeOperationalInt
             self::NFSE_NS
         );
 
-        if (!empty($identificacaoRps['pagina'])) {
+        if (! empty($identificacaoRps['pagina'])) {
             $this->appendXmlNode($dom, $root, 'Pagina', trim((string) $identificacaoRps['pagina']), self::NFSE_NS);
         }
 
@@ -763,7 +771,7 @@ class PublicaProvider extends AbstractNFSeProvider implements NFSeOperationalInt
 
         $pedido = $this->appendXmlNode($dom, $root, 'Pedido', null, self::NFSE_NS);
         $infPedido = $this->appendXmlNode($dom, $pedido, 'InfPedidoCancelamento', null, self::NFSE_NS);
-        $infPedido->setAttribute('id', 'cancelar-' . $this->normalizeDigits($numeroNfse));
+        $infPedido->setAttribute('id', 'cancelar-'.$this->normalizeDigits($numeroNfse));
 
         $identificacao = $this->appendXmlNode($dom, $infPedido, 'IdentificacaoNfse', null, self::NFSE_NS);
         $this->appendXmlNode($dom, $identificacao, 'Numero', trim($numeroNfse), self::NFSE_NS);
@@ -872,7 +880,7 @@ class PublicaProvider extends AbstractNFSeProvider implements NFSeOperationalInt
             $parsedResponse['request_headers'] = $requestHeaders;
         }
 
-        if (!isset($parsedResponse['raw_transport_xml']) || trim((string) $parsedResponse['raw_transport_xml']) === '') {
+        if (! isset($parsedResponse['raw_transport_xml']) || trim((string) $parsedResponse['raw_transport_xml']) === '') {
             $parsedResponse['raw_transport_xml'] = $responseXml;
         }
 
@@ -934,9 +942,9 @@ class PublicaProvider extends AbstractNFSeProvider implements NFSeOperationalInt
 
     private function extractHeaderValue(array $headers, string $name): ?string
     {
-        $prefix = strtolower($name) . ':';
+        $prefix = strtolower($name).':';
         foreach ($headers as $header) {
-            if (!is_scalar($header)) {
+            if (! is_scalar($header)) {
                 continue;
             }
 
@@ -953,13 +961,13 @@ class PublicaProvider extends AbstractNFSeProvider implements NFSeOperationalInt
 
     private function assertItensCompativeis(array $dados): void
     {
-        if (empty($dados['itens']) || !is_array($dados['itens'])) {
+        if (empty($dados['itens']) || ! is_array($dados['itens'])) {
             return;
         }
 
         $first = null;
         foreach ($dados['itens'] as $index => $item) {
-            if (!is_array($item)) {
+            if (! is_array($item)) {
                 throw new \InvalidArgumentException("Item {$index} inválido para emissão de Joinville.");
             }
 
@@ -973,6 +981,7 @@ class PublicaProvider extends AbstractNFSeProvider implements NFSeOperationalInt
 
             if ($first === null) {
                 $first = $normalized;
+
                 continue;
             }
 
@@ -994,7 +1003,7 @@ class PublicaProvider extends AbstractNFSeProvider implements NFSeOperationalInt
         $identificacaoTomador = $this->appendXmlNode($dom, $tomadorNode, 'IdentificacaoTomador', null, self::NFSE_NS);
         $cpfCnpj = $this->appendXmlNode($dom, $identificacaoTomador, 'CpfCnpj', null, self::NFSE_NS);
         $this->appendDocumentoNode($dom, $cpfCnpj, $this->normalizeDigits((string) $tomador['documento']));
-        if (!empty($tomador['inscricaoMunicipal'])) {
+        if (! empty($tomador['inscricaoMunicipal'])) {
             $this->appendXmlNode(
                 $dom,
                 $identificacaoTomador,
@@ -1005,11 +1014,11 @@ class PublicaProvider extends AbstractNFSeProvider implements NFSeOperationalInt
         }
 
         $this->appendXmlNode($dom, $tomadorNode, 'RazaoSocial', (string) $tomador['razao_social'], self::NFSE_NS);
-        if (!empty($tomador['nome_fantasia'])) {
+        if (! empty($tomador['nome_fantasia'])) {
             $this->appendXmlNode($dom, $tomadorNode, 'NomeFantasia', (string) $tomador['nome_fantasia'], self::NFSE_NS);
         }
 
-        if (!empty($tomador['endereco']) && is_array($tomador['endereco'])) {
+        if (! empty($tomador['endereco']) && is_array($tomador['endereco'])) {
             $endereco = $tomador['endereco'];
             $enderecoNode = $this->appendXmlNode($dom, $tomadorNode, 'Endereco', null, self::NFSE_NS);
             $this->appendOptionalStringNode($dom, $enderecoNode, 'Endereco', $endereco['logradouro'] ?? null);
@@ -1033,7 +1042,7 @@ class PublicaProvider extends AbstractNFSeProvider implements NFSeOperationalInt
             $this->appendOptionalStringNode($dom, $enderecoNode, 'Municipio', $endereco['municipio'] ?? null);
         }
 
-        if (!empty($tomador['telefone']) || !empty($tomador['email'])) {
+        if (! empty($tomador['telefone']) || ! empty($tomador['email'])) {
             $contatoNode = $this->appendXmlNode($dom, $tomadorNode, 'Contato', null, self::NFSE_NS);
             $this->appendOptionalStringNode(
                 $dom,
@@ -1049,6 +1058,7 @@ class PublicaProvider extends AbstractNFSeProvider implements NFSeOperationalInt
     {
         if (strlen($documento) === 11) {
             $this->appendXmlNode($dom, $parent, 'Cpf', $documento, self::NFSE_NS);
+
             return;
         }
 
@@ -1185,7 +1195,7 @@ class PublicaProvider extends AbstractNFSeProvider implements NFSeOperationalInt
         }
 
         foreach ($parsedResponse['mensagens'] ?? [] as $message) {
-            if (!is_scalar($message)) {
+            if (! is_scalar($message)) {
                 continue;
             }
 
@@ -1228,8 +1238,8 @@ class PublicaProvider extends AbstractNFSeProvider implements NFSeOperationalInt
 
     private function assertRequestSchema(string $requestXml, string $operation): void
     {
-        $resolver = new NFSeSchemaResolver();
-        $validator = new NFSeSchemaValidator();
+        $resolver = new NFSeSchemaResolver;
+        $validator = new NFSeSchemaValidator;
         $schemaPath = $resolver->resolve('PUBLICA', $operation);
         $validation = $validator->validate($requestXml, $schemaPath);
 
@@ -1239,9 +1249,9 @@ class PublicaProvider extends AbstractNFSeProvider implements NFSeOperationalInt
 
         throw new \RuntimeException(
             'XML de Joinville inválido para o schema da operação '
-            . $operation
-            . ': '
-            . implode('; ', $validation['errors'])
+            .$operation
+            .': '
+            .implode('; ', $validation['errors'])
         );
     }
 
@@ -1261,7 +1271,7 @@ class PublicaProvider extends AbstractNFSeProvider implements NFSeOperationalInt
         $body = $soap->createElementNS('http://schemas.xmlsoap.org/soap/envelope/', 'soapenv:Body');
         $envelope->appendChild($body);
 
-        $operationNode = $soap->createElementNS(self::SERVICE_NS, 'svc:' . $soapOperation);
+        $operationNode = $soap->createElementNS(self::SERVICE_NS, 'svc:'.$soapOperation);
         $body->appendChild($operationNode);
         $operationNode->appendChild($soap->createElement('XML', $requestXml));
 
@@ -1270,14 +1280,14 @@ class PublicaProvider extends AbstractNFSeProvider implements NFSeOperationalInt
 
     private function extractSoapPayload(string $xmlResposta): string
     {
-        $soap = new \DOMDocument();
-        if (!@$soap->loadXML($xmlResposta)) {
+        $soap = new \DOMDocument;
+        if (! @$soap->loadXML($xmlResposta)) {
             return $xmlResposta;
         }
 
         $xpath = new \DOMXPath($soap);
         $returnNode = $xpath->query("//*[local-name()='return']")->item(0);
-        if (!$returnNode instanceof \DOMNode) {
+        if (! $returnNode instanceof \DOMNode) {
             return $xmlResposta;
         }
 
@@ -1295,12 +1305,12 @@ class PublicaProvider extends AbstractNFSeProvider implements NFSeOperationalInt
     {
         $configured = match ($channel) {
             'consultas' => (string) (
-                $this->config['consultas_wsdl_' . $this->getAmbiente()]
+                $this->config['consultas_wsdl_'.$this->getAmbiente()]
                 ?? $this->config['consultas_wsdl']
                 ?? ''
             ),
             default => (string) (
-                $this->config['wsdl_' . $this->getAmbiente()]
+                $this->config['wsdl_'.$this->getAmbiente()]
                 ?? $this->config['wsdl']
                 ?? ''
             ),
@@ -1415,15 +1425,15 @@ class PublicaProvider extends AbstractNFSeProvider implements NFSeOperationalInt
             return (new \DateTimeImmutable($value))->format('Y-m-d\TH:i:s');
         }
 
-        return (new \DateTimeImmutable())->format('Y-m-d\TH:i:s');
+        return (new \DateTimeImmutable)->format('Y-m-d\TH:i:s');
     }
 
     private function relocateSignature(string $xml, string $parentLocalName, string $afterLocalName): string
     {
-        $dom = new \DOMDocument();
+        $dom = new \DOMDocument;
         $dom->preserveWhiteSpace = false;
         $dom->formatOutput = false;
-        if (!@$dom->loadXML($xml)) {
+        if (! @$dom->loadXML($xml)) {
             return $xml;
         }
 
@@ -1431,7 +1441,7 @@ class PublicaProvider extends AbstractNFSeProvider implements NFSeOperationalInt
         $signature = $xpath->query("//*[local-name()='Signature' and namespace-uri()='http://www.w3.org/2000/09/xmldsig#']")->item(0);
         $targetParent = $xpath->query("//*[local-name()='{$parentLocalName}']")->item(0);
 
-        if (!$signature instanceof \DOMElement || !$targetParent instanceof \DOMElement) {
+        if (! $signature instanceof \DOMElement || ! $targetParent instanceof \DOMElement) {
             return $xml;
         }
 
@@ -1472,12 +1482,12 @@ class PublicaProvider extends AbstractNFSeProvider implements NFSeOperationalInt
             return $configured;
         }
 
-        return sys_get_temp_dir() . '/nfse-joinville-soap-debug.log';
+        return sys_get_temp_dir().'/nfse-joinville-soap-debug.log';
     }
 
     private function logSoapDebug(array $artifacts): void
     {
-        if (!$this->isSoapDebugEnabled()) {
+        if (! $this->isSoapDebugEnabled()) {
             return;
         }
 
@@ -1500,7 +1510,7 @@ class PublicaProvider extends AbstractNFSeProvider implements NFSeOperationalInt
             return;
         }
 
-        @file_put_contents($this->getSoapDebugLogPath(), $line . PHP_EOL, FILE_APPEND);
+        @file_put_contents($this->getSoapDebugLogPath(), $line.PHP_EOL, FILE_APPEND);
     }
 
     private function maskSensitiveData(mixed $value): mixed
@@ -1510,6 +1520,7 @@ class PublicaProvider extends AbstractNFSeProvider implements NFSeOperationalInt
             foreach ($value as $key => $item) {
                 if (is_string($key) && preg_match('/(cnpj|cpf|documento|email|telefone|protocolo|codigo_verificacao|inscricao|id)/i', $key) === 1) {
                     $masked[$key] = $this->maskSensitiveString((string) $item);
+
                     continue;
                 }
 
@@ -1536,14 +1547,14 @@ class PublicaProvider extends AbstractNFSeProvider implements NFSeOperationalInt
 
         $value = preg_replace_callback(
             $patterns[0],
-            static fn (array $matches): string => $matches[1] . str_repeat('*', max(4, strlen(trim($matches[2])))) . $matches[3],
+            static fn (array $matches): string => $matches[1].str_repeat('*', max(4, strlen(trim($matches[2])))).$matches[3],
             $value
         ) ?? $value;
 
         $value = preg_replace($patterns[1], '***@$2', $value) ?? $value;
         $value = preg_replace_callback(
             $patterns[2],
-            static fn (array $matches): string => str_repeat('*', max(0, strlen($matches[0]) - 4)) . substr($matches[0], -4),
+            static fn (array $matches): string => str_repeat('*', max(0, strlen($matches[0]) - 4)).substr($matches[0], -4),
             $value
         ) ?? $value;
         $value = preg_replace('/\(\d{2}\)\s*\d{4,5}-?\d{4}/', '(**) *****-****', $value) ?? $value;

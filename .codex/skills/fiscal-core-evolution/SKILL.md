@@ -9,9 +9,10 @@ Use esta skill para orientar mudancas arquiteturais e incrementais no `fiscal-co
 
 ## Raiz canonica
 
-- Trate `../fiscal-platform-api/app/Library/fiscal-core` como a unica fonte editavel do `fiscal-core`.
-- Nao implemente nem sincronize mudancas de produto nesta antiga pasta irma `Fiscal/fiscal-core`; ela permanece apenas como referencia historica.
-- Execute alteracoes, testes e validacoes a partir de `fiscal-platform-api` e de sua copia incorporada.
+- Trate `fiscal-platform-api/app/Library/fiscal-core` como a unica fonte editavel do `fiscal-core`.
+- Resolva os caminhos `src/`, `config/`, `docs/` e `tests/` desta skill a partir dessa raiz incorporada.
+- Nao replique mudancas na antiga pasta irma `Fiscal/fiscal-core`; use-a apenas como referencia historica quando a comparacao for explicitamente necessaria.
+- Ao alterar integracao Laravel, continue a partir da raiz `fiscal-platform-api` e mantenha o core incorporado e a camada `app/` coerentes no mesmo change set.
 
 ## Resultado esperado
 
@@ -83,7 +84,7 @@ Leia arquivos adicionais do repo apenas quando a trilha exigir.
 ## Comandos uteis
 
 ```bash
-cd ../fiscal-platform-api
+cd fiscal-platform-api
 rg -n "NFSe|Provider|evento|cancelar|substituir|manifest" app/Library/fiscal-core/{src,config,docs,tests}
 php -d memory_limit=512M vendor/bin/phpunit app/Library/fiscal-core/tests --filter NFSe
 php -d memory_limit=512M vendor/bin/phpunit app/Library/fiscal-core/tests --filter NFe

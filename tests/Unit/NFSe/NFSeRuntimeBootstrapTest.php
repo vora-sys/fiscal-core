@@ -4,8 +4,9 @@ declare(strict_types=1);
 
 namespace Tests\Unit\NFSe;
 
-use PHPUnit\Framework\TestCase;
 use NFePHP\Common\Certificate;
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\TestCase;
 use sabbajohn\FiscalCore\Contracts\NFSeConsultaResultInterface;
 use sabbajohn\FiscalCore\Contracts\NFSeProviderConfigInterface;
 use sabbajohn\FiscalCore\Support\CertificateManager;
@@ -13,14 +14,13 @@ use sabbajohn\FiscalCore\Support\ConfigManager;
 use sabbajohn\FiscalCore\Support\NFSeProviderResolver;
 use sabbajohn\FiscalCore\Support\NFSeRuntimeBootstrap;
 use sabbajohn\FiscalCore\Support\ProviderRegistry;
-use PHPUnit\Framework\Attributes\DataProvider;
 
 final class NFSeRuntimeBootstrapTest extends TestCase
 {
     public function test_root_policy_accepts_different_establishments_from_same_cnpj_root(): void
     {
         $method = new \ReflectionMethod(NFSeRuntimeBootstrap::class, 'assertCertificateCompatibility');
-        $method->invoke(new NFSeRuntimeBootstrap(), '12345678000270', '12345678000199', 'root');
+        $method->invoke(new NFSeRuntimeBootstrap, '12345678000270', '12345678000199', 'root');
 
         $this->addToAssertionCount(1);
     }
@@ -30,7 +30,7 @@ final class NFSeRuntimeBootstrapTest extends TestCase
         $method = new \ReflectionMethod(NFSeRuntimeBootstrap::class, 'assertCertificateCompatibility');
 
         $this->expectException(\RuntimeException::class);
-        $method->invoke(new NFSeRuntimeBootstrap(), '12345678000270', '12345678000199', 'exact');
+        $method->invoke(new NFSeRuntimeBootstrap, '12345678000270', '12345678000199', 'exact');
     }
 
     public function test_make_provider_preserves_runtime_environment_without_reloading_config(): void
@@ -47,10 +47,10 @@ final class NFSeRuntimeBootstrapTest extends TestCase
         ]);
 
         $bootstrap = new NFSeRuntimeBootstrap(
-            new FakeProviderRegistry(),
-            new NFSeProviderResolver(),
+            new FakeProviderRegistry,
+            new NFSeProviderResolver,
             $configManager,
-            new FakeCertificateManager(),
+            new FakeCertificateManager,
         );
 
         $result = $bootstrap->makeProvider('4208203');
@@ -79,9 +79,9 @@ final class NFSeRuntimeBootstrapTest extends TestCase
 
         $bootstrap = new NFSeRuntimeBootstrap(
             ProviderRegistry::getInstance(),
-            new NFSeProviderResolver(),
+            new NFSeProviderResolver,
             $configManager,
-            new FakeCertificateManager(),
+            new FakeCertificateManager,
         );
 
         $result = $bootstrap->makeProvider($municipio);
@@ -107,9 +107,7 @@ final class FakeConfigManager extends ConfigManager
 {
     public bool $reloadCalled = false;
 
-    public function __construct(private array $store)
-    {
-    }
+    public function __construct(private array $store) {}
 
     public function reload(): void
     {
@@ -127,7 +125,7 @@ final class FakeConfigManager extends ConfigManager
         $value = $this->store;
 
         foreach ($parts as $part) {
-            if (!is_array($value) || !array_key_exists($part, $value)) {
+            if (! is_array($value) || ! array_key_exists($part, $value)) {
                 return $default;
             }
 
@@ -150,9 +148,7 @@ final class FakeConfigManager extends ConfigManager
 
 final class FakeCertificateManager extends CertificateManager
 {
-    public function __construct()
-    {
-    }
+    public function __construct() {}
 
     public function getCertificate(): ?Certificate
     {
@@ -162,9 +158,7 @@ final class FakeCertificateManager extends CertificateManager
 
 final class FakeProviderRegistry extends ProviderRegistry
 {
-    public function __construct()
-    {
-    }
+    public function __construct() {}
 
     public function getConfigForMunicipio(?string $municipio): array
     {
@@ -180,9 +174,7 @@ final class FakeProviderRegistry extends ProviderRegistry
 
 final class FakeMunicipalProvider implements NFSeProviderConfigInterface
 {
-    public function __construct(private array $config)
-    {
-    }
+    public function __construct(private array $config) {}
 
     public function emitir(array $dados): string
     {
@@ -191,7 +183,8 @@ final class FakeMunicipalProvider implements NFSeProviderConfigInterface
 
     public function consultar(string $chave): NFSeConsultaResultInterface
     {
-        return new class implements NFSeConsultaResultInterface {
+        return new class implements NFSeConsultaResultInterface
+        {
             public function getConsulta(): array
             {
                 return [];

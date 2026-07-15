@@ -8,13 +8,12 @@ use sabbajohn\FiscalCore\Adapters\NF\Core\NotaNodeInterface;
 class ImpostoSeletivoNode implements NotaNodeInterface
 {
     /**
-     * @param array<string,mixed> $data
+     * @param  array<string,mixed>  $data
      */
     public function __construct(
         private int $item,
         private array $data,
-    ) {
-    }
+    ) {}
 
     public function addToMake(Make $make): void
     {
@@ -79,7 +78,7 @@ class ImpostoSeletivoNode implements NotaNodeInterface
     }
 
     /**
-     * @param list<string> $paths
+     * @param  list<string>  $paths
      */
     private function stringValue(array $paths): ?string
     {
@@ -94,7 +93,7 @@ class ImpostoSeletivoNode implements NotaNodeInterface
     }
 
     /**
-     * @param list<string> $paths
+     * @param  list<string>  $paths
      */
     private function numberValue(array $paths): ?float
     {
@@ -109,7 +108,7 @@ class ImpostoSeletivoNode implements NotaNodeInterface
     }
 
     /**
-     * @param array<string,mixed> $payload
+     * @param  array<string,mixed>  $payload
      * @return array<string,mixed>
      */
     private function withoutNulls(array $payload): array
@@ -125,7 +124,7 @@ class ImpostoSeletivoNode implements NotaNodeInterface
     }
 
     /**
-     * @param array<string,mixed> $source
+     * @param  array<string,mixed>  $source
      */
     private function valueAtPath(array $source, string $path): mixed
     {

@@ -4,14 +4,16 @@ namespace Tests\Unit;
 
 use PHPUnit\Framework\TestCase;
 use sabbajohn\FiscalCore\Adapters\NF\Core\NotaFiscal;
-use sabbajohn\FiscalCore\Adapters\NF\DTO\{IdentificacaoDTO, EmitenteDTO, DestinatarioDTO};
-use sabbajohn\FiscalCore\Adapters\NF\Nodes\{IdentificacaoNode, EmitenteNode, DestinatarioNode};
+use sabbajohn\FiscalCore\Adapters\NF\DTO\EmitenteDTO;
+use sabbajohn\FiscalCore\Adapters\NF\DTO\IdentificacaoDTO;
+use sabbajohn\FiscalCore\Adapters\NF\Nodes\EmitenteNode;
+use sabbajohn\FiscalCore\Adapters\NF\Nodes\IdentificacaoNode;
 
 class NotaFiscalTest extends TestCase
 {
-    public function testAddNode()
+    public function test_add_node()
     {
-        $nota = new NotaFiscal();
+        $nota = new NotaFiscal;
         $dto = IdentificacaoDTO::forNFCe(41, 'VENDA', 123, 4106902);
         $node = new IdentificacaoNode($dto);
 
@@ -20,21 +22,21 @@ class NotaFiscalTest extends TestCase
         $this->assertTrue($nota->hasNode('identificacao'));
     }
 
-    public function testHasNode()
+    public function test_has_node()
     {
-        $nota = new NotaFiscal();
-        
+        $nota = new NotaFiscal;
+
         $this->assertFalse($nota->hasNode('identificacao'));
-        
+
         $dto = IdentificacaoDTO::forNFCe(41, 'VENDA', 123, 4106902);
         $nota->addNode(new IdentificacaoNode($dto));
-        
+
         $this->assertTrue($nota->hasNode('identificacao'));
     }
 
-    public function testGetNodes()
+    public function test_get_nodes()
     {
-        $nota = new NotaFiscal();
+        $nota = new NotaFiscal;
         $dto = IdentificacaoDTO::forNFCe(41, 'VENDA', 123, 4106902);
         $nota->addNode(new IdentificacaoNode($dto));
 
@@ -45,29 +47,29 @@ class NotaFiscalTest extends TestCase
         $this->assertArrayHasKey('identificacao', $nodes);
     }
 
-    public function testValidateIdentificacaoObrigatoria()
+    public function test_validate_identificacao_obrigatoria()
     {
         $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage('Identificação é obrigatória');
 
-        $nota = new NotaFiscal();
+        $nota = new NotaFiscal;
         $nota->validate();
     }
 
-    public function testValidateEmitenteObrigatorio()
+    public function test_validate_emitente_obrigatorio()
     {
         $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage('Emitente é obrigatório');
 
-        $nota = new NotaFiscal();
+        $nota = new NotaFiscal;
         $dto = IdentificacaoDTO::forNFCe(41, 'VENDA', 123, 4106902);
         $nota->addNode(new IdentificacaoNode($dto));
         $nota->validate();
     }
 
-    public function testValidateComDadosMinimos()
+    public function test_validate_com_dados_minimos()
     {
-        $nota = new NotaFiscal();
+        $nota = new NotaFiscal;
 
         // Identificação
         $id = IdentificacaoDTO::forNFCe(41, 'VENDA', 123, 4106902);
@@ -83,9 +85,9 @@ class NotaFiscalTest extends TestCase
         $this->assertTrue($nota->validate());
     }
 
-    public function testAddNodeFluente()
+    public function test_add_node_fluente()
     {
-        $nota = new NotaFiscal();
+        $nota = new NotaFiscal;
 
         $id = IdentificacaoDTO::forNFCe(41, 'VENDA', 123, 4106902);
         $emit = new EmitenteDTO(

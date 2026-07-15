@@ -7,9 +7,9 @@ use sabbajohn\FiscalCore\Support\NFSeSchemaResolver;
 
 final class AbrasfSharedSchemaResolverTest extends TestCase
 {
-    public function testAbrasfSharedEmitirSchemaUsesSharedRoot(): void
+    public function test_abrasf_shared_emitir_schema_uses_shared_root(): void
     {
-        $schemaPath = (new NFSeSchemaResolver())->resolve('ABRASF_SHARED', 'emitir');
+        $schemaPath = (new NFSeSchemaResolver)->resolve('ABRASF_SHARED', 'emitir');
         $normalizedPath = str_replace('\\', '/', $schemaPath);
 
         $this->assertStringContainsString('/resources/nfse/schemas/ABRASF_SHARED/', $normalizedPath);
@@ -17,9 +17,9 @@ final class AbrasfSharedSchemaResolverTest extends TestCase
         $this->assertFileExists($schemaPath);
     }
 
-    public function testDsfAliasEmitirSchemaUsesSharedRoot(): void
+    public function test_dsf_alias_emitir_schema_uses_shared_root(): void
     {
-        $schemaPath = (new NFSeSchemaResolver())->resolve('DSF', 'emitir');
+        $schemaPath = (new NFSeSchemaResolver)->resolve('DSF', 'emitir');
         $normalizedPath = str_replace('\\', '/', $schemaPath);
 
         $this->assertStringContainsString('/resources/nfse/schemas/ABRASF_SHARED/', $normalizedPath);
@@ -27,4 +27,3 @@ final class AbrasfSharedSchemaResolverTest extends TestCase
         $this->assertFileExists($schemaPath);
     }
 }
-

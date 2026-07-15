@@ -10,6 +10,4 @@ namespace sabbajohn\FiscalCore\Providers\NFSe\Municipal;
  * Implementacao inicial compartilhada; especializacoes municipais
  * devem ser adicionadas por familia conforme homologacao real.
  */
-final class BethaCloudProvider extends AbrasfSharedProvider
-{
-}
+final class BethaCloudProvider extends AbrasfSharedProvider {}

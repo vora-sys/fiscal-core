@@ -2,9 +2,9 @@
 
 namespace sabbajohn\FiscalCore\Adapters\NF\Nodes;
 
+use NFePHP\NFe\Make;
 use sabbajohn\FiscalCore\Adapters\NF\Core\NotaNodeInterface;
 use sabbajohn\FiscalCore\Adapters\NF\DTO\ProdutoDTO;
-use NFePHP\NFe\Make;
 
 /**
  * Node para tag <prod> (Produto/Item)
@@ -12,10 +12,10 @@ use NFePHP\NFe\Make;
 class ProdutoNode implements NotaNodeInterface
 {
     public function __construct(private ProdutoDTO $dto) {}
-    
+
     public function addToMake(Make $make): void
     {
-        $std = (object)[
+        $std = (object) [
             'item' => $this->dto->item,
             'cProd' => $this->dto->codigo,
             'cEAN' => $this->dto->cean,
@@ -33,39 +33,39 @@ class ProdutoNode implements NotaNodeInterface
             'indTot' => $this->dto->indTot,
             'cest' => $this->dto->cest,
         ];
-        
+
         $make->tagprod($std);
     }
-    
+
     public function validate(): bool
     {
         if (empty($this->dto->codigo)) {
             throw new \InvalidArgumentException('Código do produto é obrigatório');
         }
-        
+
         if (empty($this->dto->descricao)) {
             throw new \InvalidArgumentException('Descrição do produto é obrigatória');
         }
-        
+
         if (empty($this->dto->ncm)) {
             throw new \InvalidArgumentException('NCM é obrigatório');
         }
-        
+
         if (empty($this->dto->cfop)) {
             throw new \InvalidArgumentException('CFOP é obrigatório');
         }
-        
+
         if ($this->dto->quantidadeComercial <= 0) {
             throw new \InvalidArgumentException('Quantidade deve ser maior que zero');
         }
-        
+
         if ($this->dto->valorUnitario <= 0) {
             throw new \InvalidArgumentException('Valor unitário deve ser maior que zero');
         }
-        
+
         return true;
     }
-    
+
     public function getNodeType(): string
     {
         return 'produto';

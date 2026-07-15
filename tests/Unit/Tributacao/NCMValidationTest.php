@@ -15,7 +15,7 @@ class NCMValidationTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->tributacao = new TributacaoFacade();
+        $this->tributacao = new TributacaoFacade;
     }
 
     /** @test */
@@ -25,7 +25,7 @@ class NCMValidationTest extends TestCase
             '84715010',
             '22071000',
             '01012100',
-            '95030000'
+            '95030000',
         ];
 
         foreach ($ncms_validos as $ncm) {
@@ -43,7 +43,7 @@ class NCMValidationTest extends TestCase
             'abcd1234',     // letras
             '84715010a',    // letra no final
             '',             // vazio
-            '00000000'      // zeros
+            '00000000',      // zeros
         ];
 
         foreach ($ncms_invalidos as $ncm) {
@@ -75,7 +75,7 @@ class NCMValidationTest extends TestCase
         $ncms_com_st = [
             '22071000', // Bebidas alcoólicas
             '27101129', // Combustíveis
-            '27101199'  // Derivados petróleo
+            '27101199',  // Derivados petróleo
         ];
 
         foreach ($ncms_com_st as $ncm) {
@@ -91,7 +91,7 @@ class NCMValidationTest extends TestCase
         $ncms_sem_st = [
             '84715010', // Equipamentos eletrônicos
             '01012100', // Animais vivos
-            '09012100'  // Café
+            '09012100',  // Café
         ];
 
         foreach ($ncms_sem_st as $ncm) {
@@ -107,12 +107,12 @@ class NCMValidationTest extends TestCase
         $casos_teste = [
             '84715010' => 0.0,  // Isento IPI
             '22071000' => 20.0, // Bebidas - 20%
-            '27101129' => 0.0   // Combustíveis - isento
+            '27101129' => 0.0,   // Combustíveis - isento
         ];
 
         foreach ($casos_teste as $ncm => $aliquota_esperada) {
             $resultado = $this->tributacao->consultarAliquotaIPI($ncm);
-            
+
             if ($resultado->isSuccess()) {
                 $this->assertEquals($aliquota_esperada, $resultado->getData()['aliquota']);
             }
@@ -126,7 +126,7 @@ class NCMValidationTest extends TestCase
         $resultado = $this->tributacao->analisarHieraquiaNCM($ncm);
 
         $this->assertTrue($resultado->isSuccess());
-        
+
         $dados = $resultado->getData();
         $this->assertEquals('84', $dados['capitulo']);
         $this->assertEquals('8471', $dados['posicao']);
@@ -142,7 +142,7 @@ class NCMValidationTest extends TestCase
         unset($_ENV['IBPT_CNPJ'], $_ENV['IBPT_TOKEN']);
 
         try {
-            $resultado = (new TributacaoFacade())->calcular([
+            $resultado = (new TributacaoFacade)->calcular([
                 'ncm' => '84715010',
                 'valor' => 100,
             ]);

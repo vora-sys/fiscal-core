@@ -11,7 +11,7 @@ class ThermalDanfceRendererTest extends TestCase
 {
     public function test_build_html_respects_required_sections_header_and_width(): void
     {
-        $renderer = new ThermalDanfceRenderer();
+        $renderer = new ThermalDanfceRenderer;
 
         $html = $renderer->buildHtml($this->sampleXml(), [
             'layout_cupom' => [

@@ -20,7 +20,7 @@ final class NFSeReconcileUninfeProvidersScriptTest extends TestCase
         $this->tempFiles = [];
     }
 
-    public function testExpectedDivergencesAreClassifiedWithoutUnexpected(): void
+    public function test_expected_divergences_are_classified_without_unexpected(): void
     {
         $catalog = $this->makeCatalogFile([
             '1302603' => ['slug' => 'manaus', 'nome' => 'Manaus', 'uf' => 'AM', 'provider_family' => 'nfse_nacional', 'active' => true],
@@ -48,7 +48,7 @@ final class NFSeReconcileUninfeProvidersScriptTest extends TestCase
         $this->assertSame(0, $data['summary']['divergences_unexpected']);
     }
 
-    public function testFailOnUnexpectedReturnsExitCodeTwo(): void
+    public function test_fail_on_unexpected_returns_exit_code_two(): void
     {
         $catalog = $this->makeCatalogFile([
             '4209102' => ['slug' => 'joinville', 'nome' => 'Joinville', 'uf' => 'SC', 'provider_family' => 'PUBLICA', 'active' => true],
@@ -68,7 +68,7 @@ final class NFSeReconcileUninfeProvidersScriptTest extends TestCase
         $this->assertSame(1, $data['summary']['divergences_unexpected']);
     }
 
-    public function testMissingMunicipioIsReported(): void
+    public function test_missing_municipio_is_reported(): void
     {
         $catalog = $this->makeCatalogFile([
             '4209102' => ['slug' => 'joinville', 'nome' => 'Joinville', 'uf' => 'SC', 'provider_family' => 'PUBLICA', 'active' => true],
@@ -90,8 +90,31 @@ final class NFSeReconcileUninfeProvidersScriptTest extends TestCase
         $this->assertSame('9999999', (string) ($data['missing'][0]['ibge'] ?? ''));
     }
 
+    public function test_dry_run_with_output_does_not_write_report(): void
+    {
+        $catalog = $this->makeCatalogFile([
+            '4209102' => ['slug' => 'joinville', 'nome' => 'Joinville', 'uf' => 'SC', 'provider_family' => 'PUBLICA', 'active' => true],
+        ]);
+        $csv = $this->makeCsvFile([
+            ['PUBLICA', 'SC', 'Joinville', '4209102'],
+        ]);
+        $output = $this->makeTempFile();
+        @unlink($output);
+
+        [$exitCode, $report] = $this->runScript(sprintf(
+            'scripts/nfse/reconcile-uninfe-providers.php --csv=%s --catalog=%s --format=md --output=%s --dry-run --generated-at=1970-01-01T00:00:00+00:00',
+            escapeshellarg($csv),
+            escapeshellarg($catalog),
+            escapeshellarg($output)
+        ));
+
+        $this->assertSame(0, $exitCode, $report);
+        $this->assertStringContainsString('Gerado em: `1970-01-01T00:00:00+00:00`', $report);
+        $this->assertFalse(is_file($output));
+    }
+
     /**
-     * @param array<string, array<string, mixed>> $municipios
+     * @param  array<string, array<string, mixed>>  $municipios
      */
     private function makeCatalogFile(array $municipios): string
     {
@@ -101,14 +124,14 @@ final class NFSeReconcileUninfeProvidersScriptTest extends TestCase
             json_encode(
                 ['municipios' => $municipios],
                 JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR
-            ) . PHP_EOL
+            ).PHP_EOL
         );
 
         return $file;
     }
 
     /**
-     * @param list<array{0:string,1:string,2:string,3:string}> $rows
+     * @param  list<array{0:string,1:string,2:string,3:string}>  $rows
      */
     private function makeCsvFile(array $rows): string
     {
@@ -117,7 +140,7 @@ final class NFSeReconcileUninfeProvidersScriptTest extends TestCase
         foreach ($rows as $row) {
             $lines[] = implode(',', $row);
         }
-        file_put_contents($file, implode(PHP_EOL, $lines) . PHP_EOL);
+        file_put_contents($file, implode(PHP_EOL, $lines).PHP_EOL);
 
         return $file;
     }

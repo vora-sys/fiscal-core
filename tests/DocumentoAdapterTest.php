@@ -9,7 +9,7 @@ class DocumentoAdapterTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->adapter = new DocumentoAdapter();
+        $this->adapter = new DocumentoAdapter;
     }
 
     public function test_valida_cpf_correto(): void

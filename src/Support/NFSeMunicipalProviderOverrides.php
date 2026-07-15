@@ -14,7 +14,7 @@ final class NFSeMunicipalProviderOverrides
 
     public function __construct(?string $path = null)
     {
-        $path ??= dirname(__DIR__, 2) . '/config/nfse/municipio-provider-overrides.json';
+        $path ??= dirname(__DIR__, 2).'/config/nfse/municipio-provider-overrides.json';
 
         $this->overrides = $this->loadOverrides($path);
     }
@@ -33,7 +33,7 @@ final class NFSeMunicipalProviderOverrides
 
         foreach ($keys as $lookupKey) {
             $entry = $this->overrides[$lookupKey] ?? null;
-            if (!is_array($entry)) {
+            if (! is_array($entry)) {
                 continue;
             }
 
@@ -63,7 +63,7 @@ final class NFSeMunicipalProviderOverrides
      */
     private function loadOverrides(string $path): array
     {
-        if (!is_file($path)) {
+        if (! is_file($path)) {
             return [];
         }
 
@@ -81,12 +81,13 @@ final class NFSeMunicipalProviderOverrides
             );
         }
 
-        if (!is_array($data)) {
+        if (! is_array($data)) {
             return [];
         }
 
+        $data = NFSeCatalogRuntime::resolve('routing_overrides', $data);
         $rawOverrides = $data['overrides'] ?? $data;
-        if (!is_array($rawOverrides)) {
+        if (! is_array($rawOverrides)) {
             return [];
         }
 
@@ -123,7 +124,7 @@ final class NFSeMunicipalProviderOverrides
             ];
         }
 
-        if (!is_array($rawEntry)) {
+        if (! is_array($rawEntry)) {
             return null;
         }
 

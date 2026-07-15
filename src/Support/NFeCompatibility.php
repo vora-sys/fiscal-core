@@ -4,10 +4,12 @@ namespace sabbajohn\FiscalCore\Support;
 
 use Composer\InstalledVersions;
 use NFePHP\NFe\Make;
+use NFePHP\NFe\Tools;
 
 final class NFeCompatibility
 {
     public const DEFAULT_XML_VERSION = '4.00';
+
     public const DEFAULT_SCHEMA = 'PL_009_V4';
 
     /** @var array<string,string> */
@@ -30,7 +32,7 @@ final class NFeCompatibility
     {
         $version = trim((string) ($version ?: self::DEFAULT_XML_VERSION));
 
-        if (!preg_match('/^\d+\.\d+$/', $version)) {
+        if (! preg_match('/^\d+\.\d+$/', $version)) {
             throw new \InvalidArgumentException("Versao de layout NFe/NFCe invalida: {$version}");
         }
 
@@ -69,7 +71,7 @@ final class NFeCompatibility
     }
 
     /**
-     * @param array<string,mixed> $config
+     * @param  array<string,mixed>  $config
      * @return array<string,mixed>
      */
     public static function normalizeToolsConfig(array $config): array
@@ -88,7 +90,7 @@ final class NFeCompatibility
     public static function installedSchemas(): array
     {
         $basePath = self::schemaBasePath();
-        if ($basePath === null || !is_dir($basePath)) {
+        if ($basePath === null || ! is_dir($basePath)) {
             return [];
         }
 
@@ -98,7 +100,7 @@ final class NFeCompatibility
                 continue;
             }
 
-            if (is_dir($basePath . DIRECTORY_SEPARATOR . $entry)) {
+            if (is_dir($basePath.DIRECTORY_SEPARATOR.$entry)) {
                 $schemas[] = $entry;
             }
         }
@@ -132,7 +134,7 @@ final class NFeCompatibility
                 && method_exists(Make::class, 'taggAjusteCompet')
                 && method_exists(Make::class, 'taggEstornoCred')
                 && method_exists(Make::class, 'tagDFeReferenciado'),
-            'supports_nfce_qrcode_v300' => method_exists(\NFePHP\NFe\Tools::class, 'forceQRCodeVersion'),
+            'supports_nfce_qrcode_v300' => method_exists(Tools::class, 'forceQRCodeVersion'),
         ];
     }
 
@@ -148,7 +150,7 @@ final class NFeCompatibility
     {
         $basePath = self::schemaBasePath();
 
-        return $basePath !== null && is_dir($basePath . DIRECTORY_SEPARATOR . $schema);
+        return $basePath !== null && is_dir($basePath.DIRECTORY_SEPARATOR.$schema);
     }
 
     private static function latestInstalledSchema(string $prefix): ?string
@@ -172,11 +174,11 @@ final class NFeCompatibility
         try {
             $reflection = new \ReflectionClass(Make::class);
             $fileName = $reflection->getFileName();
-            if (!is_string($fileName)) {
+            if (! is_string($fileName)) {
                 return null;
             }
 
-            return dirname($fileName, 2) . DIRECTORY_SEPARATOR . 'schemes';
+            return dirname($fileName, 2).DIRECTORY_SEPARATOR.'schemes';
         } catch (\Throwable) {
             return null;
         }
@@ -184,7 +186,7 @@ final class NFeCompatibility
 
     private static function packageVersion(string $package): ?string
     {
-        if (!class_exists(InstalledVersions::class)) {
+        if (! class_exists(InstalledVersions::class)) {
             return null;
         }
 

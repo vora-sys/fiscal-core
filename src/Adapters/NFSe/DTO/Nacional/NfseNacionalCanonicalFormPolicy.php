@@ -5,8 +5,11 @@ namespace sabbajohn\FiscalCore\Adapters\NFSe\DTO\Nacional;
 final class NfseNacionalCanonicalFormPolicy
 {
     public const FIELD_SERVICE_MUNICIPAL_CODE = 'servico.cTribMun';
+
     public const FIELD_SERVICE_NATIONAL_TAX_CODE = 'servico.cTribNac';
+
     public const FIELD_SERVICE_NBS = 'servico.cNBS';
+
     public const FIELD_PRESTADOR_OP_SIMP_NAC = 'prestador.opSimpNac';
 
     /**
@@ -28,7 +31,7 @@ final class NfseNacionalCanonicalFormPolicy
     }
 
     /**
-     * @param array<string,mixed> $policy
+     * @param  array<string,mixed>  $policy
      * @return array<string,mixed>
      */
     public static function canonicalize(array $policy): array
@@ -53,18 +56,18 @@ final class NfseNacionalCanonicalFormPolicy
         $policy['field_schema'] = self::canonicalFieldSchema($schema, $activeFields);
 
         foreach ($policy['field_schema'] as $field => $entry) {
-            if (!isset($policy['labels'][$field]) && isset($entry['label'])) {
+            if (! isset($policy['labels'][$field]) && isset($entry['label'])) {
                 $policy['labels'][$field] = $entry['label'];
             }
 
-            if (!isset($policy['hints'][$field])) {
+            if (! isset($policy['hints'][$field])) {
                 $defaultHints = self::defaultHints();
                 if (isset($defaultHints[$field])) {
                     $policy['hints'][$field] = $defaultHints[$field];
                 }
             }
 
-            if (!isset($policy['enum_fields'][$field]) && is_array($entry['options'] ?? null)) {
+            if (! isset($policy['enum_fields'][$field]) && is_array($entry['options'] ?? null)) {
                 $policy['enum_fields'][$field] = array_values(array_map(
                     static fn (array $option): string => (string) ($option['value'] ?? ''),
                     array_filter((array) $entry['options'], static fn ($option): bool => is_array($option) && isset($option['value']))
@@ -102,7 +105,7 @@ final class NfseNacionalCanonicalFormPolicy
     }
 
     /**
-     * @param list<string> $fields
+     * @param  list<string>  $fields
      * @return array<string,string>
      */
     public static function labelsFor(array $fields): array
@@ -111,7 +114,7 @@ final class NfseNacionalCanonicalFormPolicy
     }
 
     /**
-     * @param list<string> $fields
+     * @param  list<string>  $fields
      * @return array<string,string>
      */
     public static function hintsFor(array $fields): array
@@ -120,8 +123,8 @@ final class NfseNacionalCanonicalFormPolicy
     }
 
     /**
-     * @param array<string,mixed> $schema
-     * @param list<string> $activeFields
+     * @param  array<string,mixed>  $schema
+     * @param  list<string>  $activeFields
      * @return array<string,array<string,mixed>>
      */
     private static function canonicalFieldSchema(array $schema, array $activeFields): array
@@ -146,9 +149,9 @@ final class NfseNacionalCanonicalFormPolicy
     }
 
     /**
-     * @param array<string,mixed> $entry
-     * @param list<string> $payloadPaths
-     * @param list<array{value:string,label:string}> $options
+     * @param  array<string,mixed>  $entry
+     * @param  list<string>  $payloadPaths
+     * @param  list<array{value:string,label:string}>  $options
      * @return array<string,mixed>
      */
     private static function canonicalFieldEntry(
@@ -200,7 +203,7 @@ final class NfseNacionalCanonicalFormPolicy
     }
 
     /**
-     * @param list<mixed> $values
+     * @param  list<mixed>  $values
      * @return list<string>
      */
     private static function normalizeFieldList(array $values): array
@@ -217,8 +220,8 @@ final class NfseNacionalCanonicalFormPolicy
     }
 
     /**
-     * @param array<string,mixed> $values
-     * @param list<string>|null $activeFields
+     * @param  array<string,mixed>  $values
+     * @param  list<string>|null  $activeFields
      * @return array<string,mixed>
      */
     private static function normalizeFieldMap(array $values, ?array $activeFields = null): array
@@ -231,7 +234,7 @@ final class NfseNacionalCanonicalFormPolicy
                 continue;
             }
 
-            if ($allowed !== null && !isset($allowed[$field])) {
+            if ($allowed !== null && ! isset($allowed[$field])) {
                 continue;
             }
 
@@ -242,8 +245,8 @@ final class NfseNacionalCanonicalFormPolicy
     }
 
     /**
-     * @param array<string,mixed> $values
-     * @param list<string> $activeFields
+     * @param  array<string,mixed>  $values
+     * @param  list<string>  $activeFields
      * @return array<string,list<string>>
      */
     private static function normalizeEnumFields(array $values, array $activeFields): array
@@ -252,7 +255,7 @@ final class NfseNacionalCanonicalFormPolicy
         $allowed = array_flip($activeFields);
         foreach ($values as $key => $enumValues) {
             $field = self::canonicalFieldKey($key);
-            if ($field === null || !isset($allowed[$field]) || !is_array($enumValues)) {
+            if ($field === null || ! isset($allowed[$field]) || ! is_array($enumValues)) {
                 continue;
             }
 
@@ -263,14 +266,14 @@ final class NfseNacionalCanonicalFormPolicy
     }
 
     /**
-     * @param list<mixed> $rules
+     * @param  list<mixed>  $rules
      * @return list<array<string,mixed>>
      */
     private static function normalizeConditionalRules(array $rules): array
     {
         $normalized = [];
         foreach ($rules as $rule) {
-            if (!is_array($rule)) {
+            if (! is_array($rule)) {
                 continue;
             }
 
@@ -302,7 +305,7 @@ final class NfseNacionalCanonicalFormPolicy
 
     private static function canonicalFieldKey(mixed $value): ?string
     {
-        if (!is_scalar($value)) {
+        if (! is_scalar($value)) {
             return null;
         }
 

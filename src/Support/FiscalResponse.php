@@ -9,10 +9,15 @@ namespace sabbajohn\FiscalCore\Support;
 class FiscalResponse
 {
     private bool $success;
+
     private array $data;
+
     private ?string $error;
+
     private ?string $errorCode;
+
     private string $operation;
+
     private array $metadata;
 
     public function __construct(
@@ -35,7 +40,7 @@ class FiscalResponse
             'operation' => $operation,
             'category' => $success ? 'success' : 'runtime',
             'severity' => $success ? 'info' : 'error',
-            'recoverable' => !$success,
+            'recoverable' => ! $success,
         ], $metadata);
         $this->metadata['operation'] = $this->metadata['operation'] ?? $operation;
     }
@@ -52,8 +57,8 @@ class FiscalResponse
      * Cria resposta de erro
      */
     public static function error(
-        string $message, 
-        ?string $code = null, 
+        string $message,
+        ?string $code = null,
         string $operation = 'unknown',
         array $metadata = []
     ): self {
@@ -96,7 +101,7 @@ class FiscalResponse
 
     public function isError(): bool
     {
-        return !$this->success;
+        return ! $this->success;
     }
 
     public function getData(?string $key = null)
@@ -104,6 +109,7 @@ class FiscalResponse
         if ($key === null) {
             return $this->data;
         }
+
         return $this->data[$key] ?? null;
     }
 
@@ -127,6 +133,7 @@ class FiscalResponse
         if ($key === null) {
             return $this->metadata;
         }
+
         return $this->metadata[$key] ?? null;
     }
 
@@ -150,7 +157,7 @@ class FiscalResponse
             ];
         }
 
-        if (!empty($this->metadata)) {
+        if (! empty($this->metadata)) {
             $result['metadata'] = $this->metadata;
         }
 
@@ -180,6 +187,7 @@ class FiscalResponse
     {
         $clone = clone $this;
         $clone->metadata[$key] = $value;
+
         return $clone;
     }
 
@@ -188,19 +196,20 @@ class FiscalResponse
      */
     public function withData(string $key, $value): self
     {
-        if (!$this->success) {
+        if (! $this->success) {
             return $this;
         }
-        
+
         $clone = clone $this;
         $clone->data[$key] = $value;
+
         return $clone;
     }
 
     private static function newTraceId(): string
     {
         try {
-            return 'fc_' . bin2hex(random_bytes(8));
+            return 'fc_'.bin2hex(random_bytes(8));
         } catch (\Throwable) {
             return uniqid('fc_', true);
         }

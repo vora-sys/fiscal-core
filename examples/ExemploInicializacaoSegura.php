@@ -2,19 +2,18 @@
 
 namespace sabbajohn\Examples;
 
-require_once __DIR__ . '/../vendor/autoload.php';
+require_once __DIR__.'/../vendor/autoload.php';
 
+use sabbajohn\FiscalCore\Facade\NFeFacade;
+use sabbajohn\FiscalCore\Support\FiscalResponse;
 use sabbajohn\FiscalCore\Support\SafeCertificateManager;
 use sabbajohn\FiscalCore\Support\SafeConfigManager;
 use sabbajohn\FiscalCore\Support\ToolsFactory;
-use sabbajohn\FiscalCore\Support\FiscalResponse;
-use sabbajohn\FiscalCore\Facade\NFeFacade;
 
 /**
  * Exemplo de inicialização segura com tratamento de erros padronizado
  * Demonstra como evitar erros 500 durante setup e configuração
  */
-
 function exemploInicializacaoSegura(): void
 {
     echo "🔧 Inicialização Segura do Sistema Fiscal\n";
@@ -31,7 +30,7 @@ function exemploInicializacaoSegura(): void
         $setupResponse = ToolsFactory::setupForDevelopmentSafe([
             'uf' => 'SC',
             'municipio_ibge' => '4205407',
-            'token_ibpt' => 'TEST_TOKEN'
+            'token_ibpt' => 'TEST_TOKEN',
         ]);
         exibirResponse($setupResponse, 'Setup Desenvolvimento');
     }
@@ -61,15 +60,15 @@ function exemploInicializacaoSegura(): void
 function testFacadeInitialization(): void
 {
     try {
-        $facade = new NFeFacade();
+        $facade = new NFeFacade;
         echo "✅ NFeFacade inicializado com sucesso!\n";
-        
+
         // Testa operação simples
         $statusResponse = $facade->verificarStatusSefaz('SC', 2);
         exibirResponse($statusResponse, 'Teste de Status SEFAZ');
-        
+
     } catch (\Throwable $e) {
-        echo "❌ ERRO na inicialização do Facade: " . $e->getMessage() . "\n";
+        echo '❌ ERRO na inicialização do Facade: '.$e->getMessage()."\n";
         echo "   Isso NÃO deveria acontecer com a nova implementação!\n";
     }
 }
@@ -96,7 +95,7 @@ function exemploConfiguracaoCompleta(): void
         'municipio_ibge' => '3304557',
         'serie_nfe' => '2',
         'serie_nfce' => '3',
-        'token_ibpt' => 'FAKE_TOKEN_FOR_TESTS'
+        'token_ibpt' => 'FAKE_TOKEN_FOR_TESTS',
     ]);
     exibirResponse($devResponse, 'Setup Desenvolvimento');
 
@@ -133,33 +132,33 @@ function exemploGerenciamentoCertificado(): void
 function exibirResponse(FiscalResponse $response, string $titulo): void
 {
     echo "--- {$titulo} ---\n";
-    
+
     if ($response->isSuccess()) {
         echo "✅ Sucesso!\n";
         $data = $response->getData();
-        
+
         // Exibe dados relevantes de forma organizada
         if (isset($data['valid'])) {
-            echo "Válido: " . ($data['valid'] ? 'Sim' : 'Não') . "\n";
+            echo 'Válido: '.($data['valid'] ? 'Sim' : 'Não')."\n";
         }
         if (isset($data['environment'])) {
-            echo "Ambiente: " . $data['environment'] . "\n";
+            echo 'Ambiente: '.$data['environment']."\n";
         }
         if (isset($data['loaded'])) {
-            echo "Carregado: " . ($data['loaded'] ? 'Sim' : 'Não') . "\n";
+            echo 'Carregado: '.($data['loaded'] ? 'Sim' : 'Não')."\n";
         }
-        if (isset($data['errors']) && !empty($data['errors'])) {
-            echo "Erros encontrados: " . count($data['errors']) . "\n";
+        if (isset($data['errors']) && ! empty($data['errors'])) {
+            echo 'Erros encontrados: '.count($data['errors'])."\n";
         }
-        if (isset($data['warnings']) && !empty($data['warnings'])) {
-            echo "Avisos: " . count($data['warnings']) . "\n";
+        if (isset($data['warnings']) && ! empty($data['warnings'])) {
+            echo 'Avisos: '.count($data['warnings'])."\n";
         }
-        
+
     } else {
         echo "⚠️  Erro tratado (sem crash):\n";
-        echo "Código: " . $response->getErrorCode() . "\n";
-        echo "Mensagem: " . $response->getError() . "\n";
-        
+        echo 'Código: '.$response->getErrorCode()."\n";
+        echo 'Mensagem: '.$response->getError()."\n";
+
         $metadata = $response->getMetadata();
         if (isset($metadata['suggestions'])) {
             echo "Sugestões:\n";
@@ -167,14 +166,14 @@ function exibirResponse(FiscalResponse $response, string $titulo): void
                 echo "  - $suggestion\n";
             }
         }
-        
+
         if (isset($metadata['severity'])) {
-            echo "Severidade: " . $metadata['severity'] . "\n";
+            echo 'Severidade: '.$metadata['severity']."\n";
         }
     }
-    
-    echo "Operação: " . $response->getOperation() . "\n";
-    echo "Timestamp: " . $response->getMetadata('timestamp') . "\n";
+
+    echo 'Operação: '.$response->getOperation()."\n";
+    echo 'Timestamp: '.$response->getMetadata('timestamp')."\n";
     echo "\n";
 }
 
@@ -223,7 +222,7 @@ if (basename($_SERVER['PHP_SELF']) === basename(__FILE__)) {
     exemploConfiguracaoCompleta();
     exemploGerenciamentoCertificado();
     exemploComparacaoAntesDepois();
-    
+
     echo "\n🎉 CONCLUSÃO\n";
     echo "============\n";
     echo "✅ Sistema fiscal totalmente protegido contra erros 500\n";

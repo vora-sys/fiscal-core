@@ -11,7 +11,7 @@ class NFeFacadeResponseShapeTest extends TestCase
 {
     public function test_emitir_returns_authorized_nfeproc_as_document_xml(): void
     {
-        $signedXml = <<<XML
+        $signedXml = <<<'XML'
 <NFe xmlns="http://www.portalfiscal.inf.br/nfe">
     <infNFe versao="4.00" Id="NFe35123456789012345678901234567890123456789012">
         <ide><cUF>35</cUF></ide>
@@ -23,7 +23,7 @@ class NFeFacadeResponseShapeTest extends TestCase
     <Signature xmlns="http://www.w3.org/2000/09/xmldsig#"><SignedInfo><Reference><DigestValue>ABC</DigestValue></Reference></SignedInfo><SignatureValue>ABC</SignatureValue><KeyInfo/></Signature>
 </NFe>
 XML;
-        $responseXml = <<<XML
+        $responseXml = <<<'XML'
 <retEnviNFe xmlns="http://www.portalfiscal.inf.br/nfe" versao="4.00">
     <cStat>104</cStat>
     <xMotivo>Lote processado</xMotivo>
@@ -71,7 +71,7 @@ XML;
 
     public function test_emitir_builds_authorized_document_when_sefaz_response_is_wrapped_in_soap(): void
     {
-        $signedXml = <<<XML
+        $signedXml = <<<'XML'
 <NFe xmlns="http://www.portalfiscal.inf.br/nfe">
     <infNFe versao="4.00" Id="NFe42260483188342000104550010000000121304400319">
         <ide><cUF>42</cUF></ide>
@@ -83,7 +83,7 @@ XML;
     <Signature xmlns="http://www.w3.org/2000/09/xmldsig#"><SignedInfo><Reference><DigestValue>hbczq+8hH5hC2yoP+UJwML0k9M0=</DigestValue></Reference></SignedInfo><SignatureValue>ABC</SignatureValue><KeyInfo/></Signature>
 </NFe>
 XML;
-        $soapResponse = <<<XML
+        $soapResponse = <<<'XML'
 <soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
     <soap:Body>
         <nfeResultMsg xmlns="http://www.portalfiscal.inf.br/nfe/wsdl/NFeAutorizacao4">
@@ -138,7 +138,7 @@ XML;
     public function test_emitir_rejected_keeps_document_xml_null_and_preserves_raw_response(): void
     {
         $signedXml = '<NFe><infNFe Id="NFe35123456789012345678901234567890123456789012" versao="4.00" /></NFe>';
-        $responseXml = <<<XML
+        $responseXml = <<<'XML'
 <retEnviNFe xmlns="http://www.portalfiscal.inf.br/nfe" versao="4.00">
     <cStat>104</cStat>
     <xMotivo>Lote processado</xMotivo>

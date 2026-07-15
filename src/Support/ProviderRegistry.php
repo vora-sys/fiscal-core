@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace sabbajohn\FiscalCore\Support;
 
-use sabbajohn\FiscalCore\Contracts\NFSeProviderConfigInterface;
 use JsonException;
 use RuntimeException;
+use sabbajohn\FiscalCore\Contracts\NFSeProviderConfigInterface;
 
 class ProviderRegistry
 {
@@ -15,14 +15,18 @@ class ProviderRegistry
     private static ?self $instance = null;
 
     private array $config = [];
+
     private array $providers = [];
 
+    private string $catalogRevision = '';
+
     private NFSeProviderResolver $resolver;
+
     private NFSeMunicipalCatalog $catalog;
 
     private function __construct(?NFSeProviderResolver $resolver = null)
     {
-        $this->catalog = new NFSeMunicipalCatalog();
+        $this->catalog = new NFSeMunicipalCatalog;
         $this->resolver = $resolver ?? new NFSeProviderResolver($this->catalog);
         $this->loadConfig();
     }
@@ -31,6 +35,8 @@ class ProviderRegistry
     {
         if (self::$instance === null) {
             self::$instance = new self($resolver);
+        } elseif (self::$instance->catalogRevision !== NFSeCatalogRuntime::revision()) {
+            self::$instance->reload();
         }
 
         return self::$instance;
@@ -45,19 +51,19 @@ class ProviderRegistry
         $config = $this->getConfig($providerKey);
         $providerClass = $config['provider_class'] ?? null;
 
-        if (!is_string($providerClass) || trim($providerClass) === '') {
+        if (! is_string($providerClass) || trim($providerClass) === '') {
             throw new RuntimeException("Provider class não especificado para chave '{$providerKey}'.");
         }
 
         $providerClass = $this->resolveProviderClass($providerClass);
 
-        if (!class_exists($providerClass)) {
+        if (! class_exists($providerClass)) {
             throw new RuntimeException("Provider class não encontrado: {$providerClass}");
         }
 
         $provider = new $providerClass($config);
 
-        if (!$provider instanceof NFSeProviderConfigInterface) {
+        if (! $provider instanceof NFSeProviderConfigInterface) {
             throw new RuntimeException(
                 "Provider '{$providerClass}' deve implementar NFSeProviderConfigInterface."
             );
@@ -78,30 +84,30 @@ class ProviderRegistry
         $metadata = $this->resolver->buildMetadata($municipio);
         $providerKey = $metadata['provider_key'] ?? self::NFSE_NATIONAL_KEY;
 
-        if (!$this->has($providerKey)) {
+        if (! $this->has($providerKey)) {
             return $this->getNfseNacional();
         }
 
-        if (!is_array($metadata['municipio_resolved'] ?? null)) {
+        if (! is_array($metadata['municipio_resolved'] ?? null)) {
             return $this->get($providerKey);
         }
 
         $config = $this->applyMunicipioConfig($this->getConfig($providerKey), $metadata['municipio_resolved']);
         $providerClass = $config['provider_class'] ?? null;
 
-        if (!is_string($providerClass) || trim($providerClass) === '') {
+        if (! is_string($providerClass) || trim($providerClass) === '') {
             throw new RuntimeException("Provider class não especificado para chave '{$providerKey}'.");
         }
 
         $providerClass = $this->resolveProviderClass($providerClass);
 
-        if (!class_exists($providerClass)) {
+        if (! class_exists($providerClass)) {
             throw new RuntimeException("Provider class não encontrado: {$providerClass}");
         }
 
         $provider = new $providerClass($config);
 
-        if (!$provider instanceof NFSeProviderConfigInterface) {
+        if (! $provider instanceof NFSeProviderConfigInterface) {
             throw new RuntimeException(
                 "Provider '{$providerClass}' deve implementar NFSeProviderConfigInterface."
             );
@@ -117,7 +123,7 @@ class ProviderRegistry
 
     public function getConfig(string $providerKey): array
     {
-        if (!$this->has($providerKey)) {
+        if (! $this->has($providerKey)) {
             throw new RuntimeException("Provider '{$providerKey}' não configurado.");
         }
 
@@ -129,7 +135,7 @@ class ProviderRegistry
         $metadata = $this->resolver->buildMetadata($municipio);
         $providerKey = $metadata['provider_key'] ?? self::NFSE_NATIONAL_KEY;
 
-        if (!$this->has($providerKey)) {
+        if (! $this->has($providerKey)) {
             return $this->getConfig(self::NFSE_NATIONAL_KEY);
         }
 
@@ -166,7 +172,7 @@ class ProviderRegistry
     {
         $this->config = [];
         $this->providers = [];
-        $this->catalog = new NFSeMunicipalCatalog();
+        $this->catalog = new NFSeMunicipalCatalog;
         $this->resolver = new NFSeProviderResolver($this->catalog);
         $this->loadConfig();
     }
@@ -186,17 +192,18 @@ class ProviderRegistry
 
     public function obterRegrasEspecificas(string $providerKey): array
     {
-        if (!$this->has($providerKey)) {
+        if (! $this->has($providerKey)) {
             return [];
         }
 
         $config = $this->getConfig($providerKey);
+
         return is_array($config['regras_especificas'] ?? null) ? $config['regras_especificas'] : [];
     }
 
     public function buscarFallback(string $providerKey): ?string
     {
-        if (!$this->has($providerKey)) {
+        if (! $this->has($providerKey)) {
             return null;
         }
 
@@ -207,7 +214,7 @@ class ProviderRegistry
 
     public function obterVersaoSchema(string $providerKey): string
     {
-        if (!$this->has($providerKey)) {
+        if (! $this->has($providerKey)) {
             return '1.0';
         }
 
@@ -218,9 +225,9 @@ class ProviderRegistry
 
     private function loadConfig(): void
     {
-        $configFile = dirname(__DIR__, 2) . '/config/nfse/nfse-provider-families.json';
+        $configFile = dirname(__DIR__, 2).'/config/nfse/nfse-provider-families.json';
 
-        if (!is_file($configFile)) {
+        if (! is_file($configFile)) {
             throw new RuntimeException("Arquivo de configuração não encontrado: {$configFile}");
         }
 
@@ -239,17 +246,18 @@ class ProviderRegistry
             );
         }
 
-        if (!is_array($data)) {
+        if (! is_array($data)) {
             throw new RuntimeException("Estrutura inválida em {$configFile}");
         }
 
-        if (!isset($data[self::NFSE_NATIONAL_KEY]) || !is_array($data[self::NFSE_NATIONAL_KEY])) {
+        if (! isset($data[self::NFSE_NATIONAL_KEY]) || ! is_array($data[self::NFSE_NATIONAL_KEY])) {
             throw new RuntimeException(
-                "Configuração inválida: chave obrigatória '" . self::NFSE_NATIONAL_KEY . "' ausente."
+                "Configuração inválida: chave obrigatória '".self::NFSE_NATIONAL_KEY."' ausente."
             );
         }
 
-        $this->config = $data;
+        $this->config = NFSeCatalogRuntime::resolve('provider_families', $data);
+        $this->catalogRevision = NFSeCatalogRuntime::revision();
     }
 
     private function resolveProviderClass(string $providerName): string
@@ -296,6 +304,7 @@ class ProviderRegistry
         foreach ($overrides as $key => $value) {
             if (is_array($value) && isset($base[$key]) && is_array($base[$key])) {
                 $base[$key] = $this->mergeRecursiveDistinct($base[$key], $value);
+
                 continue;
             }
 
@@ -305,9 +314,7 @@ class ProviderRegistry
         return $base;
     }
 
-    private function __clone(): void
-    {
-    }
+    private function __clone(): void {}
 
     public function __wakeup()
     {

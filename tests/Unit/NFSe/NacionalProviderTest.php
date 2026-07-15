@@ -2,12 +2,12 @@
 
 namespace Tests\Unit\NFSe;
 
+use PHPUnit\Framework\TestCase;
 use sabbajohn\FiscalCore\Adapters\NF\NFSeAdapter;
 use sabbajohn\FiscalCore\Facade\NFSeFacade;
 use sabbajohn\FiscalCore\Providers\NFSe\NacionalProvider;
 use sabbajohn\FiscalCore\Support\NFSeMunicipalPreviewSupport;
 use sabbajohn\FiscalCore\Support\NFSeSchemaResolver;
-use PHPUnit\Framework\TestCase;
 
 class NacionalProviderTest extends TestCase
 {
@@ -16,6 +16,7 @@ class NacionalProviderTest extends TestCase
         $calls = [];
         $provider = new NacionalProvider($this->buildConfig(function ($method, $path, $body, $headers = []) use (&$calls) {
             $calls[] = compact('method', 'path', 'body');
+
             return '<Resposta><Sucesso>true</Sucesso><NumeroNfse>123</NumeroNfse></Resposta>';
         }));
 
@@ -61,7 +62,7 @@ class NacionalProviderTest extends TestCase
         $payload = json_decode((string) $calls[0]['body'], true);
         $xml = gzdecode((string) base64_decode((string) ($payload['dpsXmlGZipB64'] ?? '')));
         $this->assertIsString($xml);
-        $this->assertStringContainsString('<subst><chSubstda>' . str_repeat('7', 50) . '</chSubstda><cMotivo>05</cMotivo>', $xml);
+        $this->assertStringContainsString('<subst><chSubstda>'.str_repeat('7', 50).'</chSubstda><cMotivo>05</cMotivo>', $xml);
         $this->assertStringContainsString('<xMotivo>Serviço rejeitado pelo tomador responsável.</xMotivo>', $xml);
         $this->assertLessThan(strpos($xml, '<prest>'), strpos($xml, '<subst>'));
 
@@ -77,7 +78,7 @@ class NacionalProviderTest extends TestCase
     {
         $originalKey = str_repeat('7', 50);
         $replacementKey = str_repeat('8', 50);
-        $nfseXml = '<NFSe><infNFSe Id="NFS' . $replacementKey . '"><DPS><infDPS><nDPS>11</nDPS></infDPS></DPS></infNFSe></NFSe>';
+        $nfseXml = '<NFSe><infNFSe Id="NFS'.$replacementKey.'"><DPS><infDPS><nDPS>11</nDPS></infDPS></DPS></infNFSe></NFSe>';
         $provider = new NacionalProvider($this->buildConfig(static fn (): string => json_encode([
             'chaveAcesso' => $replacementKey,
             'idDps' => 'DPS42091021234567800019000003000000000000011',
@@ -99,11 +100,88 @@ class NacionalProviderTest extends TestCase
         $this->assertStringContainsString('<nDPS>11</nDPS>', (string) $response->getData('xml'));
     }
 
+    public function test_substituir_preserva_xml_da_tentativa_quando_transporte_expira(): void
+    {
+        $provider = new NacionalProvider($this->buildConfig(static function (): never {
+            throw new \RuntimeException('Timeout was reached');
+        }));
+        $dados = $this->dadosValidos();
+        $dados['motivo_substituicao'] = 'rejeicao_pelo_tomador_intermediario';
+        $dados['justificativa'] = 'Serviço rejeitado pelo tomador responsável.';
+
+        $facade = new NFSeFacade('nfse_nacional', new NFSeAdapter('nfse_nacional', $provider));
+        $response = $facade->substituir(str_repeat('7', 50), $dados);
+
+        $this->assertTrue($response->isError());
+        $this->assertSame('Timeout was reached', $response->getError());
+        $artifacts = $provider->getLastOperationArtifacts();
+        $this->assertSame('substituir', $artifacts['operation']);
+        $this->assertStringContainsString('<chSubstda>'.str_repeat('7', 50).'</chSubstda>', (string) $artifacts['request_xml']);
+        $this->assertStringContainsString('<xMotivo>Serviço rejeitado pelo tomador responsável.</xMotivo>', (string) $artifacts['request_xml']);
+        $metadata = $response->getMetadata();
+        $this->assertSame($artifacts['request_xml'], $metadata['artifacts']['request_xml'] ?? null);
+    }
+
+    public function test_substituir_aplica_im_exata_confirmada_pelo_cnc_antes_do_envio(): void
+    {
+        $calls = [];
+        $config = $this->buildConfig(static function (string $method, string $path, mixed $body = null) use (&$calls): string {
+            $calls[] = compact('method', 'path', 'body');
+            if ($method === 'GET' && str_contains($path, 'cnc.local')) {
+                return json_encode([
+                    'ListaCadastroMunicipal' => [[
+                        'CodigoMunicipio' => 3550308,
+                        'InfCad' => [
+                            'Inscricao' => '11222333000181',
+                            'TpInscricao' => 'CNPJ',
+                            'InscricaoMunicipal' => '      12345',
+                            'SituacaoEmissaoNFSe' => 'HABILITADO',
+                        ],
+                    ]],
+                    'StatusProcessamento' => 'DOCUMENTOS_LOCALIZADOS',
+                ], JSON_THROW_ON_ERROR);
+            }
+            if ($method === 'GET') {
+                return '{"data":{}}';
+            }
+
+            return '<Resposta><Sucesso>true</Sucesso><ChaveAcesso>123</ChaveAcesso></Resposta>';
+        });
+        $config['remote_preflight_enabled'] = true;
+        $config['services'] = [
+            'parametrizacao' => ['homologacao' => 'https://param.local'],
+            'cnc_consulta' => ['homologacao' => 'https://cnc.local'],
+        ];
+        $provider = new NacionalProvider($config);
+        $dados = $this->dadosValidos();
+        $dados['motivo_substituicao'] = 'rejeicao_pelo_tomador_intermediario';
+        $dados['justificativa'] = 'Serviço rejeitado pelo tomador responsável.';
+
+        $provider->substituir(str_repeat('7', 50), $dados);
+
+        $emission = null;
+        foreach ($calls as $call) {
+            if ($call['method'] === 'POST' && $call['path'] === '/nfse') {
+                $emission = $call;
+                break;
+            }
+        }
+        $this->assertIsArray($emission);
+        $payload = json_decode((string) $emission['body'], true, flags: JSON_THROW_ON_ERROR);
+        $xml = gzdecode((string) base64_decode((string) ($payload['dpsXmlGZipB64'] ?? '')));
+        $this->assertIsString($xml);
+        $this->assertStringContainsString('<IM>      12345</IM>', $xml);
+        $this->assertStringContainsString('<subst><chSubstda>'.str_repeat('7', 50).'</chSubstda>', $xml);
+        $artifacts = $provider->getLastOperationArtifacts();
+        $this->assertSame('      12345', $artifacts['emission_context']['decisions'][0]['value'] ?? null);
+    }
+
     public function test_emitir_inclui_irrf_retido_na_tributacao_nacional(): void
     {
         $calls = [];
         $provider = new NacionalProvider($this->buildConfig(function ($method, $path, $body, $headers = []) use (&$calls) {
             $calls[] = compact('method', 'path', 'body');
+
             return '<Resposta><Sucesso>true</Sucesso></Resposta>';
         }));
 
@@ -157,6 +235,7 @@ class NacionalProviderTest extends TestCase
         $calls = [];
         $config = $this->buildConfig(function ($method, $path, $body, $headers = []) use (&$calls) {
             $calls[] = compact('method', 'path', 'body');
+
             return '<Resposta><Sucesso>true</Sucesso></Resposta>';
         });
         $config['versao'] = '1.00';
@@ -183,6 +262,7 @@ class NacionalProviderTest extends TestCase
         $calls = [];
         $provider = new NacionalProvider($this->buildConfig(function ($method, $path, $body, $headers = []) use (&$calls) {
             $calls[] = compact('method', 'path', 'body');
+
             return '<Resposta><Sucesso>true</Sucesso></Resposta>';
         }));
 
@@ -220,6 +300,7 @@ class NacionalProviderTest extends TestCase
         $calls = [];
         $provider = new NacionalProvider($this->buildConfig(function ($method, $path, $body, $headers = []) use (&$calls) {
             $calls[] = compact('method', 'path', 'body');
+
             return '<Resposta><Sucesso>true</Sucesso></Resposta>';
         }));
 
@@ -309,6 +390,35 @@ class NacionalProviderTest extends TestCase
         $this->assertLessThan(strpos($xml, '<totTrib>'), strpos($xml, '<tribFed>'));
     }
 
+    public function test_dps_nacional_omite_pis_cofins_de_apuracao_propria_para_simples_nacional(): void
+    {
+        $provider = new NacionalProvider($this->buildConfig(function () {
+            return '<Resposta><Sucesso>true</Sucesso></Resposta>';
+        }));
+
+        $dados = $this->dadosValidos();
+        $dados['prestador']['opSimpNac'] = '3';
+        $dados['prestador']['regApTribSN'] = '1';
+        $dados['tributacao']['federal'] = [
+            'piscofins' => [
+                'CST' => '01',
+                'vBCPisCofins' => 1000,
+                'pAliqPis' => 1.65,
+                'pAliqCofins' => 7.6,
+                'vPis' => 16.50,
+                'vCofins' => 76.00,
+                'tpRetPisCofins' => '2',
+            ],
+        ];
+
+        $xml = $provider->gerarXmlDpsPreview($dados);
+
+        $this->assertIsString($xml);
+        $this->assertStringNotContainsString('<tribFed>', $xml);
+        $this->assertStringNotContainsString('<piscofins>', $xml);
+        $this->assertStringContainsString('<totTrib><vTotTrib><vTotTribFed>135.00</vTotTribFed><vTotTribEst>0.00</vTotTribEst><vTotTribMun>47.00</vTotTribMun></vTotTrib></totTrib>', $xml);
+    }
+
     public function test_dps_nacional_inclui_descontos_deducao_e_total_de_tributos_por_escolha(): void
     {
         $provider = new NacionalProvider($this->buildConfig(function () {
@@ -333,7 +443,8 @@ class NacionalProviderTest extends TestCase
         $xml = $provider->gerarXmlDpsPreview($dados);
 
         $this->assertIsString($xml);
-        $this->assertStringContainsString('<vServPrest><vReceb>950.00</vReceb><vServ>1000.00</vServ></vServPrest>', $xml);
+        $this->assertStringContainsString('<vServPrest><vServ>1000.00</vServ></vServPrest>', $xml);
+        $this->assertStringNotContainsString('<vReceb>', $xml);
         $this->assertStringContainsString('<vDescCondIncond><vDescIncond>25.00</vDescIncond><vDescCond>10.00</vDescCond></vDescCondIncond>', $xml);
         $this->assertStringContainsString('<vDedRed><vDR>100.00</vDR></vDedRed>', $xml);
         $this->assertStringContainsString('<totTrib><pTotTribSN>4.25</pTotTribSN></totTrib>', $xml);
@@ -362,7 +473,104 @@ class NacionalProviderTest extends TestCase
         $this->assertStringContainsString('<vTotTribMun>47.00</vTotTribMun>', $xml);
     }
 
-    public function test_dps_nacional_inclui_ibscbs_minimo_com_tributacao_regular_e_diferimento(): void
+    public function test_dps_nacional_nao_envia_indicador_de_total_para_me_epp(): void
+    {
+        $provider = new NacionalProvider($this->buildConfig(function () {
+            return '<Resposta><Sucesso>true</Sucesso></Resposta>';
+        }));
+
+        $dados = $this->dadosValidos();
+        $dados['prestador']['opSimpNac'] = '3';
+        $dados['prestador']['regApTribSN'] = '1';
+        $dados['tributacao']['total'] = ['indTotTrib' => '0'];
+
+        $xml = $provider->gerarXmlDpsPreview($dados);
+
+        $this->assertStringNotContainsString('<indTotTrib>', $xml);
+        $this->assertStringContainsString('<totTrib><vTotTrib>', $xml);
+        $this->assertStringContainsString('<vTotTribFed>135.00</vTotTribFed>', $xml);
+        $this->assertStringContainsString('<vTotTribMun>47.00</vTotTribMun>', $xml);
+    }
+
+    public function test_dps_nacional_nao_envia_percentual_simples_para_mei(): void
+    {
+        $provider = new NacionalProvider($this->buildConfig(function () {
+            return '<Resposta><Sucesso>true</Sucesso></Resposta>';
+        }));
+
+        $dados = $this->dadosValidos();
+        $dados['prestador']['opSimpNac'] = '2';
+        unset($dados['prestador']['regApTribSN']);
+        $dados['tributacao']['total'] = ['pTotTribSN' => 4.25];
+
+        $xml = $provider->gerarXmlDpsPreview($dados);
+
+        $this->assertStringNotContainsString('<pTotTribSN>', $xml);
+        $this->assertStringContainsString('<totTrib><vTotTrib>', $xml);
+    }
+
+    public function test_dps_nacional_inclui_valor_recebido_quando_intermediario_emitente(): void
+    {
+        $provider = new NacionalProvider($this->buildConfig(function () {
+            return '<Resposta><Sucesso>true</Sucesso></Resposta>';
+        }));
+
+        $dados = $this->dadosValidos();
+        $dados['tpEmit'] = '3';
+        $dados['valores'] = [
+            'vReceb' => 950.00,
+        ];
+
+        $xml = $provider->gerarXmlDpsPreview($dados);
+
+        $this->assertIsString($xml);
+        $this->assertStringContainsString('<vServPrest><vReceb>950.00</vReceb><vServ>1000.00</vServ></vServPrest>', $xml);
+    }
+
+    public function test_dps_nacional_omite_descontos_quando_valores_sao_zero(): void
+    {
+        $provider = new NacionalProvider($this->buildConfig(function () {
+            return '<Resposta><Sucesso>true</Sucesso></Resposta>';
+        }));
+
+        $dados = $this->dadosValidos();
+        $dados['valores'] = [
+            'vDescIncond' => 0,
+            'vDescCond' => 0,
+        ];
+
+        $xml = $provider->gerarXmlDpsPreview($dados);
+        $validation = $provider->validarDpsXml($xml);
+
+        $this->assertIsString($xml);
+        $this->assertStringNotContainsString('<vDescCondIncond>', $xml);
+        $this->assertStringNotContainsString('<vDescIncond>0.00</vDescIncond>', $xml);
+        $this->assertStringNotContainsString('<vDescCond>0.00</vDescCond>', $xml);
+        $this->assertTrue(
+            $validation['ok'],
+            implode(PHP_EOL, array_column($validation['errors'], 'message'))
+        );
+    }
+
+    public function test_dps_nacional_usa_total_aproximado_por_padrao_no_modelo_uninfe(): void
+    {
+        $provider = new NacionalProvider($this->buildConfig(function () {
+            return '<Resposta><Sucesso>true</Sucesso></Resposta>';
+        }));
+
+        $dados = $this->dadosValidos();
+        $dados['prestador']['opSimpNac'] = '3';
+        $dados['prestador']['regApTribSN'] = '1';
+        $dados['valor_servicos'] = 10.00;
+
+        $xml = $provider->gerarXmlDpsPreview($dados);
+
+        $this->assertIsString($xml);
+        $this->assertStringContainsString('<totTrib><vTotTrib><vTotTribFed>1.35</vTotTribFed><vTotTribEst>0.00</vTotTribEst><vTotTribMun>0.47</vTotTribMun></vTotTrib></totTrib>', $xml);
+        $this->assertStringNotContainsString('<pTotTribSN>0.00</pTotTribSN>', $xml);
+    }
+
+    public function test_dps_nacional_omite_grupos_ibscbs_nao_permitidos_para_classe_000001(): void
     {
         $provider = new NacionalProvider($this->buildConfig(function () {
             return '<Resposta><Sucesso>true</Sucesso></Resposta>';
@@ -397,10 +605,57 @@ class NacionalProviderTest extends TestCase
 
         $this->assertIsString($xml);
         $this->assertStringContainsString(
-            '<IBSCBS><finNFSe>0</finNFSe><indFinal>0</indFinal><cIndOp>000001</cIndOp><indDest>0</indDest><valores><trib><gIBSCBS><CST>000</CST><cClassTrib>000001</cClassTrib><gTribRegular><CSTReg>000</CSTReg><cClassTribReg>000001</cClassTribReg></gTribRegular><gDif><pDifUF>1.00</pDifUF><pDifMun>2.00</pDifMun><pDifCBS>3.00</pDifCBS></gDif></gIBSCBS></trib></valores></IBSCBS>',
+            '<IBSCBS><finNFSe>0</finNFSe><indFinal>0</indFinal><cIndOp>000001</cIndOp><indDest>0</indDest><valores><trib><gIBSCBS><CST>000</CST><cClassTrib>000001</cClassTrib></gIBSCBS></trib></valores></IBSCBS>',
             $xml
         );
+        $this->assertStringNotContainsString('<gTribRegular>', $xml);
+        $this->assertStringNotContainsString('<gDif>', $xml);
         $this->assertLessThan(strpos($xml, '<IBSCBS>'), strpos($xml, '</valores>'));
+    }
+
+    public function test_dps_nacional_preserva_grupos_ibscbs_quando_cst_permite_no_modelo_uninfe(): void
+    {
+        $provider = new NacionalProvider($this->buildConfig(function () {
+            return '<Resposta><Sucesso>true</Sucesso></Resposta>';
+        }));
+
+        $dados = $this->dadosValidos();
+        $dados['ibscbs'] = [
+            'finNFSe' => '0',
+            'indFinal' => '0',
+            'cIndOp' => '000001',
+            'indDest' => '0',
+            'valores' => [
+                'trib' => [
+                    'gIBSCBS' => [
+                        'CST' => '101',
+                        'cClassTrib' => '000001',
+                        'gTribRegular' => [
+                            'CSTReg' => '000',
+                            'cClassTribReg' => '000001',
+                        ],
+                        'gDif' => [
+                            'pDifUF' => 1,
+                            'pDifMun' => 2,
+                            'pDifCBS' => 3,
+                        ],
+                    ],
+                ],
+            ],
+        ];
+
+        $xml = $provider->gerarXmlDpsPreview($dados);
+        $validation = $provider->validarDpsXml($xml);
+
+        $this->assertIsString($xml);
+        $this->assertStringContainsString(
+            '<gIBSCBS><CST>101</CST><cClassTrib>000001</cClassTrib><gTribRegular><CSTReg>000</CSTReg><cClassTribReg>000001</cClassTribReg></gTribRegular><gDif><pDifUF>1.00</pDifUF><pDifMun>2.00</pDifMun><pDifCBS>3.00</pDifCBS></gDif></gIBSCBS>',
+            $xml
+        );
+        $this->assertTrue(
+            $validation['ok'],
+            implode(PHP_EOL, array_column($validation['errors'], 'message'))
+        );
     }
 
     public function test_dps_nacional_serializa_ibscbs_declarativo_com_destino_imovel_e_reembolso(): void
@@ -500,9 +755,11 @@ class NacionalProviderTest extends TestCase
             $xml
         );
         $this->assertStringContainsString(
-            '<trib><gIBSCBS><CST>000</CST><cClassTrib>000001</cClassTrib><cCredPres>03</cCredPres><gTribRegular><CSTReg>000</CSTReg><cClassTribReg>000001</cClassTribReg></gTribRegular><gDif><pDifUF>1.50</pDifUF><pDifMun>2.50</pDifMun><pDifCBS>3.50</pDifCBS></gDif></gIBSCBS></trib>',
+            '<trib><gIBSCBS><CST>000</CST><cClassTrib>000001</cClassTrib><cCredPres>03</cCredPres></gIBSCBS></trib>',
             $xml
         );
+        $this->assertStringNotContainsString('<gTribRegular>', $xml);
+        $this->assertStringNotContainsString('<gDif>', $xml);
         $this->assertLessThan(strpos($xml, '<trib><gIBSCBS>'), strpos($xml, '<gReeRepRes>'));
     }
 
@@ -511,6 +768,7 @@ class NacionalProviderTest extends TestCase
         $calls = [];
         $provider = new NacionalProvider($this->buildConfig(function ($method, $path, $body, $headers = []) use (&$calls) {
             $calls[] = compact('method', 'path', 'body');
+
             return '<Resposta><Sucesso>true</Sucesso></Resposta>';
         }));
 
@@ -582,6 +840,7 @@ class NacionalProviderTest extends TestCase
         $provider = new NacionalProvider($this->buildConfig(
             function ($method = null, $path = null, $body = null, $headers = []) use (&$calls) {
                 $calls[] = compact('method', 'path', 'body', 'headers');
+
                 return json_encode([
                     'tipoAmbiente' => 2,
                     'versaoAplicativo' => 'test',
@@ -594,7 +853,7 @@ class NacionalProviderTest extends TestCase
         $result = $provider->cancelar($chave, 'Cancelamento por erro operacional');
         $this->assertTrue($result);
         $this->assertSame('POST', $calls[0]['method']);
-        $this->assertSame('/nfse/' . $chave . '/eventos', $calls[0]['path']);
+        $this->assertSame('/nfse/'.$chave.'/eventos', $calls[0]['path']);
         $this->assertContains('Content-Type: application/json', $calls[0]['headers']);
 
         $payload = json_decode((string) $calls[0]['body'], true);
@@ -603,14 +862,14 @@ class NacionalProviderTest extends TestCase
         $xml = gzdecode((string) base64_decode((string) $payload['pedidoRegistroEventoXmlGZipB64']));
         $this->assertIsString($xml);
         $this->assertStringContainsString('<pedRegEvento', $xml);
-        $this->assertStringContainsString('<infPedReg Id="PRE' . $chave . '101101">', $xml);
+        $this->assertStringContainsString('<infPedReg Id="PRE'.$chave.'101101">', $xml);
         $this->assertStringContainsString('<e101101>', $xml);
         $this->assertStringContainsString('<xMotivo>Cancelamento por erro operacional</xMotivo>', $xml);
     }
 
     public function test_consultar_retorno_compnfse_com_xml_real(): void
     {
-        $xmlReferencia = file_get_contents(__DIR__ . '/../../Fixtures/belem/retorno_lista_nfse_sanitizado.xml');
+        $xmlReferencia = file_get_contents(__DIR__.'/../../Fixtures/belem/retorno_lista_nfse_sanitizado.xml');
         $this->assertNotFalse($xmlReferencia);
 
         $provider = new NacionalProvider($this->buildConfig(
@@ -634,6 +893,7 @@ class NacionalProviderTest extends TestCase
         $calls = [];
         $config = $this->buildConfig(function ($method, $path, $body, $headers = []) use (&$calls) {
             $calls[] = compact('method', 'path', 'body');
+
             return '<Resposta><Sucesso>true</Sucesso></Resposta>';
         });
         $config['services'] = [
@@ -653,11 +913,61 @@ class NacionalProviderTest extends TestCase
         $this->assertArrayHasKey('dpsXmlGZipB64', $payload);
     }
 
+    public function test_validacao_envia_im_joinville_quando_cnc_exige_identificacao_municipal(): void
+    {
+        $config = $this->buildConfig(function () {
+            return '<Resposta><Sucesso>true</Sucesso></Resposta>';
+        });
+        $config['codigo_municipio'] = '4209102';
+        $config['ambiente'] = 'producao';
+        $provider = new NacionalProvider($config);
+
+        $payload = [
+            'tpAmb' => '2',
+            'dhEmi' => '2026-07-09T10:00:00-03:00',
+            'verAplic' => 'fiscal-platform-api',
+            'serie' => '1',
+            'nDPS' => '9028',
+            'dCompet' => '2026-07-09',
+            'tpEmit' => '1',
+            'cLocEmi' => '4209102',
+            'prestador' => [
+                'cnpj' => '83188342000104',
+                'inscricaoMunicipal' => '33061',
+                'opSimpNac' => '3',
+                'regApTribSN' => '1',
+                'regEspTrib' => '0',
+                'codigoMunicipio' => '4209102',
+            ],
+            'tomador' => [
+                'documento' => '00980556236',
+                'razaoSocial' => 'Cliente Teste',
+            ],
+            'servico' => [
+                'cLocPrestacao' => '4209102',
+                'cTribNac' => '010701',
+                'descricao' => 'Servico de suporte tecnico em informatica',
+                'tribISSQN' => '1',
+                'tpRetISSQN' => '1',
+                'aliquota' => 2,
+            ],
+            'valor_servicos' => 200,
+        ];
+
+        $validation = $provider->validarLayoutDps($payload, false);
+        $xml = $provider->gerarXmlDpsPreview($payload);
+
+        $this->assertTrue($validation['valid'], implode(PHP_EOL, $validation['errors']));
+        $this->assertStringContainsString('<CNPJ>83188342000104</CNPJ>', (string) $xml);
+        $this->assertStringContainsString('<IM>33061</IM>', (string) $xml);
+    }
+
     public function test_dps_nacional_omite_codigo_municipal_fora_do_padrao_do_schema(): void
     {
         $calls = [];
         $provider = new NacionalProvider($this->buildConfig(function ($method, $path, $body, $headers = []) use (&$calls) {
             $calls[] = compact('method', 'path', 'body');
+
             return '<Resposta><Sucesso>true</Sucesso></Resposta>';
         }));
 
@@ -724,19 +1034,17 @@ class NacionalProviderTest extends TestCase
             ],
         ];
         $config['catalog_endpoints'] = [
-            'municipios' => 'parametrizacao:/catalogos/municipios',
             'aliquotas_municipio' => 'parametrizacao:/{codigo_municipio}/{codigoServico}/{competencia}/aliquota',
             'convenio_municipio' => 'parametrizacao:/{codigo_municipio}/convenio',
         ];
 
         $provider = new NacionalProvider($config);
         $provider->listarMunicipiosNacionais(true);
-        $provider->consultarAliquotasMunicipio('3550308', '0107', '2026-04-08', true);
+        $provider->consultarAliquotasMunicipio('3550308', '010701', '2026-04-08', true);
         $provider->consultarConvenioMunicipio('3550308', true);
 
-        $this->assertSame('https://adn.producaorestrita.nfse.gov.br/parametrizacao/catalogos/municipios', $calls[0]['path']);
-        $this->assertSame('https://adn.producaorestrita.nfse.gov.br/parametrizacao/3550308/0107/2026-04-08/aliquota', $calls[1]['path']);
-        $this->assertSame('https://adn.producaorestrita.nfse.gov.br/parametrizacao/3550308/convenio', $calls[2]['path']);
+        $this->assertSame('https://adn.producaorestrita.nfse.gov.br/parametrizacao/3550308/01.07.01.000/2026-04-08T00%3A00%3A00Z/aliquota', $calls[0]['path']);
+        $this->assertSame('https://adn.producaorestrita.nfse.gov.br/parametrizacao/3550308/convenio', $calls[1]['path']);
     }
 
     public function test_consulta_cnc_resolve_rota_por_servico(): void
@@ -744,17 +1052,17 @@ class NacionalProviderTest extends TestCase
         $calls = [];
         $config = $this->buildConfig(function ($method, $path, $body = null, $headers = []) use (&$calls) {
             $calls[] = compact('method', 'path');
+
             return json_encode(['ok' => true], JSON_UNESCAPED_UNICODE);
         });
         $config['services'] = [
-            'adn_contribuintes' => [
-                'homologacao' => 'https://adn.producaorestrita.nfse.gov.br/contribuintes',
-                'producao' => 'https://adn.nfse.gov.br/contribuintes',
+            'cnc_consulta' => [
+                'homologacao' => 'https://adn.producaorestrita.nfse.gov.br/cnc/consulta',
+                'producao' => 'https://adn.nfse.gov.br/cnc/consulta',
             ],
         ];
         $config['cnc_endpoints'] = [
-            'contribuinte' => 'adn_contribuintes:/{cpfCnpj}',
-            'habilitacao' => 'adn_contribuintes:/{cpfCnpj}/habilitacao',
+            'cadastro' => 'cnc_consulta:/cad',
         ];
 
         $provider = new NacionalProvider($config);
@@ -762,9 +1070,8 @@ class NacionalProviderTest extends TestCase
         $provider->verificarHabilitacaoCnc('11.222.333/0001-81', '3550308');
 
         $this->assertSame('GET', $calls[0]['method']);
-        $this->assertSame('https://adn.producaorestrita.nfse.gov.br/contribuintes/11222333000181', $calls[0]['path']);
-        $this->assertSame('GET', $calls[1]['method']);
-        $this->assertSame('https://adn.producaorestrita.nfse.gov.br/contribuintes/11222333000181/habilitacao?codigoMunicipio=3550308', $calls[1]['path']);
+        $this->assertSame('https://adn.producaorestrita.nfse.gov.br/cnc/consulta/cad?codMunicipio=3550308&inscricaoFederal=11222333000181', $calls[0]['path']);
+        $this->assertCount(1, $calls, 'A segunda consulta idêntica deve reutilizar o cache CNC de 6 horas.');
     }
 
     public function test_consulta_cnc_contribuinte_e_habilitacao(): void
@@ -772,19 +1079,25 @@ class NacionalProviderTest extends TestCase
         $calls = [];
         $config = $this->buildConfig(function ($method, $path, $body = null, $headers = []) use (&$calls) {
             $calls[] = compact('method', 'path');
-            if ($path === '/contribuintes/11222333000181') {
+            if (str_contains($path, '/cnc/consulta/cad?codMunicipio=3550308')) {
                 return json_encode([
-                    'documento' => '11222333000181',
-                    'situacao' => 'HABILITADO',
-                    'habilitado' => true,
+                    'dados' => [[
+                        'codMunicipio' => '3550308',
+                        'inscricaoFederal' => '11222333000181',
+                        'situacao' => 'HABILITADO',
+                        'habilitado' => true,
+                    ]],
                 ]);
             }
 
-            if ($path === '/contribuintes/11222333000181/habilitacao?codigoMunicipio=4106902') {
+            if (str_contains($path, '/cnc/consulta/cad?codMunicipio=4106902')) {
                 return json_encode([
-                    'documento' => '11222333000181',
-                    'situacao' => 'HABILITADO',
-                    'habilitado' => true,
+                    'dados' => [[
+                        'codMunicipio' => '4106902',
+                        'inscricaoFederal' => '11222333000181',
+                        'situacao' => 'HABILITADO',
+                        'habilitado' => true,
+                    ]],
                 ]);
             }
 
@@ -795,18 +1108,136 @@ class NacionalProviderTest extends TestCase
         $contribuinte = $provider->consultarContribuinteCnc('11.222.333/0001-81');
         $habilitacao = $provider->verificarHabilitacaoCnc('11.222.333/0001-81', '4106902');
 
-        $this->assertTrue($contribuinte['habilitado']);
+        $this->assertSame('encontrado', $contribuinte['status']);
+        $this->assertTrue($contribuinte['data']['correspondencia']['habilitado']);
         $this->assertTrue($habilitacao);
-        $this->assertSame('/contribuintes/11222333000181', $calls[0]['path']);
-        $this->assertSame('/contribuintes/11222333000181/habilitacao?codigoMunicipio=4106902', $calls[1]['path']);
+        $this->assertStringContainsString('/cnc/consulta/cad?codMunicipio=3550308&inscricaoFederal=11222333000181', $calls[0]['path']);
+        $this->assertStringContainsString('/cnc/consulta/cad?codMunicipio=4106902&inscricaoFederal=11222333000181', $calls[1]['path']);
     }
 
     public function test_schema_resolver_resolve_layout_nacional_para_xsd_101(): void
     {
-        $schemaPath = (new NFSeSchemaResolver())->resolve('NACIONAL', 'emitir');
+        $schemaPath = (new NFSeSchemaResolver)->resolve('NACIONAL', 'emitir');
 
         $this->assertStringEndsWith('src/Providers/NFSe/Xsd/1.01/DPS_v1.01.xsd', $schemaPath);
         $this->assertFileExists($schemaPath);
+    }
+
+    public function test_validacao_xsd_dps_retorna_diagnostico_rastreavel(): void
+    {
+        $provider = new NacionalProvider($this->buildConfig(function () {
+            return '<Resposta><Sucesso>true</Sucesso></Resposta>';
+        }));
+
+        $xml = $provider->gerarXmlDpsPreview($this->dadosValidos());
+        $this->assertIsString($xml);
+        $invalidXml = preg_replace('/<cTribNac>[^<]+<\/cTribNac>/', '<cTribNac>ABC</cTribNac>', $xml, 1);
+        $this->assertIsString($invalidXml);
+        $this->assertNotSame($xml, $invalidXml);
+
+        $validation = $provider->validarDpsXml($invalidXml);
+
+        $this->assertFalse($validation['ok']);
+        $this->assertStringEndsWith('src/Providers/NFSe/Xsd/1.01/DPS_v1.01.xsd', $validation['schema']);
+        $this->assertSame('cTribNac', $validation['errors'][0]['campo_provavel']);
+        $this->assertSame('servico.cTribNac', $validation['errors'][0]['payload_path']);
+        $this->assertIsInt($validation['errors'][0]['line']);
+        $this->assertArrayHasKey('column', $validation['errors'][0]);
+        $this->assertSame($validation['schema'], $validation['errors'][0]['schema']);
+    }
+
+    public function test_preview_104_serializa_grupos_rtc_regulares_na_ordem_do_layout(): void
+    {
+        $config = $this->buildConfig(fn () => '<ok/>');
+        $config['versao'] = '1.04';
+        $config['dps_versao'] = '1.04';
+        $config['dps_xsd_path'] = null;
+        $provider = new NacionalProvider($config);
+
+        $dados = $this->dadosValidos();
+        $dados['prestador']['cnpj'] = 'AB222333000181';
+        $dados['prestador']['opSimpNac'] = '4';
+        $dados['prestador']['regApIBSCBSSN'] = '1';
+        $dados['servico']['cAtvSN'] = '11';
+        $dados['valores']['vAjusteBC'] = [
+            'pAjusteBCISSQN' => 10,
+            'vAjusteBCISSQN' => 100,
+            'documentos' => ['docAjusteBC' => [[
+                'tpAjusteBC' => '01',
+                'vTotDoc' => 100,
+                'vAjuteAplic' => 100,
+                'dFeNacional' => [
+                    'tipoChaveDFe' => '1',
+                    'chaveDFe' => str_repeat('1', 44),
+                ],
+            ]]],
+        ];
+        $dados['ibscbs'] = [
+            'finNFSe' => '0',
+            'indFinal' => '1',
+            'cIndOp' => '050101',
+            'indDest' => '0',
+            'imovel' => [
+                'cMun' => '3550308',
+                'gLocacao' => ['pCopropriedade' => 100, 'vTotOper' => 1000],
+                'gUnidImob' => [[
+                    'inscImobFisc' => '123',
+                    'cCIB' => 'CIB123',
+                    'gAjusteBCLocImoveis' => [[
+                        'tpAjusteBCLocImoveis' => '01',
+                        'vAjusteBCLocImoveis' => 50,
+                    ]],
+                ]],
+            ],
+            'gPgtoVinc' => ['pgto' => [[
+                'nPag' => '1',
+                'idTransacao' => 'PIX-123',
+                'tpMeioPgto' => '01',
+                'CNPJReceb' => 'CD222333000181',
+                'CNPJBasePSP' => 'EF222333',
+            ]]],
+            'valores' => ['trib' => [
+                'gIBSCBS' => ['CST' => '000', 'cClassTrib' => '000001'],
+            ]],
+        ];
+
+        $xml = $provider->gerarXmlDpsPreview($dados);
+
+        $this->assertStringContainsString('versao="1.04"', $xml);
+        $this->assertStringContainsString('<cLocEmi>3550308</cLocEmi><finNFSe>0</finNFSe><prest>', $xml);
+        $this->assertStringContainsString('<CNPJ>AB222333000181</CNPJ>', $xml);
+        $this->assertStringContainsString('<opSimpNac>4</opSimpNac><regApIBSCBSSN>1</regApIBSCBSSN>', $xml);
+        $this->assertStringContainsString('<cAtvSN>11</cAtvSN>', $xml);
+        $this->assertStringContainsString('<vAjusteBC><pAjusteBCISSQN>10.00</pAjusteBCISSQN><vAjusteBCISSQN>100.00</vAjusteBCISSQN><documentos><docAjusteBC>', $xml);
+        $this->assertStringContainsString('<IBSCBS><indFinal>1</indFinal><cIndOp>050101</cIndOp>', $xml);
+        $this->assertStringContainsString('<imovel><cMun>3550308</cMun><gLocacao><pCopropriedade>100.00</pCopropriedade><vTotOper>1000.00</vTotOper></gLocacao><gUnidImob><inscImobFisc>123</inscImobFisc><cCIB>CIB123</cCIB><gAjusteBCLocImoveis><tpAjusteBCLocImoveis>01</tpAjusteBCLocImoveis><vAjusteBCLocImoveis>50.00</vAjusteBCLocImoveis></gAjusteBCLocImoveis></gUnidImob></imovel>', $xml);
+        $this->assertStringContainsString('<gPgtoVinc><pgto><nPag>001</nPag><idTransacao>PIX-123</idTransacao><tpMeioPgto>01</tpMeioPgto><CNPJReceb>CD222333000181</CNPJReceb><CNPJBasePSP>EF222333</CNPJBasePSP></pgto></gPgtoVinc>', $xml);
+        $this->assertStringContainsString('<valores><trib><gIBSCBS><CST>000</CST><cClassTrib>000001</cClassTrib></gIBSCBS></trib></valores>', $xml);
+        $this->assertStringNotContainsString('<IBSCBS><finNFSe>', $xml);
+    }
+
+    public function test_preview_104_serializa_nota_de_debito_com_ajuste(): void
+    {
+        $config = $this->buildConfig(fn () => '<ok/>');
+        $config['versao'] = '1.04';
+        $config['dps_versao'] = '1.04';
+        $config['dps_xsd_path'] = null;
+        $provider = new NacionalProvider($config);
+
+        $dados = $this->dadosValidos();
+        $dados['ibscbs'] = [
+            'finNFSe' => '2',
+            'tpNFSeDebito' => '06',
+            'valores' => ['trib' => [
+                'gIBSCBSAjuste' => ['vIBS' => 12.34, 'vCBS' => 5.67],
+            ]],
+        ];
+
+        $xml = $provider->gerarXmlDpsPreview($dados);
+
+        $this->assertStringContainsString('<finNFSe>2</finNFSe><tpNFSeDebito>06</tpNFSeDebito><prest>', $xml);
+        $this->assertStringContainsString('<IBSCBS><valores><trib><gIBSCBSAjuste><vIBS>12.34</vIBS><vCBS>5.67</vCBS></gIBSCBSAjuste></trib></valores></IBSCBS>', $xml);
+        $this->assertStringNotContainsString('<gIBSCBS><CST>', $xml);
     }
 
     private function buildConfig(callable $httpClient): array
@@ -819,7 +1250,6 @@ class NacionalProviderTest extends TestCase
             'ambiente' => 'homologacao',
             'api_base_url' => 'https://api.local',
             'timeout' => 10,
-            'substitution_enabled' => true,
             'auth' => ['token' => 'abc'],
             'prestador' => [
                 'cnpj' => '11.222.333/0001-81',
@@ -841,7 +1271,7 @@ class NacionalProviderTest extends TestCase
                 'substituir' => 'POST',
             ],
             'http_client' => $httpClient,
-            'cache_dir' => sys_get_temp_dir() . '/fiscal-core-provider-' . uniqid(),
+            'cache_dir' => sys_get_temp_dir().'/fiscal-core-provider-'.uniqid(),
         ];
     }
 

@@ -4,31 +4,41 @@ declare(strict_types=1);
 
 namespace sabbajohn\FiscalCore\Providers\NFSe\Municipal;
 
+use NFePHP\Common\Certificate;
 use sabbajohn\FiscalCore\Contracts\NFSeConsultaResultInterface;
 use sabbajohn\FiscalCore\Contracts\NFSeImpressaoResultInterface;
 use sabbajohn\FiscalCore\Contracts\NFSeOperationalIntrospectionInterface;
 use sabbajohn\FiscalCore\Providers\NFSe\AbstractNFSeProvider;
+use sabbajohn\FiscalCore\Support\BelemMunicipalDocumentUrlBuilder;
 use sabbajohn\FiscalCore\Support\CertificateManager;
 use sabbajohn\FiscalCore\Support\NFSeResultNormalizer;
 use sabbajohn\FiscalCore\Support\NFSeSchemaResolver;
 use sabbajohn\FiscalCore\Support\NFSeSchemaValidator;
 use sabbajohn\FiscalCore\Support\NFSeSoapCurlTransport;
 use sabbajohn\FiscalCore\Support\NFSeSoapTransportInterface;
-use NFePHP\Common\Certificate;
 
 class BelemMunicipalProvider extends AbstractNFSeProvider implements NFSeOperationalIntrospectionInterface
 {
     private const NFSE_NS = 'http://www.abrasf.org.br/nfse.xsd';
+
     private const DSIG_NS = 'http://www.w3.org/2000/09/xmldsig#';
+
     private const SERVICE_NS = 'http://nfse.abrasf.org.br';
 
     private ?string $lastRequestXml = null;
+
     private ?string $lastSoapEnvelope = null;
+
     private ?string $lastResponseXml = null;
+
     private array $lastResponseData = [];
+
     private array $lastTransportData = [];
+
     private ?string $lastOperation = null;
+
     private array $lastOperationArtifacts = [];
+
     private array $lastPrestadorContext = [];
 
     private NFSeSoapTransportInterface $transport;
@@ -36,7 +46,7 @@ class BelemMunicipalProvider extends AbstractNFSeProvider implements NFSeOperati
     public function __construct(array $config)
     {
         parent::__construct($config);
-        $this->transport = $config['soap_transport'] ?? new NFSeSoapCurlTransport();
+        $this->transport = $config['soap_transport'] ?? new NFSeSoapCurlTransport;
     }
 
     public function emitir(array $dados): string
@@ -134,7 +144,7 @@ class BelemMunicipalProvider extends AbstractNFSeProvider implements NFSeOperati
         $impressao = $consulta->getImpressao();
 
         if (($impressao['disponivel'] ?? false) === true && is_string($impressao['url'] ?? null)) {
-            return (new NFSeResultNormalizer())->normalizeUrl($impressao['url'], [
+            return (new NFSeResultNormalizer)->normalizeUrl($impressao['url'], [
                 'provider_key' => 'BELEM_MUNICIPAL_2025',
                 'provider_class' => static::class,
                 'municipio' => (string) ($this->config['municipio_nome'] ?? 'Belém'),
@@ -142,7 +152,7 @@ class BelemMunicipalProvider extends AbstractNFSeProvider implements NFSeOperati
             ], $consulta->getRaw());
         }
 
-        return (new NFSeResultNormalizer())->normalizeIndisponivel([
+        return (new NFSeResultNormalizer)->normalizeIndisponivel([
             'provider_key' => 'BELEM_MUNICIPAL_2025',
             'provider_class' => static::class,
             'municipio' => (string) ($this->config['municipio_nome'] ?? 'Belém'),
@@ -187,7 +197,7 @@ class BelemMunicipalProvider extends AbstractNFSeProvider implements NFSeOperati
                 return true;
             }
 
-            if (!$this->shouldRetryCancelamentoComCodigoAlternativo($this->lastResponseData)) {
+            if (! $this->shouldRetryCancelamentoComCodigoAlternativo($this->lastResponseData)) {
                 break;
             }
         }
@@ -226,7 +236,7 @@ class BelemMunicipalProvider extends AbstractNFSeProvider implements NFSeOperati
         $infDeclaracao->setAttribute('Id', (string) ($dados['id'] ?? 'BelemRps1'));
 
         $infRps = $this->appendXmlNode($dom, $infDeclaracao, 'Rps');
-        $infRps->setAttribute('Id', (string) ($rps['id'] ?? (($dados['id'] ?? 'BelemRps1') . '-rps')));
+        $infRps->setAttribute('Id', (string) ($rps['id'] ?? (($dados['id'] ?? 'BelemRps1').'-rps')));
 
         $identificacaoRps = $this->appendXmlNode($dom, $infRps, 'IdentificacaoRps');
         $this->appendXmlNode($dom, $identificacaoRps, 'Numero', (string) ($rps['numero'] ?? '1'));
@@ -260,7 +270,7 @@ class BelemMunicipalProvider extends AbstractNFSeProvider implements NFSeOperati
         $this->appendXmlNode($dom, $servicoNode, 'IssRetido', $this->issRetidoCode($servico));
         $this->appendXmlNode($dom, $servicoNode, 'ItemListaServico', (string) $servico['item_lista_servico']);
         $this->appendXmlNode($dom, $servicoNode, 'CodigoCnae', (string) $servico['codigo_cnae']);
-        if (!empty($servico['codigo_tributacao_municipio'])) {
+        if (! empty($servico['codigo_tributacao_municipio'])) {
             $this->appendXmlNode($dom, $servicoNode, 'CodigoTributacaoMunicipio', (string) $servico['codigo_tributacao_municipio']);
         }
         $this->appendXmlNode($dom, $servicoNode, 'Discriminacao', (string) $servico['discriminacao']);
@@ -276,14 +286,14 @@ class BelemMunicipalProvider extends AbstractNFSeProvider implements NFSeOperati
         $identificacaoTomador = $this->appendXmlNode($dom, $tomadorNode, 'IdentificacaoTomador');
         $cpfCnpjTomador = $this->appendXmlNode($dom, $identificacaoTomador, 'CpfCnpj');
         $this->appendDocumentoNode($dom, $cpfCnpjTomador, $this->normalizeDigits((string) $tomador['documento']));
-        if (!empty($tomador['inscricaoMunicipal'])) {
+        if (! empty($tomador['inscricaoMunicipal'])) {
             $this->appendXmlNode($dom, $identificacaoTomador, 'InscricaoMunicipal', (string) $tomador['inscricaoMunicipal']);
         }
         $this->appendXmlNode($dom, $tomadorNode, 'RazaoSocial', (string) $tomador['razao_social']);
         $enderecoNode = $this->appendXmlNode($dom, $tomadorNode, 'Endereco');
         $this->appendXmlNode($dom, $enderecoNode, 'Endereco', (string) $tomador['endereco']['logradouro']);
         $this->appendXmlNode($dom, $enderecoNode, 'Numero', (string) ($tomador['endereco']['numero'] ?? 'S/N'));
-        if (!empty($tomador['endereco']['complemento'])) {
+        if (! empty($tomador['endereco']['complemento'])) {
             $this->appendXmlNode($dom, $enderecoNode, 'Complemento', (string) $tomador['endereco']['complemento']);
         }
         $this->appendXmlNode($dom, $enderecoNode, 'Bairro', (string) $tomador['endereco']['bairro']);
@@ -296,17 +306,17 @@ class BelemMunicipalProvider extends AbstractNFSeProvider implements NFSeOperati
         $this->appendXmlNode($dom, $enderecoNode, 'Uf', (string) ($tomador['endereco']['uf'] ?? 'PA'));
         $this->appendXmlNode($dom, $enderecoNode, 'Cep', $this->normalizeDigits((string) $tomador['endereco']['cep']));
 
-        if (!empty($tomador['telefone']) || !empty($tomador['email'])) {
+        if (! empty($tomador['telefone']) || ! empty($tomador['email'])) {
             $contatoNode = $this->appendXmlNode($dom, $tomadorNode, 'Contato');
-            if (!empty($tomador['telefone'])) {
+            if (! empty($tomador['telefone'])) {
                 $this->appendXmlNode($dom, $contatoNode, 'Telefone', $this->normalizeDigits((string) $tomador['telefone']));
             }
-            if (!empty($tomador['email'])) {
+            if (! empty($tomador['email'])) {
                 $this->appendXmlNode($dom, $contatoNode, 'Email', (string) $tomador['email']);
             }
         }
 
-        if (!empty($prestador['regime_especial_tributacao'])) {
+        if (! empty($prestador['regime_especial_tributacao'])) {
             $this->appendXmlNode(
                 $dom,
                 $infDeclaracao,
@@ -356,7 +366,7 @@ class BelemMunicipalProvider extends AbstractNFSeProvider implements NFSeOperati
             }
         }
 
-        if (!isset($dados['prestador']['mei']) && !isset($dados['prestador']['regime_tributario'])) {
+        if (! isset($dados['prestador']['mei']) && ! isset($dados['prestador']['regime_tributario'])) {
             throw new \InvalidArgumentException(
                 'Belém exige classificação explícita do emitente para distinguir MEI do fluxo municipal.'
             );
@@ -380,8 +390,8 @@ class BelemMunicipalProvider extends AbstractNFSeProvider implements NFSeOperati
             ];
         }
 
-        $dom = new \DOMDocument();
-        if (!@$dom->loadXML($xmlResposta)) {
+        $dom = new \DOMDocument;
+        if (! @$dom->loadXML($xmlResposta)) {
             return [
                 'status' => 'invalid_xml',
                 'mensagens' => ['Resposta XML inválida do webservice de Belém.'],
@@ -540,7 +550,7 @@ class BelemMunicipalProvider extends AbstractNFSeProvider implements NFSeOperati
 
     private function normalizeConsultaResult(string $operation, array $context = []): NFSeConsultaResultInterface
     {
-        return (new NFSeResultNormalizer())->normalizeConsulta(
+        return (new NFSeResultNormalizer)->normalizeConsulta(
             $operation,
             $this->lastResponseData,
             $this->lastOperationArtifacts,
@@ -564,7 +574,7 @@ class BelemMunicipalProvider extends AbstractNFSeProvider implements NFSeOperati
 
         $prestador = $this->resolvePrestadorContext();
 
-        return \sabbajohn\FiscalCore\Support\BelemMunicipalDocumentUrlBuilder::build(
+        return BelemMunicipalDocumentUrlBuilder::build(
             (string) ($prestador['cnpj'] ?? ''),
             (string) ($prestador['inscricao_municipal'] ?? ''),
             $numero,
@@ -576,7 +586,7 @@ class BelemMunicipalProvider extends AbstractNFSeProvider implements NFSeOperati
     {
         $servico = $dados['servico'];
 
-        if (!empty($dados['itens']) && is_array($dados['itens'])) {
+        if (! empty($dados['itens']) && is_array($dados['itens'])) {
             $descricao = [];
             $valorTotal = 0.0;
             foreach ($dados['itens'] as $item) {
@@ -690,8 +700,7 @@ class BelemMunicipalProvider extends AbstractNFSeProvider implements NFSeOperati
         string $motivo,
         ?string $protocolo,
         string $codigoCancelamento
-    ): string
-    {
+    ): string {
         $prestador = $this->resolvePrestadorContext();
 
         $dom = new \DOMDocument('1.0', 'UTF-8');
@@ -788,7 +797,7 @@ class BelemMunicipalProvider extends AbstractNFSeProvider implements NFSeOperati
                 $responseXml = $alternativeResponseXml;
                 $parsedResponse = $alternativeParsedResponse;
 
-                if (!$this->shouldRetryConsultaWithAlternativeSignature($operationKey, $parsedResponse, $schemaXml)) {
+                if (! $this->shouldRetryConsultaWithAlternativeSignature($operationKey, $parsedResponse, $schemaXml)) {
                     break;
                 }
             }
@@ -816,15 +825,15 @@ class BelemMunicipalProvider extends AbstractNFSeProvider implements NFSeOperati
         array $parsedResponse,
         ?string $unsignedRequestXml
     ): bool {
-        if (!in_array($operationKey, ['consultar_lote', 'consultar_nfse_rps', 'consultar_nfse_numero'], true)) {
+        if (! in_array($operationKey, ['consultar_lote', 'consultar_nfse_rps', 'consultar_nfse_numero'], true)) {
             return false;
         }
 
-        if (!is_string($unsignedRequestXml) || trim($unsignedRequestXml) === '') {
+        if (! is_string($unsignedRequestXml) || trim($unsignedRequestXml) === '') {
             return false;
         }
 
-        $faultMessage = strtolower(trim((string)($parsedResponse['fault']['message'] ?? '')));
+        $faultMessage = strtolower(trim((string) ($parsedResponse['fault']['message'] ?? '')));
         if ($faultMessage === '') {
             return false;
         }
@@ -835,7 +844,7 @@ class BelemMunicipalProvider extends AbstractNFSeProvider implements NFSeOperati
     private function resolveCertificateForConsultaRetry(): Certificate
     {
         $certificate = $this->resolveCertificate();
-        if (!$certificate instanceof Certificate) {
+        if (! $certificate instanceof Certificate) {
             throw new \RuntimeException('Certificado digital obrigatório para o provider municipal de Belém.');
         }
 
@@ -846,8 +855,7 @@ class BelemMunicipalProvider extends AbstractNFSeProvider implements NFSeOperati
         string $operationKey,
         Certificate $certificate,
         string $xml
-    ): array
-    {
+    ): array {
         $variants = [
             'prestador_embedded' => $this->assinarXmlConsultaMovendoParaPrestador($certificate, $xml),
         ];
@@ -893,13 +901,13 @@ class BelemMunicipalProvider extends AbstractNFSeProvider implements NFSeOperati
 
     private function assertItensCompativeis(array $dados): void
     {
-        if (empty($dados['itens']) || !is_array($dados['itens'])) {
+        if (empty($dados['itens']) || ! is_array($dados['itens'])) {
             return;
         }
 
         $first = null;
         foreach ($dados['itens'] as $index => $item) {
-            if (!is_array($item)) {
+            if (! is_array($item)) {
                 throw new \InvalidArgumentException("Item {$index} inválido para emissão de Belém.");
             }
 
@@ -915,6 +923,7 @@ class BelemMunicipalProvider extends AbstractNFSeProvider implements NFSeOperati
 
             if ($first === null) {
                 $first = $normalized;
+
                 continue;
             }
 
@@ -931,10 +940,10 @@ class BelemMunicipalProvider extends AbstractNFSeProvider implements NFSeOperati
         \DOMElement $parent,
         string $documento,
         ?string $namespace = null
-    ): void
-    {
+    ): void {
         if (strlen($documento) === 11) {
             $this->appendXmlNode($dom, $parent, 'Cpf', $documento, $namespace);
+
             return;
         }
 
@@ -942,12 +951,12 @@ class BelemMunicipalProvider extends AbstractNFSeProvider implements NFSeOperati
     }
 
     /**
-     * @param array<string,mixed> $servico
+     * @param  array<string,mixed>  $servico
      */
     private function issRetidoCode(array $servico): string
     {
         foreach (['tpRetISSQN', 'IssRetido', 'iss_retido'] as $key) {
-            if (!array_key_exists($key, $servico)) {
+            if (! array_key_exists($key, $servico)) {
                 continue;
             }
 
@@ -956,7 +965,7 @@ class BelemMunicipalProvider extends AbstractNFSeProvider implements NFSeOperati
                 return $this->booleanCode($value);
             }
 
-            if (!is_scalar($value)) {
+            if (! is_scalar($value)) {
                 continue;
             }
 
@@ -1016,7 +1025,7 @@ class BelemMunicipalProvider extends AbstractNFSeProvider implements NFSeOperati
         $dom = new \DOMDocument('1.0', 'UTF-8');
         $dom->preserveWhiteSpace = false;
         $dom->formatOutput = false;
-        if (!@$dom->loadXML($xml)) {
+        if (! @$dom->loadXML($xml)) {
             throw new \RuntimeException('XML invalido para assinatura do cancelamento de Belem.');
         }
 
@@ -1024,7 +1033,7 @@ class BelemMunicipalProvider extends AbstractNFSeProvider implements NFSeOperati
         $pedido = $xpath->query("//*[local-name()='Pedido']")->item(0);
         $infPedido = $xpath->query("//*[local-name()='InfPedidoCancelamento']")->item(0);
 
-        if (!$pedido instanceof \DOMElement || !$infPedido instanceof \DOMElement) {
+        if (! $pedido instanceof \DOMElement || ! $infPedido instanceof \DOMElement) {
             throw new \RuntimeException('Nos obrigatorios para assinatura do cancelamento de Belem nao encontrados.');
         }
 
@@ -1069,7 +1078,7 @@ class BelemMunicipalProvider extends AbstractNFSeProvider implements NFSeOperati
         $dom = new \DOMDocument('1.0', 'UTF-8');
         $dom->preserveWhiteSpace = false;
         $dom->formatOutput = false;
-        if (!@$dom->loadXML($xml)) {
+        if (! @$dom->loadXML($xml)) {
             throw new \RuntimeException('XML invalido para assinatura da consulta de Belem.');
         }
 
@@ -1077,11 +1086,11 @@ class BelemMunicipalProvider extends AbstractNFSeProvider implements NFSeOperati
         $root = $dom->documentElement;
         $signedNode = $xpath->query("//*[local-name()='{$signedNodeLocalName}']")->item(0);
 
-        if (!$root instanceof \DOMElement || !$signedNode instanceof \DOMElement) {
+        if (! $root instanceof \DOMElement || ! $signedNode instanceof \DOMElement) {
             throw new \RuntimeException('Nos obrigatorios para assinatura da consulta de Belem nao encontrados.');
         }
 
-        if (!$signedNode->hasAttribute('Id')) {
+        if (! $signedNode->hasAttribute('Id')) {
             $signedNode->setAttribute('Id', $signedNodeId);
         }
 
@@ -1109,16 +1118,16 @@ class BelemMunicipalProvider extends AbstractNFSeProvider implements NFSeOperati
         $dom = new \DOMDocument('1.0', 'UTF-8');
         $dom->preserveWhiteSpace = false;
         $dom->formatOutput = false;
-        if (!@$dom->loadXML($xml)) {
+        if (! @$dom->loadXML($xml)) {
             throw new \RuntimeException('XML invalido para assinatura por raiz da consulta de Belem.');
         }
 
         $root = $dom->documentElement;
-        if (!$root instanceof \DOMElement) {
+        if (! $root instanceof \DOMElement) {
             throw new \RuntimeException('Raiz do XML nao encontrada para assinatura por raiz da consulta de Belem.');
         }
 
-        if (!$root->hasAttribute('Id')) {
+        if (! $root->hasAttribute('Id')) {
             $root->setAttribute('Id', 'ConsultaBelem');
         }
 
@@ -1139,12 +1148,12 @@ class BelemMunicipalProvider extends AbstractNFSeProvider implements NFSeOperati
         $dom = new \DOMDocument('1.0', 'UTF-8');
         $dom->preserveWhiteSpace = false;
         $dom->formatOutput = false;
-        if (!@$dom->loadXML($xml)) {
+        if (! @$dom->loadXML($xml)) {
             throw new \RuntimeException('XML invalido para assinatura alternativa da consulta de Belem.');
         }
 
         $root = $dom->documentElement;
-        if (!$root instanceof \DOMElement) {
+        if (! $root instanceof \DOMElement) {
             throw new \RuntimeException('Raiz do XML nao encontrada para assinatura alternativa da consulta de Belem.');
         }
 
@@ -1188,13 +1197,13 @@ class BelemMunicipalProvider extends AbstractNFSeProvider implements NFSeOperati
         $referenceDom->preserveWhiteSpace = false;
         $referenceDom->formatOutput = false;
         $referenceRoot = $referenceDom->importNode($root, true);
-        if (!$referenceRoot instanceof \DOMElement) {
+        if (! $referenceRoot instanceof \DOMElement) {
             throw new \RuntimeException('Falha ao clonar documento da consulta de Belem para assinatura alternativa.');
         }
 
         $referenceDom->appendChild($referenceRoot);
         $referenceXPath = new \DOMXPath($referenceDom);
-        foreach ($referenceXPath->query("//*[local-name()='Signature' and namespace-uri()='" . self::DSIG_NS . "']") as $embeddedSignature) {
+        foreach ($referenceXPath->query("//*[local-name()='Signature' and namespace-uri()='".self::DSIG_NS."']") as $embeddedSignature) {
             $embeddedSignature->parentNode?->removeChild($embeddedSignature);
         }
 
@@ -1228,12 +1237,12 @@ class BelemMunicipalProvider extends AbstractNFSeProvider implements NFSeOperati
         $dom = new \DOMDocument('1.0', 'UTF-8');
         $dom->preserveWhiteSpace = false;
         $dom->formatOutput = false;
-        if (!@$dom->loadXML($xml)) {
+        if (! @$dom->loadXML($xml)) {
             throw new \RuntimeException('XML inválido para assinatura da emissão de Belém.');
         }
 
         $root = $dom->documentElement;
-        if (!$root instanceof \DOMElement) {
+        if (! $root instanceof \DOMElement) {
             throw new \RuntimeException('Raiz do XML não encontrada para assinatura da emissão de Belém.');
         }
 
@@ -1243,9 +1252,9 @@ class BelemMunicipalProvider extends AbstractNFSeProvider implements NFSeOperati
         $infDeclaracao = $xpath->query("//*[local-name()='InfDeclaracaoPrestacaoServico']")->item(0);
 
         if (
-            !$loteRps instanceof \DOMElement
-            || !$rpsWrapper instanceof \DOMElement
-            || !$infDeclaracao instanceof \DOMElement
+            ! $loteRps instanceof \DOMElement
+            || ! $rpsWrapper instanceof \DOMElement
+            || ! $infDeclaracao instanceof \DOMElement
         ) {
             throw new \RuntimeException('Nós obrigatórios para assinatura da emissão de Belém não encontrados.');
         }
@@ -1308,7 +1317,7 @@ class BelemMunicipalProvider extends AbstractNFSeProvider implements NFSeOperati
         $signedInfoNode->appendChild($referenceNode);
 
         $idSigned = trim($signedNode->getAttribute($mark));
-        $referenceNode->setAttribute('URI', $idSigned !== '' ? '#' . $idSigned : '');
+        $referenceNode->setAttribute('URI', $idSigned !== '' ? '#'.$idSigned : '');
 
         $transformsNode = $dom->createElement('Transforms');
         $referenceNode->appendChild($transformsNode);
@@ -1361,18 +1370,18 @@ class BelemMunicipalProvider extends AbstractNFSeProvider implements NFSeOperati
 
     private function relocateSignature(string $xml, string $parentLocalName, string $afterLocalName): string
     {
-        $dom = new \DOMDocument();
+        $dom = new \DOMDocument;
         $dom->preserveWhiteSpace = false;
         $dom->formatOutput = false;
-        if (!@$dom->loadXML($xml)) {
+        if (! @$dom->loadXML($xml)) {
             return $xml;
         }
 
         $xpath = new \DOMXPath($dom);
-        $signature = $xpath->query("//*[local-name()='Signature' and namespace-uri()='" . self::DSIG_NS . "']")->item(0);
+        $signature = $xpath->query("//*[local-name()='Signature' and namespace-uri()='".self::DSIG_NS."']")->item(0);
         $targetParent = $xpath->query("//*[local-name()='{$parentLocalName}']")->item(0);
 
-        if (!$signature instanceof \DOMElement || !$targetParent instanceof \DOMElement) {
+        if (! $signature instanceof \DOMElement || ! $targetParent instanceof \DOMElement) {
             return $xml;
         }
 
@@ -1403,7 +1412,7 @@ class BelemMunicipalProvider extends AbstractNFSeProvider implements NFSeOperati
             'consultar_nfse_numero',
             'cancelar_nfse',
         ];
-        if (!is_array($configured)) {
+        if (! is_array($configured)) {
             $configured = [
                 'emitir',
                 'consultar_lote',
@@ -1434,8 +1443,8 @@ class BelemMunicipalProvider extends AbstractNFSeProvider implements NFSeOperati
 
     private function assertRequestSchema(string $requestXml, string $operation): void
     {
-        $resolver = new NFSeSchemaResolver();
-        $validator = new NFSeSchemaValidator();
+        $resolver = new NFSeSchemaResolver;
+        $validator = new NFSeSchemaValidator;
         $schemaPath = $resolver->resolve('BELEM_MUNICIPAL_2025', $operation);
         $validation = $validator->validate($this->normalizeRequestXmlForSchema($requestXml), $schemaPath);
 
@@ -1445,9 +1454,9 @@ class BelemMunicipalProvider extends AbstractNFSeProvider implements NFSeOperati
 
         throw new \RuntimeException(
             'XML de Belém inválido para o schema da operação '
-            . $operation
-            . ': '
-            . implode('; ', $validation['errors'])
+            .$operation
+            .': '
+            .implode('; ', $validation['errors'])
         );
     }
 
@@ -1459,7 +1468,7 @@ class BelemMunicipalProvider extends AbstractNFSeProvider implements NFSeOperati
 
         if (@$dom->loadXML($requestXml)) {
             $xpath = new \DOMXPath($dom);
-            foreach ($xpath->query("//*[local-name()='Signature' and namespace-uri()='" . self::DSIG_NS . "']") as $signatureNode) {
+            foreach ($xpath->query("//*[local-name()='Signature' and namespace-uri()='".self::DSIG_NS."']") as $signatureNode) {
                 if ($signatureNode->parentNode instanceof \DOMNode) {
                     $signatureNode->parentNode->removeChild($signatureNode);
                 }
@@ -1472,11 +1481,12 @@ class BelemMunicipalProvider extends AbstractNFSeProvider implements NFSeOperati
             }
 
             $root = $dom->documentElement;
-            if ($root instanceof \DOMElement && !$root->hasAttribute('xmlns')) {
+            if ($root instanceof \DOMElement && ! $root->hasAttribute('xmlns')) {
                 $normalized = $dom->saveXML($root) ?: $requestXml;
+
                 return preg_replace(
                     '/^<([A-Za-z0-9_:-]+)/',
-                    '<$1 xmlns="' . self::NFSE_NS . '"',
+                    '<$1 xmlns="'.self::NFSE_NS.'"',
                     $normalized,
                     1
                 ) ?: $normalized;
@@ -1487,7 +1497,7 @@ class BelemMunicipalProvider extends AbstractNFSeProvider implements NFSeOperati
 
         return preg_replace(
             '/^<([A-Za-z0-9_:-]+)/',
-            '<$1 xmlns="' . self::NFSE_NS . '"',
+            '<$1 xmlns="'.self::NFSE_NS.'"',
             $requestXml,
             1
         ) ?: $requestXml;
@@ -1497,11 +1507,11 @@ class BelemMunicipalProvider extends AbstractNFSeProvider implements NFSeOperati
     {
         return sprintf(
             '<?xml version="1.0" encoding="UTF-8"?>'
-            . '<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"'
-            . ' xmlns:svc="%s" xmlns:nfse="%s">'
-            . '<soapenv:Header><nfse:cabecalho><nfse:versaoDados>%s</nfse:versaoDados></nfse:cabecalho></soapenv:Header>'
-            . '<soapenv:Body><svc:%s>%s</svc:%s></soapenv:Body>'
-            . '</soapenv:Envelope>',
+            .'<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"'
+            .' xmlns:svc="%s" xmlns:nfse="%s">'
+            .'<soapenv:Header><nfse:cabecalho><nfse:versaoDados>%s</nfse:versaoDados></nfse:cabecalho></soapenv:Header>'
+            .'<soapenv:Body><svc:%s>%s</svc:%s></soapenv:Body>'
+            .'</soapenv:Envelope>',
             self::SERVICE_NS,
             self::NFSE_NS,
             htmlspecialchars((string) $this->getVersao(), ENT_XML1 | ENT_QUOTES, 'UTF-8'),
@@ -1569,7 +1579,7 @@ class BelemMunicipalProvider extends AbstractNFSeProvider implements NFSeOperati
 
         throw new \InvalidArgumentException(
             'Belém requer CNPJ e inscrição municipal do prestador para consulta/cancelamento. '
-            . 'Informe no payload da emissão anterior ou na configuração do provider.'
+            .'Informe no payload da emissão anterior ou na configuração do provider.'
         );
     }
 
@@ -1698,12 +1708,12 @@ class BelemMunicipalProvider extends AbstractNFSeProvider implements NFSeOperati
             return $configured;
         }
 
-        return sys_get_temp_dir() . '/nfse-belem-soap-debug.log';
+        return sys_get_temp_dir().'/nfse-belem-soap-debug.log';
     }
 
     private function logSoapDebug(array $artifacts): void
     {
-        if (!$this->isSoapDebugEnabled()) {
+        if (! $this->isSoapDebugEnabled()) {
             return;
         }
 
@@ -1725,7 +1735,7 @@ class BelemMunicipalProvider extends AbstractNFSeProvider implements NFSeOperati
             return;
         }
 
-        @file_put_contents($this->getSoapDebugLogPath(), $line . PHP_EOL, FILE_APPEND);
+        @file_put_contents($this->getSoapDebugLogPath(), $line.PHP_EOL, FILE_APPEND);
     }
 
     private function maskSensitiveData(mixed $value): mixed
@@ -1735,6 +1745,7 @@ class BelemMunicipalProvider extends AbstractNFSeProvider implements NFSeOperati
             foreach ($value as $key => $item) {
                 if (is_string($key) && preg_match('/(cnpj|cpf|documento|email|telefone|protocolo|codigo_verificacao|inscricao|id)/i', $key) === 1) {
                     $masked[$key] = $this->maskSensitiveString((string) $item);
+
                     continue;
                 }
 
@@ -1761,7 +1772,7 @@ class BelemMunicipalProvider extends AbstractNFSeProvider implements NFSeOperati
 
         $value = preg_replace_callback(
             $patterns[0],
-            static fn (array $matches): string => $matches[1] . str_repeat('*', max(4, strlen(trim($matches[2])))) . $matches[3],
+            static fn (array $matches): string => $matches[1].str_repeat('*', max(4, strlen(trim($matches[2])))).$matches[3],
             $value
         ) ?? $value;
 
@@ -1775,7 +1786,8 @@ class BelemMunicipalProvider extends AbstractNFSeProvider implements NFSeOperati
             $patterns[2],
             static function (array $matches): string {
                 $digits = $matches[0];
-                return str_repeat('*', max(0, strlen($digits) - 4)) . substr($digits, -4);
+
+                return str_repeat('*', max(0, strlen($digits) - 4)).substr($digits, -4);
             },
             $value
         ) ?? $value;

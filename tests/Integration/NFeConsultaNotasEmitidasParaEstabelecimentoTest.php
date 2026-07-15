@@ -2,12 +2,13 @@
 
 namespace Tests\Integration;
 
+use PHPUnit\Framework\TestCase;
 use sabbajohn\FiscalCore\Adapters\NF\NFeAdapter;
 use sabbajohn\FiscalCore\Support\CertificateManager;
 use sabbajohn\FiscalCore\Support\ConfigManager;
 use sabbajohn\FiscalCore\Support\ToolsFactory;
-use PHPUnit\Framework\TestCase;
 use sabbajohn\FiscalCore\Support\XmlUtils;
+
 /**
  * @group integration
  */
@@ -17,7 +18,7 @@ class NFeConsultaNotasEmitidasParaEstabelecimentoTest extends TestCase
 
     protected function setUp(): void
     {
-        if (!$this->externalTestsEnabled()) {
+        if (! $this->externalTestsEnabled()) {
             $this->markTestSkipped('Defina ENABLE_EXTERNAL_TESTS=true para executar integrações reais com SEFAZ.');
         }
 
@@ -28,10 +29,10 @@ class NFeConsultaNotasEmitidasParaEstabelecimentoTest extends TestCase
         $_ENV['FISCAL_ENVIRONMENT'] = $_ENV['FISCAL_ENVIRONMENT'] ?? 'homologacao';
         $_ENV['FISCAL_UF'] = $_ENV['FISCAL_UF'] ?? 'SC';
 
-        putenv('FISCAL_CERT_PATH=' . $certPath);
-        putenv('FISCAL_CERT_PASSWORD=' . $certPassword);
-        putenv('FISCAL_ENVIRONMENT=' . $_ENV['FISCAL_ENVIRONMENT']);
-        putenv('FISCAL_UF=' . $_ENV['FISCAL_UF']);
+        putenv('FISCAL_CERT_PATH='.$certPath);
+        putenv('FISCAL_CERT_PASSWORD='.$certPassword);
+        putenv('FISCAL_ENVIRONMENT='.$_ENV['FISCAL_ENVIRONMENT']);
+        putenv('FISCAL_UF='.$_ENV['FISCAL_UF']);
 
         ConfigManager::getInstance()->reload();
         CertificateManager::reload();
@@ -54,7 +55,7 @@ class NFeConsultaNotasEmitidasParaEstabelecimentoTest extends TestCase
     public function test_consulta_notas_emitidas_para_estabelecimento_por_chave(): void
     {
         $chave = getenv('TEST_NFE_CHAVE') ?: $this->extractChaveFromNsuQuery();
-        if (!$chave) {
+        if (! $chave) {
             $this->markTestSkipped(
                 'Nenhuma chave disponível. Defina TEST_NFE_CHAVE=44_digitos ou execute com um certificado que retorne documentos na consulta por NSU.'
             );
@@ -74,7 +75,7 @@ class NFeConsultaNotasEmitidasParaEstabelecimentoTest extends TestCase
     {
         $xml = $this->adapter->consultaNotasEmitidasParaEstabelecimento(0, 0, null, 'AN');
         $response = @simplexml_load_string($xml);
-        if ($response === false || !isset($response->loteDistDFeInt->docZip)) {
+        if ($response === false || ! isset($response->loteDistDFeInt->docZip)) {
             return null;
         }
 
@@ -106,7 +107,7 @@ class NFeConsultaNotasEmitidasParaEstabelecimentoTest extends TestCase
     {
         $response = XmlUtils::parseSefazRetorno($xml);
         if ($response === []) {
-            $this->fail('Resposta inválida (não é XML): ' . mb_substr($xml, 0, 300));
+            $this->fail('Resposta inválida (não é XML): '.mb_substr($xml, 0, 300));
         }
 
         return (string) ($response['lote']['cStat'] ?? '');
@@ -149,6 +150,6 @@ class NFeConsultaNotasEmitidasParaEstabelecimentoTest extends TestCase
             return $path;
         }
 
-        return dirname(__DIR__, 2) . '/' . ltrim($path, './');
+        return dirname(__DIR__, 2).'/'.ltrim($path, './');
     }
 }

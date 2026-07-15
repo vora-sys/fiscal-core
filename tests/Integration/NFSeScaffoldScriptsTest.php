@@ -6,7 +6,7 @@ use PHPUnit\Framework\TestCase;
 
 final class NFSeScaffoldScriptsTest extends TestCase
 {
-    public function testScaffoldFamilyDryRunGeneratesExpectedArtifacts(): void
+    public function test_scaffold_family_dry_run_generates_expected_artifacts(): void
     {
         $output = $this->runScript(
             'scripts/nfse/scaffold-family.php --family=PROVEDOR_TESTE --layout-family=ABRASF_203 --schema-package=PROVEDOR_TESTE --dry-run'
@@ -22,7 +22,7 @@ final class NFSeScaffoldScriptsTest extends TestCase
         $this->assertContains('build/nfse-scaffold/families/PROVEDOR_TESTE/snippets/nfse-provider-family.json', $this->normalizePaths($paths));
     }
 
-    public function testScaffoldMunicipioDryRunUsesCatalogAndManifestHints(): void
+    public function test_scaffold_municipio_dry_run_uses_catalog_and_manifest_hints(): void
     {
         $output = $this->runScript(
             'scripts/nfse/scaffold-municipio.php --ibge=1303536 --dry-run'
@@ -49,12 +49,12 @@ final class NFSeScaffoldScriptsTest extends TestCase
     }
 
     /**
-     * @param array<int, string> $paths
+     * @param  array<int, string>  $paths
      * @return array<int, string>
      */
     private function normalizePaths(array $paths): array
     {
-        $root = dirname(__DIR__, 2) . '/';
+        $root = dirname(__DIR__, 2).'/';
 
         return array_map(
             static fn (string $path): string => str_replace($root, '', $path),

@@ -10,9 +10,9 @@ use sabbajohn\FiscalCore\Renderers\NFSe\NacionalDanfseRenderer;
 
 final class NacionalDanfseRendererTest extends TestCase
 {
-    public function testRenderGeraPdfValidoComLayoutNacional(): void
+    public function test_render_gera_pdf_valido_com_layout_nacional(): void
     {
-        $renderer = new NacionalDanfseRenderer();
+        $renderer = new NacionalDanfseRenderer;
         $xml = $this->fixture('nfse_nacional_completa.xml');
 
         $pdf = $renderer->render($xml);
@@ -20,9 +20,9 @@ final class NacionalDanfseRendererTest extends TestCase
         $this->assertStringStartsWith('%PDF', $pdf);
     }
 
-    public function testBuildHtmlIncluiCamposObrigatoriosQrCodeEHomologacao(): void
+    public function test_build_html_inclui_campos_obrigatorios_qr_code_e_homologacao(): void
     {
-        $renderer = new NacionalDanfseRenderer();
+        $renderer = new NacionalDanfseRenderer;
         $xml = $this->fixture('nfse_nacional_completa.xml');
 
         $data = $this->invokePrivate($renderer, 'extractDocumentData', [$xml]);
@@ -36,9 +36,9 @@ final class NacionalDanfseRendererTest extends TestCase
         $this->assertStringContainsString('ConsultaPublica', $data['qr_code_url']);
     }
 
-    public function testBuildHtmlPreservaContratoVisualDoLayoutNacional(): void
+    public function test_build_html_preserva_contrato_visual_do_layout_nacional(): void
     {
-        $renderer = new NacionalDanfseRenderer();
+        $renderer = new NacionalDanfseRenderer;
         $xml = $this->fixture('nfse_nacional_completa.xml');
 
         $data = $this->invokePrivate($renderer, 'extractDocumentData', [$xml]);
@@ -75,16 +75,16 @@ final class NacionalDanfseRendererTest extends TestCase
             'VALOR LIQUIDO MAIS IBS CBS',
             'TOTAIS APROXIMADOS TRIBUTOS',
         ] as $label) {
-            $this->assertStringContainsString('<span class="field-label">' . $label . '</span>', $html);
+            $this->assertStringContainsString('<span class="field-label">'.$label.'</span>', $html);
         }
 
         $this->assertStringContainsString('<td class="highlight"><span class="field-label">SITUACAO</span>', $html);
         $this->assertStringContainsString('<td class="highlight"><span class="field-label">VALOR LIQUIDO MAIS IBS CBS</span>', $html);
     }
 
-    public function testBuildHtmlSuprimeBlocosOpcionaisAusentes(): void
+    public function test_build_html_suprime_blocos_opcionais_ausentes(): void
     {
-        $renderer = new NacionalDanfseRenderer();
+        $renderer = new NacionalDanfseRenderer;
         $xml = $this->fixture('nfse_nacional_minima.xml');
 
         $data = $this->invokePrivate($renderer, 'extractDocumentData', [$xml]);
@@ -95,9 +95,9 @@ final class NacionalDanfseRendererTest extends TestCase
         $this->assertStringContainsString('Tomador / Adquirente da Operacao', $html);
     }
 
-    public function testExtractDocumentDataReconheceEstadosCanceladaESubstituida(): void
+    public function test_extract_document_data_reconhece_estados_cancelada_e_substituida(): void
     {
-        $renderer = new NacionalDanfseRenderer();
+        $renderer = new NacionalDanfseRenderer;
 
         $cancelada = str_replace('</infNFSe>', '<dhCanc>2026-06-08T15:00:00-03:00</dhCanc></infNFSe>', $this->fixture('nfse_nacional_minima.xml'));
         $substituida = str_replace('</infNFSe>', '<nNFSSubst>9999</nNFSSubst></infNFSe>', $this->fixture('nfse_nacional_minima.xml'));
@@ -118,7 +118,7 @@ final class NacionalDanfseRendererTest extends TestCase
     }
 
     /**
-     * @param array<string,string> $expectedSections
+     * @param  array<string,string>  $expectedSections
      */
     private function assertSectionOrder(string $html, array $expectedSections): void
     {
@@ -140,7 +140,7 @@ final class NacionalDanfseRendererTest extends TestCase
 
     private function fixture(string $name): string
     {
-        $contents = file_get_contents(dirname(__DIR__, 2) . '/Fixtures/' . $name);
+        $contents = file_get_contents(dirname(__DIR__, 2).'/Fixtures/'.$name);
         $this->assertNotFalse($contents);
 
         return (string) $contents;
