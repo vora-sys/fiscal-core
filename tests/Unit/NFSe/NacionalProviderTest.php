@@ -2,6 +2,8 @@
 
 namespace Tests\Unit\NFSe;
 
+use sabbajohn\FiscalCore\Adapters\NF\NFSeAdapter;
+use sabbajohn\FiscalCore\Facade\NFSeFacade;
 use sabbajohn\FiscalCore\Providers\NFSe\NacionalProvider;
 use sabbajohn\FiscalCore\Support\NFSeMunicipalPreviewSupport;
 use sabbajohn\FiscalCore\Support\NFSeSchemaResolver;
@@ -69,6 +71,32 @@ class NacionalProviderTest extends TestCase
             implode(PHP_EOL, array_column($schemaValidation['errors'], 'message'))
         );
         $this->assertContains('substituir', $provider->getSupportedOperations());
+    }
+
+    public function test_facade_expoe_a_chave_da_substituta_sem_sobrescrever_com_a_chave_substituida(): void
+    {
+        $originalKey = str_repeat('7', 50);
+        $replacementKey = str_repeat('8', 50);
+        $nfseXml = '<NFSe><infNFSe Id="NFS' . $replacementKey . '"><DPS><infDPS><nDPS>11</nDPS></infDPS></DPS></infNFSe></NFSe>';
+        $provider = new NacionalProvider($this->buildConfig(static fn (): string => json_encode([
+            'chaveAcesso' => $replacementKey,
+            'idDps' => 'DPS42091021234567800019000003000000000000011',
+            'nfseXmlGZipB64' => base64_encode(gzencode($nfseXml)),
+        ], JSON_THROW_ON_ERROR)));
+        $facade = new NFSeFacade('nfse_nacional', new NFSeAdapter('nfse_nacional', $provider));
+        $dados = $this->dadosValidos();
+        $dados['nDPS'] = '11';
+        $dados['motivo_substituicao'] = 'outros';
+        $dados['justificativa'] = 'Correção dos dados do serviço prestado.';
+
+        $response = $facade->substituir($originalKey, $dados);
+
+        $this->assertTrue($response->isSuccess());
+        $this->assertSame($replacementKey, $response->getData('chave'));
+        $this->assertSame($replacementKey, $response->getData('chave_acesso'));
+        $this->assertSame($replacementKey, $response->getData('documento')['chave_acesso']);
+        $this->assertSame($originalKey, $response->getData('chave_substituida'));
+        $this->assertStringContainsString('<nDPS>11</nDPS>', (string) $response->getData('xml'));
     }
 
     public function test_emitir_inclui_irrf_retido_na_tributacao_nacional(): void

@@ -473,27 +473,37 @@ class NFSeFacade
             $operation = method_exists($this->nfse, 'getLastOperationInfo')
                 ? $this->nfse->getLastOperationInfo()
                 : [];
+            $parsed = is_array($operation['parsed_response'] ?? null)
+                ? $operation['parsed_response']
+                : [];
+            $replacementKey = $this->extractNfseAccessKeyFromParsedResponse($parsed);
+            $replacementXml = $this->extractNfseXmlFromParsedResponse($parsed)
+                ?? $this->extractFiscalXmlFromCandidate($resultado);
             $normalized = $this->publicNormalizer->normalizeFiscalOperation('nfse', 'nfse_substitution', [
                 'status' => $operation['normalized_result']['operacao']['status'] ?? null,
                 'ok' => $operation['normalized_result']['operacao']['ok'] ?? null,
                 'mensagens' => $operation['normalized_result']['operacao']['mensagens'] ?? [],
                 'protocolo' => $operation['normalized_result']['operacao']['protocolo'] ?? null,
             ], [
-                'xml' => $this->extractFiscalXmlFromCandidate($resultado),
-                'chave_consulta' => $chave,
+                'xml' => $replacementXml,
+                'chave_acesso' => $replacementKey,
+                'chave_consulta' => $replacementKey,
                 'protocolo' => $operation['normalized_result']['operacao']['protocolo'] ?? null,
             ], [
                 'provider_key' => $this->providerKey,
                 'municipio' => $this->municipio,
             ], [
+                'request_xml' => $operation['artifacts']['request_xml'] ?? null,
                 'response_body' => $resultado,
-                'response_xml' => str_starts_with(ltrim($resultado), '<') ? $resultado : null,
+                'response_xml' => ($operation['artifacts']['response_xml'] ?? null)
+                    ?? (str_starts_with(ltrim($resultado), '<') ? $resultado : null),
                 'parsed_response' => $operation['parsed_response'] ?? null,
             ]);
             return FiscalResponse::success($normalized + [
                 'resultado' => $resultado,
                 'type' => 'nfse_substituicao',
-                'chave' => $chave,
+                'chave' => $replacementKey,
+                'chave_substituida' => $chave,
                 'municipio' => $this->municipio,
                 'substituicao' => $operation,
             ], 'nfse_substitution', $this->buildCompatibilityMetadata());
@@ -1753,6 +1763,56 @@ class NFSeFacade
         return null;
     }
 
+    private function extractNfseAccessKeyFromParsedResponse(array $parsedResponse): ?string
+    {
+        $candidates = [
+            $parsedResponse['nfse']['chave_acesso'] ?? null,
+            $parsedResponse['dados']['chave_acesso'] ?? null,
+            $parsedResponse['chaveAcesso'] ?? null,
+            $parsedResponse['chave_acesso'] ?? null,
+        ];
+
+        $fallback = null;
+        foreach ($candidates as $candidate) {
+            if (!is_scalar($candidate)) {
+                continue;
+            }
+
+            $value = trim((string) $candidate);
+            if ($value === '') {
+                continue;
+            }
+            $fallback ??= $value;
+            $digits = preg_replace('/\D+/', '', $value) ?: '';
+            if (strlen($digits) === 50) {
+                return $digits;
+            }
+        }
+
+        if ($fallback !== null) {
+            return $fallback;
+        }
+
+        $xml = $this->extractNfseXmlFromParsedResponse($parsedResponse);
+        if ($xml === null) {
+            return null;
+        }
+
+        $dom = new \DOMDocument();
+        if (!@$dom->loadXML($xml)) {
+            return null;
+        }
+
+        $infNfse = (new \DOMXPath($dom))->query("//*[local-name()='infNFSe' or local-name()='InfNfse']")->item(0);
+        if (!$infNfse instanceof \DOMElement) {
+            return null;
+        }
+
+        $digits = preg_replace('/\D+/', '', $infNfse->getAttribute('Id')) ?: '';
+
+        return $digits !== '' ? $digits : null;
+    }
+
     private function extractFiscalXmlFromCandidate(mixed $candidate): ?string
     {
         if (!is_string($candidate)) {
@@ -1770,7 +1830,7 @@ class NFSeFacade
         }
 
         $xpath = new \DOMXPath($dom);
-        foreach (['CompNfse', 'Nfse', 'InfNfse'] as $nodeName) {
+        foreach (['CompNfse', 'Nfse', 'NFSe', 'InfNfse', 'infNFSe'] as $nodeName) {
             $node = $xpath->query("//*[local-name()='{$nodeName}']")->item(0);
             if ($node instanceof \DOMNode) {
                 return $dom->saveXML($node) ?: null;
