@@ -2,6 +2,8 @@
 
 Use este mapa para localizar o ponto de extensao certo antes de editar.
 
+Todos os caminhos relativos deste mapa pertencem agora a `fiscal-platform-api/app/Library/fiscal-core`. Esta pasta irma `Fiscal/fiscal-core` e apenas referencia historica e nao deve receber implementacoes novas.
+
 ## Roteamento e configuracao NFSe
 
 - `config/nfse/providers-catalog.json`: municipios, aliases, `provider_family`, `schema_package`, overrides e status.

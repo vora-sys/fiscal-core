@@ -63,6 +63,15 @@ final class DpsDTO
             $data['cLocEmi'] = str_pad(substr($cLocEmi, 0, 7), 7, '0', STR_PAD_LEFT);
         }
 
+        $subst = DpsPayloadHelper::firstArray([$payload['subst'] ?? null]);
+        if ($subst !== []) {
+            $data['subst'] = [
+                'chSubstda' => DpsPayloadHelper::onlyDigits((string) ($subst['chSubstda'] ?? '')),
+                'cMotivo' => str_pad(DpsPayloadHelper::onlyDigits((string) ($subst['cMotivo'] ?? '')), 2, '0', STR_PAD_LEFT),
+                'xMotivo' => trim(preg_replace('/\s+/', ' ', (string) ($subst['xMotivo'] ?? '')) ?? ''),
+            ];
+        }
+
         if (DpsPayloadHelper::firstString([$payload['id'] ?? null]) === null) {
             $dpsId = NacionalDpsIdentityBuilder::fromPayload($data, $context);
             if ($dpsId !== null) {
@@ -104,6 +113,21 @@ final class DpsDTO
         }
         if (strlen(DpsPayloadHelper::onlyDigits((string) ($this->data['cLocEmi'] ?? ''))) !== 7) {
             $errors[] = 'cLocEmi deve conter 7 dígitos.';
+        }
+
+        $subst = DpsPayloadHelper::firstArray([$this->data['subst'] ?? null]);
+        if ($subst !== []) {
+            if (strlen(DpsPayloadHelper::onlyDigits((string) ($subst['chSubstda'] ?? ''))) !== 50) {
+                $errors[] = 'subst.chSubstda deve conter 50 dígitos.';
+            }
+            if (!in_array((string) ($subst['cMotivo'] ?? ''), ['01', '02', '03', '04', '05', '99'], true)) {
+                $errors[] = 'subst.cMotivo deve ser 01, 02, 03, 04, 05 ou 99.';
+            }
+            $xMotivo = trim((string) ($subst['xMotivo'] ?? ''));
+            $length = function_exists('mb_strlen') ? mb_strlen($xMotivo) : strlen($xMotivo);
+            if ($length < 15 || $length > 255) {
+                $errors[] = 'subst.xMotivo deve conter entre 15 e 255 caracteres.';
+            }
         }
 
         return array_values(array_unique(array_merge(

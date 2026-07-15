@@ -40,6 +40,37 @@ class NacionalProviderTest extends TestCase
         );
     }
 
+    public function test_substituir_emite_nova_dps_com_grupo_subst_valido_no_xsd(): void
+    {
+        $calls = [];
+        $provider = new NacionalProvider($this->buildConfig(function ($method, $path, $body, $headers = []) use (&$calls) {
+            $calls[] = compact('method', 'path', 'body');
+
+            return '<Resposta><Sucesso>true</Sucesso><ChaveAcesso>123</ChaveAcesso></Resposta>';
+        }));
+        $dados = $this->dadosValidos();
+        $dados['motivo_substituicao'] = 'rejeicao_pelo_tomador_intermediario';
+        $dados['justificativa'] = 'Serviço rejeitado pelo tomador responsável.';
+
+        $provider->substituir(str_repeat('7', 50), $dados);
+
+        $this->assertSame('POST', $calls[0]['method']);
+        $this->assertSame('/nfse', $calls[0]['path']);
+        $payload = json_decode((string) $calls[0]['body'], true);
+        $xml = gzdecode((string) base64_decode((string) ($payload['dpsXmlGZipB64'] ?? '')));
+        $this->assertIsString($xml);
+        $this->assertStringContainsString('<subst><chSubstda>' . str_repeat('7', 50) . '</chSubstda><cMotivo>05</cMotivo>', $xml);
+        $this->assertStringContainsString('<xMotivo>Serviço rejeitado pelo tomador responsável.</xMotivo>', $xml);
+        $this->assertLessThan(strpos($xml, '<prest>'), strpos($xml, '<subst>'));
+
+        $schemaValidation = $provider->validarDpsXml($xml);
+        $this->assertTrue(
+            $schemaValidation['ok'],
+            implode(PHP_EOL, array_column($schemaValidation['errors'], 'message'))
+        );
+        $this->assertContains('substituir', $provider->getSupportedOperations());
+    }
+
     public function test_emitir_inclui_irrf_retido_na_tributacao_nacional(): void
     {
         $calls = [];
@@ -760,6 +791,7 @@ class NacionalProviderTest extends TestCase
             'ambiente' => 'homologacao',
             'api_base_url' => 'https://api.local',
             'timeout' => 10,
+            'substitution_enabled' => true,
             'auth' => ['token' => 'abc'],
             'prestador' => [
                 'cnpj' => '11.222.333/0001-81',

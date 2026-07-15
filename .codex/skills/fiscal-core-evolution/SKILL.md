@@ -7,6 +7,12 @@ description: Use esta skill quando a tarefa envolver evolucao do fiscal-core em 
 
 Use esta skill para orientar mudancas arquiteturais e incrementais no `fiscal-core` quando o trabalho tocar NFSe municipal, NFSe nacional, eventos fiscais e contratos publicos da biblioteca.
 
+## Raiz canonica
+
+- Trate `../fiscal-platform-api/app/Library/fiscal-core` como a unica fonte editavel do `fiscal-core`.
+- Nao implemente nem sincronize mudancas de produto nesta antiga pasta irma `Fiscal/fiscal-core`; ela permanece apenas como referencia historica.
+- Execute alteracoes, testes e validacoes a partir de `fiscal-platform-api` e de sua copia incorporada.
+
 ## Resultado esperado
 
 Antes de editar codigo:
@@ -77,9 +83,10 @@ Leia arquivos adicionais do repo apenas quando a trilha exigir.
 ## Comandos uteis
 
 ```bash
-rg -n "NFSe|Provider|evento|cancelar|substituir|manifest" src config docs tests
-vendor/bin/phpunit --filter NFSe
-vendor/bin/phpunit --filter NFe
+cd ../fiscal-platform-api
+rg -n "NFSe|Provider|evento|cancelar|substituir|manifest" app/Library/fiscal-core/{src,config,docs,tests}
+php -d memory_limit=512M vendor/bin/phpunit app/Library/fiscal-core/tests --filter NFSe
+php -d memory_limit=512M vendor/bin/phpunit app/Library/fiscal-core/tests --filter NFe
 ```
 
 ## Notas de contexto

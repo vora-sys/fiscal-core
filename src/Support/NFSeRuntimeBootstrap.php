@@ -38,6 +38,10 @@ final class NFSeRuntimeBootstrap
 
         $config['ambiente'] = $configManager->isProduction() ? 'producao' : 'homologacao';
         $config['timeout'] = (int) ($configManager->get('nfse.timeout') ?? $configManager->get('timeout') ?? $config['timeout'] ?? 30);
+        $config['substitution_enabled'] = filter_var(
+            $configManager->get('nfse.substitution_enabled') ?? $config['substitution_enabled'] ?? false,
+            FILTER_VALIDATE_BOOLEAN,
+        );
 
         if ($certificate instanceof Certificate) {
             $config['certificate'] = $certificate;

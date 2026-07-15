@@ -204,14 +204,43 @@ class NacionalProvider extends AbstractNFSeProvider implements NFSeNacionalCapab
 
     public function substituir(string $nfseOriginal, array $dadosSubstituicao): string
     {
-        if ($nfseOriginal === '') {
-            throw new \InvalidArgumentException('NFSe original é obrigatória para substituição');
+        $nfseOriginal = $this->onlyDigits($nfseOriginal);
+        if (strlen($nfseOriginal) !== 50) {
+            throw new \InvalidArgumentException('Chave da NFSe original deve conter 50 dígitos para substituição');
         }
 
+        $dadosSubstituicao['subst'] = [
+            'chSubstda' => $nfseOriginal,
+            'cMotivo' => $this->resolveSubstituicaoCodigo($dadosSubstituicao),
+            'xMotivo' => $this->resolveSubstituicaoJustificativa($dadosSubstituicao),
+        ];
+        $this->assertDpsIdentityFieldsBeforeNormalization($dadosSubstituicao);
+        $dadosSubstituicao = $this->normalizeDpsPayload($dadosSubstituicao, false);
         $this->validarDados($dadosSubstituicao);
-        $xml = $this->buildSubstituicaoXml($nfseOriginal, $dadosSubstituicao);
+        $this->validarDadosDpsNacional($dadosSubstituicao);
+        $xml = $this->montarXmlDpsNacional($dadosSubstituicao);
+        $xml = $this->assinarXmlSeNecessario($xml);
+        $xml = $this->ensureUtf8XmlForTransmission($xml);
+        $this->assertDpsXmlSchemaValidBeforeEmission($xml);
 
-        return $this->enviarOperacao('substituir', $xml);
+        try {
+            // Na NFS-e Nacional, substituição é uma nova emissão de DPS contendo o grupo subst.
+            $response = $this->enviarOperacao('emitir', $xml);
+            $parsed = $this->processarResposta($response);
+            $this->storeOperationState('substituir', $xml, $response, $parsed, [
+                'chave_substituida' => $nfseOriginal,
+                'codigo_motivo' => $dadosSubstituicao['subst']['cMotivo'],
+            ]);
+        } catch (\Throwable $e) {
+            $this->storeOperationState('substituir', $xml, $e->getMessage(), [
+                'status' => 'error',
+                'mensagens' => [$e->getMessage()],
+                'transport_error' => $e->getMessage(),
+            ], ['chave_substituida' => $nfseOriginal]);
+            throw $e;
+        }
+
+        return $response;
     }
 
     public function consultarPorRps(array $identificacaoRps): NFSeConsultaResultInterface
@@ -741,6 +770,15 @@ class NacionalProvider extends AbstractNFSeProvider implements NFSeNacionalCapab
         $cLocEmiInput = (string)($dados['cLocEmi'] ?? $dados['prestador']['codigoMunicipio'] ?? $this->getCodigoMunicipio());
         $cLocEmi = str_pad(substr($this->onlyDigits($cLocEmiInput), 0, 7), 7, '0', STR_PAD_LEFT);
         $this->appendNodeDps($dom, $inf, 'cLocEmi', $cLocEmi);
+
+        $subst = (array) ($dados['subst'] ?? []);
+        if ($subst !== []) {
+            $substNode = $dom->createElementNS($ns, 'subst');
+            $inf->appendChild($substNode);
+            $this->appendNodeDps($dom, $substNode, 'chSubstda', (string) ($subst['chSubstda'] ?? ''));
+            $this->appendNodeDps($dom, $substNode, 'cMotivo', (string) ($subst['cMotivo'] ?? ''));
+            $this->appendNodeDps($dom, $substNode, 'xMotivo', (string) ($subst['xMotivo'] ?? ''));
+        }
 
         $this->appendPrestadorDps($dom, $inf, (array) ($dados['prestador'] ?? []), $tpEmit, $cLocEmi);
         $this->appendTomadorDps($dom, $inf, (array) ($dados['tomador'] ?? []));
@@ -3591,12 +3629,40 @@ class NacionalProvider extends AbstractNFSeProvider implements NFSeNacionalCapab
         ]);
     }
 
-    private function buildSubstituicaoXml(string $nfseOriginal, array $dadosSubstituicao): string
+    private function resolveSubstituicaoCodigo(array $dados): string
     {
-        return $this->simpleEnvelope('SubstituirNfseEnvio', [
-            'NfseOriginal' => $nfseOriginal,
-            'NfseSubstituta' => $this->montarXmlRps($dadosSubstituicao),
-        ]);
+        $value = strtolower(trim((string) (
+            $dados['subst']['cMotivo']
+            ?? $dados['codigo_motivo_substituicao']
+            ?? $dados['motivo_substituicao']
+            ?? '99'
+        )));
+        $map = [
+            'desenquadramento_simples_nacional' => '01',
+            'enquadramento_simples_nacional' => '02',
+            'inclusao_retroativa_imunidade_isencao' => '03',
+            'exclusao_retroativa_imunidade_isencao' => '04',
+            'rejeicao_pelo_tomador_intermediario' => '05',
+            'outros' => '99',
+        ];
+        $code = $map[$value] ?? str_pad($this->onlyDigits($value), 2, '0', STR_PAD_LEFT);
+        if (!in_array($code, ['01', '02', '03', '04', '05', '99'], true)) {
+            throw new \InvalidArgumentException('Motivo de substituição inválido.');
+        }
+
+        return $code;
+    }
+
+    private function resolveSubstituicaoJustificativa(array $dados): string
+    {
+        $value = (string) (
+            $dados['subst']['xMotivo']
+            ?? $dados['justificativa']
+            ?? $dados['justificativa_substituicao']
+            ?? ''
+        );
+
+        return $this->normalizeCancelamentoMotivo($value);
     }
 
     private function buildConsultaRpsXml(array $identificacaoRps): string
@@ -4362,7 +4428,7 @@ class NacionalProvider extends AbstractNFSeProvider implements NFSeNacionalCapab
 
     public function getSupportedOperations(): array
     {
-        return [
+        $operations = [
             'emitir',
             'consultar',
             'consultar_por_rps',
@@ -4373,6 +4439,11 @@ class NacionalProvider extends AbstractNFSeProvider implements NFSeNacionalCapab
             'baixar_xml',
             'baixar_danfse',
         ];
+        if (($this->config['substitution_enabled'] ?? false) === true) {
+            $operations[] = 'substituir';
+        }
+
+        return $operations;
     }
 
     private function normalizeConsultaResult(string $operation, array $parsedResponse, array $context = []): NFSeConsultaResultInterface

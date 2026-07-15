@@ -17,6 +17,11 @@ final class NfseNacionalCanonicalPayload
         'dCompet' => true,
         'tpEmit' => true,
         'cLocEmi' => true,
+        'subst' => [
+            'chSubstda' => true,
+            'cMotivo' => true,
+            'xMotivo' => true,
+        ],
         'prestador' => [
             'cnpj' => true,
             'inscricaoMunicipal' => true,
@@ -210,6 +215,9 @@ final class NfseNacionalCanonicalPayload
             'dCompet',
             'tpEmit',
             'cLocEmi',
+            'subst.chSubstda',
+            'subst.cMotivo',
+            'subst.xMotivo',
             'prestador.cnpj',
             'prestador.inscricaoMunicipal',
             'prestador.enviarIM',

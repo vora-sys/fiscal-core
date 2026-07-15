@@ -283,7 +283,7 @@ class NFSeAdapter implements NotaServicoInterface
             $routingRules[] = 'Este provider exige classificação explícita de MEI no payload de emissão';
         }
         if ($this->provider instanceof NFSeOperationalIntrospectionInterface) {
-            $supportedOperations = $this->provider->getSupportedOperations();
+            $supportedOperations = $this->normalizeSupportedOperations($this->provider->getSupportedOperations());
         } elseif ($this->provider instanceof NFSeNacionalCapabilitiesInterface) {
             $supportedOperations = [
                 'emitir',
@@ -319,6 +319,21 @@ class NFSeAdapter implements NotaServicoInterface
                 ? $this->provider->getConfig()['prestador']
                 : null,
         ];
+    }
+
+    /** @return list<string> */
+    private function normalizeSupportedOperations(array $operations): array
+    {
+        $aliases = [
+            'cancelar_nfse' => 'cancelar',
+            'substituir_nfse' => 'substituir',
+            'consultar_nfse_numero' => 'consultar',
+            'consultar_nfse_rps' => 'consultar_por_rps',
+        ];
+        return array_values(array_unique(array_map(
+            static fn (mixed $operation): string => $aliases[(string) $operation] ?? (string) $operation,
+            $operations,
+        )));
     }
 
     public function getLastEmissionInfo(): array

@@ -544,12 +544,14 @@ class AbrasfV2Provider extends AbstractNFSeProvider implements NFSeOperationalIn
     {
         $motivo = trim((string) (
             $dados['substituicao']['motivo']
-            ?? $dados['motivo_substituicao']
+            ?? $dados['justificativa']
+            ?? $dados['justificativa_substituicao']
             ?? $dados['motivo_cancelamento']
             ?? 'Substituicao de NFSe'
         ));
         $codigoCancelamento = $dados['substituicao']['codigo_cancelamento']
             ?? $dados['codigo_cancelamento']
+            ?? ($this->config['substitution_reason_codes'][(string) ($dados['motivo_substituicao'] ?? 'outros')] ?? null)
             ?? null;
 
         $cancelamentoXml = $this->montarXmlCancelarNfse(
@@ -1027,14 +1029,18 @@ class AbrasfV2Provider extends AbstractNFSeProvider implements NFSeOperationalIn
             return array_values(array_map('strval', $this->config['supported_operations']));
         }
 
-        return [
+        $operations = [
             'emitir',
             'consultar_lote',
             'consultar_nfse_numero',
             'consultar_nfse_rps',
             'cancelar_nfse',
-            'substituir_nfse',
         ];
+        if (($this->config['substitution_enabled'] ?? false) === true) {
+            $operations[] = 'substituir_nfse';
+        }
+
+        return $operations;
     }
 
     private function resolveSoapOperationName(string $operationKey, string $default): string

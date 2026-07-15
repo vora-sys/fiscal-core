@@ -447,6 +447,13 @@ class NFSeFacade
                 'municipio_ignored' => $this->municipioIgnored,
                 'warnings' => $this->deprecationWarnings,
             ]);
+        } catch (\BadMethodCallException $e) {
+            return FiscalResponse::error(
+                'O provedor municipal não suporta cancelamento.',
+                'NFSE_OPERATION_NOT_SUPPORTED',
+                'nfse_cancellation',
+                $this->buildCompatibilityMetadata(),
+            );
         } catch (\Exception $e) {
             return $this->responseHandler->handle($e, 'nfse_cancellation');
         }
@@ -490,6 +497,13 @@ class NFSeFacade
                 'municipio' => $this->municipio,
                 'substituicao' => $operation,
             ], 'nfse_substitution', $this->buildCompatibilityMetadata());
+        } catch (\BadMethodCallException $e) {
+            return FiscalResponse::error(
+                'O provedor municipal não suporta substituição.',
+                'NFSE_OPERATION_NOT_SUPPORTED',
+                'nfse_substitution',
+                $this->buildCompatibilityMetadata(),
+            );
         } catch (\Exception $e) {
             return $this->responseHandler->handle($e, 'nfse_substitution');
         }

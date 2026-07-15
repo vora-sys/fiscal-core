@@ -91,9 +91,7 @@ abstract class AbstractNFSeProvider implements NFSeProviderConfigInterface
      */
     public function cancelar(string $chave, string $motivo, ?string $protocolo = null): bool
     {
-        // TODO: Implementar cancelamento
-        // Usar $chave, $motivo e $protocolo (se fornecido)
-        return false;
+        throw new \BadMethodCallException('NFSE_OPERATION_NOT_SUPPORTED: cancelar');
     }
 
     /**
@@ -101,8 +99,7 @@ abstract class AbstractNFSeProvider implements NFSeProviderConfigInterface
      */
     public function substituir(string $chave, array $dados): string
     {
-        // TODO: Implementar substituição quando o provider suportar
-        return '<?xml version="1.0"?><substituirNfseResposta><mensagem>Implementação pendente</mensagem></substituirNfseResposta>';
+        throw new \BadMethodCallException('NFSE_OPERATION_NOT_SUPPORTED: substituir');
     }
     
     /**
