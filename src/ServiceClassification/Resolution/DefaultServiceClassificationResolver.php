@@ -6,6 +6,7 @@ use sabbajohn\FiscalCore\ServiceClassification\Contracts\ServiceCandidateScorer;
 use sabbajohn\FiscalCore\ServiceClassification\Contracts\ServiceClassificationCatalog;
 use sabbajohn\FiscalCore\ServiceClassification\Contracts\ServiceClassificationResolver;
 use sabbajohn\FiscalCore\ServiceClassification\Scoring\CandidateScore;
+use sabbajohn\FiscalCore\ServiceClassification\Validation\NormalizedCode;
 
 final class DefaultServiceClassificationResolver implements ServiceClassificationResolver
 {
@@ -19,7 +20,8 @@ final class DefaultServiceClassificationResolver implements ServiceClassificatio
     public function resolve(ResolveServiceClassificationInput $input): ServiceClassificationResolution
     {
         $resolutionId = $this->uuid();
-        $scores = array_map(fn (ServiceClassificationCandidate $candidate): CandidateScore => $this->scorer->score($candidate, $input), $this->catalog->candidates($input));
+        $catalogCandidates = $this->territoriallyCompatible($this->catalog->candidates($input), $input);
+        $scores = array_map(fn (ServiceClassificationCandidate $candidate): CandidateScore => $this->scorer->score($candidate, $input), $catalogCandidates);
         $accepted = array_values(array_filter($scores, static fn (CandidateScore $score): bool => $score->accepted()));
         usort($accepted, static fn (CandidateScore $left, CandidateScore $right): int => $right->score <=> $left->score);
 
@@ -38,16 +40,15 @@ final class DefaultServiceClassificationResolver implements ServiceClassificatio
         }
 
         $first = $accepted[0];
-        $second = $accepted[1] ?? null;
         $isSingle = count($accepted) === 1;
-        $hasLead = $second === null || ($first->score - $second->score) >= $this->minimumLead;
+        $second = $accepted[1] ?? null;
         $explicitExact = $this->hasExplicitExactMatch($first);
-        $automatic = ($isSingle && $first->score >= $this->automaticThreshold) || ($first->score >= $this->automaticThreshold && $hasLead);
+        $automatic = $isSingle && $first->score >= $this->automaticThreshold;
         $confidence = $explicitExact && $isSingle
             ? ResolutionConfidence::Exact
             : ($automatic ? ResolutionConfidence::High : ($first->score >= 30 ? ResolutionConfidence::Medium : ResolutionConfidence::Low));
 
-        if (! $automatic && $confidence !== ResolutionConfidence::Exact) {
+        if (! $isSingle || (! $automatic && $confidence !== ResolutionConfidence::Exact)) {
             return new ServiceClassificationResolution(
                 ResolutionStatus::SelectionRequired,
                 $confidence,
@@ -56,12 +57,26 @@ final class DefaultServiceClassificationResolver implements ServiceClassificatio
                 array_map(static fn (CandidateScore $score): array => $score->toArray(), $accepted),
                 [['method' => 'weighted_candidate_scoring', 'top_score' => $first->score, 'lead' => $second === null ? null : $first->score - $second->score]],
                 [['code' => 'SERVICE_CLASSIFICATION_AMBIGUOUS', 'message' => 'Há mais de uma classificação possível para o serviço informado.', 'severity' => 'warning']],
-                [],
+                $this->missingForCandidates($input, array_map(static fn (CandidateScore $score): ServiceClassificationCandidate => $score->candidate, $accepted)),
                 $resolutionId,
             );
         }
 
         $candidate = $first->candidate;
+        $missingCandidateFields = $this->missingCandidateFields($candidate);
+        if ($missingCandidateFields !== []) {
+            return new ServiceClassificationResolution(
+                ResolutionStatus::Unresolved,
+                ResolutionConfidence::Unknown,
+                null,
+                [],
+                [$first->toArray()],
+                [['method' => 'incomplete_catalog_candidate', 'candidate_id' => $candidate->id]],
+                [['code' => 'SERVICE_CLASSIFICATION_INCOMPLETE', 'message' => 'A correlação encontrada não contém NBS, IndOp e cClassTrib completos.', 'severity' => 'warning']],
+                $missingCandidateFields,
+                $resolutionId,
+            );
+        }
         $fields = $this->fields($candidate, $confidence, $first);
         $warnings = [...$this->sourceWarnings($candidate), ...$this->rateWarnings($input, $candidate)];
 
@@ -78,12 +93,91 @@ final class DefaultServiceClassificationResolver implements ServiceClassificatio
         );
     }
 
+    /**
+     * @param  list<ServiceClassificationCandidate>  $candidates
+     * @return list<ServiceClassificationCandidate>
+     */
+    private function territoriallyCompatible(array $candidates, ResolveServiceClassificationInput $input): array
+    {
+        if (NormalizedCode::municipality($input->executionMunicipalityCode) === null) {
+            return $candidates;
+        }
+
+        return array_values(array_filter($candidates, function (ServiceClassificationCandidate $candidate) use ($input): bool {
+            $role = $candidate->metadata['operation_indicator']['location_role'] ?? null;
+            if (! is_string($role) || $role === '' || $role === 'other') {
+                return true;
+            }
+            $execution = NormalizedCode::municipality($input->executionMunicipalityCode);
+            $expected = match ($role) {
+                'provider' => NormalizedCode::municipality($input->providerMunicipalityCode),
+                'taker' => NormalizedCode::municipality($input->customerMunicipalityCode),
+                'recipient' => NormalizedCode::municipality($input->recipientMunicipalityCode),
+                'property' => NormalizedCode::municipality($input->propertyMunicipalityCode),
+                default => null,
+            };
+            if ($role === 'service_location') {
+                $provider = NormalizedCode::municipality($input->providerMunicipalityCode);
+
+                return $provider === null || $execution !== $provider;
+            }
+
+            return $expected === null || $execution === $expected;
+        }));
+    }
+
+    /** @return list<string> */
+    private function missingCandidateFields(ServiceClassificationCandidate $candidate): array
+    {
+        $missing = [];
+        foreach ([
+            'nbs_code' => $candidate->nbsCode,
+            'operation_indicator_code' => $candidate->operationIndicatorCode,
+            'tax_classification_code' => $candidate->taxClassificationCode,
+        ] as $field => $value) {
+            if ($value === null || $value === '') {
+                $missing[] = $field;
+            }
+        }
+
+        return $missing;
+    }
+
+    /** @param list<ServiceClassificationCandidate> $candidates @return list<string> */
+    private function missingForCandidates(ResolveServiceClassificationInput $input, array $candidates): array
+    {
+        $missing = [];
+        $roles = array_values(array_unique(array_filter(array_map(
+            static fn (ServiceClassificationCandidate $candidate): ?string => is_string($candidate->metadata['operation_indicator']['location_role'] ?? null)
+                ? $candidate->metadata['operation_indicator']['location_role']
+                : null,
+            $candidates,
+        ))));
+        if (count($roles) > 1 && NormalizedCode::municipality($input->executionMunicipalityCode) === null) {
+            $missing[] = 'execution_municipality_code';
+        }
+        foreach ([
+            'provider' => ['provider_municipality_code', $input->providerMunicipalityCode],
+            'taker' => ['customer_municipality_code', $input->customerMunicipalityCode],
+            'recipient' => ['recipient_municipality_code', $input->recipientMunicipalityCode],
+            'property' => ['property_municipality_code', $input->propertyMunicipalityCode],
+        ] as $role => [$field, $value]) {
+            if (in_array($role, $roles, true) && NormalizedCode::municipality($value) === null) {
+                $missing[] = $field;
+            }
+        }
+
+        return array_values(array_unique($missing));
+    }
+
     private function hasExplicitExactMatch(CandidateScore $score): bool
     {
         return isset($score->breakdown['national_tax_exact'])
             || isset($score->breakdown['municipal_tax_exact'])
             || isset($score->breakdown['lc116_exact'])
-            || isset($score->breakdown['nbs_exact']);
+            || isset($score->breakdown['nbs_exact'])
+            || isset($score->breakdown['operation_indicator_exact'])
+            || isset($score->breakdown['tax_classification_exact']);
     }
 
     /** @return array<string, ResolvedField> */

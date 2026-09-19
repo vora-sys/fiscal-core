@@ -2,11 +2,12 @@
 
 namespace sabbajohn\FiscalCore\Support;
 
+use sabbajohn\FiscalCore\Exceptions\CertificateException;
+use sabbajohn\FiscalCore\Exceptions\ValidationException;
+use NFePHP\Common\Soap\SoapCurl;
 use NFePHP\DA\NFe\Danfe as DanfeNFCe;
 use NFePHP\DA\NFe\Danfe as DanfeNFe;
 use NFePHP\NFe\Tools as NFeTools;
-use sabbajohn\FiscalCore\Exceptions\CertificateException;
-use sabbajohn\FiscalCore\Exceptions\ValidationException;
 
 /**
  * Factory para criação de Tools NFePHP com configuração centralizada
@@ -98,6 +99,11 @@ class ToolsFactory
             $certificate = $certManager->getCertificate();
 
             $tools = new NFeTools($config, $certificate);
+            $soap = new SoapCurl($certificate);
+            $soap->setTemporaryFolder(
+                sys_get_temp_dir().DIRECTORY_SEPARATOR.'fiscal-sefaz-soap-'.(getmypid() ?: 'cli')
+            );
+            $tools->loadSoapClass($soap);
             $tools->model($model);
 
             return $tools;

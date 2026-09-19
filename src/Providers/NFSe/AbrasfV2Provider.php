@@ -4,13 +4,14 @@ declare(strict_types=1);
 
 namespace sabbajohn\FiscalCore\Providers\NFSe;
 
-use NFePHP\Common\Certificate;
 use sabbajohn\FiscalCore\Contracts\NFSeConsultaResultInterface;
 use sabbajohn\FiscalCore\Contracts\NFSeOperationalIntrospectionInterface;
 use sabbajohn\FiscalCore\Support\CertificateManager;
 use sabbajohn\FiscalCore\Support\NFSeResultNormalizer;
 use sabbajohn\FiscalCore\Support\NFSeSoapCurlTransport;
 use sabbajohn\FiscalCore\Support\NFSeSoapTransportInterface;
+use sabbajohn\FiscalCore\Support\ProfilesNFSeEmission;
+use NFePHP\Common\Certificate;
 
 /**
  * Provider base para municipios que seguem ABRASF v2.02/v2.03.
@@ -20,6 +21,8 @@ use sabbajohn\FiscalCore\Support\NFSeSoapTransportInterface;
  */
 class AbrasfV2Provider extends AbstractNFSeProvider implements NFSeOperationalIntrospectionInterface
 {
+    use ProfilesNFSeEmission;
+
     private const NFSE_NS = 'http://www.abrasf.org.br/nfse.xsd';
 
     private const DSIG_NS = 'http://www.w3.org/2000/09/xmldsig#';
@@ -52,14 +55,27 @@ class AbrasfV2Provider extends AbstractNFSeProvider implements NFSeOperationalIn
 
     public function emitir(array $dados): string
     {
-        $this->validarDados($dados);
-        $this->lastPrestadorContext = $this->extractPrestadorContext($dados['prestador'] ?? []);
+        $emissionStartedAt = $this->beginEmissionProfile();
 
-        return $this->dispatchSoapOperation(
-            'emitir',
-            $this->resolveSoapOperationName('emitir', 'RecepcionarLoteRpsSincrono'),
-            $this->montarXmlRps($dados)
-        );
+        try {
+            $this->validarDados($dados);
+            $this->lastPrestadorContext = $this->extractPrestadorContext($dados['prestador'] ?? []);
+
+            $xmlStartedAt = hrtime(true);
+            try {
+                $requestXml = $this->montarXmlRps($dados);
+            } finally {
+                $this->addEmissionMetric('xml_build_ms', $xmlStartedAt);
+            }
+
+            return $this->dispatchSoapOperation(
+                'emitir',
+                $this->resolveSoapOperationName('emitir', 'RecepcionarLoteRpsSincrono'),
+                $requestXml
+            );
+        } finally {
+            $this->finishEmissionProfile($emissionStartedAt);
+        }
     }
 
     public function consultar(string $chave): NFSeConsultaResultInterface
@@ -630,20 +646,34 @@ class AbrasfV2Provider extends AbstractNFSeProvider implements NFSeOperationalIn
     private function dispatchSoapOperation(string $operationKey, string $soapOperation, string $requestXml): string
     {
         if ($this->shouldSignOperation($operationKey)) {
-            $requestXml = $this->assinarXml($requestXml, $operationKey);
+            $signatureStartedAt = hrtime(true);
+            try {
+                $requestXml = $this->assinarXml($requestXml, $operationKey);
+            } finally {
+                if ($operationKey === 'emitir') {
+                    $this->addEmissionMetric('signature_ms', $signatureStartedAt);
+                }
+            }
         }
 
         $soapEnvelope = $this->montarSoapEnvelope($requestXml, $soapOperation);
-        $transportData = $this->transport->send(
-            $this->resolveSoapEndpoint(),
-            $soapEnvelope,
-            [
-                'soap_action' => $this->resolveSoapAction($operationKey),
-                'timeout' => $this->getTimeout(),
-                'soap_operation' => $soapOperation,
-                'operation' => $operationKey,
-            ]
-        );
+        $transportStartedAt = hrtime(true);
+        try {
+            $transportData = $this->transport->send(
+                $this->resolveSoapEndpoint(),
+                $soapEnvelope,
+                [
+                    'soap_action' => $this->resolveSoapAction($operationKey),
+                    'timeout' => $this->getTimeout(),
+                    'soap_operation' => $soapOperation,
+                    'operation' => $operationKey,
+                ]
+            );
+        } finally {
+            if ($operationKey === 'emitir') {
+                $this->addEmissionMetric('transport_ms', $transportStartedAt);
+            }
+        }
 
         $responseXml = (string) ($transportData['response_xml'] ?? '');
         $parsedResponse = $this->processarResposta($responseXml);
@@ -943,14 +973,14 @@ class AbrasfV2Provider extends AbstractNFSeProvider implements NFSeOperationalIn
         $this->lastResponseXml = $responseXml;
         $this->lastTransportData = $transportData;
         $this->lastResponseData = $parsedResponse;
-        $this->lastOperationArtifacts = [
+        $this->lastOperationArtifacts = $this->withEmissionMetrics($operationKey, [
             'operation' => $operationKey,
             'request_xml' => $requestXml,
             'soap_envelope' => $soapEnvelope,
             'response_xml' => $responseXml,
             'parsed_response' => $parsedResponse,
             'transport' => $transportData,
-        ];
+        ]);
     }
 
     private function normalizeConsultaResult(string $operation, array $context = []): NFSeConsultaResultInterface

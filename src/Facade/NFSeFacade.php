@@ -165,6 +165,7 @@ class NFSeFacade
                 'municipio_ignored' => $this->municipioIgnored,
                 'warnings' => $this->deprecationWarnings,
                 'provider_info' => $this->nfse->getProviderInfo(),
+                'metrics' => (array) ($lastEmission['metrics'] ?? []),
             ];
 
             if ($failure = $this->normalizeEmissionFailure($lastEmission, 'nfse_emission', $metadata, $data)) {
@@ -182,6 +183,7 @@ class NFSeFacade
                 'municipio_ignored' => $this->municipioIgnored,
                 'warnings' => $this->deprecationWarnings,
                 'emissao' => $lastEmission,
+                'metrics' => (array) ($lastEmission['metrics'] ?? []),
             ];
             $metadata = array_merge($metadata, $this->nfseNacionalValidationMetadata($lastEmission));
             $exceptionDetails = $lastEmission['exception']['details'] ?? null;
@@ -710,7 +712,7 @@ class NFSeFacade
         }
     }
 
-    public function gerarDanfse(string $xmlNfse): FiscalResponse
+    public function gerarDanfse(string $xmlNfse, array $context = []): FiscalResponse
     {
         if ($check = $this->checkNFSeInitialization()) {
             return $check;
@@ -722,7 +724,7 @@ class NFSeFacade
             }
 
             $renderer = (new MunicipalDanfseRendererResolver)->resolve($this->providerKey);
-            $pdf = $renderer->render($xmlNfse);
+            $pdf = $renderer->render($xmlNfse, $context);
 
             $printResult = (new NFSeResultNormalizer)->normalizePdfBase64(
                 base64_encode($pdf),
@@ -764,6 +766,30 @@ class NFSeFacade
             ]), 'nfse_generate_danfse', $this->buildCompatibilityMetadata());
         } catch (\Exception $e) {
             return $this->responseHandler->handle($e, 'nfse_generate_danfse');
+        }
+    }
+
+    public function gerarDanfseHtml(string $xmlNfse, array $context = []): FiscalResponse
+    {
+        if ($check = $this->checkNFSeInitialization()) {
+            return $check;
+        }
+
+        try {
+            if (trim($xmlNfse) === '') {
+                throw new \InvalidArgumentException('XML final da NFSe e obrigatorio para gerar o DANFSe.');
+            }
+
+            $html = (new MunicipalDanfseRendererResolver)
+                ->resolve($this->providerKey)
+                ->renderHtml($xmlNfse, $context);
+
+            return FiscalResponse::success([
+                'html' => $html,
+                'type' => 'nfse_generate_danfse_html',
+            ], 'nfse_generate_danfse_html', $this->buildCompatibilityMetadata());
+        } catch (\Exception $e) {
+            return $this->responseHandler->handle($e, 'nfse_generate_danfse_html');
         }
     }
 

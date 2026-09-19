@@ -2,11 +2,11 @@
 
 namespace sabbajohn\FiscalCore\Adapters\NF\NFCe;
 
-use NFePHP\NFe\Tools;
 use sabbajohn\FiscalCore\Adapters\NF\Builder\NotaFiscalBuilder;
 use sabbajohn\FiscalCore\Adapters\NF\Core\NotaFiscal;
 use sabbajohn\FiscalCore\Contracts\NotaFiscalInterface;
 use sabbajohn\FiscalCore\Support\SefazAdvancedMethodRegistry;
+use NFePHP\NFe\Tools;
 
 /**
  * Adapter para NFCe (modelo 65)
@@ -20,6 +20,9 @@ class NFCeAdapter implements NotaFiscalInterface
     private ?string $lastSignedXml = null;
 
     private ?string $lastResponseXml = null;
+
+    /** @var array<string,float> */
+    private array $lastEmissionMetrics = [];
 
     public function __construct(Tools $tools)
     {
@@ -37,38 +40,53 @@ class NFCeAdapter implements NotaFiscalInterface
      */
     public function emitir(array $dados): string
     {
-        $this->tools->model(65);
+        $emissionStartedAt = hrtime(true);
+        $this->lastEmissionMetrics = [];
 
-        // Garante que é modelo 65 (NFCe)
-        if (! isset($dados['identificacao']['mod'])) {
-            $dados['identificacao']['mod'] = 65;
+        try {
+            $this->tools->model(65);
+
+            if (! isset($dados['identificacao']['mod'])) {
+                $dados['identificacao']['mod'] = 65;
+            }
+
+            $dados = $this->removeSupplementalInfoForAutomaticQRCode($dados);
+
+            $xmlStartedAt = hrtime(true);
+            try {
+                $nota = NotaFiscalBuilder::fromArray($dados)->build();
+                $xml = $nota->toXml();
+            } finally {
+                $this->lastEmissionMetrics['xml_build_ms'] = $this->elapsedMilliseconds($xmlStartedAt);
+            }
+
+            $signatureStartedAt = hrtime(true);
+            try {
+                // Para NFCe, signNFe() também adiciona o QR Code quando há CSC/CSCid.
+                $xmlAssinado = $this->tools->signNFe($xml);
+            } finally {
+                $this->lastEmissionMetrics['signature_ms'] = $this->elapsedMilliseconds($signatureStartedAt);
+            }
+
+            $lote = is_array($dados['lote'] ?? null) ? $dados['lote'] : [];
+            $idLote = preg_replace('/\D/', '', (string) ($lote['idLote'] ?? '')) ?: '1';
+            $indSinc = (int) ($lote['indSinc'] ?? 1);
+            if (! in_array($indSinc, [0, 1], true)) {
+                $indSinc = 1;
+            }
+
+            $this->lastSignedXml = $xmlAssinado;
+            $transportStartedAt = hrtime(true);
+            try {
+                $this->lastResponseXml = $this->tools->sefazEnviaLote([$xmlAssinado], $idLote, $indSinc);
+            } finally {
+                $this->lastEmissionMetrics['transport_ms'] = $this->elapsedMilliseconds($transportStartedAt);
+            }
+
+            return $this->lastResponseXml;
+        } finally {
+            $this->lastEmissionMetrics['provider_total_ms'] = $this->elapsedMilliseconds($emissionStartedAt);
         }
-
-        $dados = $this->removeSupplementalInfoForAutomaticQRCode($dados);
-
-        // Constrói a nota usando o Builder
-        $nota = NotaFiscalBuilder::fromArray($dados)->build();
-
-        // Gera o XML uma única vez; toXml() já valida a nota e o Make internamente.
-        $xml = $nota->toXml();
-
-        // Assina o XML
-        $xmlAssinado = $this->tools->signNFe($xml);
-
-        $lote = is_array($dados['lote'] ?? null) ? $dados['lote'] : [];
-        $idLote = preg_replace('/\D/', '', (string) ($lote['idLote'] ?? '')) ?: '1';
-        $indSinc = (int) ($lote['indSinc'] ?? 1);
-        if (! in_array($indSinc, [0, 1], true)) {
-            $indSinc = 1;
-        }
-
-        // Para NFCe, signNFe() adiciona o QR Code quando o Tools tem CSC/CSCid.
-
-        // Envia para SEFAZ
-        $this->lastSignedXml = $xmlAssinado;
-        $this->lastResponseXml = $this->tools->sefazEnviaLote([$xmlAssinado], $idLote, $indSinc);
-
-        return $this->lastResponseXml;
     }
 
     public function getLastSignedXml(): ?string
@@ -81,9 +99,20 @@ class NFCeAdapter implements NotaFiscalInterface
         return $this->lastResponseXml;
     }
 
+    /** @return array<string,float> */
+    public function getLastEmissionMetrics(): array
+    {
+        return $this->lastEmissionMetrics;
+    }
+
     public function getLastRequestXml(): ?string
     {
         return $this->tools->lastRequest !== '' ? $this->tools->lastRequest : null;
+    }
+
+    private function elapsedMilliseconds(int $startedAt): float
+    {
+        return round((hrtime(true) - $startedAt) / 1_000_000, 2);
     }
 
     /**

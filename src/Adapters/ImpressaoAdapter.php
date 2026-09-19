@@ -2,11 +2,12 @@
 
 namespace sabbajohn\FiscalCore\Adapters;
 
+use sabbajohn\FiscalCore\Contracts\ImpressaoInterface;
+use sabbajohn\FiscalCore\Renderers\NFCe\ThermalDanfceRenderer;
 use NFePHP\DA\CTe\Dacte as DanfeCte;
 use NFePHP\DA\MDFe\Damdfe as DanfeMdfe;
 use NFePHP\DA\NFe\Danfe as DanfeNFe;
-use sabbajohn\FiscalCore\Contracts\ImpressaoInterface;
-use sabbajohn\FiscalCore\Renderers\NFCe\ThermalDanfceRenderer;
+use NFePHP\NFe\Complements;
 
 class ImpressaoAdapter implements ImpressaoInterface
 {
@@ -14,9 +15,25 @@ class ImpressaoAdapter implements ImpressaoInterface
         private readonly ?ThermalDanfceRenderer $thermalDanfceRenderer = null,
     ) {}
 
-    public function gerarDanfe(string $xml): string
+    public function gerarDanfe(string $xml, array $context = []): string
     {
-        $danfe = new DanfeNFe($xml);
+        $cancelled = (bool) ($context['cancelada'] ?? false);
+        $cancellationResponseXml = data_get($context, 'cancelamento.response_xml')
+            ?? data_get($context, 'cancelamento.processed_event_xml');
+        $renderXml = $xml;
+
+        if ($cancelled && is_string($cancellationResponseXml) && trim($cancellationResponseXml) !== '') {
+            try {
+                $renderXml = Complements::cancelRegister($xml, $cancellationResponseXml);
+            } catch (\Throwable) {
+                $renderXml = $xml;
+            }
+        }
+
+        $danfe = new DanfeNFe($renderXml);
+        if ($cancelled) {
+            $danfe->setCancelFlag();
+        }
 
         return $danfe->render();
     }

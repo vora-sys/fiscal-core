@@ -2,9 +2,9 @@
 
 namespace sabbajohn\FiscalCore\Adapters;
 
+use sabbajohn\FiscalCore\Contracts\DocumentoInterface;
 use Brazanation\Documents\Cnpj;
 use Brazanation\Documents\Cpf;
-use sabbajohn\FiscalCore\Contracts\DocumentoInterface;
 
 class DocumentoAdapter implements DocumentoInterface
 {

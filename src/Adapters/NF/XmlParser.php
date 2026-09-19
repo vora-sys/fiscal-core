@@ -9,6 +9,7 @@ use sabbajohn\FiscalCore\Adapters\NF\DTO\IdentificacaoDTO;
 use sabbajohn\FiscalCore\Adapters\NF\DTO\InfoAdicionalDTO;
 use sabbajohn\FiscalCore\Adapters\NF\DTO\InfoSuplementarDTO;
 use sabbajohn\FiscalCore\Adapters\NF\DTO\PagamentoDTO;
+use sabbajohn\FiscalCore\Adapters\NF\DTO\PagamentosDTO;
 use sabbajohn\FiscalCore\Adapters\NF\DTO\ProdutoDTO;
 use sabbajohn\FiscalCore\Adapters\NF\DTO\ResponsavelTecnicoDTO;
 use sabbajohn\FiscalCore\Adapters\NF\DTO\TotaisDTO;
@@ -81,7 +82,7 @@ class XmlParser
         $enderEmit = $emit->enderEmit;
 
         return new EmitenteDTO(
-            cnpj: (string) $emit->CNPJ,
+            cnpj: (string) ($emit->CNPJ ?? $emit->CPF ?? ''),
             razaoSocial: (string) $emit->xNome,
             nomeFantasia: (string) ($emit->xFant ?? ''),
             inscricaoEstadual: (string) $emit->IE,
@@ -277,30 +278,31 @@ class XmlParser
     /**
      * Extrai formas de pagamento (tag <pag>)
      */
-    public function parsePagamentos(): array
+    public function parsePagamentos(): ?PagamentosDTO
     {
         $pagamentos = [];
 
         if (! isset($this->infNFe->pag)) {
-            return $pagamentos;
+            return null;
         }
 
         // Pode ter múltiplas formas de pagamento
         $pags = $this->infNFe->pag;
 
-        // Se tiver apenas uma tag <detPag>, ela vem diretamente
-        // Se tiver múltiplas, vem como array
         if (isset($pags->detPag)) {
-            if (is_array($pags->detPag)) {
-                foreach ($pags->detPag as $detPag) {
-                    $pagamentos[] = $this->parsePagamento($detPag);
-                }
-            } else {
-                $pagamentos[] = $this->parsePagamento($pags->detPag);
+            foreach ($pags->detPag as $detPag) {
+                $pagamentos[] = $this->parsePagamento($detPag);
             }
         }
 
-        return $pagamentos;
+        if ($pagamentos === []) {
+            return null;
+        }
+
+        return PagamentosDTO::fromFormas(
+            $pagamentos,
+            isset($pags->vTroco) ? (float) $pags->vTroco : null,
+        );
     }
 
     /**
@@ -311,10 +313,12 @@ class XmlParser
         return new PagamentoDTO(
             tPag: (string) $detPag->tPag,
             vPag: (float) $detPag->vPag,
+            xPag: isset($detPag->xPag) ? (string) $detPag->xPag : null,
             tpIntegra: isset($detPag->card->tpIntegra) ? (int) $detPag->card->tpIntegra : null,
             cnpj: isset($detPag->card->CNPJ) ? (string) $detPag->card->CNPJ : null,
             tBand: isset($detPag->card->tBand) ? (string) $detPag->card->tBand : null,
             cAut: isset($detPag->card->cAut) ? (string) $detPag->card->cAut : null,
+            indPag: isset($detPag->indPag) ? (string) $detPag->indPag : null,
         );
     }
 
@@ -509,8 +513,8 @@ class XmlParser
 
         // Pagamentos
         $pagamentos = $this->parsePagamentos();
-        if (! empty($pagamentos)) {
-            $data['pagamentos'] = array_map(fn ($p) => $this->dtoToArray($p), $pagamentos);
+        if ($pagamentos !== null) {
+            $data['pagamentos'] = $pagamentos->toArray();
         }
 
         // Totais

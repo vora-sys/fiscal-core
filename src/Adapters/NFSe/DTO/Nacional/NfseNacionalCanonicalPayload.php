@@ -149,6 +149,11 @@ final class NfseNacionalCanonicalPayload
                 ],
             ],
         ],
+        'observacoes' => [
+            'texto' => true,
+            'fisco' => true,
+            'contribuinte' => true,
+        ],
     ];
 
     /**
@@ -299,6 +304,9 @@ final class NfseNacionalCanonicalPayload
             'ibscbs.valores.trib.gIBSCBS.gDif.pDifUF',
             'ibscbs.valores.trib.gIBSCBS.gDif.pDifMun',
             'ibscbs.valores.trib.gIBSCBS.gDif.pDifCBS',
+            'observacoes.texto',
+            'observacoes.fisco',
+            'observacoes.contribuinte',
         ];
     }
 

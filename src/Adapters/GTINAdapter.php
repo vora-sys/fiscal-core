@@ -2,10 +2,10 @@
 
 namespace sabbajohn\FiscalCore\Adapters;
 
-use NFePHP\Gtin\Gtin;
 use sabbajohn\FiscalCore\Contracts\ProdutoInterface;
 use sabbajohn\FiscalCore\Support\CertificateManager;
 use sabbajohn\FiscalCore\Support\ConfigManager;
+use NFePHP\Gtin\Gtin;
 use stdClass;
 
 use function PHPUnit\Framework\throwException;

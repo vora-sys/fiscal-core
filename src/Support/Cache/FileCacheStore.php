@@ -4,6 +4,8 @@ namespace sabbajohn\FiscalCore\Support\Cache;
 
 class FileCacheStore
 {
+    private static $sharedFactory = null;
+
     private string $cacheDir;
 
     public function __construct(?string $cacheDir = null)
@@ -53,6 +55,34 @@ class FileCacheStore
         ];
 
         file_put_contents($path, json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
+    }
+
+    public function synchronized(string $key, int $seconds, callable $callback): mixed
+    {
+        return $callback();
+    }
+
+    /** @param list<string> $keys */
+    public function synchronizedMany(array $keys, int $seconds, callable $callback): mixed
+    {
+        return $callback();
+    }
+
+    public static function registerSharedFactory(?callable $factory): void
+    {
+        self::$sharedFactory = $factory;
+    }
+
+    public static function shared(string $namespace): self
+    {
+        if (is_callable(self::$sharedFactory)) {
+            $store = call_user_func(self::$sharedFactory, $namespace);
+            if ($store instanceof self) {
+                return $store;
+            }
+        }
+
+        return new self;
     }
 
     private function resolvePath(string $key): string

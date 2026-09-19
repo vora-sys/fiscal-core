@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace sabbajohn\FiscalCore\Support;
 
-use InvalidArgumentException;
 use sabbajohn\FiscalCore\Contracts\NFSeProviderConfigInterface;
+use InvalidArgumentException;
 
 final class NFSeEmissionRoutingPolicy
 {

@@ -29,7 +29,7 @@ class ImpressaoFacade
     /**
      * Gera DANFE (PDF da NFe)
      */
-    public function gerarDanfe(string $xmlNfe): FiscalResponse
+    public function gerarDanfe(string $xmlNfe, array $context = []): FiscalResponse
     {
         try {
             if (! function_exists('imagefontheight')) {
@@ -62,7 +62,7 @@ class ImpressaoFacade
                 );
             }
 
-            $pdf = $this->impressao->gerarDanfe($xmlNfe);
+            $pdf = $this->impressao->gerarDanfe($xmlNfe, $context);
 
             return FiscalResponse::success($this->normalizer->normalizeImpressaoPdf(
                 'nfe',

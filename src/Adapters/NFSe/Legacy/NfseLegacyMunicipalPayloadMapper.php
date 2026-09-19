@@ -17,6 +17,18 @@ final class NfseLegacyMunicipalPayloadMapper implements NfseProviderPayloadMappe
     public function map(NfseEmissionDTO $emission, NfseLayoutProfile $profile, array $context = []): array
     {
         $emission->assertValid(false);
+        if ($emission->customer()->situation() === 'nao_informado') {
+            throw new NfseLayoutCapabilityException(
+                'O provedor municipal não possui capacidade homologada para emitir NFS-e sem tomador identificado.',
+                [
+                    'stage' => 'provider_capability',
+                    'code' => 'NFSE_TAKER_POLICY_PROVIDER_UNSUPPORTED',
+                    'path' => 'payload.tomador.situacao',
+                    'provider' => $profile->providerKey,
+                    'layout_version' => $profile->version,
+                ],
+            );
+        }
         if (! $profile->supportsCapability('declaracao_ibs_cbs')) {
             throw new NfseLayoutCapabilityException(
                 'A ponte municipal não possui mapeamento IBS/CBS homologado para este provedor.',

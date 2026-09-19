@@ -58,7 +58,9 @@ final class NFSeSoapCurlTransport implements NFSeSoapTransportInterface
             },
         ]);
 
+        $transportStartedAt = hrtime(true);
         $response = curl_exec($handle);
+        $durationMs = round((hrtime(true) - $transportStartedAt) / 1_000_000, 2);
         $statusCode = (int) curl_getinfo($handle, CURLINFO_RESPONSE_CODE);
         $error = curl_error($handle);
         curl_close($handle);
@@ -76,6 +78,7 @@ final class NFSeSoapCurlTransport implements NFSeSoapTransportInterface
             'headers' => $responseHeaders,
             'request_headers' => $headers,
             'response_headers' => $responseHeaders,
+            'duration_ms' => $durationMs,
         ];
     }
 }

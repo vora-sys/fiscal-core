@@ -19,6 +19,17 @@ class IcmsDTO
         public ?int $modBC = null,          // Modalidade BC: 0=Margem Valor Agregado, 3=Valor da operação
         public ?float $pRedBC = null,       // Percentual redução BC
         public ?int $motDesICMS = null,     // Motivo desoneração
+        public ?float $vBCSTRet = null,     // Base de cálculo do ICMS ST retido
+        public ?float $pST = null,          // Alíquota suportada pelo consumidor final
+        public ?float $vICMSSubstituto = null, // Valor do ICMS próprio do substituto
+        public ?float $vICMSSTRet = null,   // Valor do ICMS ST retido
+        public ?float $vBCFCPSTRet = null,  // Base do FCP ST retido
+        public ?float $pFCPSTRet = null,    // Alíquota do FCP ST retido
+        public ?float $vFCPSTRet = null,    // Valor do FCP ST retido
+        public ?float $pRedBCEfet = null,   // Redução da base efetiva
+        public ?float $vBCEfet = null,      // Base efetiva
+        public ?float $pICMSEfet = null,    // Alíquota efetiva
+        public ?float $vICMSEfet = null,    // Valor efetivo
     ) {}
 
     /**
@@ -107,6 +118,23 @@ class IcmsDTO
         }
         if ($this->motDesICMS !== null) {
             $obj->motDesICMS = $this->motDesICMS;
+        }
+        foreach ([
+            'vBCSTRet',
+            'pST',
+            'vICMSSubstituto',
+            'vICMSSTRet',
+            'vBCFCPSTRet',
+            'pFCPSTRet',
+            'vFCPSTRet',
+            'pRedBCEfet',
+            'vBCEfet',
+            'pICMSEfet',
+            'vICMSEfet',
+        ] as $field) {
+            if ($this->{$field} !== null) {
+                $obj->{$field} = $this->{$field};
+            }
         }
 
         return $obj;

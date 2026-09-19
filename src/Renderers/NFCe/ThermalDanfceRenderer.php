@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace sabbajohn\FiscalCore\Renderers\NFCe;
 
+use sabbajohn\FiscalCore\Support\NfceThermalLayout;
 use Com\Tecnick\Barcode\Barcode;
 use Dompdf\Dompdf;
 use Dompdf\Options;
 use RuntimeException;
-use sabbajohn\FiscalCore\Support\NfceThermalLayout;
 
 final class ThermalDanfceRenderer
 {

@@ -2,10 +2,10 @@
 
 namespace sabbajohn\FiscalCore\Adapters\NF\Core;
 
-use NFePHP\NFe\Make;
 use sabbajohn\FiscalCore\Adapters\NF\Nodes\IdentificacaoNode;
 use sabbajohn\FiscalCore\Support\ConfigManager;
 use sabbajohn\FiscalCore\Support\NFeCompatibility;
+use NFePHP\NFe\Make;
 
 /**
  * Composite Root - Representa uma NFe/NFCe completa
@@ -174,7 +174,7 @@ class NotaFiscal
 
     /**
      * Gera chave de acesso da NFe (44 dígitos)
-     * Formato: cUF(2) + AAMM(4) + CNPJ(14) + mod(2) + serie(3) + nNF(9) + tpEmis(1) + cNF(8) + DV(1)
+     * Formato: cUF(2) + AAMM(4) + documento do emitente em 14 posições + mod(2) + serie(3) + nNF(9) + tpEmis(1) + cNF(8) + DV(1).
      *
      * @param  object  $idDTO  DTO de identificação
      * @return string Chave de 44 dígitos
@@ -186,17 +186,19 @@ class NotaFiscal
             return preg_replace('/[^0-9]/', '', $idDTO->chNFe);
         }
 
-        // Pegar CNPJ do emitente
+        // A chave reserva 14 posições para a identificação do emitente. Para CPF,
+        // o leiaute usa o CPF alinhado à direita e preenchido com zeros à esquerda.
         $emitenteNode = $this->nodes['emitente'] ?? null;
-        $cnpj = '00000000000000';
+        $issuerDocument = '00000000000000';
 
         if ($emitenteNode) {
             $reflection = new \ReflectionClass($emitenteNode);
             $dtoProp = $reflection->getProperty('dto');
             $dtoProp->setAccessible(true);
             $emitenteDTO = $dtoProp->getValue($emitenteNode);
-            $cnpj = preg_replace('/[^0-9]/', '', $emitenteDTO->cnpj);
+            $issuerDocument = preg_replace('/[^0-9]/', '', $emitenteDTO->cnpj) ?: $issuerDocument;
         }
+        $issuerDocument = str_pad(substr($issuerDocument, 0, 14), 14, '0', STR_PAD_LEFT);
 
         // Extrair AAMM da data de emissão
         $dhEmi = $idDTO->dhEmi;
@@ -207,7 +209,7 @@ class NotaFiscal
             '%02d%04s%014s%02d%03d%09d%01d%08d',
             $idDTO->cUF,
             $aamm,
-            $cnpj,
+            $issuerDocument,
             $idDTO->mod,
             $idDTO->serie,
             $idDTO->nNF,

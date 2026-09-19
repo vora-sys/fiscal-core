@@ -2,9 +2,9 @@
 
 namespace sabbajohn\FiscalCore\Adapters\NF\Nodes;
 
-use NFePHP\NFe\Make;
 use sabbajohn\FiscalCore\Adapters\NF\Core\NotaNodeInterface;
 use sabbajohn\FiscalCore\Adapters\NF\DTO\IdentificacaoDTO;
+use NFePHP\NFe\Make;
 
 /**
  * Node para tag <ide> (Identificação da NFe/NFCe)

@@ -2,9 +2,9 @@
 
 namespace sabbajohn\FiscalCore\Adapters\NF\Nodes;
 
-use NFePHP\NFe\Make;
 use sabbajohn\FiscalCore\Adapters\NF\Core\NotaNodeInterface;
 use sabbajohn\FiscalCore\Adapters\NF\DTO\DestinatarioDTO;
+use NFePHP\NFe\Make;
 
 /**
  * Node para tag <dest> (Destinatário)
@@ -16,7 +16,7 @@ class DestinatarioNode implements NotaNodeInterface
     public function addToMake(Make $make): void
     {
         $dest = [
-            'xNome' => $this->dto->nome,
+            'xNome' => mb_substr(trim($this->dto->nome), 0, 60),
             'indIEDest' => $this->dto->indIEDest,
         ];
 
@@ -35,10 +35,6 @@ class DestinatarioNode implements NotaNodeInterface
             $dest['IE'] = $this->dto->inscricaoEstadual;
         }
 
-        if ($this->dto->telefone) {
-            $dest['fone'] = $this->dto->telefone;
-        }
-
         if ($this->dto->email) {
             $dest['email'] = $this->dto->email;
         }
@@ -48,16 +44,17 @@ class DestinatarioNode implements NotaNodeInterface
         // Endereço do destinatário é uma tag separada em NFePHP: <enderDest>.
         if ($this->dto->logradouro) {
             $enderDest = [
-                'xLgr' => $this->dto->logradouro,
+                'xLgr' => mb_substr(trim($this->dto->logradouro), 0, 60),
                 'nro' => $this->dto->numero,
                 'xCpl' => $this->dto->complemento,
                 'xBairro' => $this->dto->bairro,
                 'cMun' => $this->dto->codigoMunicipio,
-                'xMun' => $this->dto->nomeMunicipio,
+                'xMun' => mb_substr(trim($this->dto->nomeMunicipio), 0, 60),
                 'UF' => $this->dto->uf,
                 'CEP' => $this->dto->cep,
                 'cPais' => $this->dto->codigoPais,
-                'xPais' => $this->dto->nomePais,
+                'xPais' => mb_substr(trim($this->dto->nomePais), 0, 60),
+                'fone' => $this->dto->telefone,
             ];
             $make->tagenderDest((object) $enderDest);
         }

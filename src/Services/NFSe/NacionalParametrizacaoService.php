@@ -2,20 +2,73 @@
 
 namespace sabbajohn\FiscalCore\Services\NFSe;
 
-use sabbajohn\FiscalCore\Contracts\NfseNacionalParametrizacaoInterface;
+use sabbajohn\FiscalCore\Contracts\NfseNacionalParametrizacaoBatchInterface;
 use sabbajohn\FiscalCore\DTO\NFSe\Nacional\NacionalApiResult;
 use sabbajohn\FiscalCore\Exceptions\NacionalApiException;
 use sabbajohn\FiscalCore\Support\Cache\FileCacheStore;
 
-final class NacionalParametrizacaoService implements NfseNacionalParametrizacaoInterface
+final class NacionalParametrizacaoService implements NfseNacionalParametrizacaoBatchInterface
 {
     private const NEGATIVE_TTL = 900;
+
+    private readonly NacionalPreflightBatchExecutor $preflightBatch;
 
     public function __construct(
         private readonly string $baseUrl,
         private readonly NacionalRestClient $client,
         private readonly FileCacheStore $cache,
-    ) {}
+        ?NacionalPreflightBatchExecutor $preflightBatch = null,
+    ) {
+        $this->preflightBatch = $preflightBatch ?? new NacionalPreflightBatchExecutor($client, $cache);
+    }
+
+    public function consultarPreflight(
+        string $municipioEmissao,
+        string $municipioIncidencia,
+        string $servico,
+        string $competencia,
+        ?string $beneficio = null,
+        bool $incluirRegimesEspeciais = false,
+    ): array {
+        return $this->preflightBatch->execute($this->preflightRequests(
+            $municipioEmissao,
+            $municipioIncidencia,
+            $servico,
+            $competencia,
+            $beneficio,
+            $incluirRegimesEspeciais,
+        ));
+    }
+
+    /** @return array<string,NacionalPreflightRequest> */
+    public function preflightRequests(
+        string $municipioEmissao,
+        string $municipioIncidencia,
+        string $servico,
+        string $competencia,
+        ?string $beneficio = null,
+        bool $incluirRegimesEspeciais = false,
+    ): array {
+        $municipioEmissao = $this->municipio($municipioEmissao);
+        $municipioIncidencia = $this->municipio($municipioIncidencia);
+        $servico = $this->servico($servico);
+        $competencia = $this->competencia($competencia);
+        $requests = [
+            'convenio' => $this->requestDefinition('convenio', [$municipioEmissao, 'convenio'], 21600),
+            'aliquota' => $this->requestDefinition('aliquota', [$municipioIncidencia, $servico, $competencia, 'aliquota'], 86400),
+            'retencoes' => $this->requestDefinition('retencoes', [$municipioIncidencia, $competencia, 'retencoes'], 86400),
+        ];
+
+        $beneficio = trim((string) $beneficio);
+        if ($beneficio !== '') {
+            $requests['beneficio'] = $this->requestDefinition('beneficio', [$municipioIncidencia, $beneficio, $competencia, 'beneficio'], 86400);
+        }
+        if ($incluirRegimesEspeciais) {
+            $requests['regimes_especiais'] = $this->requestDefinition('regimes_especiais', [$municipioIncidencia, $servico, $competencia, 'regimes_especiais'], 86400);
+        }
+
+        return $requests;
+    }
 
     public function consultarAliquota(string $municipio, string $servico, string $competencia, bool $forceRefresh = false): NacionalApiResult
     {
@@ -53,8 +106,52 @@ final class NacionalParametrizacaoService implements NfseNacionalParametrizacaoI
     }
 
     /** @param list<string> $segments */
+    private function requestDefinition(string $resource, array $segments, int $ttl): NacionalPreflightRequest
+    {
+        $path = '/'.implode('/', array_map('rawurlencode', $segments));
+        $key = 'nfse:param:'.$resource.':'.sha1($path);
+
+        return new NacionalPreflightRequest(
+            name: $resource,
+            url: rtrim($this->baseUrl, '/').$path,
+            query: [],
+            cacheKey: $key,
+            cacheReadTtl: max($ttl, self::NEGATIVE_TTL),
+            isFreshCacheEntry: fn (?array $cached): bool => $this->isFreshCacheEntry($cached, $ttl),
+            fromCache: fn (array $cached, bool $stale, ?string $error): NacionalApiResult => $this->fromCache(
+                (array) $cached['value'],
+                $cached,
+                $stale,
+                $error,
+            ),
+            fromRemote: fn (array|\Throwable $response, ?array $cached): NacionalApiResult => $this->resultFromRemoteResponse(
+                $response,
+                $key,
+                $cached,
+            ),
+            fallback: fn (?array $cached, \Throwable $exception, string $source): NacionalApiResult => $this->fallbackResult(
+                $cached,
+                $exception,
+                $source,
+            ),
+        );
+    }
+
+    /** @param array<string,mixed>|null $cached */
+    private function isFreshCacheEntry(?array $cached, int $ttl): bool
+    {
+        if ($cached === null || ! is_array($cached['value'] ?? null)) {
+            return false;
+        }
+        $effectiveTtl = ($cached['value']['status'] ?? null) === 'nao_parametrizado' ? self::NEGATIVE_TTL : $ttl;
+
+        return ($cached['age_seconds'] ?? PHP_INT_MAX) <= $effectiveTtl;
+    }
+
+    /** @param list<string> $segments */
     private function fetch(string $resource, array $segments, int $ttl, bool $forceRefresh): NacionalApiResult
     {
+        $startedAt = hrtime(true);
         $path = '/'.implode('/', array_map('rawurlencode', $segments));
         $key = 'nfse:param:'.$resource.':'.sha1($path);
         $cached = $this->cache->get($key, max($ttl, self::NEGATIVE_TTL));
@@ -62,12 +159,52 @@ final class NacionalParametrizacaoService implements NfseNacionalParametrizacaoI
             $cachedResult = is_array($cached['value'] ?? null) ? $cached['value'] : [];
             $effectiveTtl = ($cachedResult['status'] ?? null) === 'nao_parametrizado' ? self::NEGATIVE_TTL : $ttl;
             if (($cached['age_seconds'] ?? PHP_INT_MAX) <= $effectiveTtl) {
-                return $this->fromCache($cachedResult, $cached, false);
+                return $this->profile($this->fromCache($cachedResult, $cached, false), $startedAt);
             }
         }
 
         try {
-            $response = $this->client->get(rtrim($this->baseUrl, '/').$path);
+            $result = $this->cache->synchronized($key, 30, function () use ($path, $key, $ttl, $forceRefresh, $cached): NacionalApiResult {
+                $current = $this->cache->get($key, max($ttl, self::NEGATIVE_TTL));
+                if (! $forceRefresh && $current !== null) {
+                    $currentResult = is_array($current['value'] ?? null) ? $current['value'] : [];
+                    $effectiveTtl = ($currentResult['status'] ?? null) === 'nao_parametrizado' ? self::NEGATIVE_TTL : $ttl;
+                    if (($current['age_seconds'] ?? PHP_INT_MAX) <= $effectiveTtl) {
+                        return $this->fromCache($currentResult, $current, false);
+                    }
+                }
+
+                return $this->fetchRemote($path, $key, $current ?? $cached);
+            });
+        } catch (\Throwable $exception) {
+            $result = $cached !== null && is_array($cached['value'] ?? null)
+                ? $this->fromCache($cached['value'], $cached, true, $exception->getMessage())
+                : new NacionalApiResult('indisponivel', warnings: ['Parametrização Nacional indisponível.'], metadata: $this->metadata('lock', null, false, $exception->getMessage()));
+        }
+
+        return $this->profile($result, $startedAt);
+    }
+
+    /** @param array<string,mixed>|null $cached */
+    private function fetchRemote(string $path, string $key, ?array $cached): NacionalApiResult
+    {
+        try {
+            return $this->resultFromRemoteResponse($this->client->get(rtrim($this->baseUrl, '/').$path), $key, $cached);
+        } catch (\Throwable $e) {
+            return $this->fallbackResult($cached, $e);
+        }
+    }
+
+    /**
+     * @param  array{status:int,body:string,request_id:string,headers:array<string,string>}|\Throwable  $response
+     * @param  array<string,mixed>|null  $cached
+     */
+    private function resultFromRemoteResponse(array|\Throwable $response, string $key, ?array $cached): NacionalApiResult
+    {
+        try {
+            if ($response instanceof \Throwable) {
+                throw $response;
+            }
             if ($response['status'] === 404) {
                 $result = new NacionalApiResult('nao_parametrizado', metadata: $this->metadata('remote', $response['request_id'], false));
                 $this->cache->put($key, $result->toArray());
@@ -86,13 +223,28 @@ final class NacionalParametrizacaoService implements NfseNacionalParametrizacaoI
             $this->cache->put($key, $result->toArray());
 
             return $result;
-        } catch (\Throwable $e) {
-            if ($cached !== null && is_array($cached['value'] ?? null) && ($cached['value']['status'] ?? null) === 'encontrado') {
-                return $this->fromCache($cached['value'], $cached, true, $e->getMessage());
-            }
-
-            return new NacionalApiResult('indisponivel', warnings: ['Parametrização Nacional indisponível.'], metadata: $this->metadata('remote', $e instanceof NacionalApiException ? $e->requestId : null, false, $e->getMessage()));
+        } catch (\Throwable $exception) {
+            return $this->fallbackResult($cached, $exception);
         }
+    }
+
+    /** @param array<string,mixed>|null $cached */
+    private function fallbackResult(?array $cached, \Throwable $exception, string $source = 'remote'): NacionalApiResult
+    {
+        if ($cached !== null && is_array($cached['value'] ?? null) && ($cached['value']['status'] ?? null) === 'encontrado') {
+            return $this->fromCache($cached['value'], $cached, true, $exception->getMessage());
+        }
+
+        return new NacionalApiResult(
+            'indisponivel',
+            warnings: ['Parametrização Nacional indisponível.'],
+            metadata: $this->metadata(
+                $source,
+                $exception instanceof NacionalApiException ? $exception->requestId : null,
+                false,
+                $exception->getMessage(),
+            ),
+        );
     }
 
     /** @param array<string,mixed> $value @param array<string,mixed> $cached */
@@ -127,6 +279,22 @@ final class NacionalParametrizacaoService implements NfseNacionalParametrizacaoI
             'request_id' => $requestId,
             'error' => $error,
         ], static fn (mixed $value): bool => $value !== null && $value !== '');
+    }
+
+    private function profile(NacionalApiResult $result, int $startedAt): NacionalApiResult
+    {
+        $source = (string) ($result->metadata['source'] ?? 'remote');
+        $stale = ($result->metadata['stale'] ?? false) === true;
+
+        return new NacionalApiResult(
+            $result->status,
+            $result->data,
+            $result->warnings,
+            array_replace($result->metadata, [
+                'cache_status' => $stale ? 'stale' : ($source === 'cache' ? 'hit' : 'miss'),
+                'duration_ms' => round((hrtime(true) - $startedAt) / 1_000_000, 2),
+            ]),
+        );
     }
 
     private function municipio(string $value): string

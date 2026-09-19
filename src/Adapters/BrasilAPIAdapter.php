@@ -2,10 +2,10 @@
 
 namespace sabbajohn\FiscalCore\Adapters;
 
+use sabbajohn\FiscalCore\Contracts\ConsultaPublicaInterface;
 use BrasilApi\Client;
 use GuzzleHttp\Client as HttpClient;
 use GuzzleHttp\ClientInterface;
-use sabbajohn\FiscalCore\Contracts\ConsultaPublicaInterface;
 
 class BrasilAPIAdapter implements ConsultaPublicaInterface
 {
@@ -49,9 +49,9 @@ class BrasilAPIAdapter implements ConsultaPublicaInterface
 
     public function consultarCNPJ(string $cnpj): array
     {
-        $cnpjLimpo = preg_replace('/\D/', '', $cnpj) ?? '';
-        if (strlen($cnpjLimpo) !== 14) {
-            throw new \InvalidArgumentException('CNPJ deve conter 14 dígitos.');
+        $cnpjLimpo = preg_replace('/[^A-Z0-9]/', '', strtoupper(trim($cnpj))) ?? '';
+        if (preg_match('/^[A-Z0-9]{12}[0-9]{2}$/', $cnpjLimpo) !== 1) {
+            throw new \InvalidArgumentException('CNPJ deve conter 14 posições, com dígitos verificadores numéricos.');
         }
 
         $primaryError = null;
@@ -71,13 +71,15 @@ class BrasilAPIAdapter implements ConsultaPublicaInterface
             return $this->consultarCnpjWs($cnpjLimpo);
         } catch (\Throwable $fallbackError) {
             $primaryFailure = $primaryError !== null ? $this->failureLabel($primaryError) : 'resposta vazia';
+            $notFound = (int) $fallbackError->getCode() === 404
+                && ($primaryError === null || (int) $primaryError->getCode() === 404);
             throw new \RuntimeException(
                 sprintf(
                     'Falha ao consultar CNPJ nas fontes públicas: BrasilAPI (%s); CNPJ.ws (%s).',
                     $primaryFailure,
                     $this->failureLabel($fallbackError),
                 ),
-                0,
+                $notFound ? 404 : 0,
                 $fallbackError,
             );
         }
@@ -108,23 +110,50 @@ class BrasilAPIAdapter implements ConsultaPublicaInterface
         $simples = is_array($decoded['simples'] ?? null) ? $decoded['simples'] : [];
         $cidade = is_array($estabelecimento['cidade'] ?? null) ? $estabelecimento['cidade'] : [];
         $estado = is_array($estabelecimento['estado'] ?? null) ? $estabelecimento['estado'] : [];
+        $pais = is_array($estabelecimento['pais'] ?? null) ? $estabelecimento['pais'] : [];
+        $responsibleQualification = is_array($decoded['qualificacao_do_responsavel'] ?? null)
+            ? $decoded['qualificacao_do_responsavel']
+            : [];
 
         return [
             '_source' => 'cnpj_ws',
-            'cnpj' => preg_replace('/\D/', '', (string) ($estabelecimento['cnpj'] ?? $cnpj)) ?? $cnpj,
+            'cnpj' => preg_replace('/[^A-Z0-9]/', '', strtoupper((string) ($estabelecimento['cnpj'] ?? $cnpj))) ?? $cnpj,
             'razao_social' => trim((string) ($decoded['razao_social'] ?? '')),
             'nome_fantasia' => trim((string) ($estabelecimento['nome_fantasia'] ?? '')),
+            'data_inicio_atividade' => trim((string) ($estabelecimento['data_inicio_atividade'] ?? '')),
+            'atualizado_em' => trim((string) ($estabelecimento['atualizado_em'] ?? $decoded['atualizado_em'] ?? '')),
+            'capital_social' => is_numeric($decoded['capital_social'] ?? null) ? (float) $decoded['capital_social'] : null,
+            'ente_federativo_responsavel' => trim((string) ($decoded['responsavel_federativo'] ?? '')),
+            'identificador_matriz_filial' => match (mb_strtolower(trim((string) ($estabelecimento['tipo'] ?? '')))) {
+                'matriz' => 1,
+                'filial' => 2,
+                default => null,
+            },
+            'descricao_identificador_matriz_filial' => trim((string) ($estabelecimento['tipo'] ?? '')),
+            'qualificacao_do_responsavel' => [
+                'id' => $responsibleQualification['id'] ?? null,
+                'descricao' => trim((string) ($responsibleQualification['descricao'] ?? '')),
+            ],
             'email' => trim((string) ($estabelecimento['email'] ?? '')),
             'telefone' => $this->joinPhone($estabelecimento['ddd1'] ?? null, $estabelecimento['telefone1'] ?? null),
             'ddd_telefone_1' => $this->joinPhone($estabelecimento['ddd1'] ?? null, $estabelecimento['telefone1'] ?? null),
+            'ddd_telefone_2' => $this->joinPhone($estabelecimento['ddd2'] ?? null, $estabelecimento['telefone2'] ?? null),
+            'ddd_fax' => $this->joinPhone($estabelecimento['ddd_fax'] ?? null, $estabelecimento['fax'] ?? null),
             'cnae_fiscal' => preg_replace('/\D/', '', (string) ($atividadePrincipal['id'] ?? '')) ?? '',
             'cnae_fiscal_descricao' => trim((string) ($atividadePrincipal['descricao'] ?? '')),
+            'cnaes_secundarios' => $this->cnpjWsActivities($estabelecimento['atividades_secundarias'] ?? []),
             'natureza_juridica' => preg_replace('/\D/', '', (string) ($naturezaJuridica['id'] ?? '')) ?? '',
+            'codigo_natureza_juridica' => preg_replace('/\D/', '', (string) ($naturezaJuridica['id'] ?? '')) ?? '',
             'natureza_juridica_descricao' => trim((string) ($naturezaJuridica['descricao'] ?? '')),
             'codigo_porte' => trim((string) ($porte['id'] ?? '')),
             'porte' => trim((string) ($porte['descricao'] ?? '')),
             'opcao_pelo_simples' => $this->yesNoBoolean($simples['simples'] ?? null),
+            'data_opcao_pelo_simples' => trim((string) ($simples['data_opcao_simples'] ?? '')),
+            'data_exclusao_do_simples' => trim((string) ($simples['data_exclusao_simples'] ?? '')),
             'opcao_pelo_mei' => $this->yesNoBoolean($simples['mei'] ?? null),
+            'data_opcao_pelo_mei' => trim((string) ($simples['data_opcao_mei'] ?? '')),
+            'data_exclusao_do_mei' => trim((string) ($simples['data_exclusao_mei'] ?? '')),
+            'descricao_tipo_de_logradouro' => trim((string) ($estabelecimento['tipo_logradouro'] ?? '')),
             'logradouro' => trim((string) ($estabelecimento['logradouro'] ?? '')),
             'numero' => trim((string) ($estabelecimento['numero'] ?? '')),
             'complemento' => trim((string) ($estabelecimento['complemento'] ?? '')),
@@ -133,11 +162,73 @@ class BrasilAPIAdapter implements ConsultaPublicaInterface
             'municipio' => trim((string) ($cidade['nome'] ?? '')),
             'uf' => strtoupper(trim((string) ($estado['sigla'] ?? ''))),
             'codigo_municipio_ibge' => preg_replace('/\D/', '', (string) ($cidade['ibge_id'] ?? '')) ?? '',
+            'codigo_pais' => trim((string) ($pais['id'] ?? '')),
+            'pais' => trim((string) ($pais['nome'] ?? '')),
+            'nome_cidade_no_exterior' => trim((string) ($estabelecimento['nome_cidade_exterior'] ?? '')),
             'situacao_cadastral' => trim((string) ($estabelecimento['situacao_cadastral'] ?? '')),
-            'atividades_secundarias' => is_array($estabelecimento['atividades_secundarias'] ?? null)
-                ? $estabelecimento['atividades_secundarias']
+            'descricao_situacao_cadastral' => trim((string) ($estabelecimento['situacao_cadastral'] ?? '')),
+            'data_situacao_cadastral' => trim((string) ($estabelecimento['data_situacao_cadastral'] ?? '')),
+            'descricao_motivo_situacao_cadastral' => trim((string) ($estabelecimento['motivo_situacao_cadastral'] ?? '')),
+            'situacao_especial' => trim((string) ($estabelecimento['situacao_especial'] ?? '')),
+            'data_situacao_especial' => trim((string) ($estabelecimento['data_situacao_especial'] ?? '')),
+            'qsa' => $this->cnpjWsPartners($decoded['socios'] ?? []),
+            'inscricoes_estaduais' => is_array($estabelecimento['inscricoes_estaduais'] ?? null)
+                ? $estabelecimento['inscricoes_estaduais']
                 : [],
         ];
+    }
+
+    /**
+     * @return list<array{codigo:string,descricao:string}>
+     */
+    private function cnpjWsActivities(mixed $activities): array
+    {
+        if (! is_array($activities)) {
+            return [];
+        }
+
+        return array_values(array_map(static fn (array $activity): array => [
+            'codigo' => preg_replace('/\D/', '', (string) ($activity['id'] ?? '')) ?? '',
+            'descricao' => trim((string) ($activity['descricao'] ?? '')),
+        ], array_filter($activities, 'is_array')));
+    }
+
+    /**
+     * @return list<array<string,mixed>>
+     */
+    private function cnpjWsPartners(mixed $partners): array
+    {
+        if (! is_array($partners)) {
+            return [];
+        }
+
+        $normalized = [];
+        foreach ($partners as $partner) {
+            if (! is_array($partner)) {
+                continue;
+            }
+
+            $qualification = is_array($partner['qualificacao_socio'] ?? null)
+                ? $partner['qualificacao_socio']
+                : [];
+            $country = is_array($partner['pais'] ?? null) ? $partner['pais'] : [];
+            $normalized[] = [
+                'nome_socio' => trim((string) ($partner['nome'] ?? '')),
+                'cnpj_cpf_do_socio' => trim((string) ($partner['cpf_cnpj_socio'] ?? '')),
+                'identificador_de_socio' => trim((string) ($partner['tipo'] ?? '')),
+                'codigo_qualificacao_socio' => $qualification['id'] ?? null,
+                'qualificacao_socio' => trim((string) ($qualification['descricao'] ?? '')),
+                'data_entrada_sociedade' => trim((string) ($partner['data_entrada'] ?? '')),
+                'faixa_etaria' => trim((string) ($partner['faixa_etaria'] ?? '')),
+                'codigo_pais' => $country['id'] ?? $partner['pais_id'] ?? null,
+                'pais' => trim((string) ($country['nome'] ?? '')),
+                'cpf_representante_legal' => trim((string) ($partner['cpf_representante_legal'] ?? '')),
+                'nome_representante_legal' => trim((string) ($partner['nome_representante'] ?? '')),
+                'qualificacao_representante_legal' => trim((string) ($partner['qualificacao_representante'] ?? '')),
+            ];
+        }
+
+        return $normalized;
     }
 
     private function joinPhone(mixed $ddd, mixed $phone): string

@@ -26,5 +26,8 @@ final class ResolveServiceClassificationInput
         public readonly ?bool $issWithheld = null,
         public readonly ?float $issRate = null,
         public readonly array $serviceAttributes = [],
+        public readonly ?string $recipientMunicipalityCode = null,
+        public readonly ?string $operationIndicatorCode = null,
+        public readonly ?string $taxClassificationCode = null,
     ) {}
 }

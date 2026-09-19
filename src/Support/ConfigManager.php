@@ -45,6 +45,7 @@ class ConfigManager
         'nfse' => [
             'provider' => 'abrasf-v2-soap',
             'versao' => '2.02',
+            'ver_aplic' => 'fiscal-platform-api',
             'timeout' => 30,
         ],
     ];
@@ -237,6 +238,7 @@ class ConfigManager
             'FISCAL_NFCE_CSC' => 'csc',
             'FISCAL_NFCE_CSC_ID' => 'csc_id',
             'FISCAL_NFCE_QRCODE_VERSION' => 'nfce_qrcode_version',
+            'FISCAL_VER_APLIC' => 'nfse.ver_aplic',
             'FISCAL_UF' => 'uf',
             'FISCAL_CERT_PATH' => 'certificado.cert_path',
             'FISCAL_CERT_PASSWORD' => 'certificado.cert_password',

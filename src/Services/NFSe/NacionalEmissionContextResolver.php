@@ -3,7 +3,9 @@
 namespace sabbajohn\FiscalCore\Services\NFSe;
 
 use sabbajohn\FiscalCore\Contracts\NfseNacionalCncInterface;
+use sabbajohn\FiscalCore\Contracts\NfseNacionalParametrizacaoBatchInterface;
 use sabbajohn\FiscalCore\Contracts\NfseNacionalParametrizacaoInterface;
+use sabbajohn\FiscalCore\Contracts\NfseNacionalPreflightInterface;
 use sabbajohn\FiscalCore\DTO\NFSe\Nacional\NacionalApiResult;
 use sabbajohn\FiscalCore\Exceptions\NfseNacionalPreflightException;
 
@@ -13,6 +15,7 @@ final class NacionalEmissionContextResolver
         private readonly NfseNacionalParametrizacaoInterface $parametrizacao,
         private readonly NfseNacionalCncInterface $cnc,
         private readonly NfseNacionalIssIncidenceResolver $incidence,
+        private readonly ?NfseNacionalPreflightInterface $preflight = null,
     ) {}
 
     /** @param array<string,mixed> $payload @return array{payload:array<string,mixed>,context:array<string,mixed>} */
@@ -37,7 +40,39 @@ final class NacionalEmissionContextResolver
             'errors' => [],
         ];
 
-        $agreement = $this->parametrizacao->consultarConvenio($emissionCity);
+        $benefitBlock = is_array($municipal['beneficio_municipal'] ?? null)
+            ? $municipal['beneficio_municipal']
+            : (is_array($municipal['BM'] ?? null) ? $municipal['BM'] : []);
+        $benefitNumber = trim((string) ($benefitBlock['numero_beneficio'] ?? $benefitBlock['nBM'] ?? ''));
+        $specialRegime = trim((string) ($issuer['regEspTrib'] ?? '0'));
+        $document = $this->document($issuer['cnpj'] ?? $issuer['cpf'] ?? '');
+        $localIm = trim((string) ($issuer['inscricaoMunicipal'] ?? $issuer['IM'] ?? ''));
+        $cncDocument = strlen($emissionCity) === 7 && in_array(strlen($document), [11, 14], true)
+            ? $document
+            : null;
+        $preflight = $this->preflight !== null
+            ? $this->preflight->consultar(
+                $emissionCity,
+                $incidence['codigo_municipio'],
+                $serviceCode,
+                $competence,
+                $benefitNumber !== '' ? $benefitNumber : null,
+                $specialRegime !== '' && $specialRegime !== '0',
+                $cncDocument,
+                $localIm !== '' ? $localIm : null,
+            )
+            : ($this->parametrizacao instanceof NfseNacionalParametrizacaoBatchInterface
+            ? $this->parametrizacao->consultarPreflight(
+                $emissionCity,
+                $incidence['codigo_municipio'],
+                $serviceCode,
+                $competence,
+                $benefitNumber !== '' ? $benefitNumber : null,
+                $specialRegime !== '' && $specialRegime !== '0',
+            )
+            : []);
+
+        $agreement = $preflight['convenio'] ?? $this->parametrizacao->consultarConvenio($emissionCity);
         $context['convenio'] = $agreement->toArray();
         if ($this->fresh($agreement) && $agreement->found() && $this->explicitFalse($agreement->data, ['aderenteEmissorNacional', 'aderente_emissor_nacional'])) {
             $this->fail('Município não aderente ao Emissor Nacional.', 'NFSE_NACIONAL_CONVENIO_INCOMPATIVEL', 'payload.identificacao.municipio_ocorrencia_codigo', $agreement);
@@ -46,7 +81,7 @@ final class NacionalEmissionContextResolver
             $context['warnings'][] = 'Não foi possível confirmar o convênio municipal; a SEFIN fará a validação final.';
         }
 
-        $rate = $this->parametrizacao->consultarAliquota($incidence['codigo_municipio'], $serviceCode, $competence);
+        $rate = $preflight['aliquota'] ?? $this->parametrizacao->consultarAliquota($incidence['codigo_municipio'], $serviceCode, $competence);
         $context['aliquota'] = $rate->toArray();
         $officialRate = $this->extractRate($rate->data);
         $sendRate = filter_var($service['enviarPAliq'] ?? false, FILTER_VALIDATE_BOOLEAN);
@@ -64,12 +99,8 @@ final class NacionalEmissionContextResolver
             $this->fail('O perfil exige pAliq, mas não há alíquota informada ou parametrizada.', 'NFSE_NACIONAL_ALIQUOTA_OBRIGATORIA', 'payload.tributacao.municipal.aliquota_iss', $rate);
         }
 
-        $benefitBlock = is_array($municipal['beneficio_municipal'] ?? null)
-            ? $municipal['beneficio_municipal']
-            : (is_array($municipal['BM'] ?? null) ? $municipal['BM'] : []);
-        $benefitNumber = trim((string) ($benefitBlock['numero_beneficio'] ?? $benefitBlock['nBM'] ?? ''));
         if ($benefitNumber !== '') {
-            $benefit = $this->parametrizacao->consultarBeneficio($incidence['codigo_municipio'], $benefitNumber, $competence);
+            $benefit = $preflight['beneficio'] ?? $this->parametrizacao->consultarBeneficio($incidence['codigo_municipio'], $benefitNumber, $competence);
             $context['beneficio'] = $benefit->toArray();
             if ($this->fresh($benefit) && ! $benefit->found()) {
                 $this->fail('Benefício municipal declarado não foi localizado na competência.', 'NFSE_NACIONAL_BENEFICIO_INVALIDO', 'payload.tributacao.municipal.beneficio_municipal.numero_beneficio', $benefit);
@@ -99,9 +130,8 @@ final class NacionalEmissionContextResolver
             }
         }
 
-        $specialRegime = trim((string) ($issuer['regEspTrib'] ?? '0'));
         if ($specialRegime !== '' && $specialRegime !== '0') {
-            $regimes = $this->parametrizacao->consultarRegimesEspeciais($incidence['codigo_municipio'], $serviceCode, $competence);
+            $regimes = $preflight['regimes_especiais'] ?? $this->parametrizacao->consultarRegimesEspeciais($incidence['codigo_municipio'], $serviceCode, $competence);
             $context['regimes_especiais'] = $regimes->toArray();
             if ($this->fresh($regimes) && ! $regimes->found()) {
                 $this->fail('Regime especial configurado não foi localizado na competência.', 'NFSE_NACIONAL_REGIME_ESPECIAL_INVALIDO', 'empresa.configuracao.regime_especial_tributacao', $regimes);
@@ -115,7 +145,7 @@ final class NacionalEmissionContextResolver
             }
         }
 
-        $retentions = $this->parametrizacao->consultarRetencoes($incidence['codigo_municipio'], $competence);
+        $retentions = $preflight['retencoes'] ?? $this->parametrizacao->consultarRetencoes($incidence['codigo_municipio'], $competence);
         $context['retencoes'] = $retentions->toArray();
         if ($retentions->unavailable()) {
             $context['warnings'][] = 'Retenções municipais não puderam ser consultadas; o tipo informado foi preservado.';
@@ -130,17 +160,17 @@ final class NacionalEmissionContextResolver
             $this->fail('Payload declara retenção do ISS não permitida pela parametrização.', 'NFSE_NACIONAL_RETENCAO_CONTRADITORIA', 'payload.tributacao.municipal.tipo_retencao_iss', $retentions);
         }
 
-        $document = $this->document($issuer['cnpj'] ?? $issuer['cpf'] ?? '');
         if (strlen($emissionCity) === 7 && in_array(strlen($document), [11, 14], true)) {
             // A consulta oficial usa município + CNPJ/CPF. A IM local serve apenas
             // para selecionar a correspondência quando o CNC devolver mais de uma.
-            $localIm = trim((string) ($issuer['inscricaoMunicipal'] ?? $issuer['IM'] ?? ''));
-            $cnc = $this->cnc->consultarCadastroCnc($emissionCity, $document, $localIm !== '' ? $localIm : null);
+            $cnc = $preflight['cnc'] ?? $this->cnc->consultarCadastroCnc($emissionCity, $document, $localIm !== '' ? $localIm : null);
             $context['cnc'] = $cnc->toArray();
             $record = is_array($cnc->data['correspondencia'] ?? null) ? $cnc->data['correspondencia'] : null;
             $unambiguous = ($cnc->data['correspondencia_inequivoca'] ?? false) === true;
             if ($this->fresh($cnc) && $cnc->found() && ($record === null || ! $unambiguous)) {
-                $this->fail('O CNC não confirmou uma inscrição municipal única para o emitente.', 'NFSE_NACIONAL_CNC_IM_NAO_CONFIRMADA', 'payload.emitente.inscricao_municipal', $cnc);
+                $context['warnings'][] = $localIm !== ''
+                    ? 'O CNC não confirmou uma inscrição municipal única para o emitente; a IM informada foi preservada e a SEFIN fará a validação final.'
+                    : 'O CNC não confirmou uma inscrição municipal única para o emitente; nenhuma IM foi selecionada e a SEFIN fará a validação final.';
             }
             if ($this->fresh($cnc) && $record !== null && $unambiguous && $this->cncExplicitlyDisabled($record)) {
                 $this->fail('Emitente está inequivocamente desabilitado para emissão no CNC.', 'NFSE_NACIONAL_CNC_NAO_HABILITADO', 'payload.emitente.cpf_cnpj', $cnc);
@@ -162,7 +192,7 @@ final class NacionalEmissionContextResolver
                     'reason' => 'sem_informacoes_complementares',
                 ];
                 $context['warnings'][] = 'O CNC confirmou ausência de informações complementares; a IM será omitida da DPS.';
-            } elseif ($cnc->unavailable() || $record === null) {
+            } elseif ($cnc->unavailable() || ($record === null && ! $cnc->found())) {
                 $context['warnings'][] = $localIm === ''
                     ? 'A IM é obrigatória para consultar o CNC; informe-a no cadastro da empresa.'
                     : 'O CNC não confirmou a combinação CNPJ/CPF + município + IM; os dados locais foram preservados.';
@@ -191,14 +221,13 @@ final class NacionalEmissionContextResolver
         $cncData = is_array($cncSnapshot['data'] ?? null) ? $cncSnapshot['data'] : [];
         if (($cncSnapshot['status'] ?? null) === 'encontrado') {
             $record = is_array($cncData['correspondencia'] ?? null) ? $cncData['correspondencia'] : null;
-            if ($record === null || ($cncData['correspondencia_inequivoca'] ?? false) !== true) {
-                return null;
-            }
-            $officialIm = $this->cncMunicipalRegistration($record);
-            if ($officialIm !== null) {
-                $payload['prestador']['inscricaoMunicipal'] = $officialIm;
-                $payload['prestador']['IM'] = $officialIm;
-                $payload['prestador']['enviarIM'] = true;
+            if ($record !== null && ($cncData['correspondencia_inequivoca'] ?? false) === true) {
+                $officialIm = $this->cncMunicipalRegistration($record);
+                if ($officialIm !== null) {
+                    $payload['prestador']['inscricaoMunicipal'] = $officialIm;
+                    $payload['prestador']['IM'] = $officialIm;
+                    $payload['prestador']['enviarIM'] = true;
+                }
             }
         } elseif (($cncSnapshot['status'] ?? null) === 'nao_parametrizado'
             && ($cncSnapshot['metadata']['stale'] ?? false) !== true
@@ -292,9 +321,9 @@ final class NacionalEmissionContextResolver
             return null;
         }
 
-        $registration = (string) $value;
+        $registration = trim((string) $value);
 
-        return trim($registration) !== '' ? $registration : null;
+        return $registration !== '' ? $registration : null;
     }
 
     private function extractRate(array $data): ?float

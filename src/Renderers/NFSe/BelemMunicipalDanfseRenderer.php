@@ -4,17 +4,16 @@ declare(strict_types=1);
 
 namespace sabbajohn\FiscalCore\Renderers\NFSe;
 
+use sabbajohn\FiscalCore\Contracts\MunicipalDanfseRendererInterface;
 use Dompdf\Dompdf;
 use Dompdf\Options;
 use RuntimeException;
-use sabbajohn\FiscalCore\Contracts\MunicipalDanfseRendererInterface;
 
 final class BelemMunicipalDanfseRenderer implements MunicipalDanfseRendererInterface
 {
     public function render(string $xmlNfse): string
     {
-        $data = $this->extractDocumentData($xmlNfse);
-        $html = $this->buildHtml($data);
+        $html = $this->renderHtml($xmlNfse);
 
         $options = new Options;
         $options->set('isRemoteEnabled', false);
@@ -26,6 +25,11 @@ final class BelemMunicipalDanfseRenderer implements MunicipalDanfseRendererInter
         $dompdf->render();
 
         return $dompdf->output();
+    }
+
+    public function renderHtml(string $xmlNfse, array $context = []): string
+    {
+        return $this->buildHtml($this->extractDocumentData($xmlNfse));
     }
 
     private function extractDocumentData(string $xmlNfse): array
@@ -109,9 +113,16 @@ final class BelemMunicipalDanfseRenderer implements MunicipalDanfseRendererInter
     .label { font-size: 10px; text-transform: uppercase; color: #6b7280; display: block; margin-bottom: 4px; }
     .box { min-height: 52px; }
     .mono { font-family: DejaVu Sans Mono, monospace; }
+    .print-actions { display: none; }
+    @media screen {
+      .print-actions { display: flex; justify-content: flex-end; margin: 0 auto 12px; max-width: 900px; }
+      .print-actions button { border: 0; border-radius: 6px; padding: 10px 16px; background: #111827; color: #fff; font: 600 14px Arial, sans-serif; cursor: pointer; }
+      .print-actions button:hover { background: #374151; }
+    }
   </style>
 </head>
 <body>
+  <div class="print-actions"><button type="button" onclick="window.print()">Imprimir DANFSe</button></div>
   <div class="wrap">
     <h1>DANFSe - Belém</h1>
     <table class="grid">

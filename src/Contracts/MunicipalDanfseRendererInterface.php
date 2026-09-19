@@ -6,5 +6,7 @@ namespace sabbajohn\FiscalCore\Contracts;
 
 interface MunicipalDanfseRendererInterface
 {
-    public function render(string $xmlNfse): string;
+    public function render(string $xmlNfse, array $context = []): string;
+
+    public function renderHtml(string $xmlNfse, array $context = []): string;
 }

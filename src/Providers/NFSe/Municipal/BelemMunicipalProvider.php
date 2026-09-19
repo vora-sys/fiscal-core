@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace sabbajohn\FiscalCore\Providers\NFSe\Municipal;
 
-use NFePHP\Common\Certificate;
 use sabbajohn\FiscalCore\Contracts\NFSeConsultaResultInterface;
 use sabbajohn\FiscalCore\Contracts\NFSeImpressaoResultInterface;
 use sabbajohn\FiscalCore\Contracts\NFSeOperationalIntrospectionInterface;
@@ -16,9 +15,13 @@ use sabbajohn\FiscalCore\Support\NFSeSchemaResolver;
 use sabbajohn\FiscalCore\Support\NFSeSchemaValidator;
 use sabbajohn\FiscalCore\Support\NFSeSoapCurlTransport;
 use sabbajohn\FiscalCore\Support\NFSeSoapTransportInterface;
+use sabbajohn\FiscalCore\Support\ProfilesNFSeEmission;
+use NFePHP\Common\Certificate;
 
 class BelemMunicipalProvider extends AbstractNFSeProvider implements NFSeOperationalIntrospectionInterface
 {
+    use ProfilesNFSeEmission;
+
     private const NFSE_NS = 'http://www.abrasf.org.br/nfse.xsd';
 
     private const DSIG_NS = 'http://www.w3.org/2000/09/xmldsig#';
@@ -51,20 +54,36 @@ class BelemMunicipalProvider extends AbstractNFSeProvider implements NFSeOperati
 
     public function emitir(array $dados): string
     {
-        $this->validarDados($dados);
-        $this->lastPrestadorContext = $this->extractPrestadorContext($dados['prestador'] ?? []);
+        $emissionStartedAt = $this->beginEmissionProfile();
 
-        $requestXml = $this->montarXmlRps($dados);
-        if ($this->shouldSignOperation('emitir')) {
-            $requestXml = $this->assinarXml($requestXml, 'emitir');
+        try {
+            $this->validarDados($dados);
+            $this->lastPrestadorContext = $this->extractPrestadorContext($dados['prestador'] ?? []);
+
+            $xmlStartedAt = hrtime(true);
+            try {
+                $requestXml = $this->montarXmlRps($dados);
+            } finally {
+                $this->addEmissionMetric('xml_build_ms', $xmlStartedAt);
+            }
+            if ($this->shouldSignOperation('emitir')) {
+                $signatureStartedAt = hrtime(true);
+                try {
+                    $requestXml = $this->assinarXml($requestXml, 'emitir');
+                } finally {
+                    $this->addEmissionMetric('signature_ms', $signatureStartedAt);
+                }
+            }
+
+            return $this->dispatchSoapOperation(
+                'emitir',
+                'RecepcionarLoteRpsSincrono',
+                $requestXml,
+                'emitir'
+            );
+        } finally {
+            $this->finishEmissionProfile($emissionStartedAt);
         }
-
-        return $this->dispatchSoapOperation(
-            'emitir',
-            'RecepcionarLoteRpsSincrono',
-            $requestXml,
-            'emitir'
-        );
     }
 
     public function consultarPorRps(array $identificacaoRps): NFSeConsultaResultInterface
@@ -270,7 +289,7 @@ class BelemMunicipalProvider extends AbstractNFSeProvider implements NFSeOperati
         $this->appendXmlNode($dom, $servicoNode, 'IssRetido', $this->issRetidoCode($servico));
         $this->appendXmlNode($dom, $servicoNode, 'ItemListaServico', (string) $servico['item_lista_servico']);
         $this->appendXmlNode($dom, $servicoNode, 'CodigoCnae', (string) $servico['codigo_cnae']);
-        if (! empty($servico['codigo_tributacao_municipio'])) {
+        if ($this->shouldAppendCodigoTributacaoMunicipio($servico)) {
             $this->appendXmlNode($dom, $servicoNode, 'CodigoTributacaoMunicipio', (string) $servico['codigo_tributacao_municipio']);
         }
         $this->appendXmlNode($dom, $servicoNode, 'Discriminacao', (string) $servico['discriminacao']);
@@ -400,6 +419,14 @@ class BelemMunicipalProvider extends AbstractNFSeProvider implements NFSeOperati
         }
 
         $xpath = new \DOMXPath($dom);
+
+        if (strcasecmp((string) $dom->documentElement?->localName, 'html') === 0) {
+            return [
+                'status' => 'invalid_xml',
+                'mensagens' => ['O webservice de Belém retornou uma página HTML em vez do XML da NFS-e.'],
+                'raw_xml' => $xmlResposta,
+            ];
+        }
 
         $mensagens = [];
         $faultString = trim((string) $xpath->evaluate("string(//*[local-name()='Fault']/*[local-name()='faultstring'])"));
@@ -602,11 +629,36 @@ class BelemMunicipalProvider extends AbstractNFSeProvider implements NFSeOperati
         }
 
         $servico['item_lista_servico'] = (string) ($servico['item_lista_servico'] ?? $servico['codigo'] ?? '');
-        $servico['codigo_cnae'] = $this->normalizeDigits((string) ($servico['codigo_cnae'] ?? $servico['codigo_atividade'] ?? ''));
+        $servico['codigo_cnae'] = $this->normalizeBelemActivityCode(
+            (string) ($servico['codigo_cnae'] ?? $servico['codigo_atividade'] ?? '')
+        );
         $servico['codigo_municipio'] = $this->normalizeDigits((string) ($servico['codigo_municipio'] ?? $this->getCodigoMunicipio()));
         $servico['aliquota'] = $this->normalizeAliquota($servico['aliquota'] ?? null);
 
         return $servico;
+    }
+
+    private function normalizeBelemActivityCode(string $value): string
+    {
+        $digits = $this->normalizeDigits($value);
+
+        // Belém identifica a atividade com os 7 dígitos do CNAE seguidos
+        // pelos 2 dígitos da atividade municipal (ex.: 6209-1/00 => 620910000).
+        return strlen($digits) === 7 ? $digits.'00' : $digits;
+    }
+
+    private function shouldAppendCodigoTributacaoMunicipio(array $servico): bool
+    {
+        $codigoMunicipal = trim((string) ($servico['codigo_tributacao_municipio'] ?? ''));
+        if ($codigoMunicipal === '') {
+            return false;
+        }
+
+        // O fluxo genérico pode copiar o item LC 116 para este campo opcional.
+        // A prefeitura de Belém interpreta essa duplicação como classificação de
+        // atividade, embora o valor seja somente o item da lista de serviços.
+        return $this->normalizeDigits($codigoMunicipal)
+            !== $this->normalizeDigits((string) ($servico['item_lista_servico'] ?? ''));
     }
 
     private function normalizeAliquota(mixed $aliquota): float
@@ -736,22 +788,39 @@ class BelemMunicipalProvider extends AbstractNFSeProvider implements NFSeOperati
         string $schemaOperation,
         ?string $schemaXml = null
     ): string {
-        $this->assertRequestSchema($schemaXml ?? $requestXml, $schemaOperation);
+        $schemaStartedAt = hrtime(true);
+        try {
+            $this->assertRequestSchema($schemaXml ?? $requestXml, $schemaOperation);
+        } finally {
+            if ($operationKey === 'emitir') {
+                $this->addEmissionMetric('schema_validation_ms', $schemaStartedAt);
+            }
+        }
 
         $soapEnvelope = $this->montarSoapEnvelope($requestXml, $soapOperation);
-        $transportData = $this->transport->send(
-            $this->resolveSoapEndpoint(),
-            $soapEnvelope,
-            [
-                'soap_action' => '',
-                'timeout' => $this->getTimeout(),
-                'soap_operation' => $soapOperation,
-                'operation' => $operationKey,
-            ]
-        );
+        $transportStartedAt = hrtime(true);
+        try {
+            $transportData = $this->transport->send(
+                $this->resolveSoapEndpoint(),
+                $soapEnvelope,
+                [
+                    'soap_action' => '',
+                    'timeout' => $this->getTimeout(),
+                    'soap_operation' => $soapOperation,
+                    'operation' => $operationKey,
+                ]
+            );
+        } finally {
+            if ($operationKey === 'emitir') {
+                $this->addEmissionMetric('transport_ms', $transportStartedAt);
+            }
+        }
 
         $responseXml = (string) ($transportData['response_xml'] ?? '');
-        $parsedResponse = $this->processarResposta($responseXml);
+        $parsedResponse = $this->annotateTransportFailure(
+            $this->processarResposta($responseXml),
+            $transportData
+        );
 
         if ($this->shouldRetryConsultaWithAlternativeSignature($operationKey, $parsedResponse, $schemaXml)) {
             $certificate = $this->resolveCertificateForConsultaRetry();
@@ -778,7 +847,10 @@ class BelemMunicipalProvider extends AbstractNFSeProvider implements NFSeOperati
                 );
 
                 $alternativeResponseXml = (string) ($alternativeTransportData['response_xml'] ?? '');
-                $alternativeParsedResponse = $this->processarResposta($alternativeResponseXml);
+                $alternativeParsedResponse = $this->annotateTransportFailure(
+                    $this->processarResposta($alternativeResponseXml),
+                    $alternativeTransportData
+                );
 
                 $attempts[] = [
                     'signature_variant' => $signatureVariant,
@@ -818,6 +890,27 @@ class BelemMunicipalProvider extends AbstractNFSeProvider implements NFSeOperati
         );
 
         return $responseXml;
+    }
+
+    private function annotateTransportFailure(array $parsedResponse, array $transportData): array
+    {
+        $httpStatus = (int) ($transportData['status_code'] ?? 0);
+        if ($httpStatus > 0) {
+            $parsedResponse['http_status'] = $httpStatus;
+        }
+
+        if (
+            $httpStatus === 404
+            && $this->getAmbiente() === 'homologacao'
+            && ($parsedResponse['status'] ?? null) === 'invalid_xml'
+        ) {
+            $parsedResponse['mensagens'] = [
+                'NFSE_HOMOLOGATION_UNAVAILABLE: O endpoint municipal de homologação de Belém respondeu HTTP 404. '
+                .'Use fiscal_environment=producao para emitir uma NFS-e fiscal real.',
+            ];
+        }
+
+        return $parsedResponse;
     }
 
     private function shouldRetryConsultaWithAlternativeSignature(
@@ -887,14 +980,14 @@ class BelemMunicipalProvider extends AbstractNFSeProvider implements NFSeOperati
         $this->lastResponseXml = $responseXml;
         $this->lastTransportData = $transportData;
         $this->lastResponseData = $parsedResponse;
-        $this->lastOperationArtifacts = [
+        $this->lastOperationArtifacts = $this->withEmissionMetrics($operationKey, [
             'operation' => $operationKey,
             'request_xml' => $requestXml,
             'soap_envelope' => $soapEnvelope,
             'response_xml' => $responseXml,
             'parsed_response' => $parsedResponse,
             'transport' => $transportData,
-        ];
+        ]);
 
         $this->logSoapDebug($this->lastOperationArtifacts);
     }

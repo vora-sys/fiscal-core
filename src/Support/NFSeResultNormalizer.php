@@ -18,7 +18,8 @@ final class NFSeResultNormalizer
         $documento = $this->buildDocumento($parsedResponse, $context);
         $impressao = $this->buildImpressao($parsedResponse, $artifacts, $context, $documento);
         $mensagens = $this->extractMensagens($parsedResponse);
-        $disponivel = ($documento['numero'] ?? null) !== null;
+        $disponivel = ($documento['numero'] ?? null) !== null
+            || ($documento['chave_acesso'] ?? null) !== null;
 
         $consulta = [
             'operation' => $operation,
@@ -132,6 +133,7 @@ final class NFSeResultNormalizer
             $nfse['numero'] ?? null,
             $parsedResponse['numero'] ?? null,
             $parsedResponse['numero_nfse'] ?? null,
+            $parsedResponse['dados']['numero_nfse'] ?? null,
             $primary['numero'] ?? null,
         ]);
         $codigoVerificacao = $this->pickString([
@@ -140,27 +142,87 @@ final class NFSeResultNormalizer
             $parsedResponse['chave_validacao'] ?? null,
             $primary['codigo_verificacao'] ?? null,
         ]);
+        $xml = $this->extractXml($parsedResponse, $context);
+        $xmlSummary = $this->extractNacionalXmlSummary($xml);
+        $numero = $numero ?? $this->pickString([
+            $xmlSummary['numero_nfse'] ?? null,
+        ]);
         $protocolo = $this->pickString([
             $parsedResponse['protocolo'] ?? null,
             $parsedResponse['numero_lote'] ?? null,
             $parsedResponse['lote'] ?? null,
+            $xmlSummary['protocolo'] ?? null,
         ]);
         $dataEmissao = $this->pickString([
             $nfse['data_emissao'] ?? null,
             $parsedResponse['data_emissao'] ?? null,
             $primary['data_emissao'] ?? null,
+            $xmlSummary['data_emissao'] ?? null,
         ]);
-        $xml = $this->extractXml($parsedResponse, $context);
+        $chaveAcesso = $this->pickString([
+            $context['chave_acesso'] ?? null,
+            $nfse['chave_acesso'] ?? null,
+            $parsedResponse['chave_acesso'] ?? null,
+            $parsedResponse['dados']['chave_acesso'] ?? null,
+            $parsedResponse['chNFSe'] ?? null,
+            $xmlSummary['chave_acesso'] ?? null,
+        ]);
+        $idDps = $this->pickString([
+            $context['id_dps'] ?? null,
+            $parsedResponse['id_dps'] ?? null,
+            $parsedResponse['idDps'] ?? null,
+            $parsedResponse['dados']['id_dps'] ?? null,
+            $xmlSummary['id_dps'] ?? null,
+        ]);
+        $serie = $this->pickString([
+            $parsedResponse['serie'] ?? null,
+            $parsedResponse['serie_dps'] ?? null,
+            $xmlSummary['serie'] ?? null,
+        ]);
+        $statusCode = $this->pickString([
+            $parsedResponse['cStat'] ?? null,
+            $parsedResponse['cstat'] ?? null,
+            $parsedResponse['codigo_status'] ?? null,
+            $parsedResponse['dados']['cStat'] ?? null,
+            $parsedResponse['dados']['cstat'] ?? null,
+            $parsedResponse['dados']['codigo_status'] ?? null,
+            $xmlSummary['cStat'] ?? null,
+        ]);
+        $statusReason = $this->pickString([
+            $parsedResponse['xMotivo'] ?? null,
+            $parsedResponse['motivo'] ?? null,
+            $parsedResponse['dados']['xMotivo'] ?? null,
+            $parsedResponse['dados']['xmotivo'] ?? null,
+            $parsedResponse['dados']['motivo'] ?? null,
+            $xmlSummary['xMotivo'] ?? null,
+        ]);
+        $statusPayload = array_filter(array_merge($parsedResponse, [
+            'cStat' => $statusCode,
+            'xMotivo' => $statusReason,
+        ]), static fn (mixed $value): bool => $value !== null && $value !== '');
 
         return [
             'numero' => $numero,
+            'numero_nfse' => $xmlSummary['numero_nfse'] ?? $numero,
+            'numero_dps' => $xmlSummary['numero_dps'] ?? null,
+            'numero_documento' => $xmlSummary['numero_nfse'] ?? $numero,
+            'numero_dps_origem' => $xmlSummary['numero_dps'] ?? null,
+            'serie' => $serie,
             'codigo_verificacao' => $codigoVerificacao,
             'protocolo' => $protocolo,
-            'status_autorizacao' => $this->resolveStatusAutorizacao($parsedResponse, $numero, $codigoVerificacao),
+            'status_autorizacao' => $this->resolveStatusAutorizacao($statusPayload, $numero, $codigoVerificacao, $chaveAcesso),
+            'cStat' => $statusCode,
+            'xMotivo' => $statusReason,
             'data_emissao' => $dataEmissao,
             'xml' => $xml,
+            'chave_acesso' => $chaveAcesso,
+            'chNFSe' => $chaveAcesso,
+            'id_dps' => $idDps,
+            'idDps' => $idDps,
             'chave_consulta' => $this->pickString([
                 $context['chave_consulta'] ?? null,
+                $chaveAcesso,
+                $idDps,
                 $numero,
             ]),
         ];
@@ -262,9 +324,18 @@ final class NFSeResultNormalizer
         return $this->extractFiscalXmlFromGZipField($parsedResponse['nfseXmlGZipB64'] ?? null);
     }
 
-    private function resolveStatusAutorizacao(array $parsedResponse, ?string $numero, ?string $codigoVerificacao): string
+    private function resolveStatusAutorizacao(array $parsedResponse, ?string $numero, ?string $codigoVerificacao, ?string $chaveAcesso): string
     {
         $status = (string) ($parsedResponse['status'] ?? 'unknown');
+        $code = (string) ($parsedResponse['cStat'] ?? $parsedResponse['cstat'] ?? $parsedResponse['codigo_status'] ?? '');
+
+        if (in_array($code, ['100', '150'], true)) {
+            return 'autorizada';
+        }
+
+        if (in_array($code, ['101', '135', '155'], true)) {
+            return 'cancelada';
+        }
 
         if ($numero !== null && ($codigoVerificacao !== null || ! empty($parsedResponse['nfse_url']) || ! empty($parsedResponse['pdf_base64']))) {
             return 'autorizada';
@@ -272,7 +343,9 @@ final class NFSeResultNormalizer
 
         return match ($status) {
             'error', 'invalid_xml', 'empty' => 'erro',
-            'success' => 'pendente',
+            'authorized', 'autorizada' => 'autorizada',
+            'cancelled', 'cancelada', 'cancelado' => 'cancelada',
+            'success' => $numero !== null || $chaveAcesso !== null ? 'autorizada' : 'pendente',
             default => 'nao_encontrada',
         };
     }
@@ -315,11 +388,16 @@ final class NFSeResultNormalizer
         }
 
         $candidate = trim($candidate);
-        if ($candidate === '' || ! str_starts_with(ltrim($candidate), '<')) {
+        if ($candidate === '') {
             return null;
         }
 
-        return $candidate;
+        $firstTag = strpos($candidate, '<');
+        if ($firstTag === false) {
+            return null;
+        }
+
+        return trim($firstTag > 0 ? substr($candidate, $firstTag) : $candidate);
     }
 
     private function extractFiscalXmlFromCandidate(mixed $candidate): ?string
@@ -335,11 +413,12 @@ final class NFSeResultNormalizer
         }
 
         $xpath = new \DOMXPath($dom);
-        foreach (['CompNfse', 'Nfse', 'InfNfse'] as $nodeName) {
-            $node = $xpath->query("//*[local-name()='{$nodeName}']")->item(0);
+        foreach (['CompNfse', 'NFSe', 'infNFSe'] as $nodeName) {
+            $node = $xpath->query("//*[local-name()='$nodeName']")->item(0);
             if ($node instanceof \DOMNode) {
-                return $dom->saveXML($node) ?: null;
+                return $dom->saveXML($node);
             }
+
         }
 
         return null;
@@ -362,5 +441,69 @@ final class NFSeResultNormalizer
         }
 
         return $this->extractFiscalXmlFromCandidate($xml);
+    }
+
+    /**
+     * @return array<string, string|null>
+     */
+    private function extractNacionalXmlSummary(?string $xml): array
+    {
+        $summary = [
+            'chave_acesso' => null,
+            'id_dps' => null,
+            'numero_nfse' => null,
+            'numero_dps' => null,
+            'serie' => null,
+            'cStat' => null,
+            'xMotivo' => null,
+            'protocolo' => null,
+            'data_emissao' => null,
+        ];
+
+        $xml = $this->normalizeFiscalXml($xml);
+        if ($xml === null) {
+            return $summary;
+        }
+
+        $dom = new \DOMDocument;
+        if (! @$dom->loadXML($xml)) {
+            return $summary;
+        }
+
+        $xpath = new \DOMXPath($dom);
+        $pick = static function (array $names, ?\DOMNode $scope = null) use ($xpath): ?string {
+            foreach ($names as $name) {
+                $query = ($scope instanceof \DOMNode ? './/' : '//')."*[local-name()='{$name}']";
+                $nodes = $xpath->query($query, $scope);
+                if ($nodes && $nodes->length > 0) {
+                    $value = trim((string) $nodes->item(0)?->textContent);
+                    if ($value !== '') {
+                        return $value;
+                    }
+                }
+            }
+
+            return null;
+        };
+
+        $infNfse = $xpath->query("//*[local-name()='infNFSe']")?->item(0);
+        $infDps = $xpath->query("//*[local-name()='infDPS']")?->item(0);
+
+        $nfseId = trim((string) ($infNfse?->attributes?->getNamedItem('Id')?->nodeValue ?? ''));
+        $dpsId = trim((string) ($infDps?->attributes?->getNamedItem('Id')?->nodeValue ?? ''));
+
+        $summary['chave_acesso'] = $pick(['chNFSe', 'ChaveNfse', 'ChaveNFS-e']) ?? ($nfseId !== '' ? $nfseId : null);
+        $summary['id_dps'] = $dpsId !== '' ? $dpsId : null;
+        $summary['numero_nfse'] = $pick(['nNFSe'], $infNfse);
+        $summary['numero_dps'] = $pick(['nDPS'], $infDps);
+        $summary['serie'] = $pick(['serie', 'Serie'], $infDps) ?? $pick(['serie', 'Serie'], $infNfse);
+        $summary['cStat'] = $pick(['cStat'], $infNfse) ?? $pick(['cStat']);
+        $summary['xMotivo'] = $pick(['xMotivo'], $infNfse) ?? $pick(['xMotivo']);
+        $summary['protocolo'] = $pick(['nProt'], $infNfse) ?? $pick(['protocolo', 'Protocolo']);
+        $summary['data_emissao'] = $pick(['dhProc'], $infNfse)
+            ?? $pick(['dhEmi'], $infDps)
+            ?? $pick(['dEmi'], $infDps);
+
+        return $summary;
     }
 }

@@ -68,6 +68,10 @@ final class NfseEmissionDTO
         if ($environment !== '' && ! in_array($environment, ['homologacao', 'producao'], true)) {
             $errors[] = 'payload.identificacao.ambiente deve ser homologacao ou producao.';
         }
+        $applicationVersion = (string) ($this->identification['versao_aplicativo'] ?? '');
+        if ($applicationVersion !== '' && strlen($applicationVersion) > 20) {
+            $errors[] = 'payload.identificacao.versao_aplicativo deve ter no máximo 20 caracteres.';
+        }
 
         return array_values(array_unique($errors));
     }
@@ -144,6 +148,7 @@ final class NfseEmissionDTO
             'data_competencia' => self::string($identification['data_competencia'] ?? null),
             'ambiente' => self::string($identification['ambiente'] ?? null),
             'municipio_ocorrencia_codigo' => $municipality !== '' ? $municipality : null,
+            'versao_aplicativo' => self::string($identification['versao_aplicativo'] ?? null),
         ], static fn (mixed $value): bool => $value !== null && $value !== '');
     }
 

@@ -35,7 +35,12 @@ class EmitenteDTO
     public function toStdClass(): \stdClass
     {
         $obj = new \stdClass;
-        $obj->CNPJ = $this->cnpj;
+        $document = preg_replace('/\D+/', '', $this->cnpj) ?? '';
+        if (strlen($document) === 11) {
+            $obj->CPF = $document;
+        } else {
+            $obj->CNPJ = $document;
+        }
         $obj->xNome = $this->razaoSocial;
         $obj->xFant = $this->nomeFantasia;
         $obj->IE = $this->inscricaoEstadual;

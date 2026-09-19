@@ -98,7 +98,7 @@ class NFCeFacade
             return $initError;
         }
 
-        return $this->responseHandler->handle(function () use ($dados) {
+        $response = $this->responseHandler->handle(function () use ($dados) {
             // Garante que é modelo 65 (NFCe)
             if (! isset($dados['identificacao']['mod'])) {
                 $dados['identificacao']['mod'] = 65;
@@ -122,6 +122,25 @@ class NFCeFacade
                 ]
             );
         }, 'emissao_nfce');
+
+        return $this->withEmissionMetrics($response);
+    }
+
+    private function withEmissionMetrics(FiscalResponse $response): FiscalResponse
+    {
+        if ($this->nfce === null) {
+            return $response;
+        }
+
+        $metrics = $this->nfce->getLastEmissionMetrics();
+        if ($metrics === []) {
+            return $response;
+        }
+
+        return $response->withMetadata('metrics', array_merge(
+            (array) $response->getMetadata('metrics'),
+            $metrics,
+        ));
     }
 
     /**
@@ -180,6 +199,25 @@ class NFCeFacade
             $parsed = $this->parseEventResponse($xmlResponse);
             $ok = $this->isSefazOperationSuccessful($xmlResponse);
 
+            if (! $ok) {
+                return FiscalResponse::error(
+                    (string) ($parsed['xmotivo'] ?? 'A SEFAZ rejeitou o cancelamento da NFC-e.'),
+                    'SEFAZ_REJECTION',
+                    'cancelamento_nfce',
+                    [
+                        'cstat' => $parsed['cstat'] ?? null,
+                        'xmotivo' => $parsed['xmotivo'] ?? null,
+                        'artifacts' => [
+                            'request_xml' => $this->nfce?->getLastRequestXml(),
+                            'response_xml' => $xmlResponse,
+                            'parsed_response' => $parsed,
+                        ],
+                    ],
+                );
+            }
+
+            $requestXml = $this->nfce?->getLastRequestXml();
+
             return $this->publicNormalizer->normalizeFiscalOperation('nfce', 'cancelamento_nfce', [
                 'status' => $parsed['xmotivo'] ?? null,
                 'ok' => $ok,
@@ -191,6 +229,7 @@ class NFCeFacade
                 'situacao' => $parsed['xmotivo'] ?? null,
                 'protocolo' => $parsed['protocolo'] ?? $protocolo,
             ], [], [
+                'request_xml' => $requestXml,
                 'response_xml' => $xmlResponse,
                 'parsed_response' => $parsed,
             ], [
@@ -241,6 +280,70 @@ class NFCeFacade
                 'protocolo_autorizacao' => $protocolo,
             ]);
         }, 'cancelamento_substituicao_nfce');
+    }
+
+    public function inutilizar(int $ano, int $cnpj, int $modelo, int $serie, int $numeroInicial, int $numeroFinal, string $justificativa): FiscalResponse
+    {
+        $initError = $this->checkNFCeInitialization();
+        if ($initError !== null) {
+            return $initError;
+        }
+
+        return $this->responseHandler->handle(function () use ($ano, $cnpj, $serie, $numeroInicial, $numeroFinal, $justificativa) {
+            if (mb_strlen(trim($justificativa)) < 15) {
+                throw new \InvalidArgumentException('Justificativa deve ter pelo menos 15 caracteres');
+            }
+
+            $xmlResponse = $this->nfce->inutilizar(
+                $ano,
+                $cnpj,
+                65,
+                $serie,
+                $numeroInicial,
+                $numeroFinal,
+                $justificativa,
+            );
+            $parsed = $this->parseEventResponse($xmlResponse);
+            $ok = $this->isSefazOperationSuccessful($xmlResponse);
+            if (! $ok) {
+                return FiscalResponse::error(
+                    (string) ($parsed['xmotivo'] ?? 'A SEFAZ rejeitou a inutilização da faixa.'),
+                    'SEFAZ_REJECTION',
+                    'inutilizacao_nfce',
+                    [
+                        'cstat' => $parsed['cstat'] ?? null,
+                        'artifacts' => [
+                            'request_xml' => $this->nfce?->getLastRequestXml(),
+                            'response_xml' => $xmlResponse,
+                            'parsed_response' => $parsed,
+                        ],
+                    ],
+                );
+            }
+
+            return $this->publicNormalizer->normalizeFiscalOperation('nfce', 'inutilizacao_nfce', [
+                'status' => $parsed['xmotivo'] ?? null,
+                'ok' => $ok,
+                'cstat' => $parsed['cstat'] ?? null,
+                'xmotivo' => $parsed['xmotivo'] ?? null,
+                'protocolo' => $parsed['protocolo'] ?? null,
+            ], [
+                'situacao' => $parsed['xmotivo'] ?? null,
+                'protocolo' => $parsed['protocolo'] ?? null,
+            ], [], [
+                'request_xml' => $this->nfce?->getLastRequestXml(),
+                'response_xml' => $xmlResponse,
+                'parsed_response' => $parsed,
+            ], [
+                'inutilizado' => $this->isSefazOperationSuccessful($xmlResponse),
+                'xml_response' => $xmlResponse,
+                'cstat' => $parsed['cstat'] ?? null,
+                'serie' => $serie,
+                'numeros' => ['inicial' => $numeroInicial, 'final' => $numeroFinal],
+                'justificativa' => $justificativa,
+            ]);
+        }, 'inutilizacao_nfce');
+
     }
 
     /**

@@ -13,9 +13,12 @@ use sabbajohn\FiscalCore\Support\NFSeSchemaResolver;
 use sabbajohn\FiscalCore\Support\NFSeSchemaValidator;
 use sabbajohn\FiscalCore\Support\NFSeSoapCurlTransport;
 use sabbajohn\FiscalCore\Support\NFSeSoapTransportInterface;
+use sabbajohn\FiscalCore\Support\ProfilesNFSeEmission;
 
 class IsswebProvider extends AbstractNFSeProvider implements NFSeOperationalIntrospectionInterface
 {
+    use ProfilesNFSeEmission;
+
     private ?string $lastRequestXml = null;
 
     private ?string $lastSoapEnvelope = null;
@@ -43,10 +46,21 @@ class IsswebProvider extends AbstractNFSeProvider implements NFSeOperationalIntr
 
     public function emitir(array $dados): string
     {
-        $this->validarDados($dados);
-        $requestXml = $this->montarXmlRps($dados);
+        $emissionStartedAt = $this->beginEmissionProfile();
 
-        return $this->dispatchOperation('emitir', $requestXml);
+        try {
+            $this->validarDados($dados);
+            $xmlStartedAt = hrtime(true);
+            try {
+                $requestXml = $this->montarXmlRps($dados);
+            } finally {
+                $this->addEmissionMetric('xml_build_ms', $xmlStartedAt);
+            }
+
+            return $this->dispatchOperation('emitir', $requestXml);
+        } finally {
+            $this->finishEmissionProfile($emissionStartedAt);
+        }
     }
 
     public function consultar(string $chave): NFSeConsultaResultInterface
@@ -365,31 +379,45 @@ class IsswebProvider extends AbstractNFSeProvider implements NFSeOperationalIntr
             default => $operation,
         };
 
-        $this->validateSchema($schemaOperation, $requestXml);
+        $schemaStartedAt = hrtime(true);
+        try {
+            $this->validateSchema($schemaOperation, $requestXml);
+        } finally {
+            if ($operation === 'emitir') {
+                $this->addEmissionMetric('schema_validation_ms', $schemaStartedAt);
+            }
+        }
 
         $this->lastOperation = $operation;
         $this->lastRequestXml = $requestXml;
         $this->lastSoapEnvelope = $this->buildSoapEnvelope($requestXml);
 
-        $transport = $this->transport->send(
-            $this->resolveOperationEndpoint($operation),
-            $this->lastSoapEnvelope,
-            [
-                'soap_action' => $this->resolveSoapAction($operation),
-                'timeout' => $this->getTimeout(),
-            ]
-        );
+        $transportStartedAt = hrtime(true);
+        try {
+            $transport = $this->transport->send(
+                $this->resolveOperationEndpoint($operation),
+                $this->lastSoapEnvelope,
+                [
+                    'soap_action' => $this->resolveSoapAction($operation),
+                    'timeout' => $this->getTimeout(),
+                ]
+            );
+        } finally {
+            if ($operation === 'emitir') {
+                $this->addEmissionMetric('transport_ms', $transportStartedAt);
+            }
+        }
 
         $this->lastResponseXml = (string) ($transport['response_xml'] ?? '');
         $this->lastResponseData = $this->processarResposta($this->lastResponseXml);
-        $this->lastOperationArtifacts = [
+        $this->lastOperationArtifacts = $this->withEmissionMetrics($operation, [
             'operation' => $operation,
             'request_xml' => $this->lastRequestXml,
             'soap_envelope' => $this->lastSoapEnvelope,
             'response_xml' => $this->lastResponseXml,
             'parsed_response' => $this->lastResponseData,
             'transport' => $transport,
-        ];
+        ]);
 
         return $this->lastResponseXml ?? '';
     }

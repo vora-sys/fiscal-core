@@ -2,12 +2,12 @@
 
 namespace sabbajohn\FiscalCore\Adapters\NF;
 
-use NFePHP\NFe\Tools;
 use sabbajohn\FiscalCore\Adapters\NF\Builder\NotaFiscalBuilder;
 use sabbajohn\FiscalCore\Adapters\NF\Core\NotaFiscal;
 use sabbajohn\FiscalCore\Contracts\NotaFiscalInterface;
 use sabbajohn\FiscalCore\Support\ManifestationType;
 use sabbajohn\FiscalCore\Support\SefazAdvancedMethodRegistry;
+use NFePHP\NFe\Tools;
 
 /**
  * Adapter para NFe (modelo 55)
@@ -20,6 +20,9 @@ class NFeAdapter implements NotaFiscalInterface
     private ?string $lastSignedXml = null;
 
     private ?string $lastResponseXml = null;
+
+    /** @var array<string,float> */
+    private array $lastEmissionMetrics = [];
 
     public function __construct(Tools $tools)
     {
@@ -37,27 +40,45 @@ class NFeAdapter implements NotaFiscalInterface
      */
     public function emitir(array $dados): string
     {
-        // Constrói a nota usando o Builder
-        $nota = NotaFiscalBuilder::fromArray($dados)->build();
+        $emissionStartedAt = hrtime(true);
+        $this->lastEmissionMetrics = [];
 
-        // Gera o XML uma única vez; toXml() já valida a nota e o Make internamente.
-        $xml = $nota->toXml();
+        try {
+            $xmlStartedAt = hrtime(true);
+            try {
+                // Constrói a nota usando o Builder e gera o XML uma única vez.
+                $nota = NotaFiscalBuilder::fromArray($dados)->build();
+                $xml = $nota->toXml();
+            } finally {
+                $this->lastEmissionMetrics['xml_build_ms'] = $this->elapsedMilliseconds($xmlStartedAt);
+            }
 
-        // Assina o XML
-        $xmlAssinado = $this->tools->signNFe($xml);
+            $signatureStartedAt = hrtime(true);
+            try {
+                $xmlAssinado = $this->tools->signNFe($xml);
+            } finally {
+                $this->lastEmissionMetrics['signature_ms'] = $this->elapsedMilliseconds($signatureStartedAt);
+            }
 
-        $lote = is_array($dados['lote'] ?? null) ? $dados['lote'] : [];
-        $idLote = preg_replace('/\D/', '', (string) ($lote['idLote'] ?? '')) ?: '1';
-        $indSinc = (int) ($lote['indSinc'] ?? 1);
-        if (! in_array($indSinc, [0, 1], true)) {
-            $indSinc = 1;
+            $lote = is_array($dados['lote'] ?? null) ? $dados['lote'] : [];
+            $idLote = preg_replace('/\D/', '', (string) ($lote['idLote'] ?? '')) ?: '1';
+            $indSinc = (int) ($lote['indSinc'] ?? 1);
+            if (! in_array($indSinc, [0, 1], true)) {
+                $indSinc = 1;
+            }
+
+            $this->lastSignedXml = $xmlAssinado;
+            $transportStartedAt = hrtime(true);
+            try {
+                $this->lastResponseXml = $this->tools->sefazEnviaLote([$xmlAssinado], $idLote, $indSinc);
+            } finally {
+                $this->lastEmissionMetrics['transport_ms'] = $this->elapsedMilliseconds($transportStartedAt);
+            }
+
+            return $this->lastResponseXml;
+        } finally {
+            $this->lastEmissionMetrics['provider_total_ms'] = $this->elapsedMilliseconds($emissionStartedAt);
         }
-
-        // Envia para SEFAZ
-        $this->lastSignedXml = $xmlAssinado;
-        $this->lastResponseXml = $this->tools->sefazEnviaLote([$xmlAssinado], $idLote, $indSinc);
-
-        return $this->lastResponseXml;
     }
 
     public function getLastSignedXml(): ?string
@@ -70,9 +91,20 @@ class NFeAdapter implements NotaFiscalInterface
         return $this->lastResponseXml;
     }
 
+    /** @return array<string,float> */
+    public function getLastEmissionMetrics(): array
+    {
+        return $this->lastEmissionMetrics;
+    }
+
     public function getLastRequestXml(): ?string
     {
         return $this->tools->lastRequest !== '' ? $this->tools->lastRequest : null;
+    }
+
+    private function elapsedMilliseconds(int $startedAt): float
+    {
+        return round((hrtime(true) - $startedAt) / 1_000_000, 2);
     }
 
     /**

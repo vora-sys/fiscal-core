@@ -74,4 +74,6 @@ interface NFSeProviderConfigInterface extends NFSeProviderInterface
     public function verificarHabilitacaoCnc(string $cnc): bool;
 
     public function getConfig(): array;
+
+    // public function getLastEmissionContext(): array;
 }

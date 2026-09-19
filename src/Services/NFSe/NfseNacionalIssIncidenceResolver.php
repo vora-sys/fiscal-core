@@ -4,6 +4,8 @@ namespace sabbajohn\FiscalCore\Services\NFSe;
 
 final class NfseNacionalIssIncidenceResolver
 {
+    public const OFFICIAL_SOURCE_VERSION = 'anexo-i-sefin-adn-dps-nfse-snnfse-v1-01-20260209';
+
     /** @var array<string,string>|null */
     private static ?array $officialRules = null;
 
@@ -33,7 +35,7 @@ final class NfseNacionalIssIncidenceResolver
         $customerCity = $this->digits($customer['endereco']['codigoMunicipio'] ?? $customer['codigoMunicipio'] ?? null);
         $issuerCity = $this->digits($issuer['codigoMunicipio'] ?? $payload['cLocEmi'] ?? null);
 
-        $rule = $this->officialRule($code);
+        $rule = $this->ruleForService($code);
         if ($rule === 'tomador' && strlen($customerCity) === 7) {
             return ['codigo_municipio' => $customerCity, 'fundamento' => 'estabelecimento_tomador_tabela_mun_incid_info_serv'];
         }
@@ -52,8 +54,9 @@ final class NfseNacionalIssIncidenceResolver
         return preg_replace('/\D+/', '', is_scalar($value) ? (string) $value : '') ?? '';
     }
 
-    private function officialRule(string $code): ?string
+    public function ruleForService(string $code): ?string
     {
+        $code = substr($this->digits($code), 0, 6);
         if (self::$officialRules === null) {
             self::$officialRules = $this->loadOfficialRules();
         }

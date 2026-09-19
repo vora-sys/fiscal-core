@@ -12,6 +12,7 @@ use sabbajohn\FiscalCore\Adapters\NF\DTO\IdentificacaoDTO;
 use sabbajohn\FiscalCore\Adapters\NF\DTO\InfoAdicionalDTO;
 use sabbajohn\FiscalCore\Adapters\NF\DTO\InfoSuplementarDTO;
 use sabbajohn\FiscalCore\Adapters\NF\DTO\PagamentoDTO;
+use sabbajohn\FiscalCore\Adapters\NF\DTO\PagamentosDTO;
 use sabbajohn\FiscalCore\Adapters\NF\DTO\PisDTO;
 use sabbajohn\FiscalCore\Adapters\NF\DTO\ProdutoDTO;
 use sabbajohn\FiscalCore\Adapters\NF\DTO\ResponsavelTecnicoDTO;
@@ -117,7 +118,14 @@ class NotaFiscalBuilder
 
         // Pagamentos
         if (isset($data['pagamentos'])) {
-            $builder->setPagamentos($data['pagamentos']);
+            $paymentGroup = is_array($data['pagamentos']) ? $data['pagamentos'] : [];
+            $paymentMethods = is_array($paymentGroup['formas'] ?? null)
+                ? $paymentGroup['formas']
+                : $paymentGroup;
+            $builder->setPagamentos(
+                $paymentMethods,
+                self::extractTroco($paymentGroup, $data),
+            );
         }
 
         // Totais
@@ -264,7 +272,7 @@ class NotaFiscalBuilder
         $produtoDto = new ProdutoDTO(
             item: $numeroItem,
             codigo: $produto['codigo'],
-            cean: $produto['cean'] ?? $produto['cEAN'] ?? 'SEM GTIN',
+            cean: $produto['cean'] ?? $produto['cEAN'] ?? $produto['gtin'] ?? $produto['ean'] ?? 'SEM GTIN',
             descricao: $produto['descricao'],
             ncm: $produto['ncm'],
             cfop: $produto['cfop'],
@@ -272,7 +280,15 @@ class NotaFiscalBuilder
             quantidadeComercial: $produto['quantidadeComercial'] ?? $produto['quantidade'],
             valorUnitario: $produto['valorUnitario'],
             valorTotal: $produto['valorTotal'],
-            ceanTributavel: $produto['ceanTributavel'] ?? $produto['cEANTrib'] ?? $produto['cean'] ?? $produto['cEAN'] ?? 'SEM GTIN',
+            ceanTributavel: $produto['ceanTributavel']
+                ?? $produto['cEANTrib']
+                ?? $produto['gtin_tributavel']
+                ?? $produto['gtinTributavel']
+                ?? $produto['cean']
+                ?? $produto['cEAN']
+                ?? $produto['gtin']
+                ?? $produto['ean']
+                ?? 'SEM GTIN',
             unidadeTributavel: $produto['unidadeTributavel'] ?? $produto['unidadeComercial'] ?? $produto['unidade'],
             quantidadeTributavel: $produto['quantidadeTributavel'] ?? $produto['quantidadeComercial'] ?? $produto['quantidade'],
             valorUnitarioTributavel: $produto['valorUnitarioTributavel'] ?? $produto['valorUnitario'],
@@ -299,6 +315,17 @@ class NotaFiscalBuilder
                 modBC: $icmsData['modBC'] ?? null,
                 pRedBC: $icmsData['pRedBC'] ?? null,
                 motDesICMS: $icmsData['motDesICMS'] ?? null,
+                vBCSTRet: $icmsData['vBCSTRet'] ?? null,
+                pST: $icmsData['pST'] ?? null,
+                vICMSSubstituto: $icmsData['vICMSSubstituto'] ?? null,
+                vICMSSTRet: $icmsData['vICMSSTRet'] ?? null,
+                vBCFCPSTRet: $icmsData['vBCFCPSTRet'] ?? null,
+                pFCPSTRet: $icmsData['pFCPSTRet'] ?? null,
+                vFCPSTRet: $icmsData['vFCPSTRet'] ?? null,
+                pRedBCEfet: $icmsData['pRedBCEfet'] ?? null,
+                vBCEfet: $icmsData['vBCEfet'] ?? null,
+                pICMSEfet: $icmsData['pICMSEfet'] ?? null,
+                vICMSEfet: $icmsData['vICMSEfet'] ?? null,
             );
 
             // PIS
@@ -349,7 +376,7 @@ class NotaFiscalBuilder
     /**
      * Define as formas de pagamento
      */
-    public function setPagamentos(array $pagamentosData): self
+    public function setPagamentos(array $pagamentosData, ?float $troco = null): self
     {
         $pagamentos = [];
 
@@ -357,14 +384,24 @@ class NotaFiscalBuilder
             $pagamentos[] = new PagamentoDTO(
                 tPag: $pag['tPag'],
                 vPag: $pag['vPag'],
+                xPag: $pag['xPag'] ?? null,
                 tpIntegra: $pag['tpIntegra'] ?? null,
                 cnpj: $pag['cnpj'] ?? null,
                 tBand: $pag['tBand'] ?? null,
                 cAut: $pag['cAut'] ?? null,
+                indPag: $pag['indPag'] ?? null,
             );
         }
 
-        $this->nota->addNode(new PagamentoNode(...$pagamentos));
+        return $this->setGrupoPagamentos(PagamentosDTO::fromFormas($pagamentos, $troco));
+    }
+
+    /**
+     * Define o grupo fiscal de pagamentos já normalizado.
+     */
+    public function setGrupoPagamentos(PagamentosDTO $pagamentos): self
+    {
+        $this->nota->addNode(new PagamentoNode($pagamentos));
 
         return $this;
     }
@@ -514,6 +551,27 @@ class NotaFiscalBuilder
     public function build(): NotaFiscal
     {
         return $this->nota;
+    }
+
+    /**
+     * @param  array<string, mixed>  $paymentGroup
+     * @param  array<string, mixed>  $data
+     */
+    private static function extractTroco(array $paymentGroup, array $data): ?float
+    {
+        foreach (['troco', 'valorTroco', 'valor_troco', 'vTroco'] as $field) {
+            if (isset($paymentGroup[$field]) && is_numeric($paymentGroup[$field])) {
+                return (float) $paymentGroup[$field];
+            }
+        }
+
+        foreach (['troco', 'valorTroco', 'valor_troco', 'vTroco'] as $field) {
+            if (isset($data[$field]) && is_numeric($data[$field])) {
+                return (float) $data[$field];
+            }
+        }
+
+        return null;
     }
 
     /**

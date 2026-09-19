@@ -8,6 +8,8 @@ final class DpsDTO
 
     private TomadorDTO $tomador;
 
+    private bool $takerNotInformed;
+
     private ServicoDTO $servico;
 
     private ValoresDTO $valores;
@@ -17,6 +19,8 @@ final class DpsDTO
     private TributacaoFederalDTO $tributacaoFederal;
 
     private IbsCbsDTO $ibscbs;
+
+    private InformacoesComplementares $informacoesComplementares;
 
     /**
      * @param  array<string,mixed>  $data
@@ -28,6 +32,7 @@ final class DpsDTO
     ) {
         $this->prestador = PrestadorDTO::fromArray(DpsPayloadHelper::firstArray([$data['prestador'] ?? null]));
         $cLocEmi = DpsPayloadHelper::onlyDigits((string) ($data['cLocEmi'] ?? $context['codigo_municipio'] ?? ''));
+        $this->takerNotInformed = ($data['_nfse_taker_situation'] ?? null) === 'nao_informado';
         $this->tomador = TomadorDTO::fromArray(DpsPayloadHelper::firstArray([$data['tomador'] ?? null]));
         $this->servico = ServicoDTO::fromArray(DpsPayloadHelper::firstArray([$data['servico'] ?? null]), [
             'cLocEmi' => $cLocEmi,
@@ -37,6 +42,7 @@ final class DpsDTO
         $this->tributacaoMunicipal = TributacaoMunicipalDTO::fromArray($data);
         $this->tributacaoFederal = TributacaoFederalDTO::fromArray($data);
         $this->ibscbs = IbsCbsDTO::fromArray($data);
+        $this->informacoesComplementares = InformacoesComplementares::fromArray($data['observacoes'] ?? [], $context);
     }
 
     /**
@@ -139,7 +145,7 @@ final class DpsDTO
         return array_values(array_unique(array_merge(
             $errors,
             $this->prestador->validate(),
-            $this->tomador->validate(),
+            $this->takerNotInformed ? [] : $this->tomador->validate(),
             $this->servico->validate(),
             $this->valores->validate(),
             $this->tributacaoMunicipal->validate(),
@@ -155,7 +161,11 @@ final class DpsDTO
     {
         $data = $this->data;
         $data['prestador'] = $this->prestador->toArray();
-        $data['tomador'] = $this->tomador->toArray();
+        if ($this->takerNotInformed) {
+            unset($data['tomador']);
+        } else {
+            $data['tomador'] = $this->tomador->toArray();
+        }
         $data['servico'] = $this->servico->toArray();
         $data['valor_servicos'] = $this->valores->valorServicos();
         $data['valores'] = $this->valores->toArray();
@@ -174,6 +184,11 @@ final class DpsDTO
         if ($ibscbs !== []) {
             $data['ibscbs'] = $ibscbs;
             $data['IBSCBS'] = $ibscbs;
+        }
+
+        $informacoesComplementares = $this->informacoesComplementares->toArray();
+        if ($informacoesComplementares !== []) {
+            $data['informacoes_complementares'] = $informacoesComplementares;
         }
 
         return $data;

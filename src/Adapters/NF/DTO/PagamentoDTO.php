@@ -11,10 +11,12 @@ class PagamentoDTO
     public function __construct(
         public string $tPag,        // Forma: 01=Dinheiro, 03=Cartão Crédito, 04=Cartão Débito, etc
         public float $vPag,         // Valor do pagamento
+        public ?string $xPag = null,       // Descrição do meio, especialmente para tPag=99
         public ?string $tpIntegra = null,  // Tipo integração: 1=TEF, 2=POS
         public ?string $cnpj = null,        // CNPJ credenciadora (para cartão)
         public ?string $tBand = null,       // Bandeira do cartão (01=Visa, 02=Master, etc)
         public ?string $cAut = null,        // Autorização da operação
+        public ?string $indPag = null,      // 0=À vista, 1=A prazo
     ) {}
 
     /**
@@ -74,8 +76,14 @@ class PagamentoDTO
     public function toStdClass(): \stdClass
     {
         $obj = new \stdClass;
+        if ($this->indPag !== null) {
+            $obj->indPag = $this->indPag;
+        }
         $obj->tPag = $this->tPag;
         $obj->vPag = $this->vPag;
+        if ($this->xPag !== null) {
+            $obj->xPag = $this->xPag;
+        }
         if ($this->tpIntegra !== null) {
             $obj->tpIntegra = $this->tpIntegra;
         }

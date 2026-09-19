@@ -17,10 +17,12 @@ final class NfseNacionalPublicPayloadMapper
         $emitente = $this->array($payload['emitente'] ?? []);
         $tomador = $this->array($payload['tomador'] ?? []);
         $servico = $this->array($payload['servico'] ?? []);
+        $observacoes = $this->array($payload['observacoes'] ?? []);
         $tributacao = $this->array($payload['tributacao'] ?? []);
         $tributacaoMunicipal = $this->array($tributacao['municipal'] ?? []);
         $emitenteEndereco = $this->address($emitente);
         $tomadorEndereco = $this->address($tomador);
+        $tomadorNaoInformado = ($tomador['situacao'] ?? null) === 'nao_informado';
         $empresaConfig = $this->array($context['empresa_config'] ?? []);
 
         $mei = NfseNacionalTaxRegimeResolver::mei($emitente, $empresaConfig);
@@ -52,10 +54,10 @@ final class NfseNacionalPublicPayloadMapper
         $ibscbs = $this->mapIbscbs($tributacao);
         $regApIbscbsSn = $this->dataGet($tributacao, 'ibs_cbs.regime_apuracao_simples_nacional');
 
-        return array_filter([
+        $mapped = array_filter([
             'tpAmb' => ($context['fiscal_environment'] ?? null) === 'producao' ? '1' : '2',
             'dhEmi' => $identificacao['data_emissao'] ?? null,
-            'verAplic' => (string) ($context['ver_aplic'] ?? 'fiscal-platform-api'),
+            'verAplic' => $this->applicationVersion($identificacao, $empresaConfig, $context),
             'serie' => (string) ($identificacao['serie'] ?? '1'),
             'nDPS' => isset($identificacao['numero']) ? (string) $identificacao['numero'] : null,
             'dCompet' => $identificacao['data_competencia']
@@ -74,7 +76,7 @@ final class NfseNacionalPublicPayloadMapper
                 'regEspTrib' => (string) ($emitente['regime_especial_tributacao'] ?? '0'),
                 'codigoMunicipio' => (string) ($emitenteEndereco['codigo_municipio'] ?? $this->dataGet($empresaConfig, 'nfse.codigo_ibge') ?? ''),
             ], static fn (mixed $value): bool => $value !== null && $value !== ''),
-            'tomador' => [
+            'tomador' => $tomadorNaoInformado ? null : [
                 'documento' => $this->fiscalDocument((string) ($tomador['cpf_cnpj'] ?? '')),
                 'razaoSocial' => (string) ($tomador['razao_social'] ?? ''),
                 'email' => $tomador['email'] ?? null,
@@ -106,7 +108,33 @@ final class NfseNacionalPublicPayloadMapper
             'valores' => $valores !== [] ? $valores : null,
             'tributacao' => $tributacaoCore !== [] ? $tributacaoCore : null,
             'ibscbs' => $ibscbs !== [] ? $ibscbs : null,
+            'observacoes' => $observacoes !== [] ? $observacoes : null,
         ], static fn (mixed $value): bool => $value !== null && $value !== '');
+
+        if ($tomadorNaoInformado) {
+            $mapped['_nfse_taker_situation'] = 'nao_informado';
+            if (is_array($context['nfse_taker_policy'] ?? null)) {
+                $mapped['_nfse_taker_policy'] = $context['nfse_taker_policy'];
+            }
+        }
+
+        return $mapped;
+    }
+
+    /**
+     * @param  array<string,mixed>  $identificacao
+     * @param  array<string,mixed>  $empresaConfig
+     * @param  array<string,mixed>  $context
+     */
+    private function applicationVersion(array $identificacao, array $empresaConfig, array $context): string
+    {
+        return $this->firstString([
+            $identificacao['versao_aplicativo'] ?? null,
+            $context['ver_aplic'] ?? null,
+            $this->dataGet($empresaConfig, 'nfse.ver_aplic'),
+            $this->dataGet($empresaConfig, 'nfse.verAplic'),
+            'fiscal-platform-api',
+        ]) ?? 'fiscal-platform-api';
     }
 
     /**

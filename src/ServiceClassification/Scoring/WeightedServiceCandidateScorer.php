@@ -19,6 +19,8 @@ final class WeightedServiceCandidateScorer implements ServiceCandidateScorer
             'municipal_tax_exact' => 50,
             'lc116_exact' => 30,
             'nbs_exact' => 50,
+            'operation_indicator_exact' => 50,
+            'tax_classification_exact' => 50,
             'description_similarity' => 25,
             'cnae_compatible' => 10,
             'same_municipality' => 20,
@@ -43,6 +45,8 @@ final class WeightedServiceCandidateScorer implements ServiceCandidateScorer
         $this->exact($breakdown, 'municipal_tax_exact', NormalizedCode::municipalTax($input->municipalTaxCode), NormalizedCode::municipalTax($candidate->municipalTaxCode), $weights);
         $this->exact($breakdown, 'lc116_exact', NormalizedCode::lc116($input->lc116Code), NormalizedCode::lc116($candidate->lc116Code), $weights);
         $this->exact($breakdown, 'nbs_exact', NormalizedCode::nbs($input->nbsCode), NormalizedCode::nbs($candidate->nbsCode), $weights);
+        $this->exact($breakdown, 'operation_indicator_exact', NormalizedCode::operationIndicator($input->operationIndicatorCode), NormalizedCode::operationIndicator($candidate->operationIndicatorCode), $weights);
+        $this->exact($breakdown, 'tax_classification_exact', NormalizedCode::taxClassification($input->taxClassificationCode), NormalizedCode::taxClassification($candidate->taxClassificationCode), $weights);
 
         if ($candidate->municipalityCode !== null) {
             $breakdown['same_municipality'] = $weights['same_municipality'];

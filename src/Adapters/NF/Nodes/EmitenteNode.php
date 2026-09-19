@@ -2,9 +2,9 @@
 
 namespace sabbajohn\FiscalCore\Adapters\NF\Nodes;
 
-use NFePHP\NFe\Make;
 use sabbajohn\FiscalCore\Adapters\NF\Core\NotaNodeInterface;
 use sabbajohn\FiscalCore\Adapters\NF\DTO\EmitenteDTO;
+use NFePHP\NFe\Make;
 
 /**
  * Node para tag <emit> (Emitente)
@@ -16,27 +16,32 @@ class EmitenteNode implements NotaNodeInterface
     public function addToMake(Make $make): void
     {
         $emit = (object) [
-            'CNPJ' => $this->dto->cnpj,
-            'xNome' => $this->dto->razaoSocial,
-            'xFant' => $this->dto->nomeFantasia,
+            'xNome' => mb_substr(trim($this->dto->razaoSocial), 0, 60),
+            'xFant' => mb_substr(trim($this->dto->nomeFantasia), 0, 60),
             'IE' => $this->dto->inscricaoEstadual,
             'IM' => $this->dto->inscricaoMunicipal,
             'CNAE' => $this->dto->cnae,
             'CRT' => $this->dto->crt,
         ];
+        $document = preg_replace('/\D+/', '', $this->dto->cnpj) ?? '';
+        if (strlen($document) === 11) {
+            $emit->CPF = $document;
+        } else {
+            $emit->CNPJ = $document;
+        }
         $make->tagemit($emit);
 
         $enderEmit = (object) [
-            'xLgr' => $this->dto->logradouro,
+            'xLgr' => mb_substr(trim($this->dto->logradouro), 0, 60),
             'nro' => $this->dto->numero,
-            'xCpl' => $this->dto->complemento,
+            'xCpl' => mb_substr(trim($this->dto->complemento), 0, 60),
             'xBairro' => $this->dto->bairro,
             'cMun' => $this->dto->codigoMunicipio,
-            'xMun' => $this->dto->nomeMunicipio,
+            'xMun' => mb_substr(trim($this->dto->nomeMunicipio), 0, 60),
             'UF' => $this->dto->uf,
             'CEP' => $this->dto->cep,
             'cPais' => $this->dto->codigoPais,
-            'xPais' => $this->dto->nomePais,
+            'xPais' => mb_substr(trim($this->dto->nomePais), 0, 60),
             'fone' => $this->dto->telefone ?? '',
         ];
         $make->tagenderEmit($enderEmit);
@@ -44,9 +49,8 @@ class EmitenteNode implements NotaNodeInterface
 
     public function validate(): bool
     {
-        // Validação CNPJ (14 dígitos)
-        if (! preg_match('/^\d{14}$/', $this->dto->cnpj)) {
-            throw new \InvalidArgumentException('CNPJ inválido');
+        if (! preg_match('/^\d{11}(\d{3})?$/', preg_replace('/\D+/', '', $this->dto->cnpj) ?? '')) {
+            throw new \InvalidArgumentException('CPF ou CNPJ do emitente inválido');
         }
 
         if (empty($this->dto->razaoSocial)) {

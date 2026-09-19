@@ -2,8 +2,8 @@
 
 namespace sabbajohn\FiscalCore\Adapters\NF\Nodes;
 
-use NFePHP\NFe\Make;
 use sabbajohn\FiscalCore\Adapters\NF\Core\NotaNodeInterface;
+use NFePHP\NFe\Make;
 
 class ImpostoSeletivoNode implements NotaNodeInterface
 {

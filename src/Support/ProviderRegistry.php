@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace sabbajohn\FiscalCore\Support;
 
+use sabbajohn\FiscalCore\Contracts\NFSeProviderConfigInterface;
 use JsonException;
 use RuntimeException;
-use sabbajohn\FiscalCore\Contracts\NFSeProviderConfigInterface;
 
 class ProviderRegistry
 {

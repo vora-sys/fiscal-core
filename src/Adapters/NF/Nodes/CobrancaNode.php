@@ -2,10 +2,10 @@
 
 namespace sabbajohn\FiscalCore\Adapters\NF\Nodes;
 
-use NFePHP\NFe\Make;
 use sabbajohn\FiscalCore\Adapters\NF\Core\NotaNodeInterface;
 use sabbajohn\FiscalCore\Adapters\NF\DTO\CobrancaDTO;
 use sabbajohn\FiscalCore\Adapters\NF\Helpers\StdClassBuilder;
+use NFePHP\NFe\Make;
 
 /**
  * Node para dados de cobrança
@@ -38,12 +38,12 @@ class CobrancaNode implements NotaNodeInterface
     {
         // Adicionar fatura
         if ($this->cobranca->numeroFatura) {
-            $make->tagfat(StdClassBuilder::props(
-                $this->cobranca->numeroFatura,
-                $this->cobranca->valorOriginal,
-                $this->cobranca->valorDesconto,
-                $this->cobranca->valorLiquido
-            ));
+            $make->tagfat(StdClassBuilder::create([
+                'nFat' => $this->cobranca->numeroFatura,
+                'vOrig' => $this->cobranca->valorOriginal,
+                'vDesc' => $this->cobranca->valorDesconto ?? 0.0,
+                'vLiq' => $this->cobranca->valorLiquido,
+            ]));
         }
 
         // Adicionar duplicatas

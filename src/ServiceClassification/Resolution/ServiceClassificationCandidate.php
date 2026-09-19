@@ -31,6 +31,10 @@ final class ServiceClassificationCandidate
     /** @return array<string, mixed> */
     public function toArray(): array
     {
+        $operation = is_array($this->metadata['operation_indicator'] ?? null)
+            ? $this->metadata['operation_indicator']
+            : null;
+
         return [
             'id' => $this->id,
             'lc116_code' => $this->lc116Code,
@@ -41,6 +45,12 @@ final class ServiceClassificationCandidate
             'operation_indicator_code' => $this->operationIndicatorCode,
             'tax_classification_code' => $this->taxClassificationCode,
             'description' => $this->description,
+            'ibs_incidence_location' => $this->metadata['ibs_incidence_location'] ?? null,
+            'tax_classification_description' => $this->metadata['tax_classification_description'] ?? null,
+            'operation_indicator' => $operation,
+            'taker_requirement' => is_array($this->metadata['taker_requirement'] ?? null)
+                ? $this->metadata['taker_requirement']
+                : null,
             'iss_rate' => $this->issRate,
             'iss_withholding' => $this->issWithholding,
             'iss_exigibility' => $this->issExigibility,

@@ -2,10 +2,10 @@
 
 namespace sabbajohn\FiscalCore\Adapters\NF\Nodes;
 
-use NFePHP\NFe\Make;
 use sabbajohn\FiscalCore\Adapters\NF\Core\NotaNodeInterface;
 use sabbajohn\FiscalCore\Adapters\NF\DTO\TransporteDTO;
 use sabbajohn\FiscalCore\Adapters\NF\Helpers\StdClassBuilder;
+use NFePHP\NFe\Make;
 
 /**
  * Node para dados de transporte

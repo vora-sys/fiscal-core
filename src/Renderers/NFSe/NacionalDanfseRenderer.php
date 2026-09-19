@@ -1,899 +1,183 @@
 <?php
 
-declare(strict_types=1);
-
 namespace sabbajohn\FiscalCore\Renderers\NFSe;
 
-use Com\Tecnick\Barcode\Barcode;
-use DOMAttr;
-use DOMDocument;
-use DOMNode;
-use DOMNodeList;
+use sabbajohn\FiscalCore\Contracts\MunicipalDanfseRendererInterface;
+use sabbajohn\FiscalCore\Helpers\NFSe\Formatter;
+use sabbajohn\FiscalCore\Helpers\NFSe\QrCodeGen;
 use Dompdf\Dompdf;
 use Dompdf\Options;
-use DOMXPath;
-use RuntimeException;
-use sabbajohn\FiscalCore\Contracts\MunicipalDanfseRendererInterface;
 
-final class NacionalDanfseRenderer implements MunicipalDanfseRendererInterface
+class NacionalDanfseRenderer implements MunicipalDanfseRendererInterface
 {
-    private const NATIONAL_PUBLIC_QUERY_URL = 'https://www.nfse.gov.br/ConsultaPublica/';
+    /**
+     * Logo oficial reduzida e incorporada para manter HTML e PDF idênticos.
+     * O Dompdf roda sem acesso remoto, portanto uma URL externa não é confiável.
+     */
+    private const LOGO_DATA_URI = 'data:image/png;base64,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';
 
-    public function render(string $xmlNfse): string
+    public function prepare(array $dados, array $context = []): array
     {
-        $data = $this->extractDocumentData($xmlNfse);
-        $html = $this->buildHtml($data);
+        $dados['logo'] = self::LOGO_DATA_URI;
+        $dados['identificacao']['competencia'] = Formatter::data($dados['identificacao']['competencia'] ?? null);
+        $dados['identificacao']['emissao_nfse'] = Formatter::dataHora($dados['identificacao']['emissao_nfse'] ?? null);
+        $dados['identificacao']['emissao_dps'] = Formatter::dataHora($dados['identificacao']['emissao_dps'] ?? null);
+        $dados['prestador']['documento'] = Formatter::documento($dados['prestador']['documento'] ?? null);
+        $dados['prestador']['telefone'] = Formatter::telefone($dados['prestador']['telefone'] ?? null);
+        $dados['prestador']['endereco'] = Formatter::endereco($dados['prestador']['endereco_logradouro'] ?? null, $dados['prestador']['endereco_numero'] ?? null, $dados['prestador']['endereco_complemento'] ?? null);
+        $dados['prestador']['municipio_uf'] = Formatter::municipioUf($dados['prestador']['endereco_municipio'] ?? null, $dados['prestador']['endereco_estado'] ?? null);
+        $dados['prestador']['ibge_cep'] = Formatter::ibgeCep($dados['prestador']['codigo_ibge'] ?? null, $dados['prestador']['endereco_cep'] ?? null);
+
+        $dados['identificacao']['numero_nfse'] = Formatter::vazio($dados['identificacao']['numero_nfse'] ?? null);
+        $dados['identificacao']['numero_dps'] = Formatter::vazio($dados['identificacao']['numero_dps'] ?? null);
+        $statusCode = trim((string) ($dados['identificacao']['status'] ?? ''));
+        $dados['identificacao']['status_code'] = Formatter::vazio($statusCode);
+        $dados['identificacao']['status'] = match ($statusCode) {
+            '100' => 'NFS-e gerada',
+            // Embora o leiaute 1.01 liste apenas os códigos de situação
+            // vigentes, o retorno do ADN para a emissão por substituição usa
+            // cStat 101. O vínculo também está em subst/chSubstda.
+            '101' => 'NFS-e de substituição gerada',
+            '102' => 'NFS-e por decisão judicial',
+            '103' => 'NFS-e avulsa',
+            '107' => 'NFS-e MEI',
+            default => Formatter::vazio($statusCode),
+        };
+
+        $chave = $dados['identificacao']['chave'] ?? '';
+        if (str_starts_with($chave, 'NFS')) {
+            $chave = substr($chave, 3);
+        }
+        $dados['identificacao']['chave'] = Formatter::vazio($chave);
+
+        $dados['qrcode'] = $dados['identificacao']['chave'] ? QrCodeGen::image($dados['identificacao']['chave']) : null;
+        $dados['url_consulta'] = QrCodeGen::url($dados['identificacao']['chave'] ?? '');
+
+        // O XML assinado 1.01 não é alterado pelos eventos. A situação atual
+        // vem do documento/evento distribuído e é fornecida pelo chamador.
+        $danfseContext = is_array($context['danfse'] ?? null) ? $context['danfse'] : [];
+        $dados['cancelada'] = (bool) ($danfseContext['cancelada'] ?? false);
+        $dados['substituida'] = (bool) ($danfseContext['substituida'] ?? false)
+            || $statusCode === '101';
+
+        $dados['ibscbs']['ibge'] = '';
+        $dados['ibscbs']['uf'] = '';
+        $dados['ibscbs']['iimu'] = $dados['ibscbs']['indicador_operacao'].' / '.$dados['ibscbs']['ibge'].' / '.$dados['ibscbs']['municipio'].' / '.$dados['ibscbs']['uf'];
+
+        $dados['ibscbs']['ibsufmun'] = $dados['ibscbs']['aliquota_ibs_uf'].'% / '.$dados['ibscbs']['aliquota_ibs_municipio'].'%';
+
+        foreach (['codigo_tributacao', 'codigo_nbs', 'descricao_tributacao', 'descricao', 'local_prestacao', 'codigo_municipio'] as $campo) {
+            $dados['servico'][$campo] = Formatter::vazio($dados['servico'][$campo] ?? null);
+        }
+
+        if (! empty($dados['tomador'])) {
+            $dados['tomador']['documento'] = Formatter::documento($dados['tomador']['documento'] ?? null);
+            $dados['tomador']['telefone'] = Formatter::telefone($dados['tomador']['telefone'] ?? null);
+            $dados['tomador']['endereco'] = Formatter::endereco($dados['tomador']['endereco_logradouro'] ?? null, $dados['tomador']['endereco_numero'] ?? null, $dados['tomador']['endereco_complemento'] ?? null);
+            $dados['tomador']['municipio_uf'] = Formatter::municipioUf($dados['tomador']['endereco_municipio'] ?? null, $dados['tomador']['endereco_estado'] ?? null);
+            $dados['tomador']['ibge_cep'] = Formatter::ibgeCep($dados['tomador']['codigo_ibge'] ?? null, $dados['tomador']['endereco_cep'] ?? null);
+        }
+
+        if (! empty($dados['destinatario'])) {
+            $dados['destinatario']['documento'] = Formatter::documento($dados['destinatario']['documento'] ?? null);
+            $dados['destinatario']['telefone'] = Formatter::telefone($dados['destinatario']['telefone'] ?? null);
+            $dados['destinatario']['endereco'] = Formatter::endereco($dados['destinatario']['endereco_logradouro'] ?? null, $dados['destinatario']['endereco_numero'] ?? null, $dados['destinatario']['endereco_complemento'] ?? null);
+            $dados['destinatario']['municipio_uf'] = Formatter::municipioUf($dados['destinatario']['endereco_municipio'] ?? null, $dados['destinatario']['endereco_estado'] ?? null);
+            $dados['destinatario']['ibge_cep'] = Formatter::ibgeCep($dados['destinatario']['codigo_ibge'] ?? null, $dados['destinatario']['endereco_cep'] ?? null);
+        }
+
+        if (! empty($dados['intermediario'])) {
+            $dados['intermediario']['documento'] = Formatter::documento($dados['intermediario']['documento'] ?? null);
+            $dados['intermediario']['telefone'] = Formatter::telefone($dados['intermediario']['telefone'] ?? null);
+            $dados['intermediario']['endereco'] = Formatter::endereco($dados['intermediario']['endereco_logradouro'] ?? null, $dados['intermediario']['endereco_numero'] ?? null, $dados['intermediario']['endereco_complemento'] ?? null);
+            $dados['intermediario']['municipio_uf'] = Formatter::municipioUf($dados['intermediario']['endereco_municipio'] ?? null, $dados['intermediario']['endereco_estado'] ?? null);
+            $dados['intermediario']['ibge_cep'] = Formatter::ibgeCep($dados['intermediario']['codigo_ibge'] ?? null, $dados['intermediario']['endereco_cep'] ?? null);
+        }
+
+        foreach (['deducoes', 'desconto_incondicionado', 'base_calculo', 'valor_issqn'] as $campo) {
+            $dados['issqn'][$campo] = Formatter::moeda($dados['issqn'][$campo] ?? null);
+        }
+
+        foreach (['tipo_tributacao', 'municipio_incidencia', 'codigo_municipio', 'regime_especial', 'imunidade', 'suspensao', 'processo', 'beneficio', 'retencao'] as $campo) {
+            $dados['issqn'][$campo] = Formatter::vazio($dados['issqn'][$campo] ?? null);
+        }
+
+        $dados['issqn']['aliquota'] = Formatter::percentual($dados['issqn']['aliquota'] ?? null);
+
+        foreach ($dados['federal'] as $campo => $valor) {
+            if ($campo !== 'descricao') {
+                $dados['federal'][$campo] = Formatter::moeda($valor);
+            }
+        }
+
+        foreach (['base', 'valor_ibs_uf', 'valor_ibs_municipio', 'valor_total_ibs', 'valor_cbs'] as $campo) {
+            $dados['ibscbs'][$campo] = Formatter::moeda($dados['ibscbs'][$campo] ?? null);
+        }
+
+        foreach (['aliquota_ibs_uf', 'aliquota_ibs_municipio', 'aliquota_cbs', 'aliquota_efetiva_ibs_uf', 'aliquota_efetiva_ibs_municipio', 'aliquota_efetiva_cbs'] as $campo) {
+            $dados['ibscbs'][$campo] = Formatter::percentual($dados['ibscbs'][$campo] ?? null);
+        }
+
+        foreach (['cst', 'indicador_operacao', 'municipio'] as $campo) {
+            $dados['ibscbs'][$campo] = Formatter::vazio($dados['ibscbs'][$campo] ?? null);
+        }
+
+        $dados['totais']['total_final'] = 'R$ ';
+        foreach ($dados['totais'] as $campo => $valor) {
+            if ($campo === 'total_final') {
+                continue;
+            }
+
+            $dados['totais'][$campo] = Formatter::moeda($valor);
+        }
+
+        $dados['totais']['valor_total_nota'] = Formatter::moeda($dados['totais']['valor_total_nota'] ?? null);
+
+        foreach (['informacoes_complementares', 'informacoes_municipio', 'obra', 'inscricao_imobiliaria', 'evento', 'nfse_substituida'] as $campo) {
+            $dados['informacoes'][$campo] = Formatter::vazio($dados['informacoes'][$campo] ?? null);
+        }
+
+        foreach (['tributos_aproximados_federal', 'tributos_aproximados_estadual', 'tributos_aproximados_municipal'] as $campo) {
+            $dados['informacoes'][$campo] = Formatter::moeda($dados['informacoes'][$campo] ?? null);
+        }
+
+        return $dados;
+    }
+
+    public function render(string $xml, array $context = []): string
+    {
+        $html = $this->renderHtml($xml, $context);
 
         $options = new Options;
         $options->set('isRemoteEnabled', false);
         $options->set('defaultFont', 'DejaVu Sans');
-        $options->set('isHtml5ParserEnabled', true);
 
         $dompdf = new Dompdf($options);
         $dompdf->loadHtml($html, 'UTF-8');
-        $dompdf->setPaper('A4', 'portrait');
+        $dompdf->setPaper('A4');
         $dompdf->render();
 
         return $dompdf->output();
     }
 
-    private function extractDocumentData(string $xmlNfse): array
+    public function renderHtml(string $xml, array $context = []): string
     {
-        $dom = new DOMDocument;
-        if (! @$dom->loadXML($xmlNfse)) {
-            throw new RuntimeException('XML final da NFSe invalido para gerar o DANFSe nacional.');
-        }
+        $xmlreader = new XmlReader;
 
-        $xpath = new DOMXPath($dom);
-
-        $identificacao = [
-            'municipio_ambiente' => $this->joinNonEmpty(' / ', [
-                $this->nodeValue($xpath, "//*[local-name()='infNFSe']/*[local-name()='xLocEmi']"),
-                $this->nodeValue($xpath, "//*[local-name()='infNFSe']/*[local-name()='UF']"),
-            ]),
-            'ambiente_gerador' => $this->nodeValue($xpath, "//*[local-name()='infNFSe']/*[local-name()='ambGer']"),
-            'tipo_ambiente' => $this->mapAmbiente($this->nodeValue($xpath, "//*[local-name()='infDPS']/*[local-name()='tpAmb']")),
-            'chave_acesso' => $this->normalizeChaveAcesso($this->attributeValue($xpath, "//*[local-name()='infNFSe']/@Id")),
-            'numero_nfse' => $this->nodeValue($xpath, "//*[local-name()='infNFSe']/*[local-name()='nNFSe']"),
-            'competencia' => $this->formatDate($this->nodeValue($xpath, "//*[local-name()='infDPS']/*[local-name()='dCompet']")),
-            'data_hora_emissao_nfse' => $this->formatDateTime($this->nodeValue($xpath, "//*[local-name()='infNFSe']/*[local-name()='dhProc']")),
-            'numero_dps' => $this->nodeValue($xpath, "//*[local-name()='infDPS']/*[local-name()='nDPS']"),
-            'serie_dps' => $this->nodeValue($xpath, "//*[local-name()='infDPS']/*[local-name()='serie']"),
-            'data_hora_emissao_dps' => $this->formatDateTime($this->nodeValue($xpath, "//*[local-name()='infDPS']/*[local-name()='dhEmi']")),
-            'emitente_nfse' => $this->nodeValue($xpath, "//*[local-name()='infDPS']/*[local-name()='emit']/*[local-name()='xNome']"),
-            'situacao' => $this->resolveSituacao($xpath),
-            'finalidade' => $this->mapFinalidade($this->nodeValue($xpath, "//*[local-name()='infDPS']/*[local-name()='finNFSe']")),
-        ];
-
-        $prestador = $this->extractPartyData($xpath, 'emit', true);
-        $prestador['simples_nacional'] = $this->mapSimplesNacional($this->nodeValue($xpath, "//*[local-name()='infDPS']/*[local-name()='emit']/*[local-name()='CRT']"));
-        $prestador['regime_apuracao_sn'] = $this->nodeValue($xpath, "//*[local-name()='infDPS']/*[local-name()='emit']/*[local-name()='regApTribSN']");
-
-        $serviceDescription = $this->joinParagraphs([
-            $this->nodeValue($xpath, "//*[local-name()='xServ']"),
-            $this->nodeValue($xpath, "//*[local-name()='xInfComp']"),
-        ]);
-        [$federalRetentions, $federalRetentionTotal] = $this->collectFederalRetentions($xpath);
-
-        $service = [
-            'codigo_tributacao' => $this->joinNonEmpty(' / ', [
-                $this->nodeValue($xpath, "//*[local-name()='cTribNac']"),
-                $this->nodeValue($xpath, "//*[local-name()='cTribMun']"),
-            ]),
-            'codigo_nbs' => $this->nodeValue($xpath, "//*[local-name()='cNBS']"),
-            'local_prestacao' => $this->joinNonEmpty(' / ', [
-                $this->nodeValue($xpath, "//*[local-name()='xLocPrestacao']"),
-                $this->nodeValue($xpath, "//*[local-name()='UFPrest']"),
-                $this->nodeValue($xpath, "//*[local-name()='xPaisPrestacao']"),
-            ]),
-            'descricao_tributacao' => $this->joinParagraphs([
-                $this->nodeValue($xpath, "//*[local-name()='xTribNac']"),
-                $this->nodeValue($xpath, "//*[local-name()='xTribMun']"),
-            ]),
-            'descricao_servico' => $serviceDescription,
-        ];
-
-        $issqn = [
-            'tipo_tributacao_issqn' => $this->nodeValue($xpath, "//*[local-name()='tribISSQN']/*[local-name()='tpTrib']"),
-            'municipio_incidencia' => $this->joinNonEmpty(' / ', [
-                $this->nodeValue($xpath, "//*[local-name()='tribISSQN']/*[local-name()='xMunInc']"),
-                $this->nodeValue($xpath, "//*[local-name()='tribISSQN']/*[local-name()='UF']"),
-                $this->nodeValue($xpath, "//*[local-name()='tribISSQN']/*[local-name()='xPais']"),
-            ]),
-            'regime_especial' => $this->nodeValue($xpath, "//*[local-name()='tribISSQN']/*[local-name()='regEspTrib']"),
-            'tipo_imunidade' => $this->nodeValue($xpath, "//*[local-name()='tribISSQN']/*[local-name()='tpImunidade']"),
-            'suspensao_exigibilidade' => $this->mapBooleanCode($this->nodeValue($xpath, "//*[local-name()='tribISSQN']/*[local-name()='suspExig']")),
-            'processo_suspensao' => $this->nodeValue($xpath, "//*[local-name()='tribISSQN']/*[local-name()='nProcSusp']"),
-            'beneficio_municipal' => $this->nodeValue($xpath, "//*[local-name()='BM']/*[local-name()='nBM']"),
-            'calculo_bm' => $this->formatDecimal($this->nodeValue($xpath, "//*[local-name()='BM']/*[local-name()='pRedBCBM']")),
-            'deducoes_reducoes' => $this->formatDecimal($this->nodeValue($xpath, "//*[local-name()='vDeducao']")),
-            'desconto_incondicionado' => $this->formatDecimal($this->nodeValue($xpath, "//*[local-name()='vDescIncond']")),
-            'base_calculo' => $this->formatDecimal($this->nodeValue($xpath, "//*[local-name()='vBC']")),
-            'aliquota_aplicada' => $this->formatDecimal($this->nodeValue($xpath, "//*[local-name()='pAliq']")),
-            'retencao_issqn' => $this->mapIssRetido($this->nodeValue($xpath, "//*[local-name()='tpRetISSQN']")),
-            'issqn_apurado' => $this->formatDecimal($this->nodeValue($xpath, "//*[local-name()='vISSQN']")),
-        ];
-
-        $federal = [
-            'base_calculo' => $this->formatDecimal($this->nodeValue($xpath, "//*[local-name()='tribFed']/*[local-name()='vBC']")),
-            'aliquota' => $this->formatDecimal($this->nodeValue($xpath, "//*[local-name()='tribFed']/*[local-name()='pTotTrib']")),
-            'valor_total' => $this->formatDecimal($this->nodeValue($xpath, "//*[local-name()='tribFed']/*[local-name()='vTotTrib']")),
-            'retencoes' => $federalRetentions,
-            'descricao_retencoes' => $this->joinParagraphs($federalRetentions),
-        ];
-
-        $ibsCbs = [
-            'cst_classificacao' => $this->joinNonEmpty(' / ', [
-                $this->nodeValue($xpath, "//*[local-name()='IBSCBS']/*[local-name()='CST']"),
-                $this->nodeValue($xpath, "//*[local-name()='IBSCBS']/*[local-name()='cClassTrib']"),
-            ]),
-            'indicador_operacao_incidencia' => $this->joinNonEmpty(' / ', [
-                $this->nodeValue($xpath, "//*[local-name()='IBSCBS']/*[local-name()='indOper']"),
-                $this->nodeValue($xpath, "//*[local-name()='IBSCBS']/*[local-name()='cMunInc']"),
-                $this->nodeValue($xpath, "//*[local-name()='IBSCBS']/*[local-name()='xMunInc']"),
-                $this->nodeValue($xpath, "//*[local-name()='IBSCBS']/*[local-name()='UF']"),
-            ]),
-            'exclusoes_reducoes_bc' => $this->formatDecimal($this->nodeValue($xpath, "//*[local-name()='IBSCBS']/*[local-name()='vRedBC']")),
-            'base_calculo_apos_reducoes' => $this->formatDecimal($this->nodeValue($xpath, "//*[local-name()='IBSCBS']/*[local-name()='vBC']")),
-            'reducoes_aliquota' => $this->joinNonEmpty(' / ', [
-                $this->formatDecimal($this->nodeValue($xpath, "//*[local-name()='IBSCBS']/*[local-name()='pRedAliqIBSMun']")),
-                $this->formatDecimal($this->nodeValue($xpath, "//*[local-name()='IBSCBS']/*[local-name()='pRedAliqCBS']")),
-            ]),
-            'aliquota_ibs_estadual_municipal' => $this->joinNonEmpty(' / ', [
-                $this->formatDecimal($this->nodeValue($xpath, "//*[local-name()='IBSCBS']/*[local-name()='uf']/*[local-name()='pIBS']")),
-                $this->formatDecimal($this->nodeValue($xpath, "//*[local-name()='IBSCBS']/*[local-name()='mun']/*[local-name()='pIBS']")),
-            ]),
-            'aliquota_efetiva_ibs_municipal' => $this->formatDecimal($this->nodeValue($xpath, "//*[local-name()='IBSCBS']/*[local-name()='mun']/*[local-name()='pAliqEfet']")),
-            'valor_apurado_ibs_municipal' => $this->formatDecimal($this->nodeValue($xpath, "//*[local-name()='gIBSMunTot']/*[local-name()='vIBSMun']")),
-            'aliquota_efetiva_ibs_estadual' => $this->formatDecimal($this->nodeValue($xpath, "//*[local-name()='IBSCBS']/*[local-name()='uf']/*[local-name()='pAliqEfet']")),
-            'valor_apurado_ibs_estadual' => $this->formatDecimal($this->nodeValue($xpath, "//*[local-name()='gIBSUFTot']/*[local-name()='vIBSUF']")),
-            'valor_total_ibs' => $this->formatDecimal($this->nodeValue($xpath, "//*[local-name()='gIBS']/*[local-name()='vIBSTot']")),
-            'aliquota_cbs' => $this->formatDecimal($this->nodeValue($xpath, "//*[local-name()='IBSCBS']/*[local-name()='fed']/*[local-name()='pCBS']")),
-            'aliquota_efetiva_cbs' => $this->formatDecimal($this->nodeValue($xpath, "//*[local-name()='IBSCBS']/*[local-name()='fed']/*[local-name()='pAliqEfet']")),
-            'valor_total_cbs' => $this->formatDecimal($this->nodeValue($xpath, "//*[local-name()='gCBS']/*[local-name()='vCBS']")),
-        ];
-
-        $valorLiquido = $this->parseDecimal($this->nodeValue($xpath, "//*[local-name()='vLiq']"));
-        $valorTotalIbsCbs = $this->sumDecimals([
-            $this->nodeValue($xpath, "//*[local-name()='gIBS']/*[local-name()='vIBSTot']"),
-            $this->nodeValue($xpath, "//*[local-name()='gCBS']/*[local-name()='vCBS']"),
-        ]);
-
-        $totals = [
-            'valor_operacao_servico' => $this->formatDecimal($this->nodeValue($xpath, "//*[local-name()='vServPrest']/*[local-name()='vServ']")),
-            'desconto_incondicionado' => $this->formatDecimal($this->nodeValue($xpath, "//*[local-name()='vDescIncond']")),
-            'desconto_condicionado' => $this->formatDecimal($this->nodeValue($xpath, "//*[local-name()='vDescCond']")),
-            'total_retencoes' => $this->formatDecimal(($this->parseDecimal($this->nodeValue($xpath, "//*[local-name()='vRetISSQN']")) + $federalRetentionTotal) ?: null),
-            'valor_liquido_nfse' => $this->formatDecimal($this->nodeValue($xpath, "//*[local-name()='vLiq']")),
-            'total_ibs_cbs' => $this->formatDecimal($valorTotalIbsCbs ?: null),
-            'valor_liquido_mais_ibs_cbs' => $this->formatDecimal(($valorLiquido + $valorTotalIbsCbs) ?: null),
-        ];
-
-        $complementares = [
-            'imovel' => $this->joinParagraphs([
-                $this->nodeValue($xpath, "//*[local-name()='imovel']/*[local-name()='inscricaoImob']"),
-                $this->nodeValue($xpath, "//*[local-name()='imovel']/*[local-name()='end']/*[local-name()='xLgr']"),
-            ]),
-            'obra' => $this->joinParagraphs([
-                $this->nodeValue($xpath, "//*[local-name()='obra']/*[local-name()='cObra']"),
-                $this->nodeValue($xpath, "//*[local-name()='obra']/*[local-name()='ART']"),
-            ]),
-            'evento' => $this->joinParagraphs([
-                $this->nodeValue($xpath, "//*[local-name()='evento']/*[local-name()='descEvento']"),
-                $this->nodeValue($xpath, "//*[local-name()='evento']/*[local-name()='xEvento']"),
-            ]),
-            'informacoes_complementares' => $this->joinParagraphs([
-                $this->nodeValue($xpath, "//*[local-name()='infAdFisco']"),
-                $this->nodeValue($xpath, "//*[local-name()='infCpl']"),
-                $this->nodeValue($xpath, "//*[local-name()='xInfComp']"),
-            ]),
-            'informacoes_administracao' => $this->joinParagraphs([
-                $this->nodeValue($xpath, "//*[local-name()='infMun']"),
-                $this->nodeValue($xpath, "//*[local-name()='xInfMun']"),
-            ]),
-            'totais_aproximados_tributos' => $this->nodeValue($xpath, "//*[local-name()='xTotTrib']"),
-        ];
-
-        $statusBadges = array_values(array_filter([
-            $this->isHomologacao($xpath) ? 'NFS-e SEM VALIDADE JURIDICA' : null,
-            $this->isCancelled($xpath) ? 'NFS-E CANCELADA' : null,
-            $this->isSubstituted($xpath) ? 'NFS-E SUBSTITUIDA' : null,
-        ]));
-
-        $qrCodeUrl = $this->buildQrCodeQueryUrl(
-            $identificacao['chave_acesso'],
-            $prestador['documento'],
-            $identificacao['numero_dps'],
-            $identificacao['serie_dps'],
-            $identificacao['municipio_ambiente']
+        $dados = $this->prepare(
+            $xmlreader->read($xml),
+            $context,
         );
 
-        return [
-            'identificacao' => $identificacao,
-            'prestador' => $prestador,
-            'tomador' => $this->extractPartyData($xpath, 'toma', true),
-            'destinatario' => $this->extractPartyData($xpath, 'dest', false),
-            'intermediario' => $this->extractPartyData($xpath, 'interm', true),
-            'servico' => $service,
-            'issqn' => $issqn,
-            'federal' => $federal,
-            'ibs_cbs' => $ibsCbs,
-            'totais' => $totals,
-            'complementares' => $complementares,
-            'status_badges' => $statusBadges,
-            'qr_code_url' => $qrCodeUrl,
-            'qr_code_svg' => $this->buildQrCodeSvg($qrCodeUrl),
-            'qr_code_hint' => 'A autenticidade desta NFS-e pode ser verificada pela leitura deste codigo QR ou pela consulta da chave de acesso no portal nacional da NFS-e.',
-        ];
+        return $this->buildHtml($dados);
     }
 
-    private function buildHtml(array $data): string
+    private function buildHtml(array $dados): string
     {
-        $identificacaoRows = $this->renderRows($data['identificacao'], 3);
-        $prestadorRows = $this->renderRows($data['prestador'], 3);
-        $tomadorRows = $this->renderRows($data['tomador'], 3);
-        $destinatarioRows = $this->renderRows($data['destinatario'], 3);
-        $intermediarioRows = $this->renderRows($data['intermediario'], 3);
-        $servicoRows = $this->renderRows($data['servico'], 2);
-        $issqnRows = $this->renderRows($data['issqn'], 3);
-        $federalRows = $this->renderRows($data['federal'], 2);
-        $ibsCbsRows = $this->renderRows($data['ibs_cbs'], 2);
-        $totaisRows = $this->renderRows($data['totais'], 3);
-        $complementaresRows = $this->renderRows($data['complementares'], 1);
-        $statusBadges = $this->renderStatusBadges($data['status_badges']);
-        $destinatarioSection = $this->renderSection('Destinatario da Operacao', $destinatarioRows);
-        $intermediarioSection = $this->renderSection('Intermediario da Operacao', $intermediarioRows);
-        $qrCodeSvg = $data['qr_code_svg'] !== '' ? $data['qr_code_svg'] : '<div class="qr-placeholder">QR indisponivel</div>';
+        ob_start();
 
-        return <<<HTML
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-  <meta charset="UTF-8">
-  <title>DANFSe Nacional</title>
-  <style>
-    @page { margin: 0.15cm; }
-    * { box-sizing: border-box; }
-    body {
-      margin: 0;
-      font-family: DejaVu Sans, sans-serif;
-      color: #111827;
-      font-size: 7pt;
-      line-height: 1.22;
-    }
-    .page {
-      width: 100%;
-      min-height: 100%;
-      border: 1pt solid #111827;
-      padding: 0.18cm;
-    }
-    .header {
-      width: 100%;
-      border: 0.5pt solid #111827;
-      background: #f1f1f1;
-      padding: 0.18cm;
-      margin-bottom: 0.12cm;
-    }
-    .header-table {
-      width: 100%;
-      border-collapse: collapse;
-    }
-    .header-table td {
-      vertical-align: top;
-    }
-    .title {
-      font-size: 10pt;
-      font-weight: bold;
-      margin: 0;
-      text-transform: uppercase;
-    }
-    .subtitle {
-      font-size: 7pt;
-      margin-top: 0.05cm;
-    }
-    .status-badges {
-      margin-top: 0.08cm;
-    }
-    .status-badge {
-      display: inline-block;
-      margin-right: 0.08cm;
-      margin-bottom: 0.04cm;
-      padding: 0.02cm 0.08cm;
-      border: 0.5pt solid #7f1d1d;
-      color: #7f1d1d;
-      font-size: 6.5pt;
-      font-weight: bold;
-      text-transform: uppercase;
-    }
-    .status-badge.homologacao {
-      color: #b91c1c;
-      border-color: #b91c1c;
-    }
-    .qr-cell {
-      width: 3.6cm;
-      text-align: center;
-    }
-    .qr-wrap svg {
-      width: 2.65cm;
-      height: 2.65cm;
-    }
-    .qr-note {
-      margin-top: 0.06cm;
-      font-size: 6pt;
-      line-height: 1.15;
-    }
-    .section {
-      margin-bottom: 0.10cm;
-      border: 0.5pt solid #111827;
-    }
-    .section-title {
-      background: #f1f1f1;
-      border-bottom: 0.5pt solid #111827;
-      font-size: 7pt;
-      font-weight: bold;
-      padding: 0.05cm 0.08cm;
-      text-transform: uppercase;
-    }
-    table.grid {
-      width: 100%;
-      border-collapse: collapse;
-      table-layout: fixed;
-    }
-    .grid td {
-      width: 33.33%;
-      border-right: 0.5pt solid #111827;
-      border-bottom: 0.5pt solid #111827;
-      vertical-align: top;
-      padding: 0.06cm 0.08cm;
-    }
-    .grid.two td { width: 50%; }
-    .grid.one td { width: 100%; }
-    .grid td:last-child { border-right: none; }
-    .grid tr:last-child td { border-bottom: none; }
-    .field-label {
-      display: block;
-      font-size: 6pt;
-      font-weight: bold;
-      text-transform: uppercase;
-      margin-bottom: 0.02cm;
-    }
-    .field-value {
-      min-height: 0.34cm;
-      white-space: pre-wrap;
-      word-break: break-word;
-    }
-    .mono {
-      font-family: DejaVu Sans Mono, monospace;
-      letter-spacing: 0.01cm;
-    }
-    .highlight {
-      background: #f1f1f1;
-      font-weight: bold;
-    }
-    .qr-placeholder {
-      width: 2.65cm;
-      height: 2.65cm;
-      border: 0.5pt dashed #6b7280;
-      font-size: 6pt;
-      padding-top: 1.1cm;
-    }
-  </style>
-</head>
-<body>
-  <div class="page">
-    <div class="header">
-      <table class="header-table">
-        <tr>
-          <td>
-            <div class="title">Documento Auxiliar da NFS-e</div>
-            <div class="subtitle">DANFSe padrao nacional</div>
-            {$statusBadges}
-          </td>
-          <td class="qr-cell">
-            <div class="qr-wrap">{$qrCodeSvg}</div>
-            <div class="qr-note">{$this->escape($data['qr_code_hint'])}</div>
-          </td>
-        </tr>
-      </table>
-    </div>
+        require __DIR__.'/components/layout.php';
 
-    {$this->renderSection('Identificacao da NFS-e', $identificacaoRows)}
-    {$this->renderSection('Prestador / Fornecedor', $prestadorRows)}
-    {$this->renderSection('Tomador / Adquirente da Operacao', $tomadorRows)}
-    {$destinatarioSection}
-    {$intermediarioSection}
-    {$this->renderSection('Servico Prestado', $servicoRows, 'two')}
-    {$this->renderSection('Tributacao Municipal (ISSQN)', $issqnRows)}
-    {$this->renderSection('Tributacao Federal (Exceto CBS)', $federalRows, 'two')}
-    {$this->renderSection('Tributacao IBS / CBS', $ibsCbsRows, 'two')}
-    {$this->renderSection('Valor Total da NFS-e', $totaisRows, 'three', true)}
-    {$this->renderSection('Informacoes Complementares', $complementaresRows, 'one')}
-  </div>
-</body>
-</html>
-HTML;
-    }
-
-    private function extractPartyData(DOMXPath $xpath, string $nodeName, bool $includeMunicipalIndicator): array
-    {
-        $base = "//*[local-name()='{$nodeName}']";
-
-        $municipio = $this->nodeValue($xpath, $base."/*[local-name()='end']/*[local-name()='xMun']")
-            ?? $this->nodeValue($xpath, $base."/*[local-name()='endNac']/*[local-name()='xMun']")
-            ?? $this->nodeValue($xpath, $base."/*[local-name()='xMun']");
-        $uf = $this->nodeValue($xpath, $base."/*[local-name()='end']/*[local-name()='UF']")
-            ?? $this->nodeValue($xpath, $base."/*[local-name()='endNac']/*[local-name()='UF']")
-            ?? $this->nodeValue($xpath, $base."/*[local-name()='UF']");
-        $codigoMunicipio = $this->nodeValue($xpath, $base."/*[local-name()='endNac']/*[local-name()='cMun']")
-            ?? $this->nodeValue($xpath, $base."/*[local-name()='cMun']");
-        $cep = $this->formatCep($this->nodeValue($xpath, $base."/*[local-name()='endNac']/*[local-name()='CEP']"))
-            ?? $this->formatCep($this->nodeValue($xpath, $base."/*[local-name()='end']/*[local-name()='CEP']"));
-
-        $data = [
-            'documento' => $this->firstNodeValue($xpath, [
-                $base."/*[local-name()='CNPJ']",
-                $base."/*[local-name()='CPF']",
-                $base."/*[local-name()='NIF']",
-            ]),
-            'indicador_municipal' => $includeMunicipalIndicator
-                ? $this->firstNodeValue($xpath, [
-                    $base."/*[local-name()='IM']",
-                    $base."/*[local-name()='IMTomador']",
-                    $base."/*[local-name()='IMIntermed']",
-                ])
-                : null,
-            'telefone' => $this->firstNodeValue($xpath, [
-                $base."/*[local-name()='fone']",
-                $base."/*[local-name()='telefone']",
-            ]),
-            'nome' => $this->firstNodeValue($xpath, [
-                $base."/*[local-name()='xNome']",
-                $base."/*[local-name()='xRazao']",
-            ]),
-            'municipio_uf' => $this->joinNonEmpty(' / ', [$municipio, $uf]),
-            'codigo_ibge_cep' => $this->joinNonEmpty(' / ', [$codigoMunicipio, $cep]),
-            'endereco' => $this->joinNonEmpty(', ', array_filter([
-                $this->nodeValue($xpath, $base."/*[local-name()='end']/*[local-name()='xLgr']"),
-                $this->nodeValue($xpath, $base."/*[local-name()='end']/*[local-name()='nro']"),
-                $this->nodeValue($xpath, $base."/*[local-name()='end']/*[local-name()='xCpl']"),
-                $this->nodeValue($xpath, $base."/*[local-name()='end']/*[local-name()='xBairro']"),
-            ], static fn (?string $value): bool => $value !== null)),
-            'email' => $this->firstNodeValue($xpath, [
-                $base."/*[local-name()='email']",
-                $base."/*[local-name()='xEmail']",
-            ]),
-        ];
-
-        if (! $includeMunicipalIndicator) {
-            unset($data['indicador_municipal']);
-        }
-
-        return $data;
-    }
-
-    private function collectFederalRetentions(DOMXPath $xpath): array
-    {
-        $fields = [
-            'PIS' => "//*[local-name()='tribFed']/*[local-name()='vRetPIS']",
-            'COFINS' => "//*[local-name()='tribFed']/*[local-name()='vRetCOFINS']",
-            'CSLL' => "//*[local-name()='tribFed']/*[local-name()='vRetCSLL']",
-            'IRRF' => "//*[local-name()='tribFed']/*[local-name()='vRetIRRF']",
-            'INSS' => "//*[local-name()='tribFed']/*[local-name()='vRetINSS']",
-        ];
-
-        $items = [];
-        $total = 0.0;
-        foreach ($fields as $label => $query) {
-            $rawValue = $this->nodeValue($xpath, $query);
-            $value = $this->formatDecimal($rawValue);
-            if ($value !== null) {
-                $items[] = $label.': '.$value;
-                $total += $this->parseDecimal($rawValue);
-            }
-        }
-
-        return [$items, $total];
-    }
-
-    private function renderRows(array $fields, int $columns): array
-    {
-        $items = [];
-        foreach ($fields as $label => $value) {
-            if (is_array($value)) {
-                $value = $this->joinParagraphs($value);
-            }
-
-            if ($value === null || trim((string) $value) === '') {
-                continue;
-            }
-
-            $items[] = [
-                'label' => $this->humanizeLabel($label),
-                'value' => (string) $value,
-                'mono' => $this->isMonospaceField($label),
-                'highlight' => in_array($label, ['valor_liquido_mais_ibs_cbs', 'situacao'], true),
-            ];
-        }
-
-        if ($items === []) {
-            return [];
-        }
-
-        return array_chunk($items, $columns);
-    }
-
-    private function renderSection(string $title, array $rows, string $gridClass = 'three', bool $highlightLastField = false): string
-    {
-        if ($rows === []) {
-            return '';
-        }
-
-        $classMap = [
-            'one' => 'one',
-            'two' => 'two',
-            'three' => 'three',
-        ];
-        $tableClass = $classMap[$gridClass] ?? 'three';
-        $html = '<div class="section"><div class="section-title">'.$this->escape($title).'</div><table class="grid '.$tableClass.'">';
-
-        foreach ($rows as $rowIndex => $row) {
-            $html .= '<tr>';
-            foreach ($row as $fieldIndex => $field) {
-                $classes = [];
-                if ($field['mono']) {
-                    $classes[] = 'mono';
-                }
-                if ($field['highlight'] || ($highlightLastField && $rowIndex === array_key_last($rows) && $fieldIndex === array_key_last($row))) {
-                    $classes[] = 'highlight';
-                }
-                $classAttr = $classes !== [] ? ' class="'.implode(' ', $classes).'"' : '';
-
-                $html .= '<td'.$classAttr.'>';
-                $html .= '<span class="field-label">'.$this->escape($field['label']).'</span>';
-                $html .= '<div class="field-value">'.$this->escape($field['value']).'</div>';
-                $html .= '</td>';
-            }
-            $html .= '</tr>';
-        }
-
-        $html .= '</table></div>';
-
-        return $html;
-    }
-
-    private function renderStatusBadges(array $badges): string
-    {
-        if ($badges === []) {
-            return '';
-        }
-
-        $html = '<div class="status-badges">';
-        foreach ($badges as $badge) {
-            $class = str_contains($badge, 'SEM VALIDADE') ? 'status-badge homologacao' : 'status-badge';
-            $html .= '<span class="'.$class.'">'.$this->escape($badge).'</span>';
-        }
-        $html .= '</div>';
-
-        return $html;
-    }
-
-    private function buildQrCodeSvg(string $contents): string
-    {
-        if ($contents === '') {
-            return '';
-        }
-
-        try {
-            $barcode = new Barcode;
-            $qr = $barcode->getBarcodeObj('QRCODE,H', $contents, -4, -4, 'black');
-
-            return $qr->getSvgCode();
-        } catch (\Throwable) {
-            return '';
-        }
-    }
-
-    private function buildQrCodeQueryUrl(
-        ?string $chaveAcesso,
-        ?string $documentoPrestador,
-        ?string $numeroDps,
-        ?string $serieDps,
-        ?string $municipioAmbiente
-    ): string {
-        $params = array_filter([
-            'chaveAcesso' => $chaveAcesso,
-            'cpfCnpjPrestador' => $this->onlyDigits($documentoPrestador),
-            'numeroDps' => $numeroDps,
-            'serieDps' => $serieDps,
-            'municipio' => $municipioAmbiente,
-        ], static fn (?string $value): bool => $value !== null && trim($value) !== '');
-
-        if ($params === []) {
-            return self::NATIONAL_PUBLIC_QUERY_URL;
-        }
-
-        return self::NATIONAL_PUBLIC_QUERY_URL.'?'.http_build_query($params);
-    }
-
-    private function firstNodeValue(DOMXPath $xpath, array $queries): ?string
-    {
-        foreach ($queries as $query) {
-            $value = $this->nodeValue($xpath, $query);
-            if ($value !== null) {
-                return $value;
-            }
-        }
-
-        return null;
-    }
-
-    private function nodeValue(DOMXPath $xpath, string $query): ?string
-    {
-        $nodes = $xpath->query($query);
-        if (! $nodes instanceof DOMNodeList || $nodes->length === 0) {
-            return null;
-        }
-
-        $node = $nodes->item(0);
-        if (! $node instanceof DOMNode) {
-            return null;
-        }
-
-        $value = trim((string) $node->textContent);
-
-        return $value !== '' ? $value : null;
-    }
-
-    private function attributeValue(DOMXPath $xpath, string $query): ?string
-    {
-        $nodes = $xpath->query($query);
-        if (! $nodes instanceof DOMNodeList || $nodes->length === 0) {
-            return null;
-        }
-
-        $node = $nodes->item(0);
-        if (! $node instanceof DOMAttr) {
-            return null;
-        }
-
-        $value = trim($node->value);
-
-        return $value !== '' ? $value : null;
-    }
-
-    private function resolveSituacao(DOMXPath $xpath): string
-    {
-        if ($this->isCancelled($xpath)) {
-            return 'Cancelada';
-        }
-
-        if ($this->isSubstituted($xpath)) {
-            return 'Substituida';
-        }
-
-        return $this->firstNodeValue($xpath, [
-            "//*[local-name()='xSitNFS']",
-            "//*[local-name()='xSitNFSe']",
-            "//*[local-name()='sitNFSe']",
-        ]) ?? 'Autorizada';
-    }
-
-    private function isCancelled(DOMXPath $xpath): bool
-    {
-        return $this->hasAnyNode($xpath, [
-            "//*[contains(local-name(), 'Canc')]",
-            "//*[contains(translate(text(), 'cancelada', 'CANCELADA'), 'CANCELADA')]",
-        ]);
-    }
-
-    private function isSubstituted(DOMXPath $xpath): bool
-    {
-        return $this->hasAnyNode($xpath, [
-            "//*[contains(local-name(), 'Subst')]",
-            "//*[contains(translate(text(), 'substituida', 'SUBSTITUIDA'), 'SUBSTITUIDA')]",
-        ]);
-    }
-
-    private function isHomologacao(DOMXPath $xpath): bool
-    {
-        return $this->nodeValue($xpath, "//*[local-name()='infDPS']/*[local-name()='tpAmb']") === '2';
-    }
-
-    private function hasAnyNode(DOMXPath $xpath, array $queries): bool
-    {
-        foreach ($queries as $query) {
-            $nodes = $xpath->query($query);
-            if ($nodes instanceof DOMNodeList && $nodes->length > 0) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    private function humanizeLabel(string $label): string
-    {
-        $label = str_replace('_', ' ', $label);
-
-        return mb_strtoupper($label, 'UTF-8');
-    }
-
-    private function isMonospaceField(string $label): bool
-    {
-        return in_array($label, [
-            'chave_acesso',
-            'numero_nfse',
-            'numero_dps',
-            'serie_dps',
-            'documento',
-            'indicador_municipal',
-            'codigo_ibge_cep',
-            'codigo_tributacao',
-            'codigo_nbs',
-            'beneficio_municipal',
-        ], true);
-    }
-
-    private function joinNonEmpty(string $separator, array $values): ?string
-    {
-        $values = array_values(array_filter(array_map(static function (mixed $value): ?string {
-            if (! is_scalar($value)) {
-                return null;
-            }
-
-            $value = trim((string) $value);
-
-            return $value !== '' ? $value : null;
-        }, $values)));
-
-        if ($values === []) {
-            return null;
-        }
-
-        return implode($separator, $values);
-    }
-
-    private function joinParagraphs(array $values): ?string
-    {
-        return $this->joinNonEmpty("\n", $values);
-    }
-
-    private function escape(string $value): string
-    {
-        return htmlspecialchars($value, ENT_QUOTES, 'UTF-8');
-    }
-
-    private function mapAmbiente(?string $code): ?string
-    {
-        return match ($code) {
-            '1' => 'Producao',
-            '2' => 'Homologacao',
-            default => $code,
-        };
-    }
-
-    private function mapFinalidade(?string $code): ?string
-    {
-        return match ($code) {
-            '1' => 'Normal',
-            '2' => 'Substituicao',
-            '3' => 'Ajuste',
-            default => $code,
-        };
-    }
-
-    private function mapSimplesNacional(?string $code): ?string
-    {
-        return match ($code) {
-            '1' => 'Simples Nacional',
-            '2' => 'Excesso sublimite',
-            '3' => 'Regime normal',
-            default => $code,
-        };
-    }
-
-    private function mapIssRetido(?string $code): ?string
-    {
-        return match ($code) {
-            '1' => 'Nao',
-            '2' => 'Sim',
-            default => $code,
-        };
-    }
-
-    private function mapBooleanCode(?string $code): ?string
-    {
-        return match ($code) {
-            '0', '1' => $code === '1' ? 'Sim' : 'Nao',
-            default => $code,
-        };
-    }
-
-    private function normalizeChaveAcesso(?string $value): ?string
-    {
-        if ($value === null) {
-            return null;
-        }
-
-        return preg_replace('/^NFS/i', '', trim($value));
-    }
-
-    private function formatDate(?string $value): ?string
-    {
-        if ($value === null) {
-            return null;
-        }
-
-        $timestamp = strtotime($value);
-
-        return $timestamp !== false ? date('d/m/Y', $timestamp) : $value;
-    }
-
-    private function formatDateTime(?string $value): ?string
-    {
-        if ($value === null) {
-            return null;
-        }
-
-        $timestamp = strtotime($value);
-
-        return $timestamp !== false ? date('d/m/Y H:i:s', $timestamp) : $value;
-    }
-
-    private function formatCep(?string $value): ?string
-    {
-        $digits = $this->onlyDigits($value);
-        if ($digits === null) {
-            return null;
-        }
-
-        if (strlen($digits) === 8) {
-            return substr($digits, 0, 5).'-'.substr($digits, 5);
-        }
-
-        return $digits;
-    }
-
-    private function onlyDigits(?string $value): ?string
-    {
-        if ($value === null) {
-            return null;
-        }
-
-        $digits = preg_replace('/\D+/', '', $value);
-
-        return $digits !== '' ? $digits : null;
-    }
-
-    private function parseDecimal(mixed $value): float
-    {
-        if ($value === null) {
-            return 0.0;
-        }
-
-        $normalized = str_replace(',', '.', trim((string) $value));
-
-        return is_numeric($normalized) ? (float) $normalized : 0.0;
-    }
-
-    private function sumDecimals(array $values): float
-    {
-        $sum = 0.0;
-        foreach ($values as $value) {
-            $sum += $this->parseDecimal($value);
-        }
-
-        return $sum;
-    }
-
-    private function formatDecimal(mixed $value): ?string
-    {
-        if ($value === null || trim((string) $value) === '') {
-            return null;
-        }
-
-        $number = $this->parseDecimal($value);
-
-        return number_format($number, 2, ',', '.');
+        return ob_get_clean();
     }
 }

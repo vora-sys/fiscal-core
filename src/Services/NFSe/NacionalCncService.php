@@ -16,28 +16,93 @@ final class NacionalCncService implements NfseNacionalCncInterface
 
     public function consultarCadastroCnc(string $municipio, string $inscricaoFederal, ?string $inscricaoMunicipal = null, bool $forceRefresh = false): NacionalApiResult
     {
-        $municipio = preg_replace('/\D+/', '', $municipio) ?? '';
-        $documento = strtoupper(preg_replace('/[^A-Za-z0-9]+/', '', $inscricaoFederal) ?? '');
-        $inscricaoMunicipal = trim((string) $inscricaoMunicipal);
-        if (strlen($municipio) !== 7 || ! in_array(strlen($documento), [11, 14], true)) {
-            throw new \InvalidArgumentException('Município e inscrição federal válidos são obrigatórios para consultar o CNC.');
-        }
-
-        $query = [
-            'codMunicipio' => $municipio,
-            'inscricaoFederal' => $documento,
-        ];
-        $key = 'nfse:cnc:'.sha1(json_encode([
-            'query' => $query,
-            'inscricao_municipal_referencia' => $inscricaoMunicipal,
-        ]) ?: '');
+        $startedAt = hrtime(true);
+        [$query, $key, $inscricaoMunicipal] = $this->requestData($municipio, $inscricaoFederal, $inscricaoMunicipal);
         $cached = $this->cache->get($key, 21600);
         if (! $forceRefresh && $cached !== null && ($cached['stale'] ?? true) === false) {
-            return $this->cached($cached, false);
+            return $this->profile($this->cached($cached, false), $startedAt);
         }
 
         try {
+            $result = $this->cache->synchronized($key, 30, function () use ($key, $query, $inscricaoMunicipal, $forceRefresh, $cached): NacionalApiResult {
+                $current = $this->cache->get($key, 21600);
+                if (! $forceRefresh && $current !== null && ($current['stale'] ?? true) === false) {
+                    return $this->cached($current, false);
+                }
+
+                return $this->fetchRemote($key, $query, $inscricaoMunicipal, $current ?? $cached);
+            });
+        } catch (\Throwable $exception) {
+            $result = $cached !== null && is_array($cached['value'] ?? null)
+                ? $this->cached($cached, true, $exception->getMessage())
+                : new NacionalApiResult('indisponivel', warnings: ['CNC indisponível; o cadastro local foi preservado.'], metadata: [
+                    'source' => 'lock',
+                    'stale' => false,
+                    'fetched_at' => gmdate(DATE_ATOM),
+                    'error' => $exception->getMessage(),
+                ]);
+        }
+
+        return $this->profile($result, $startedAt);
+    }
+
+    public function preflightRequest(string $municipio, string $inscricaoFederal, ?string $inscricaoMunicipal = null): NacionalPreflightRequest
+    {
+        [$query, $key, $inscricaoMunicipal] = $this->requestData($municipio, $inscricaoFederal, $inscricaoMunicipal);
+
+        return new NacionalPreflightRequest(
+            name: 'cnc',
+            url: rtrim($this->baseUrl, '/').'/cad',
+            query: $query,
+            cacheKey: $key,
+            cacheReadTtl: 21600,
+            isFreshCacheEntry: static fn (?array $cached): bool => $cached !== null && ($cached['stale'] ?? true) === false,
+            fromCache: fn (array $cached, bool $stale, ?string $error): NacionalApiResult => $this->cached($cached, $stale, $error),
+            fromRemote: fn (array|\Throwable $response, ?array $cached): NacionalApiResult => $this->resultFromRemoteResponse(
+                $response,
+                $key,
+                $query,
+                $inscricaoMunicipal,
+                $cached,
+            ),
+            fallback: fn (?array $cached, \Throwable $exception, string $source): NacionalApiResult => $this->lockFallback(
+                $cached,
+                $exception,
+                $inscricaoMunicipal,
+                $source,
+            ),
+        );
+    }
+
+    /**
+     * @param  array<string,string>  $query
+     * @param  array<string,mixed>|null  $cached
+     */
+    private function fetchRemote(string $key, array $query, string $inscricaoMunicipal, ?array $cached): NacionalApiResult
+    {
+        try {
             $response = $this->client->get(rtrim($this->baseUrl, '/').'/cad', $query);
+        } catch (\Throwable $exception) {
+            $response = $exception;
+        }
+
+        return $this->resultFromRemoteResponse($response, $key, $query, $inscricaoMunicipal, $cached);
+    }
+
+    /**
+     * @param  array{status:int,body:string,request_id:string,headers:array<string,string>}|\Throwable  $response
+     * @param  array<string,string>  $query
+     * @param  array<string,mixed>|null  $cached
+     */
+    private function resultFromRemoteResponse(array|\Throwable $response, string $key, array $query, string $inscricaoMunicipal, ?array $cached): NacionalApiResult
+    {
+        $municipio = $query['codMunicipio'];
+        $documento = $query['inscricaoFederal'];
+
+        try {
+            if ($response instanceof \Throwable) {
+                throw $response;
+            }
             $metadata = array_replace($this->metadata($response['request_id']), [
                 'inscricao_municipal_referencia' => $inscricaoMunicipal !== '' ? $inscricaoMunicipal : null,
             ]);
@@ -82,6 +147,44 @@ final class NacionalCncService implements NfseNacionalCncInterface
         }
     }
 
+    /** @return array{0:array{codMunicipio:string,inscricaoFederal:string},1:string,2:string} */
+    private function requestData(string $municipio, string $inscricaoFederal, ?string $inscricaoMunicipal): array
+    {
+        $municipio = preg_replace('/\D+/', '', $municipio) ?? '';
+        $documento = strtoupper(preg_replace('/[^A-Za-z0-9]+/', '', $inscricaoFederal) ?? '');
+        $inscricaoMunicipal = trim((string) $inscricaoMunicipal);
+        if (strlen($municipio) !== 7 || ! in_array(strlen($documento), [11, 14], true)) {
+            throw new \InvalidArgumentException('Município e inscrição federal válidos são obrigatórios para consultar o CNC.');
+        }
+
+        $query = [
+            'codMunicipio' => $municipio,
+            'inscricaoFederal' => $documento,
+        ];
+        $key = 'nfse:cnc:'.sha1(json_encode([
+            'query' => $query,
+            'inscricao_municipal_referencia' => $inscricaoMunicipal,
+        ]) ?: '');
+
+        return [$query, $key, $inscricaoMunicipal];
+    }
+
+    /** @param array<string,mixed>|null $cached */
+    private function lockFallback(?array $cached, \Throwable $exception, string $inscricaoMunicipal, string $source): NacionalApiResult
+    {
+        if ($cached !== null && is_array($cached['value'] ?? null)) {
+            return $this->cached($cached, true, $exception->getMessage());
+        }
+
+        return new NacionalApiResult('indisponivel', warnings: ['CNC indisponível; o cadastro local foi preservado.'], metadata: [
+            'source' => $source,
+            'stale' => false,
+            'fetched_at' => gmdate(DATE_ATOM),
+            'error' => $exception->getMessage(),
+            'inscricao_municipal_referencia' => $inscricaoMunicipal !== '' ? $inscricaoMunicipal : null,
+        ]);
+    }
+
     /** @return array{cadastros:list<array<string,mixed>>,correspondencia:null,quantidade_correspondencias:int,correspondencia_inequivoca:bool} */
     private function emptyData(): array
     {
@@ -100,17 +203,63 @@ final class NacionalCncService implements NfseNacionalCncInterface
             if (isset($decoded[$key]) && is_array($decoded[$key])) {
                 $candidate = $decoded[$key];
                 if (array_is_list($candidate)) {
-                    return array_values(array_filter($candidate, 'is_array'));
+                    return $this->normalizeRecords($candidate);
                 }
                 foreach (['dados', 'cadastros', 'contribuintes', 'registros'] as $nested) {
                     if (isset($candidate[$nested]) && is_array($candidate[$nested]) && array_is_list($candidate[$nested])) {
-                        return array_values(array_filter($candidate[$nested], 'is_array'));
+                        return $this->normalizeRecords($candidate[$nested]);
                     }
                 }
             }
         }
 
-        return array_is_list($decoded) ? array_values(array_filter($decoded, 'is_array')) : [];
+        return array_is_list($decoded) ? $this->normalizeRecords($decoded) : [];
+    }
+
+    /** @return list<array<string,mixed>> */
+    private function normalizeRecords(array $records): array
+    {
+        return array_map(
+            fn (array $record): array => $this->normalizeRecord($record),
+            array_values(array_filter($records, 'is_array')),
+        );
+    }
+
+    /** @param array<string,mixed> $record @return array<string,mixed> */
+    private function normalizeRecord(array $record): array
+    {
+        foreach (['InfCad', 'infCad'] as $infoKey) {
+            if (is_array($record[$infoKey] ?? null)) {
+                $record[$infoKey] = $this->trimMunicipalRegistrationFields($record[$infoKey]);
+            }
+        }
+
+        return $this->trimMunicipalRegistrationFields($record);
+    }
+
+    /** @param array<string,mixed> $data @return array<string,mixed> */
+    private function normalizeResultData(array $data): array
+    {
+        if (is_array($data['cadastros'] ?? null) && array_is_list($data['cadastros'])) {
+            $data['cadastros'] = $this->normalizeRecords($data['cadastros']);
+        }
+        if (is_array($data['correspondencia'] ?? null)) {
+            $data['correspondencia'] = $this->normalizeRecord($data['correspondencia']);
+        }
+
+        return $data;
+    }
+
+    /** @param array<string,mixed> $values @return array<string,mixed> */
+    private function trimMunicipalRegistrationFields(array $values): array
+    {
+        foreach (['InscricaoMunicipal', 'inscricaoMunicipal', 'indicadorMunicipal', 'IM'] as $key) {
+            if (is_string($values[$key] ?? null)) {
+                $values[$key] = trim($values[$key]);
+            }
+        }
+
+        return $values;
     }
 
     /** @param list<array<string,mixed>> $records @return array<string,mixed>|null */
@@ -122,7 +271,7 @@ final class NacionalCncService implements NfseNacionalCncInterface
                 : (is_array($record['infCad'] ?? null) ? $record['infCad'] : []);
             $recordMunicipio = preg_replace('/\D+/', '', (string) ($record['CodigoMunicipio'] ?? $record['codigoMunicipio'] ?? $record['codMunicipio'] ?? $record['municipio'] ?? '')) ?? '';
             $recordDocumento = strtoupper(preg_replace('/[^A-Za-z0-9]+/', '', (string) ($info['Inscricao'] ?? $info['inscricao'] ?? $record['inscricaoFederal'] ?? $record['cpfCnpj'] ?? $record['documento'] ?? '')) ?? '');
-            $recordIm = trim((string) ($info['InscricaoMunicipal'] ?? $info['inscricaoMunicipal'] ?? $record['inscricaoMunicipal'] ?? $record['indicadorMunicipal'] ?? ''));
+            $recordIm = trim((string) ($info['InscricaoMunicipal'] ?? $info['inscricaoMunicipal'] ?? $info['IM'] ?? $record['InscricaoMunicipal'] ?? $record['inscricaoMunicipal'] ?? $record['indicadorMunicipal'] ?? $record['IM'] ?? ''));
 
             return ($recordMunicipio === '' || $recordMunicipio === $municipio)
                 && ($recordDocumento === '' || $recordDocumento === $documento)
@@ -137,6 +286,17 @@ final class NacionalCncService implements NfseNacionalCncInterface
         if ($left === $right) {
             return true;
         }
+
+        $left = strtoupper(preg_replace('/[^A-Za-z0-9]+/', '', trim($left)) ?? '');
+        $right = strtoupper(preg_replace('/[^A-Za-z0-9]+/', '', trim($right)) ?? '');
+        if ($left === '' || $right === '') {
+            return false;
+        }
+
+        if ($left === $right) {
+            return true;
+        }
+
         if (! ctype_digit($left) || ! ctype_digit($right)) {
             return false;
         }
@@ -154,12 +314,33 @@ final class NacionalCncService implements NfseNacionalCncInterface
             $metadata['fallback_error'] = $error;
         }
 
-        return new NacionalApiResult((string) ($value['status'] ?? 'indisponivel'), (array) ($value['data'] ?? []), (array) ($value['warnings'] ?? []), $metadata);
+        return new NacionalApiResult(
+            (string) ($value['status'] ?? 'indisponivel'),
+            $this->normalizeResultData((array) ($value['data'] ?? [])),
+            (array) ($value['warnings'] ?? []),
+            $metadata,
+        );
     }
 
     /** @return array<string,mixed> */
     private function metadata(?string $requestId): array
     {
         return ['source' => 'remote', 'stale' => false, 'fetched_at' => gmdate(DATE_ATOM), 'request_id' => $requestId];
+    }
+
+    private function profile(NacionalApiResult $result, int $startedAt): NacionalApiResult
+    {
+        $source = (string) ($result->metadata['source'] ?? 'remote');
+        $stale = ($result->metadata['stale'] ?? false) === true;
+
+        return new NacionalApiResult(
+            $result->status,
+            $result->data,
+            $result->warnings,
+            array_replace($result->metadata, [
+                'cache_status' => $stale ? 'stale' : ($source === 'cache' ? 'hit' : 'miss'),
+                'duration_ms' => round((hrtime(true) - $startedAt) / 1_000_000, 2),
+            ]),
+        );
     }
 }

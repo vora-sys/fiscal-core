@@ -4,9 +4,10 @@ declare(strict_types=1);
 
 namespace sabbajohn\FiscalCore\Support;
 
+use sabbajohn\FiscalCore\Contracts\NFSeProviderConfigInterface;
+use sabbajohn\FiscalCore\Support\Cache\FileCacheStore;
 use NFePHP\Common\Certificate;
 use RuntimeException;
-use sabbajohn\FiscalCore\Contracts\NFSeProviderConfigInterface;
 
 final class NFSeRuntimeBootstrap
 {
@@ -42,6 +43,13 @@ final class NFSeRuntimeBootstrap
             FILTER_VALIDATE_BOOLEAN,
         );
 
+        if ($providerKey === ProviderRegistry::NFSE_NATIONAL_KEY) {
+            $config['preflight_timeout'] = (int) $configManager->get('nfse.preflight_timeout', 8);
+            $config['preflight_budget'] = (int) $configManager->get('nfse.preflight_budget', 25);
+            $config['preflight_max_attempts'] = (int) $configManager->get('nfse.preflight_max_attempts', 2);
+            $config['cache_store'] = FileCacheStore::shared('nfse-nacional:'.$config['ambiente'].':');
+        }
+
         if ($certificate instanceof Certificate) {
             $config['certificate'] = $certificate;
         }
@@ -58,9 +66,10 @@ final class NFSeRuntimeBootstrap
         }
 
         if ($requireOperationalCredentials && $certificate instanceof Certificate) {
-            $matchMode = $providerKey === ProviderRegistry::NFSE_NATIONAL_KEY
-                ? strtolower((string) ($configManager->get('empresa.certificate_match_mode') ?? 'exact'))
-                : 'exact';
+            $configuredMatchMode = strtolower((string) ($configManager->get('empresa.certificate_match_mode') ?? 'exact'));
+            $matchMode = str_starts_with($configuredMatchMode, 'confirmed_cpf')
+                ? $configuredMatchMode
+                : ($providerKey === ProviderRegistry::NFSE_NATIONAL_KEY ? $configuredMatchMode : 'exact');
             $this->assertCertificateCompatibility(
                 (string) ($configManager->getEmpresaConfig()['cnpj'] ?? ''),
                 (string) ($certificate->getCnpj() ?? $certificate->getCpf() ?? ''),
@@ -131,14 +140,17 @@ final class NFSeRuntimeBootstrap
     private function assertCertificateCompatibility(string $configured, string $certificate, string $matchMode): void
     {
         $configured = $this->normalizeCnpj($configured);
-        $certificate = $this->normalizeCnpj($certificate);
+        $certificate = $this->normalizeFederalTaxDocument($certificate);
         if ($configured === '' || $certificate === '') {
-            throw new RuntimeException('Nao foi possivel validar o CNPJ do certificado digital.');
+            throw new RuntimeException('Nao foi possivel validar o CPF ou CNPJ do certificado digital.');
         }
 
-        $matches = $matchMode === 'root'
-            ? substr($configured, 0, 8) === substr($certificate, 0, 8)
-            : $configured === $certificate;
+        $matches = match (true) {
+            str_starts_with($matchMode, 'confirmed_cpf') => strlen($certificate) === 11,
+            $matchMode === 'root' => strlen($certificate) === 14
+                && substr($configured, 0, 8) === substr($certificate, 0, 8),
+            default => $configured === $certificate,
+        };
 
         if (! $matches) {
             throw new RuntimeException(
@@ -151,6 +163,18 @@ final class NFSeRuntimeBootstrap
     {
         $normalized = strtoupper(trim($value));
         $normalized = preg_replace('/[.\/\-\s]+/', '', $normalized) ?? '';
+
+        return preg_match('/^[A-Z0-9]{12}[0-9]{2}$/', $normalized) === 1 ? $normalized : '';
+    }
+
+    private function normalizeFederalTaxDocument(string $value): string
+    {
+        $normalized = strtoupper(trim($value));
+        $normalized = preg_replace('/[.\/\-\s]+/', '', $normalized) ?? '';
+
+        if (preg_match('/^[0-9]{11}$/', $normalized) === 1) {
+            return $normalized;
+        }
 
         return preg_match('/^[A-Z0-9]{12}[0-9]{2}$/', $normalized) === 1 ? $normalized : '';
     }

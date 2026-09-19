@@ -2,11 +2,11 @@
 
 namespace sabbajohn\FiscalCore\Adapters\NF\Nodes;
 
-use NFePHP\NFe\Make;
 use sabbajohn\FiscalCore\Adapters\NF\Core\NotaNodeInterface;
 use sabbajohn\FiscalCore\Adapters\NF\DTO\CofinsDTO;
 use sabbajohn\FiscalCore\Adapters\NF\DTO\IcmsDTO;
 use sabbajohn\FiscalCore\Adapters\NF\DTO\PisDTO;
+use NFePHP\NFe\Make;
 
 /**
  * Node para tag <imposto> (Impostos do item)
@@ -47,6 +47,10 @@ class ImpostoNode implements NotaNodeInterface
                 $data['vCredICMSSN'] = number_format($this->icms->vCredICMSSN, 2, '.', '');
             }
 
+            if ($cst === '500') {
+                $this->appendRetainedStFields($data);
+            }
+
             $make->tagICMSSN((object) $data);
         } else {
             // Regime normal
@@ -74,6 +78,10 @@ class ImpostoNode implements NotaNodeInterface
 
             if ($this->icms->pRedBC !== null) {
                 $data['pRedBC'] = number_format($this->icms->pRedBC, 2, '.', '');
+            }
+
+            if ($cst === '60') {
+                $this->appendRetainedStFields($data);
             }
 
             $make->tagICMS((object) $data);
@@ -131,6 +139,36 @@ class ImpostoNode implements NotaNodeInterface
         }
 
         return true;
+    }
+
+    /** @param array<string,mixed> $data */
+    private function appendRetainedStFields(array &$data): void
+    {
+        $data['vBCSTRet'] = number_format($this->icms->vBCSTRet ?? 0.0, 2, '.', '');
+        $data['pST'] = number_format($this->icms->pST ?? 0.0, 4, '.', '');
+        $data['vICMSSubstituto'] = number_format($this->icms->vICMSSubstituto ?? 0.0, 2, '.', '');
+        $data['vICMSSTRet'] = number_format($this->icms->vICMSSTRet ?? 0.0, 2, '.', '');
+
+        if (
+            $this->icms->vBCFCPSTRet !== null
+            && $this->icms->pFCPSTRet !== null
+            && $this->icms->vFCPSTRet !== null
+        ) {
+            $data['vBCFCPSTRet'] = number_format($this->icms->vBCFCPSTRet, 2, '.', '');
+            $data['pFCPSTRet'] = number_format($this->icms->pFCPSTRet, 4, '.', '');
+            $data['vFCPSTRet'] = number_format($this->icms->vFCPSTRet, 2, '.', '');
+        }
+
+        if (
+            $this->icms->vBCEfet !== null
+            && $this->icms->pICMSEfet !== null
+            && $this->icms->vICMSEfet !== null
+        ) {
+            $data['pRedBCEfet'] = number_format($this->icms->pRedBCEfet ?? 0.0, 4, '.', '');
+            $data['vBCEfet'] = number_format($this->icms->vBCEfet, 2, '.', '');
+            $data['pICMSEfet'] = number_format($this->icms->pICMSEfet, 4, '.', '');
+            $data['vICMSEfet'] = number_format($this->icms->vICMSEfet, 2, '.', '');
+        }
     }
 
     public function getNodeType(): string

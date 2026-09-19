@@ -2,7 +2,6 @@
 
 namespace sabbajohn\FiscalCore\Adapters\NF;
 
-use NFePHP\Common\Certificate;
 use sabbajohn\FiscalCore\Contracts\NFSeConsultaResultInterface;
 use sabbajohn\FiscalCore\Contracts\NFSeImpressaoResultInterface;
 use sabbajohn\FiscalCore\Contracts\NFSeNacionalCapabilitiesInterface;
@@ -19,6 +18,7 @@ use sabbajohn\FiscalCore\Support\NFSeProviderResolver;
 use sabbajohn\FiscalCore\Support\NFSeProviderTranslationPolicy;
 use sabbajohn\FiscalCore\Support\NFSeResultNormalizer;
 use sabbajohn\FiscalCore\Support\ProviderRegistry;
+use NFePHP\Common\Certificate;
 
 class NFSeAdapter implements NotaServicoInterface
 {
@@ -62,6 +62,7 @@ class NFSeAdapter implements NotaServicoInterface
     public function emitir(array $dados): string
     {
         [$providerKey, $provider, $routingMode] = $this->resolveProviderForEmission($dados);
+        $providerStartedAt = hrtime(true);
 
         try {
             $result = $provider->emitir($dados);
@@ -87,6 +88,7 @@ class NFSeAdapter implements NotaServicoInterface
                     'emission_context' => $provider->getLastEmissionContext(),
                 ]);
             }
+            $info['metrics'] = $this->emissionMetrics($info, $providerStartedAt);
             $this->lastEmissionInfo = $info;
             $this->lastOperationInfo = ['operation' => 'emitir'] + $info;
 
@@ -109,10 +111,40 @@ class NFSeAdapter implements NotaServicoInterface
                 'emission_context' => $provider->getLastEmissionContext(),
             ]);
         }
+        $info['metrics'] = $this->emissionMetrics($info, $providerStartedAt);
         $this->lastEmissionInfo = $info;
         $this->lastOperationInfo = ['operation' => 'emitir'] + $info;
 
         return $result;
+    }
+
+    /**
+     * @param  array<string,mixed>  $info
+     * @return array<string,float>
+     */
+    private function emissionMetrics(array $info, int $providerStartedAt): array
+    {
+        $artifacts = is_array($info['artifacts'] ?? null) ? $info['artifacts'] : [];
+        $emissionContext = is_array($artifacts['emission_context'] ?? null) ? $artifacts['emission_context'] : [];
+        $providerMetrics = $artifacts['metrics'] ?? null;
+        $contextMetrics = $emissionContext['metrics'] ?? null;
+        $metrics = array_merge(
+            is_array($providerMetrics) ? $providerMetrics : [],
+            is_array($contextMetrics) ? $contextMetrics : [],
+        );
+        $transport = is_array($artifacts['transport'] ?? null) ? $artifacts['transport'] : [];
+        $transportMs = $transport['duration_ms'] ?? null;
+        if (! is_numeric($metrics['transport_ms'] ?? null) && is_numeric($transportMs)) {
+            $metrics['transport_ms'] = round(max(0, (float) $transportMs), 2);
+        }
+        if (! is_numeric($metrics['provider_total_ms'] ?? null)) {
+            $metrics['provider_total_ms'] = round((hrtime(true) - $providerStartedAt) / 1_000_000, 2);
+        }
+
+        return array_filter(
+            $metrics,
+            static fn (mixed $value): bool => is_float($value) || is_int($value),
+        );
     }
 
     public function consultar(string $chave): NFSeConsultaResultInterface
@@ -162,6 +194,11 @@ class NFSeAdapter implements NotaServicoInterface
 
             throw $exception;
         }
+    }
+
+    public function consultarPorDps(array $dados): NFSeConsultaResultInterface
+    {
+        return $this->consultarPorRps($dados);
     }
 
     public function consultarPorRps(array $identificacaoRps): NFSeConsultaResultInterface

@@ -2,8 +2,9 @@
 
 namespace sabbajohn\FiscalCore\Adapters;
 
-use NFePHP\Ibpt\Ibpt;
 use sabbajohn\FiscalCore\Contracts\TributacaoInterface;
+use NFePHP\Ibpt\Ibpt;
+use NFePHP\Ibpt\RestInterface;
 
 class IBPTAdapter implements TributacaoInterface
 {
@@ -11,9 +12,19 @@ class IBPTAdapter implements TributacaoInterface
 
     private string $ufDefault;
 
-    public function __construct(string $cnpj, string $token, string $ufDefault = 'SP')
-    {
-        $this->client = new Ibpt($cnpj, $token);
+    public function __construct(
+        string $cnpj,
+        string $token,
+        string $ufDefault = 'SP',
+        int $timeoutSeconds = 5,
+        int $connectTimeoutSeconds = 2,
+        ?RestInterface $restClient = null,
+    ) {
+        $this->client = new Ibpt(
+            $cnpj,
+            $token,
+            rest: $restClient ?? new IbptRestClient($timeoutSeconds, $connectTimeoutSeconds),
+        );
         $this->ufDefault = $ufDefault;
     }
 

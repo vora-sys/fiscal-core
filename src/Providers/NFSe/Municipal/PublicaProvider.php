@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace sabbajohn\FiscalCore\Providers\NFSe\Municipal;
 
-use NFePHP\Common\Certificate;
-use NFePHP\Common\Signer;
 use sabbajohn\FiscalCore\Contracts\NFSeConsultaResultInterface;
 use sabbajohn\FiscalCore\Contracts\NFSeOperationalIntrospectionInterface;
 use sabbajohn\FiscalCore\Providers\NFSe\AbstractNFSeProvider;
@@ -15,9 +13,14 @@ use sabbajohn\FiscalCore\Support\NFSeSchemaResolver;
 use sabbajohn\FiscalCore\Support\NFSeSchemaValidator;
 use sabbajohn\FiscalCore\Support\NFSeSoapCurlTransport;
 use sabbajohn\FiscalCore\Support\NFSeSoapTransportInterface;
+use sabbajohn\FiscalCore\Support\ProfilesNFSeEmission;
+use NFePHP\Common\Certificate;
+use NFePHP\Common\Signer;
 
 class PublicaProvider extends AbstractNFSeProvider implements NFSeOperationalIntrospectionInterface
 {
+    use ProfilesNFSeEmission;
+
     private const NFSE_NS = 'http://www.publica.inf.br';
 
     private const SERVICE_NS = 'http://service.nfse.integracao.ws.publica/';
@@ -48,19 +51,25 @@ class PublicaProvider extends AbstractNFSeProvider implements NFSeOperationalInt
 
     public function emitir(array $dados): string
     {
-        $this->validarDados($dados);
-        $this->lastPrestadorContext = $this->extractPrestadorContext($dados['prestador'] ?? []);
+        $emissionStartedAt = $this->beginEmissionProfile();
 
-        if ($this->shouldUseAsyncLoteFlow()) {
-            return $this->emitirAssincronoViaLote($dados);
+        try {
+            $this->validarDados($dados);
+            $this->lastPrestadorContext = $this->extractPrestadorContext($dados['prestador'] ?? []);
+
+            if ($this->shouldUseAsyncLoteFlow()) {
+                return $this->emitirAssincronoViaLote($dados);
+            }
+
+            $responseXml = $this->emitirSincronoViaGerarNfse($dados);
+            if ($this->shouldRetryEmissionAsAsyncLote($this->lastResponseData)) {
+                return $this->emitirAssincronoViaLote($dados);
+            }
+
+            return $responseXml;
+        } finally {
+            $this->finishEmissionProfile($emissionStartedAt);
         }
-
-        $responseXml = $this->emitirSincronoViaGerarNfse($dados);
-        if ($this->shouldRetryEmissionAsAsyncLote($this->lastResponseData)) {
-            return $this->emitirAssincronoViaLote($dados);
-        }
-
-        return $responseXml;
     }
 
     public function consultarPorRps(array $identificacaoRps): NFSeConsultaResultInterface
@@ -486,9 +495,19 @@ class PublicaProvider extends AbstractNFSeProvider implements NFSeOperationalInt
 
     private function emitirSincronoViaGerarNfse(array $dados): string
     {
-        $requestXml = $this->montarXmlRps($dados);
+        $xmlStartedAt = hrtime(true);
+        try {
+            $requestXml = $this->montarXmlRps($dados);
+        } finally {
+            $this->addEmissionMetric('xml_build_ms', $xmlStartedAt);
+        }
         if ($this->shouldSignOperation('emitir')) {
-            $requestXml = $this->assinarXml($requestXml, 'emitir');
+            $signatureStartedAt = hrtime(true);
+            try {
+                $requestXml = $this->assinarXml($requestXml, 'emitir');
+            } finally {
+                $this->addEmissionMetric('signature_ms', $signatureStartedAt);
+            }
         }
 
         return $this->dispatchSoapOperation(
@@ -502,9 +521,19 @@ class PublicaProvider extends AbstractNFSeProvider implements NFSeOperationalInt
 
     private function emitirAssincronoViaLote(array $dados): string
     {
-        $requestXml = $this->montarXmlEnviarLoteRps($dados);
+        $xmlStartedAt = hrtime(true);
+        try {
+            $requestXml = $this->montarXmlEnviarLoteRps($dados);
+        } finally {
+            $this->addEmissionMetric('xml_build_ms', $xmlStartedAt);
+        }
         if ($this->shouldSignOperation('emitir')) {
-            $requestXml = $this->assinarXml($requestXml, 'emitir_lote');
+            $signatureStartedAt = hrtime(true);
+            try {
+                $requestXml = $this->assinarXml($requestXml, 'emitir_lote');
+            } finally {
+                $this->addEmissionMetric('signature_ms', $signatureStartedAt);
+            }
         }
 
         return $this->dispatchSoapOperation(
@@ -814,20 +843,34 @@ class PublicaProvider extends AbstractNFSeProvider implements NFSeOperationalInt
         string $schemaOperation,
         string $channel
     ): string {
-        $this->assertRequestSchema($requestXml, $schemaOperation);
+        $schemaStartedAt = hrtime(true);
+        try {
+            $this->assertRequestSchema($requestXml, $schemaOperation);
+        } finally {
+            if ($operationKey === 'emitir') {
+                $this->addEmissionMetric('schema_validation_ms', $schemaStartedAt);
+            }
+        }
 
         $soapEnvelope = $this->montarSoapEnvelope($soapOperation, $requestXml);
-        $transportData = $this->transport->send(
-            $this->resolveSoapEndpoint($channel),
-            $soapEnvelope,
-            [
-                'soap_action' => '',
-                'timeout' => $this->getTimeout(),
-                'soap_operation' => $soapOperation,
-                'operation' => $operationKey,
-                'channel' => $channel,
-            ]
-        );
+        $transportStartedAt = hrtime(true);
+        try {
+            $transportData = $this->transport->send(
+                $this->resolveSoapEndpoint($channel),
+                $soapEnvelope,
+                [
+                    'soap_action' => '',
+                    'timeout' => $this->getTimeout(),
+                    'soap_operation' => $soapOperation,
+                    'operation' => $operationKey,
+                    'channel' => $channel,
+                ]
+            );
+        } finally {
+            if ($operationKey === 'emitir') {
+                $this->addEmissionMetric('transport_ms', $transportStartedAt);
+            }
+        }
 
         $responseXml = (string) ($transportData['response_xml'] ?? '');
         $parsedResponse = $this->enrichTransportDiagnostics(
@@ -842,7 +885,7 @@ class PublicaProvider extends AbstractNFSeProvider implements NFSeOperationalInt
         $this->lastResponseXml = $responseXml;
         $this->lastTransportData = $transportData;
         $this->lastResponseData = $parsedResponse;
-        $this->lastOperationArtifacts = [
+        $this->lastOperationArtifacts = $this->withEmissionMetrics($operationKey, [
             'operation' => $operationKey,
             'channel' => $channel,
             'request_xml' => $requestXml,
@@ -850,7 +893,7 @@ class PublicaProvider extends AbstractNFSeProvider implements NFSeOperationalInt
             'response_xml' => $responseXml,
             'parsed_response' => $parsedResponse,
             'transport' => $transportData,
-        ];
+        ]);
 
         $this->logSoapDebug($this->lastOperationArtifacts);
 

@@ -2,7 +2,6 @@
 
 namespace sabbajohn\FiscalCore\Facade;
 
-use NFePHP\NFe\Complements;
 use sabbajohn\FiscalCore\Adapters\ImpressaoAdapter;
 use sabbajohn\FiscalCore\Adapters\NF\Builder\NotaFiscalBuilder;
 use sabbajohn\FiscalCore\Adapters\NF\Core\NotaFiscal;
@@ -16,6 +15,7 @@ use sabbajohn\FiscalCore\Support\SefazAdvancedMethodRegistry;
 use sabbajohn\FiscalCore\Support\SefazResponseParser;
 use sabbajohn\FiscalCore\Support\ToolsFactory;
 use sabbajohn\FiscalCore\Support\XmlUtils;
+use NFePHP\NFe\Complements;
 
 /**
  * Facade para NFe - Interface simplificada e com tratamento de erros
@@ -102,7 +102,7 @@ class NFeFacade
             return $initError;
         }
 
-        return $this->responseHandler->handle(function () use ($dados) {
+        $response = $this->responseHandler->handle(function () use ($dados) {
             // Garante que é modelo 55 (NFe)
             if (! isset($dados['identificacao']['mod'])) {
                 $dados['identificacao']['mod'] = 55;
@@ -133,6 +133,25 @@ class NFeFacade
                 is_string($protocolo) && trim($protocolo) !== '' ? $protocolo : null
             );
         }, 'emissao_nfe');
+
+        return $this->withEmissionMetrics($response);
+    }
+
+    private function withEmissionMetrics(FiscalResponse $response): FiscalResponse
+    {
+        if ($this->nfe === null) {
+            return $response;
+        }
+
+        $metrics = $this->nfe->getLastEmissionMetrics();
+        if ($metrics === []) {
+            return $response;
+        }
+
+        return $response->withMetadata('metrics', array_merge(
+            (array) $response->getMetadata('metrics'),
+            $metrics,
+        ));
     }
 
     /**
@@ -191,6 +210,25 @@ class NFeFacade
             $parsed = $this->parseEventResponse($xmlResponse);
             $ok = $this->isSefazOperationSuccessful($xmlResponse);
 
+            if (! $ok) {
+                return FiscalResponse::error(
+                    (string) ($parsed['xmotivo'] ?? 'A SEFAZ rejeitou o cancelamento da NF-e.'),
+                    'SEFAZ_REJECTION',
+                    'cancelamento_nfe',
+                    [
+                        'cstat' => $parsed['cstat'] ?? null,
+                        'xmotivo' => $parsed['xmotivo'] ?? null,
+                        'artifacts' => [
+                            'request_xml' => $this->nfe?->getLastRequestXml(),
+                            'response_xml' => $xmlResponse,
+                            'parsed_response' => $parsed,
+                        ],
+                    ],
+                );
+            }
+
+            $requestXml = $this->nfe?->getLastRequestXml();
+
             return $this->publicNormalizer->normalizeFiscalOperation('nfe', 'cancelamento_nfe', [
                 'status' => $parsed['xmotivo'] ?? null,
                 'ok' => $ok,
@@ -202,6 +240,7 @@ class NFeFacade
                 'situacao' => $parsed['xmotivo'] ?? null,
                 'protocolo' => $parsed['protocolo'] ?? $protocolo,
             ], [], [
+                'request_xml' => $requestXml,
                 'response_xml' => $xmlResponse,
                 'parsed_response' => $parsed,
             ], [
@@ -245,6 +284,21 @@ class NFeFacade
             );
             $parsed = $this->parseEventResponse($xmlResponse);
             $ok = $this->isSefazOperationSuccessful($xmlResponse);
+            if (! $ok) {
+                return FiscalResponse::error(
+                    (string) ($parsed['xmotivo'] ?? 'A SEFAZ rejeitou a inutilização da faixa.'),
+                    'SEFAZ_REJECTION',
+                    'inutilizacao_nfe',
+                    [
+                        'cstat' => $parsed['cstat'] ?? null,
+                        'artifacts' => [
+                            'request_xml' => $this->nfe?->getLastRequestXml(),
+                            'response_xml' => $xmlResponse,
+                            'parsed_response' => $parsed,
+                        ],
+                    ],
+                );
+            }
 
             return $this->publicNormalizer->normalizeFiscalOperation('nfe', 'inutilizacao_nfe', [
                 'status' => $parsed['xmotivo'] ?? null,
@@ -373,6 +427,24 @@ class NFeFacade
                 $this->extractDhEventoOption($opcoes),
                 $opcoes['lote'] ?? null
             );
+
+            $parsed = $this->sefazParser->parseEventResponse($xmlResponse);
+            if (! in_array((string) ($parsed['cstat'] ?? ''), ['135', '136'], true)) {
+                return FiscalResponse::error(
+                    (string) ($parsed['xmotivo'] ?? 'A SEFAZ rejeitou a carta de correção da NF-e.'),
+                    'SEFAZ_REJECTION',
+                    'carta_correcao_nfe',
+                    [
+                        'cstat' => $parsed['cstat'] ?? null,
+                        'xmotivo' => $parsed['xmotivo'] ?? null,
+                        'artifacts' => [
+                            'request_xml' => $this->nfe?->getLastRequestXml(),
+                            'response_xml' => $xmlResponse,
+                            'parsed_response' => $parsed,
+                        ],
+                    ],
+                );
+            }
 
             return $this->normalizeSefazEventOperation('carta_correcao_nfe', $xmlResponse, [
                 'chave_acesso' => $chave,
