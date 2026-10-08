@@ -61,24 +61,31 @@ os métodos FIPE do SDK 1.2 enviam essa opção no nível errado.
 
 ## Validação e distribuição
 
-```
-php -d memory_limit=512M vendor/bin/phpunit tests/Unit/Fiscal/ConsultasPublicasComplementaresTest.php tests/Unit/Fiscal/BrasilAPIAdapterCnpjTest.php
+```sh
+composer validate --strict
+php -d memory_limit=512M vendor/bin/phpunit tests/Unit/Fiscal/ConsultasPublicasComplementaresTest.php
 ```
 
-O Blank importa `sabbajohn\FiscalCore` do Composer, não o core incorporado.
-O script `tools/consultas-publicas/exportar-pacote-local.py <copia-do-pacote>` permite
-validar a evolução canônica numa **cópia local** desse pacote. Exporta adapter e
-interface e somente o delta da facade, preservando os outros métodos da versão
-instalada (inclusive CNPJ, que tem namespace/contrato diferentes no aplicativo).
-Não publica, não altera composer.lock e não deve ser usado sobre vendor de produção.
-É uma ponte de validação, não o mecanismo de release definitivo.
+A evolução vem da raiz canônica `fiscal-platform-api/app/Library/FiscalCore`.
+Esta distribuição aplica somente adapter, contrato complementar e delta da
+UtilsFacade, preservando os demais métodos publicados, inclusive o mapeamento CNPJ.
+A sincronização completa do módulo foi evitada porque incluiria outras alterações
+de emissão fiscal fora deste recorte.
 
-A distribuição oficial do pacote e atualização da dependência no Blank são
-pendências de release, exigem autorização e validação do responsável. Não foi
-editada nem sincronizada manualmente a antiga raiz standalone.
+Os nove testes novos passam com 55 asserções e transporte simulado. Não fazem
+consultas externas. `composer validate --strict` passa. Na execução local em PHP
+8.5.5, a suíte ampla reproduziu exatamente as falhas da base anterior: 10 erros e
+24 falhas; o PHPStan reproduziu os mesmos oito erros em arquivos de impressão/NFSe,
+sem nova ocorrência nos arquivos de consultas. A matriz PHP 8.1/8.2 do CI ainda
+precisa de verificação. Essa limitação não deve ser descrita como CI totalmente verde.
+
+O Blank importa `sabbajohn\FiscalCore` via Composer. Precisa atualizar seu
+`composer.lock` para uma versão que inclua estes contratos; publicar uma release
+do pacote não atualiza automaticamente o aplicativo. Não copiar arquivos para
+vendor de produção.
 
 ## Aceite ainda pendente
 
 Aceite humano do contrato #973 e qualificação de fonte #725/#979–#981;
-distribuição autorizada do pacote; QA autenticada do painel em ambiente de John.
-O código local e seus testes não removem dependências/políticas dos cards.
+QA autenticada do painel em ambiente de John. A publicação do código e seus testes
+não removem dependências/políticas dos cards.
