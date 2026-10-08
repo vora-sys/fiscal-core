@@ -24,9 +24,9 @@ class UtilsFacade
 
     private ResponseHandler $responseHandler;
 
-    public function __construct()
+    public function __construct(?BrasilAPIAdapter $brasilApi = null)
     {
-        $this->brasilApi = new BrasilAPIAdapter;
+        $this->brasilApi = $brasilApi ?? new BrasilAPIAdapter;
         $this->responseHandler = new ResponseHandler;
     }
 
@@ -52,6 +52,121 @@ class UtilsFacade
                 'ddd' => $resultado['ddd'] ?? '',
             ];
         });
+    }
+
+    /** CEP v2 preserva localização aninhada; não fornece IBGE obrigatório. */
+    public function consultarCEPv2(string $cep): FiscalResponse
+    {
+        return $this->executarComplementar('consultar_cep_v2', function () use ($cep): array {
+            $dados = $this->brasilApi->consultarCEPv2($cep);
+            foreach (['cep', 'city', 'state'] as $campo) {
+                if (! is_string($dados[$campo] ?? null) || trim($dados[$campo]) === '') {
+                    throw new \UnexpectedValueException('Resposta CEP v2 inválida.', 502);
+                }
+            }
+            $location = is_array($dados['location'] ?? null) ? $dados['location'] : [];
+            $coordinates = is_array($location['coordinates'] ?? null) ? $location['coordinates'] : [];
+
+            return [
+                'cep' => $dados['cep'],
+                'logradouro' => is_string($dados['street'] ?? null) ? $dados['street'] : '',
+                'bairro' => is_string($dados['neighborhood'] ?? null) ? $dados['neighborhood'] : '',
+                'localidade' => $dados['city'],
+                'uf' => $dados['state'],
+                'servico' => is_string($dados['service'] ?? null) ? $dados['service'] : '',
+                'fuso_horario' => is_string($dados['timezoneName'] ?? null) ? $dados['timezoneName'] : null,
+                'localizacao' => [
+                    'tipo' => is_string($location['type'] ?? null) ? $location['type'] : null,
+                    'coordenadas' => [
+                        'latitude' => is_numeric($coordinates['latitude'] ?? null) ? (string) $coordinates['latitude'] : null,
+                        'longitude' => is_numeric($coordinates['longitude'] ?? null) ? (string) $coordinates['longitude'] : null,
+                    ],
+                ],
+                'fonte' => 'brasil_api',
+            ];
+        });
+    }
+
+    public function listarTabelasReferenciaFipe(): FiscalResponse
+    {
+        return $this->executarComplementar('listar_tabelas_fipe', fn (): array => $this->validarListaComplementar(
+            $this->brasilApi->listarTabelasReferenciaFipe(), ['codigo', 'mes']
+        ));
+    }
+
+    public function consultarMarcasPorTipoVeiculo(string $tipoVeiculo, ?int $tabelaDeReferencia = null): FiscalResponse
+    {
+        return $this->executarComplementar('consultar_marcas_fipe', fn (): array => $this->validarListaComplementar(
+            $this->brasilApi->consultarMarcasPorTipoVeiculo($tipoVeiculo, $tabelaDeReferencia), ['nome', 'valor']
+        ));
+    }
+
+    /** Lista por ano/combustível; valor monetário preservado como string. */
+    public function consultarPrecoFipe(string $codigoFipe, ?int $tabelaDeReferencia = null): FiscalResponse
+    {
+        return $this->executarComplementar('consultar_preco_fipe', function () use ($codigoFipe, $tabelaDeReferencia): array {
+            $linhas = $this->validarListaComplementar($this->brasilApi->consultarPrecoFipe($codigoFipe, $tabelaDeReferencia),
+                ['valor', 'marca', 'modelo', 'anoModelo', 'combustivel', 'codigoFipe', 'mesReferencia']);
+
+            return array_map(function (array $linha) use ($codigoFipe, $tabelaDeReferencia): array {
+                foreach (['valor', 'marca', 'modelo', 'combustivel', 'codigoFipe', 'mesReferencia'] as $campo) {
+                    if (! is_string($linha[$campo])) {
+                        throw new \UnexpectedValueException('Resposta FIPE inválida.', 502);
+                    }
+                }
+                if ($linha['codigoFipe'] !== trim($codigoFipe) || ! ctype_digit((string) $linha['anoModelo'])) {
+                    throw new \UnexpectedValueException('Resposta FIPE incompatível com a consulta.', 502);
+                }
+
+                return [
+                    'codigo_fipe' => $linha['codigoFipe'],
+                    'valor' => $linha['valor'],
+                    'marca' => $linha['marca'],
+                    'modelo' => $linha['modelo'],
+                    'ano_modelo' => (int) $linha['anoModelo'],
+                    'combustivel' => $linha['combustivel'],
+                    'mes_referencia' => trim($linha['mesReferencia']),
+                    'tipo_veiculo' => $linha['tipoVeiculo'] ?? null,
+                    'sigla_combustivel' => $linha['siglaCombustivel'] ?? null,
+                    'data_consulta' => $linha['dataConsulta'] ?? null,
+                    'tabela_referencia' => $tabelaDeReferencia,
+                    'fonte' => 'brasil_api',
+                ];
+            }, $linhas);
+        });
+    }
+
+    private function validarListaComplementar(array $linhas, array $campos): array
+    {
+        if (! array_is_list($linhas) || $linhas === []) {
+            throw new \UnexpectedValueException('Resposta de consulta inválida.', 502);
+        }
+        foreach ($linhas as $linha) {
+            foreach ($campos as $campo) {
+                if (! is_array($linha) || ! is_scalar($linha[$campo] ?? null) || trim((string) $linha[$campo]) === '') {
+                    throw new \UnexpectedValueException('Resposta de consulta inválida.', 502);
+                }
+            }
+        }
+
+        return $linhas;
+    }
+
+    private function executarComplementar(string $operacao, callable $consulta): FiscalResponse
+    {
+        try {
+            return FiscalResponse::success($consulta(), $operacao, ['provider' => 'brasil_api']);
+        } catch (\Throwable $erro) {
+            $status = (int) $erro->getCode();
+            $codigo = match (true) {
+                $erro instanceof \InvalidArgumentException, $status === 400 => 'INVALID_ARGUMENT',
+                $status === 404 => 'CONSULTA_NAO_ENCONTRADA',
+                $erro instanceof \UnexpectedValueException => 'RESPOSTA_INVALIDA',
+                default => 'CONSULTA_INDISPONIVEL',
+            };
+
+            return FiscalResponse::error($erro->getMessage(), $codigo, $operacao, ['provider' => 'brasil_api']);
+        }
     }
 
     /**

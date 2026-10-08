@@ -2,12 +2,13 @@
 
 namespace sabbajohn\FiscalCore\Adapters;
 
+use sabbajohn\FiscalCore\Contracts\ConsultaPublicaComplementarInterface;
 use sabbajohn\FiscalCore\Contracts\ConsultaPublicaInterface;
 use BrasilApi\Client;
 use GuzzleHttp\Client as HttpClient;
 use GuzzleHttp\ClientInterface;
 
-class BrasilAPIAdapter implements ConsultaPublicaInterface
+class BrasilAPIAdapter implements ConsultaPublicaComplementarInterface, ConsultaPublicaInterface
 {
     private Client $client;
 
@@ -44,6 +45,90 @@ class BrasilAPIAdapter implements ConsultaPublicaInterface
             return $this->normalizeResponse($response);
         } catch (\Throwable $e) {
             throw new \RuntimeException('Falha ao consultar CEP na BrasilAPI: '.$e->getMessage(), 0, $e);
+        }
+    }
+
+    public function consultarCEPv2(string $cep): array
+    {
+        $cep = trim($cep);
+        if (preg_match('/^[0-9]{5}-?[0-9]{3}$/D', $cep) !== 1) {
+            throw new \InvalidArgumentException('CEP deve conter 8 dígitos.');
+        }
+
+        return $this->consultarComplementar('/cep/v2/'.str_replace('-', '', $cep));
+    }
+
+    public function listarTabelasReferenciaFipe(): array
+    {
+        return $this->consultarComplementar('/fipe/tabelas/v1');
+    }
+
+    public function consultarPrecoFipe(string $codigoFipe, ?int $tabelaDeReferencia = null): array
+    {
+        $codigoFipe = trim($codigoFipe);
+        if (preg_match('/^[0-9]{6}-[0-9]$/D', $codigoFipe) !== 1) {
+            throw new \InvalidArgumentException('Código FIPE deve usar o formato 000000-0.');
+        }
+        $this->validarTabelaReferencia($tabelaDeReferencia);
+
+        return $this->consultarComplementar('/fipe/preco/v1/'.$codigoFipe, $tabelaDeReferencia);
+    }
+
+    public function consultarMarcasPorTipoVeiculo(string $tipoVeiculo, ?int $tabelaDeReferencia = null): array
+    {
+        $tipoVeiculo = strtolower(trim($tipoVeiculo));
+        if (! in_array($tipoVeiculo, ['carros', 'motos', 'caminhoes'], true)) {
+            throw new \InvalidArgumentException('Tipo de veículo deve ser carros, motos ou caminhoes.');
+        }
+        $this->validarTabelaReferencia($tabelaDeReferencia);
+
+        return $this->consultarComplementar('/fipe/marcas/v1/'.$tipoVeiculo, $tabelaDeReferencia);
+    }
+
+    // Aliases do rascunho original; preservados para compatibilidade.
+    public function consutaTabelaReferencia(): array
+    {
+        return $this->listarTabelasReferenciaFipe();
+    }
+
+    public function consutaPrecoFipe(string $codigoFipe, ?int $tabelaDeReferencia = null): array
+    {
+        return $this->consultarPrecoFipe($codigoFipe, $tabelaDeReferencia);
+    }
+
+    public function consutaMarcasPorTipoVeiculo(string $tipoVeiculo, ?int $tabelaDeReferencia = null): array
+    {
+        return $this->consultarMarcasPorTipoVeiculo($tipoVeiculo, $tabelaDeReferencia);
+    }
+
+    private function validarTabelaReferencia(?int $tabelaDeReferencia): void
+    {
+        if ($tabelaDeReferencia !== null && $tabelaDeReferencia < 1) {
+            throw new \InvalidArgumentException('Tabela de referência deve ser um inteiro positivo.');
+        }
+    }
+
+    private function consultarComplementar(string $uri, ?int $tabelaDeReferencia = null): array
+    {
+        try {
+            // O SDK FIPE 1.2 não coloca tabela_referencia em query.
+            $options = $tabelaDeReferencia === null ? [] : ['query' => ['tabela_referencia' => $tabelaDeReferencia]];
+            $response = $this->normalizeResponse($this->client->request($uri, 'GET', $options));
+            if ($response === []) {
+                throw new \UnexpectedValueException('Resposta vazia ou inválida da BrasilAPI.', 502);
+            }
+
+            return $response;
+        } catch (\InvalidArgumentException|\UnexpectedValueException $e) {
+            throw $e;
+        } catch (\Throwable $e) {
+            $status = (int) $e->getCode();
+            $message = match ($status) {
+                400 => 'Parâmetros rejeitados pela BrasilAPI.',
+                404 => 'Consulta não encontrada na BrasilAPI.',
+                default => 'BrasilAPI indisponível. Tente novamente mais tarde.',
+            };
+            throw new \RuntimeException($message, in_array($status, [400, 404], true) ? $status : 503, $e);
         }
     }
 

@@ -1,5 +1,14 @@
 # Changelog
 
+## [2.2.0] - 2026-10-08
+
+### Adicionado
+- Consultas BrasilAPI de CEP v2, tabelas de referência FIPE, marcas por tipo de veículo e preços por código FIPE.
+- Contrato opcional de consultas complementares e respostas da UtilsFacade em português, mantendo localização aninhada, preços por ano/combustível e mês de referência.
+- Validação antes da requisição, timeouts limitados e erros explícitos para entrada inválida, ausência, retorno inválido e indisponibilidade.
+- Aliases dos métodos FIPE do rascunho e injeção opcional do adapter, mantendo construção sem argumentos.
+- Testes de contrato/transporte com fixtures e sem consultas externas.
+
 ## v1.4.6 - 2026-06-26
 
 ### Changed
