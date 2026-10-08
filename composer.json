@@ -22,7 +22,8 @@
     "nfephp-org/sped-da": "^1.1",
     "brazanation/documents": "^2.1",
     "andreoneres/brasilapi-php": "^1.2",
-    "dompdf/dompdf": "^3.1"
+    "dompdf/dompdf": "^3.1",
+    "guzzlehttp/guzzle": "^7.10"
 
   },
   "require-dev": {
@@ -37,6 +38,7 @@
     "analyse": "php -d memory_limit=512M vendor/bin/phpstan analyse"
   },
   "suggest": {
+    "hertzogjr/fipe-php-sdk": "Fallback FIPE direto opcional (^1.0), requer PHP 8.4+. Consumo pontual com quotas/cache.",
     "nfephp-org/sped-nfse": "Driver NFSe baseado no ecossistema nfephp-org (instale se for usar NFSe com este provider)",
     "lucas-simoes/php-nfse": "Driver NFSe alternativo com suporte a múltiplos provedores (instale se for usar NFSe com este provider)",
     "ext-soap": "Necessário para integrações SOAP de NFSe",

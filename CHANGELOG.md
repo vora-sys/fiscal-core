@@ -1,5 +1,14 @@
 # Changelog
 
+## [2.3.0] - 2026-10-08
+
+### Adicionado
+- Consulta FIPE pontual com BrasilAPI, Parallelum e SDK FIPE direto opcional, sem modificar o método legado.
+- Catálogos sob demanda, referência fixada, contrato em português e validação de veículo/combustível/mês.
+- Orçamento HTTP compartilhado, cache por fonte, quotas/circuitos injetáveis e alertas sanitizados de acesso.
+- Compatibilidade PHP >=8.1 preservada; o SDK direto opcional requer PHP 8.4.
+- Testes dos dois fallbacks com transporte simulado; limites e qualificação em [FIPE-FALLBACKS.md](docs/consultas-publicas/FIPE-FALLBACKS.md).
+
 ## [2.2.0] - 2026-10-08
 
 ### Adicionado

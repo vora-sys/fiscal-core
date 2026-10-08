@@ -3,6 +3,9 @@
 namespace sabbajohn\FiscalCore\Facade;
 
 use sabbajohn\FiscalCore\Adapters\BrasilAPIAdapter;
+use sabbajohn\FiscalCore\Fipe\CadeiaConsultaFipe;
+use sabbajohn\FiscalCore\Fipe\ConsultaFipe;
+use sabbajohn\FiscalCore\Fipe\OrcamentoFipe;
 use sabbajohn\FiscalCore\Support\FiscalResponse;
 use sabbajohn\FiscalCore\Support\ResponseHandler;
 
@@ -24,7 +27,7 @@ class UtilsFacade
 
     private ResponseHandler $responseHandler;
 
-    public function __construct(?BrasilAPIAdapter $brasilApi = null)
+    public function __construct(?BrasilAPIAdapter $brasilApi = null, private ?CadeiaConsultaFipe $cadeiaFipe = null)
     {
         $this->brasilApi = $brasilApi ?? new BrasilAPIAdapter;
         $this->responseHandler = new ResponseHandler;
@@ -134,6 +137,16 @@ class UtilsFacade
                 ];
             }, $linhas);
         });
+    }
+
+    /** Consulta pontual; a API legada acima mantém contrato e comportamento. */
+    public function consultarPrecoFipeComFallback(ConsultaFipe $consulta, ?OrcamentoFipe $orcamento = null): FiscalResponse
+    {
+        if ($this->cadeiaFipe === null) {
+            return FiscalResponse::error('Configure a cadeia FIPE e seu armazenamento compartilhado.', 'CONSULTA_INDISPONIVEL', 'consultar_preco_fipe');
+        }
+
+        return $this->cadeiaFipe->consultar($consulta, $orcamento);
     }
 
     private function validarListaComplementar(array $linhas, array $campos): array

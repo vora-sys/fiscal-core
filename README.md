@@ -783,3 +783,6 @@ Contribuição
 Licença
 
 - MIT. Veja `composer.json`.
+
+
+Consulta FIPE com fontes alternativas (v2.3.0): veja [contrato, configuração e limites](docs/consultas-publicas/FIPE-FALLBACKS.md).
