@@ -912,13 +912,13 @@ class NacionalProvider extends AbstractNFSeProvider implements NFSeNacionalCapab
         $this->appendNode($dom, $servico, 'CodigoMunicipio', (string) ($dados['servico']['codigo_municipio'] ?? $this->getCodigoMunicipio()));
 
         $prestador = $this->appendNode($dom, $inf, 'Prestador');
-        $this->appendNode($dom, $prestador, 'Cnpj', $this->onlyDigits((string) ($dados['prestador']['cnpj'] ?? '')));
+        $this->appendNode($dom, $prestador, 'Cnpj', $this->normalizeFederalDocument($dados['prestador']['cnpj'] ?? null));
         $this->appendNode($dom, $prestador, 'InscricaoMunicipal', (string) ($dados['prestador']['inscricaoMunicipal'] ?? ''));
 
         $tomador = $this->appendNode($dom, $inf, 'Tomador');
         $identTomador = $this->appendNode($dom, $tomador, 'IdentificacaoTomador');
         $cpfCnpj = $this->appendNode($dom, $identTomador, 'CpfCnpj');
-        $docTomador = $this->onlyDigits((string) ($dados['tomador']['documento'] ?? ''));
+        $docTomador = $this->normalizeFederalDocument($dados['tomador']['documento'] ?? null);
         if (strlen($docTomador) === 14) {
             $this->appendNode($dom, $cpfCnpj, 'Cnpj', $docTomador);
         } else {
@@ -1210,18 +1210,21 @@ class NacionalProvider extends AbstractNFSeProvider implements NFSeNacionalCapab
      */
     private function appendTomadorDps(\DOMDocument $dom, \DOMElement $inf, array $tomador): void
     {
+        $tomadorNif = $this->firstString([$tomador['NIF'] ?? null, $tomador['nif'] ?? null]);
         $tomadorRaw = (string) ($tomador['documento'] ?? $tomador['cnpj'] ?? $tomador['cpf'] ?? '');
         $tomadorDoc = $this->isDpsLayout104() ? $this->normalizeCnpj104($tomadorRaw, 14) : null;
         $tomadorDoc ??= $this->onlyDigits($tomadorRaw);
         $tomadorNome = trim((string) ($tomador['razaoSocial'] ?? $tomador['razao_social'] ?? $tomador['nome'] ?? ''));
-        if ($tomadorDoc === '' || $tomadorNome === '') {
+        if (($tomadorDoc === '' && $tomadorNif === null) || $tomadorNome === '') {
             return;
         }
 
         $ns = $this->getDpsNamespace();
         $toma = $dom->createElementNS($ns, 'toma');
         $inf->appendChild($toma);
-        if (strlen($tomadorDoc) === 14) {
+        if ($tomadorNif !== null) {
+            $this->appendNodeDps($dom, $toma, 'NIF', $tomadorNif);
+        } elseif (strlen($tomadorDoc) === 14) {
             $this->appendNodeDps($dom, $toma, 'CNPJ', $tomadorDoc);
         } else {
             $this->appendNodeDps($dom, $toma, 'CPF', str_pad(substr($tomadorDoc, 0, 11), 11, '0', STR_PAD_LEFT));
@@ -2549,8 +2552,7 @@ class NacionalProvider extends AbstractNFSeProvider implements NFSeNacionalCapab
             $data['cpf'] ?? null,
             $data['documento'] ?? null,
         ]) ?? '');
-        $documento = $this->isDpsLayout104() ? $this->normalizeCnpj104($documentoRaw, 14) : null;
-        $documento ??= $this->onlyDigits($documentoRaw);
+        $documento = $this->normalizeFederalDocument($documentoRaw);
         if (strlen($documento) === 14) {
             $this->appendNodeDps($dom, $parent, 'CNPJ', $documento);
 
@@ -2797,20 +2799,19 @@ class NacionalProvider extends AbstractNFSeProvider implements NFSeNacionalCapab
         $end = $dom->createElementNS($ns, 'end');
         $toma->appendChild($end);
 
-        $endNac = $dom->createElementNS($ns, 'endNac');
-        $end->appendChild($endNac);
-        $this->appendNodeDps(
-            $dom,
-            $endNac,
-            'cMun',
-            $resolved['codigo_municipio']
-        );
-        $this->appendNodeDps(
-            $dom,
-            $endNac,
-            'CEP',
-            $resolved['cep']
-        );
+        if ($resolved['codigo_pais'] !== '') {
+            $endExt = $dom->createElementNS($ns, 'endExt');
+            $end->appendChild($endExt);
+            $this->appendNodeDps($dom, $endExt, 'cPais', $resolved['codigo_pais']);
+            $this->appendNodeDps($dom, $endExt, 'cEndPost', $resolved['codigo_postal']);
+            $this->appendNodeDps($dom, $endExt, 'xCidade', $resolved['cidade_exterior']);
+            $this->appendNodeDps($dom, $endExt, 'xEstProvReg', $resolved['regiao_exterior']);
+        } else {
+            $endNac = $dom->createElementNS($ns, 'endNac');
+            $end->appendChild($endNac);
+            $this->appendNodeDps($dom, $endNac, 'cMun', $resolved['codigo_municipio']);
+            $this->appendNodeDps($dom, $endNac, 'CEP', $resolved['cep']);
+        }
 
         $this->appendNodeDps($dom, $end, 'xLgr', $resolved['logradouro']);
         $this->appendNodeDps($dom, $end, 'nro', $resolved['numero']);
@@ -2822,13 +2823,16 @@ class NacionalProvider extends AbstractNFSeProvider implements NFSeNacionalCapab
 
     /**
      * @param  array<string,mixed>  $tomador
-     * @return array{codigo_municipio:string,cep:string,logradouro:string,numero:string,complemento:string,bairro:string}
+     * @return array{codigo_municipio:string,cep:string,codigo_pais:string,codigo_postal:string,cidade_exterior:string,regiao_exterior:string,logradouro:string,numero:string,complemento:string,bairro:string}
      */
     private function resolveTomadorEnderecoDps(array $tomador): array
     {
         $endereco = is_array($tomador['endereco'] ?? null)
             ? $tomador['endereco']
             : (is_array($tomador['address'] ?? null) ? $tomador['address'] : []);
+        $endExt = is_array($endereco['endExt'] ?? null)
+            ? $endereco['endExt']
+            : (is_array($endereco['exterior'] ?? null) ? $endereco['exterior'] : []);
 
         return [
             'codigo_municipio' => $this->onlyDigits((string) ($this->firstString([
@@ -2852,6 +2856,30 @@ class NacionalProvider extends AbstractNFSeProvider implements NFSeNacionalCapab
                 $endereco['CEP'] ?? null,
                 $endereco['postal_code'] ?? null,
                 $endereco['zip'] ?? null,
+            ]) ?? '')),
+            'codigo_pais' => $this->onlyDigits((string) ($this->firstString([
+                $endExt['cPais'] ?? null,
+                $endereco['codigo_pais'] ?? null,
+                $tomador['countryCode'] ?? null,
+                $tomador['country_code'] ?? null,
+            ]) ?? '')),
+            'codigo_postal' => trim((string) ($this->firstString([
+                $endExt['cEndPost'] ?? null,
+                $endereco['codigo_postal'] ?? null,
+                $endereco['cep'] ?? null,
+                $tomador['cep'] ?? null,
+            ]) ?? '')),
+            'cidade_exterior' => trim((string) ($this->firstString([
+                $endExt['xCidade'] ?? null,
+                $endereco['cidade'] ?? null,
+                $endereco['municipio'] ?? null,
+                $tomador['municipio'] ?? null,
+            ]) ?? '')),
+            'regiao_exterior' => trim((string) ($this->firstString([
+                $endExt['xEstProvReg'] ?? null,
+                $endereco['estado_provincia'] ?? null,
+                $tomador['foreignRegion'] ?? null,
+                $tomador['foreign_region'] ?? null,
             ]) ?? '')),
             'logradouro' => trim((string) ($this->firstString([
                 $tomador['logradouro'] ?? null,
@@ -2890,12 +2918,15 @@ class NacionalProvider extends AbstractNFSeProvider implements NFSeNacionalCapab
     }
 
     /**
-     * @param  array{codigo_municipio:string,cep:string,logradouro:string,numero:string,complemento:string,bairro:string}  $endereco
+     * @param  array{codigo_municipio:string,cep:string,codigo_pais:string,codigo_postal:string,cidade_exterior:string,regiao_exterior:string,logradouro:string,numero:string,complemento:string,bairro:string}  $endereco
      */
     private function tomadorEnderecoDpsCompleto(array $endereco): bool
     {
-        return strlen($endereco['codigo_municipio']) === 7
-            && strlen($endereco['cep']) === 8
+        $localizacaoCompleta = $endereco['codigo_pais'] !== ''
+            ? $endereco['codigo_postal'] !== '' && $endereco['cidade_exterior'] !== '' && $endereco['regiao_exterior'] !== ''
+            : strlen($endereco['codigo_municipio']) === 7 && strlen($endereco['cep']) === 8;
+
+        return $localizacaoCompleta
             && $endereco['logradouro'] !== ''
             && $endereco['numero'] !== ''
             && $endereco['bairro'] !== '';
@@ -3128,7 +3159,7 @@ class NacionalProvider extends AbstractNFSeProvider implements NFSeNacionalCapab
         }
         parent::validarDados($commonValidationData);
 
-        if (empty($dados['prestador']['cnpj']) || strlen($this->onlyDigits((string) $dados['prestador']['cnpj'])) !== 14) {
+        if (strlen($this->normalizeFederalDocument($dados['prestador']['cnpj'] ?? null)) !== 14) {
             throw new \InvalidArgumentException('CNPJ do prestador inválido');
         }
 
@@ -3145,7 +3176,7 @@ class NacionalProvider extends AbstractNFSeProvider implements NFSeNacionalCapab
             throw new \InvalidArgumentException('Documento do tomador é obrigatório');
         }
 
-        $docTomador = $this->onlyDigits((string) ($dados['tomador']['documento'] ?? ''));
+        $docTomador = $this->normalizeFederalDocument($dados['tomador']['documento'] ?? null);
         if (! $takerNotInformed && ! in_array(strlen($docTomador), [11, 14], true)) {
             throw new \InvalidArgumentException('Documento do tomador deve ser CPF (11) ou CNPJ (14)');
         }
@@ -3297,7 +3328,7 @@ class NacionalProvider extends AbstractNFSeProvider implements NFSeNacionalCapab
             }
         }
 
-        $tomadorDoc = $this->onlyDigits((string) ($dados['tomador']['documento'] ?? ''));
+        $tomadorDoc = $this->normalizeFederalDocument($dados['tomador']['documento'] ?? null);
         if (($tpEmit === '1' && strlen($tomadorDoc) === 14) || ($tpEmit !== '2' && $tpRetIssqn === '2')) {
             $tomadorEndereco = $this->resolveTomadorEnderecoDps((array) ($dados['tomador'] ?? []));
             if (! $this->tomadorEnderecoDpsCompleto($tomadorEndereco)) {
@@ -5282,9 +5313,16 @@ class NacionalProvider extends AbstractNFSeProvider implements NFSeNacionalCapab
         return strlen($normalized) === $length ? $normalized : null;
     }
 
+    private function normalizeFederalDocument(mixed $value): string
+    {
+        $normalized = strtoupper(preg_replace('/[^A-Z0-9]+/i', '', trim((string) $value)) ?? '');
+
+        return preg_match('/^(?:[0-9]{11}|[A-Z0-9]{12}[0-9]{2})$/', $normalized) === 1 ? $normalized : '';
+    }
+
     public function consultarContribuinteCnc(string $cnc): array
     {
-        $documento = $this->onlyDigits($cnc);
+        $documento = $this->normalizeFederalDocument($cnc);
         if ($documento === '') {
             throw new \InvalidArgumentException('Documento é obrigatório para consultar contribuinte CNC.');
         }

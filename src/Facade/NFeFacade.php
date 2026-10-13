@@ -6,6 +6,7 @@ use sabbajohn\FiscalCore\Adapters\ImpressaoAdapter;
 use sabbajohn\FiscalCore\Adapters\NF\Builder\NotaFiscalBuilder;
 use sabbajohn\FiscalCore\Adapters\NF\Core\NotaFiscal;
 use sabbajohn\FiscalCore\Adapters\NF\NFeAdapter;
+use sabbajohn\FiscalCore\Support\CnpjIdentity;
 use sabbajohn\FiscalCore\Support\FiscalDocumentResultNormalizer;
 use sabbajohn\FiscalCore\Support\FiscalResponse;
 use sabbajohn\FiscalCore\Support\FiscalResponseNormalizer;
@@ -15,6 +16,7 @@ use sabbajohn\FiscalCore\Support\SefazAdvancedMethodRegistry;
 use sabbajohn\FiscalCore\Support\SefazResponseParser;
 use sabbajohn\FiscalCore\Support\ToolsFactory;
 use sabbajohn\FiscalCore\Support\XmlUtils;
+use NFePHP\Common\Keys;
 use NFePHP\NFe\Complements;
 
 /**
@@ -1158,8 +1160,9 @@ class NFeFacade
         return $this->responseHandler->execute(function () use ($chave) {
             $chave = trim($chave);
 
-            if (! preg_match('/^\d{44}$/', $chave)) {
-                throw new \InvalidArgumentException('Chave de acesso deve ter 44 dígitos');
+            $chave = strtoupper($chave);
+            if (! Keys::isValid($chave)) {
+                throw new \InvalidArgumentException('Chave de acesso deve ter 44 posições válidas');
             }
 
             if ($chave === str_repeat('0', 44)) {
@@ -1216,8 +1219,8 @@ class NFeFacade
             if (empty($emitente['CNPJ'])) {
                 $erros[] = 'CNPJ obrigatório';
             } else {
-                $cnpj = preg_replace('/\D/', '', $emitente['CNPJ']);
-                if (strlen($cnpj) !== 14 || ! $this->validarDigitosCNPJ($cnpj)) {
+                $cnpj = CnpjIdentity::tryNormalize($emitente['CNPJ']);
+                if ($cnpj === null || ! CnpjIdentity::hasValidCheckDigits($cnpj)) {
                     $erros[] = 'CNPJ inválido';
                 }
             }
@@ -1258,7 +1261,7 @@ class NFeFacade
 
             return [
                 'emitente_valido' => true,
-                'cnpj_formatado' => preg_replace('/\D/', '', $emitente['CNPJ']),
+                'cnpj_formatado' => CnpjIdentity::tryNormalize($emitente['CNPJ']),
                 'validacoes' => [
                     'cnpj' => ! empty($emitente['CNPJ']),
                     'razao_social' => ! empty($emitente['xNome']),
@@ -1394,53 +1397,17 @@ class NFeFacade
     {
         // Simula chave baseada nos dados (para validação prévia)
         $uf = $dados['emitente']['endereco']['cUF'] ?? '42';
-        $cnpj = preg_replace('/\D/', '', $dados['emitente']['CNPJ'] ?? '00000000000000');
+        $cnpj = CnpjIdentity::tryNormalize($dados['emitente']['CNPJ'] ?? null) ?? '00000000000000';
         $modelo = '55';
         $serie = str_pad($dados['identificacao']['serie'] ?? '1', 3, '0', STR_PAD_LEFT);
         $numero = str_pad($dados['identificacao']['nNF'] ?? '1', 9, '0', STR_PAD_LEFT);
         $codigo = str_pad(rand(10000000, 99999999), 8, '0');
 
-        $chave = $uf.date('ym').$cnpj.$modelo.$serie.$numero.'1'.$codigo;
-        $dv = $this->calcularDV($chave);
-
-        return $chave.$dv;
+        return Keys::build($uf, date('y'), date('m'), $cnpj, $modelo, $serie, $numero, 1, $codigo);
     }
 
     private function calcularDV(string $chave): string
     {
-        $soma = 0;
-        $peso = 2;
-
-        for ($i = strlen($chave) - 1; $i >= 0; $i--) {
-            $soma += (int) $chave[$i] * $peso;
-            $peso = $peso == 9 ? 2 : $peso + 1;
-        }
-
-        $dv = 11 - ($soma % 11);
-
-        return $dv >= 10 ? '0' : (string) $dv;
-    }
-
-    private function validarDigitosCNPJ(string $cnpj): bool
-    {
-        if (preg_match('/(\d)\1{13}/', $cnpj)) {
-            return false;
-        }
-
-        $pesos = [5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2];
-        $soma = 0;
-        for ($i = 0; $i < 12; $i++) {
-            $soma += (int) $cnpj[$i] * $pesos[$i];
-        }
-        $digito1 = $soma % 11 < 2 ? 0 : 11 - ($soma % 11);
-
-        $pesos = [6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2];
-        $soma = 0;
-        for ($i = 0; $i < 13; $i++) {
-            $soma += (int) $cnpj[$i] * $pesos[$i];
-        }
-        $digito2 = $soma % 11 < 2 ? 0 : 11 - ($soma % 11);
-
-        return (int) $cnpj[12] === $digito1 && (int) $cnpj[13] === $digito2;
+        return Keys::verifyingDigit($chave);
     }
 }

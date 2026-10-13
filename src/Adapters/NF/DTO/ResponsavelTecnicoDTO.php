@@ -2,6 +2,8 @@
 
 namespace sabbajohn\FiscalCore\Adapters\NF\DTO;
 
+use sabbajohn\FiscalCore\Support\CnpjIdentity;
+
 /**
  * DTO para dados do responsável técnico pela emissão
  * Corresponde à tag <infRespTec> do XML
@@ -75,8 +77,8 @@ class ResponsavelTecnicoDTO
         $errors = [];
 
         // Validar CNPJ
-        if (! preg_match('/^\d{14}$/', $this->cnpj)) {
-            $errors[] = 'CNPJ do responsável técnico deve ter 14 dígitos';
+        if (CnpjIdentity::tryNormalize($this->cnpj) === null) {
+            $errors[] = 'CNPJ do responsável técnico deve ter 14 posições válidas';
         }
 
         // Validar telefone

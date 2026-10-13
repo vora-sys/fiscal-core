@@ -1,0 +1,33 @@
+name: Contratos do release
+on:
+  push:
+    branches: ['codex/release-v2.4.0-20261013']
+    tags: ['v2.*']
+  pull_request:
+    paths: ['src/**', 'tests/**', 'composer.json', 'composer.lock', '.github/workflows/fipe-fallbacks.yml']
+permissions:
+  contents: read
+jobs:
+  contratos:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        php: ['8.1', '8.4']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '${{ matrix.php }}'
+          extensions: curl, dom, gd, json, libxml, mbstring, openssl, soap, zip
+          coverage: none
+      - run: composer validate --strict
+      - run: composer install --prefer-dist --no-interaction --no-scripts --no-plugins
+      - if: matrix.php == '8.4'
+        run: composer require --dev hertzogjr/fipe-php-sdk:^1.0 --no-interaction --no-scripts --no-plugins
+      - name: Testes focados do release
+        env:
+          ENABLE_EXTERNAL_TESTS: 'false'
+        run: php -d memory_limit=512M vendor/bin/phpunit tests/Unit/Fiscal tests/Unit/NFe/XMLValidationTest.php tests/Unit/ThermalDanfceRendererTest.php tests/Unit/NFSe/NfseNacionalCanonicalContractTest.php tests/Unit/NFSe/DpsNacionalDtoTest.php tests/Unit/Utils/CnpjResponseMappingTest.php
+      - if: matrix.php == '8.4'
+        run: php vendor/bin/phpunit --fail-on-skipped tests/Unit/Fiscal/FipeFallbackTest.php tests/Unit/Fiscal/ConsultasPublicasComplementaresTest.php

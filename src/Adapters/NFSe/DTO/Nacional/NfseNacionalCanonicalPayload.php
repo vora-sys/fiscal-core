@@ -34,6 +34,7 @@ final class NfseNacionalCanonicalPayload
         ],
         'tomador' => [
             'documento' => true,
+            'nif' => true,
             'razaoSocial' => true,
             'email' => true,
             'telefone' => true,
@@ -46,6 +47,12 @@ final class NfseNacionalCanonicalPayload
                 'codigoMunicipio' => true,
                 'uf' => true,
                 'municipio' => true,
+                'endExt' => [
+                    'cPais' => true,
+                    'cEndPost' => true,
+                    'xCidade' => true,
+                    'xEstProvReg' => true,
+                ],
             ],
         ],
         'servico' => [

@@ -294,6 +294,8 @@ class NotaFiscalBuilder
             valorUnitarioTributavel: $produto['valorUnitarioTributavel'] ?? $produto['valorUnitario'],
             indTot: $produto['indTot'] ?? 1,
             cest: $produto['cest'] ?? null,
+            valorDesconto: (float) ($produto['valorDesconto'] ?? $produto['vDesc'] ?? 0),
+            valorOutrasDespesas: (float) ($produto['valorOutrasDespesas'] ?? $produto['vOutro'] ?? 0),
         );
 
         $this->nota->addNode(new ProdutoNode($produtoDto));

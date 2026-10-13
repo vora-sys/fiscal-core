@@ -42,7 +42,8 @@ class XMLValidationTest extends TestCase
     {
         $chaves_validas = [
             '35210315123456789012345678901234567890123456',
-            '43200211222333000181550010000000011123456789',
+            '35260983188342000104550010000003571123456780',
+            '352609ABC12D34000107550010000003571123456789',
         ];
 
         foreach ($chaves_validas as $chave) {
@@ -59,6 +60,8 @@ class XMLValidationTest extends TestCase
             '35210315123456789012345678901234567890123456a', // letra
             '',                                             // vazia
             '00000000000000000000000000000000000000000000',   // zeros
+            '35260983188342000104550010000003571123456781',   // DV inválido
+            '352609ABC12D34000107550010000003571123456780',   // DV alfanumérico inválido
         ];
 
         foreach ($chaves_invalidas as $chave) {

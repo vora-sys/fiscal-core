@@ -5,6 +5,7 @@ namespace sabbajohn\FiscalCore\Facade;
 use sabbajohn\FiscalCore\Adapters\ImpressaoAdapter;
 use sabbajohn\FiscalCore\Adapters\NF\Builder\NotaFiscalBuilder;
 use sabbajohn\FiscalCore\Adapters\NF\NFCe\NFCeAdapter;
+use sabbajohn\FiscalCore\Support\CnpjIdentity;
 use sabbajohn\FiscalCore\Support\FiscalDocumentResultNormalizer;
 use sabbajohn\FiscalCore\Support\FiscalResponse;
 use sabbajohn\FiscalCore\Support\FiscalResponseNormalizer;
@@ -12,6 +13,7 @@ use sabbajohn\FiscalCore\Support\ResponseHandler;
 use sabbajohn\FiscalCore\Support\SefazAdvancedMethodRegistry;
 use sabbajohn\FiscalCore\Support\SefazResponseParser;
 use sabbajohn\FiscalCore\Support\ToolsFactory;
+use NFePHP\Common\Keys;
 
 /**
  * Facade para NFCe - Interface simplificada com tratamento de erros
@@ -827,30 +829,12 @@ class NFCeFacade
     private function simularChaveAcesso(array $dados): string
     {
         $uf = $dados['emitente']['endereco']['cUF'] ?? '42';
-        $cnpj = preg_replace('/\D/', '', $dados['emitente']['CNPJ'] ?? '00000000000000');
+        $cnpj = CnpjIdentity::tryNormalize($dados['emitente']['CNPJ'] ?? null) ?? '00000000000000';
         $modelo = '65';
         $serie = str_pad($dados['identificacao']['serie'] ?? '1', 3, '0', STR_PAD_LEFT);
         $numero = str_pad($dados['identificacao']['nNF'] ?? '1', 9, '0', STR_PAD_LEFT);
         $codigo = str_pad(rand(10000000, 99999999), 8, '0');
 
-        $chave = $uf.date('ym').$cnpj.$modelo.$serie.$numero.'1'.$codigo;
-        $dv = $this->calcularDV($chave);
-
-        return $chave.$dv;
-    }
-
-    private function calcularDV(string $chave): string
-    {
-        $soma = 0;
-        $peso = 2;
-
-        for ($i = strlen($chave) - 1; $i >= 0; $i--) {
-            $soma += (int) $chave[$i] * $peso;
-            $peso = $peso == 9 ? 2 : $peso + 1;
-        }
-
-        $dv = 11 - ($soma % 11);
-
-        return $dv >= 10 ? '0' : (string) $dv;
+        return Keys::build($uf, date('y'), date('m'), $cnpj, $modelo, $serie, $numero, 1, $codigo);
     }
 }

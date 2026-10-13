@@ -5,6 +5,7 @@ namespace sabbajohn\FiscalCore\Adapters\NF\Nodes;
 use sabbajohn\FiscalCore\Adapters\NF\Core\NotaNodeInterface;
 use sabbajohn\FiscalCore\Adapters\NF\DTO\TransporteDTO;
 use sabbajohn\FiscalCore\Adapters\NF\Helpers\StdClassBuilder;
+use sabbajohn\FiscalCore\Support\FederalTaxIdentity;
 use NFePHP\NFe\Make;
 
 /**
@@ -31,8 +32,7 @@ class TransporteNode implements NotaNodeInterface
             }
 
             // Validar CNPJ/CPF
-            $doc = preg_replace('/[^0-9]/', '', $this->transporte->cnpjCpf);
-            if (strlen($doc) !== 11 && strlen($doc) !== 14) {
+            if (FederalTaxIdentity::tryNormalize($this->transporte->cnpjCpf) === null) {
                 throw new \InvalidArgumentException('CNPJ/CPF da transportadora inválido');
             }
         }
@@ -60,7 +60,7 @@ class TransporteNode implements NotaNodeInterface
 
         // Se tiver transportadora, adicionar dados
         if ($this->transporte->cnpjCpf && $this->transporte->nome) {
-            $doc = preg_replace('/[^0-9]/', '', $this->transporte->cnpjCpf);
+            $doc = FederalTaxIdentity::normalize($this->transporte->cnpjCpf);
 
             $make->tagtransporta(StdClassBuilder::create([
                 'CNPJ' => strlen($doc) === 14 ? $doc : null,

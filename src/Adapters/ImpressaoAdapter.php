@@ -11,6 +11,8 @@ use NFePHP\NFe\Complements;
 
 class ImpressaoAdapter implements ImpressaoInterface
 {
+    private const DANFE_SIMPLIFICADO_TIPO_2_CLASS = 'NFePHP\\DA\\NFe\\DanfeSimplificadoTipo2';
+
     public function __construct(
         private readonly ?ThermalDanfceRenderer $thermalDanfceRenderer = null,
     ) {}
@@ -18,8 +20,12 @@ class ImpressaoAdapter implements ImpressaoInterface
     public function gerarDanfe(string $xml, array $context = []): string
     {
         $cancelled = (bool) ($context['cancelada'] ?? false);
-        $cancellationResponseXml = data_get($context, 'cancelamento.response_xml')
-            ?? data_get($context, 'cancelamento.processed_event_xml');
+        $cancellation = is_array($context['cancelamento'] ?? null)
+            ? $context['cancelamento']
+            : [];
+        $cancellationResponseXml = $cancellation['response_xml']
+            ?? $cancellation['processed_event_xml']
+            ?? null;
         $renderXml = $xml;
 
         if ($cancelled && is_string($cancellationResponseXml) && trim($cancellationResponseXml) !== '') {
@@ -30,7 +36,7 @@ class ImpressaoAdapter implements ImpressaoInterface
             }
         }
 
-        $danfe = new DanfeNFe($renderXml);
+        $danfe = $this->makeDanfeRenderer($renderXml);
         if ($cancelled) {
             $danfe->setCancelFlag();
         }
@@ -57,5 +63,45 @@ class ImpressaoAdapter implements ImpressaoInterface
         $danfe = new DanfeCte($xml);
 
         return $danfe->render();
+    }
+
+    private function makeDanfeRenderer(string $xml): object
+    {
+        if ($this->printType($xml) !== '6') {
+            return new DanfeNFe($xml);
+        }
+
+        if (! class_exists(self::DANFE_SIMPLIFICADO_TIPO_2_CLASS)) {
+            throw new \RuntimeException(
+                'DANFE Simplificado Tipo 2 (tpImp=6) não é suportado pela versão instalada do nfephp-org/sped-da.'
+            );
+        }
+
+        $rendererClass = self::DANFE_SIMPLIFICADO_TIPO_2_CLASS;
+
+        return new $rendererClass($xml);
+    }
+
+    private function printType(string $xml): ?string
+    {
+        $dom = new \DOMDocument;
+        $previousErrorMode = libxml_use_internal_errors();
+        libxml_use_internal_errors(true);
+        try {
+            $loaded = $dom->loadXML($xml);
+        } finally {
+            libxml_clear_errors();
+            libxml_use_internal_errors($previousErrorMode);
+        }
+
+        if (! $loaded) {
+            return null;
+        }
+
+        $value = (new \DOMXPath($dom))->evaluate(
+            "string((//*[local-name()='ide']/*[local-name()='tpImp'])[1])"
+        );
+
+        return is_string($value) && $value !== '' ? $value : null;
     }
 }

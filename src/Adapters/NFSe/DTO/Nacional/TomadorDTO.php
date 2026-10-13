@@ -32,6 +32,14 @@ final class TomadorDTO
                 unset($data['cnpj']);
             }
         }
+        $nif = DpsPayloadHelper::firstString([
+            $payload['NIF'] ?? null,
+            $payload['nif'] ?? null,
+        ]);
+        if ($nif !== null) {
+            $data['nif'] = $nif;
+            unset($data['documento'], $data['cnpj'], $data['cpf']);
+        }
 
         $nome = DpsPayloadHelper::firstString([
             $payload['razaoSocial'] ?? null,
@@ -74,8 +82,9 @@ final class TomadorDTO
         $documento = DpsPayloadHelper::fiscalDocument((string) ($this->data['documento'] ?? ''));
         $validCpf = preg_match('/^\d{11}$/', $documento) === 1;
         $validCnpj = preg_match('/^[A-Z0-9]{12}\d{2}$/', $documento) === 1;
-        if (! $validCpf && ! $validCnpj) {
-            $errors[] = 'tomador.documento deve ser CPF (11) ou CNPJ (14).';
+        $validNif = trim((string) ($this->data['nif'] ?? '')) !== '';
+        if (! $validCpf && ! $validCnpj && ! $validNif) {
+            $errors[] = 'tomador deve informar CPF, CNPJ ou NIF.';
         }
 
         if (trim((string) ($this->data['razaoSocial'] ?? '')) === '') {

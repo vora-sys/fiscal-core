@@ -5,6 +5,7 @@ namespace sabbajohn\FiscalCore\Facade;
 use sabbajohn\FiscalCore\Adapters\NF\NFSeAdapter;
 use sabbajohn\FiscalCore\Support\BelemMunicipalDocumentUrlBuilder;
 use sabbajohn\FiscalCore\Support\CertificateManager;
+use sabbajohn\FiscalCore\Support\CnpjIdentity;
 use sabbajohn\FiscalCore\Support\FiscalResponse;
 use sabbajohn\FiscalCore\Support\FiscalResponseNormalizer;
 use sabbajohn\FiscalCore\Support\MunicipalDanfseRendererResolver;
@@ -1103,9 +1104,9 @@ class NFSeFacade
                 $erros[] = 'CNPJ do prestador é obrigatório';
             } else {
                 // Valida formato CNPJ
-                $cnpj = preg_replace('/\D/', '', $prestador['cnpj']);
-                if (strlen($cnpj) !== 14) {
-                    $erros[] = 'CNPJ deve ter 14 dígitos';
+                $cnpj = CnpjIdentity::tryNormalize($prestador['cnpj']);
+                if ($cnpj === null || (CnpjIdentity::isAlphanumeric($cnpj) && ! CnpjIdentity::hasValidCheckDigits($cnpj))) {
+                    $erros[] = 'CNPJ deve ter 14 posições e dígitos verificadores válidos';
                 }
             }
 
@@ -1123,7 +1124,7 @@ class NFSeFacade
 
             return [
                 'prestador_valido' => true,
-                'cnpj_formatado' => isset($prestador['cnpj']) ? preg_replace('/\D/', '', $prestador['cnpj']) : null,
+                'cnpj_formatado' => isset($prestador['cnpj']) ? CnpjIdentity::tryNormalize($prestador['cnpj']) : null,
                 'validacoes' => [
                     'cnpj' => ! empty($prestador['cnpj']),
                     'inscricao_municipal' => ! empty($prestador['inscricaoMunicipal']),

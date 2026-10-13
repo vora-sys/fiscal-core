@@ -4,6 +4,7 @@ namespace sabbajohn\FiscalCore\Adapters\NF\Nodes;
 
 use sabbajohn\FiscalCore\Adapters\NF\Core\NotaNodeInterface;
 use sabbajohn\FiscalCore\Adapters\NF\DTO\EmitenteDTO;
+use sabbajohn\FiscalCore\Support\FederalTaxIdentity;
 use NFePHP\NFe\Make;
 
 /**
@@ -23,7 +24,7 @@ class EmitenteNode implements NotaNodeInterface
             'CNAE' => $this->dto->cnae,
             'CRT' => $this->dto->crt,
         ];
-        $document = preg_replace('/\D+/', '', $this->dto->cnpj) ?? '';
+        $document = FederalTaxIdentity::normalize($this->dto->cnpj);
         if (strlen($document) === 11) {
             $emit->CPF = $document;
         } else {
@@ -49,7 +50,7 @@ class EmitenteNode implements NotaNodeInterface
 
     public function validate(): bool
     {
-        if (! preg_match('/^\d{11}(\d{3})?$/', preg_replace('/\D+/', '', $this->dto->cnpj) ?? '')) {
+        if (FederalTaxIdentity::tryNormalize($this->dto->cnpj) === null) {
             throw new \InvalidArgumentException('CPF ou CNPJ do emitente inválido');
         }
 

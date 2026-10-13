@@ -1,5 +1,25 @@
 # Changelog
 
+## [2.4.0] - 2026-10-13
+
+- Conciliação do runtime com a API: CNPJ alfanumérico, identidade federal,
+  monofasia IBS/CBS, totais, impressão e tomador exterior NFS-e.
+- Identidade federal reutilizável no pacote sem dependência da aplicação Laravel.
+- Cadeia FIPE opcional com BrasilAPI, Parallelum e SDK FIPE direto, quotas,
+  circuitos, cache e orçamento de tempo; consultas CEP v2/FIPE existentes preservadas.
+- Guzzle e Endroid QR Code declarados como dependências diretas; SDK FIPE opcional.
+- Lock do Endroid QR Code em 5.1.0, compatível com o PHP >=8.1 declarado pelo pacote.
+- Testes offline portados da API para identidade e impressão.
+
+## [2.3.0] - 2026-10-08
+
+### Adicionado
+- Consulta FIPE pontual com BrasilAPI, Parallelum e SDK FIPE direto opcional, sem modificar o método legado.
+- Catálogos sob demanda, referência fixada, contrato em português e validação de veículo/combustível/mês.
+- Orçamento HTTP compartilhado, cache por fonte, quotas/circuitos injetáveis e alertas sanitizados de acesso.
+- Compatibilidade PHP >=8.1 preservada; o SDK direto opcional requer PHP 8.4.
+- Testes dos dois fallbacks com transporte simulado; limites e qualificação em [FIPE-FALLBACKS.md](docs/consultas-publicas/FIPE-FALLBACKS.md).
+
 ## [2.2.0] - 2026-10-08
 
 ### Adicionado

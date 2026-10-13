@@ -681,20 +681,40 @@ HTML,
      */
     private function estimatePaperHeightMm(array $data, array $layout): float
     {
-        $items = (array) ($data['items'] ?? []);
         $enabledSections = array_values(array_filter(
             (array) ($layout['sections'] ?? []),
             static fn (mixed $section): bool => is_array($section) && ($section['enabled'] ?? false)
         ));
-
-        $baseHeight = 70.0;
-        $itemsHeight = count($items) * 9.5;
-        $sectionsHeight = count($enabledSections) * 5.0;
-        $logoHeight = is_string($data['logo_url'] ?? null) ? 14.0 : 0.0;
+        $payments = (array) ($data['payments'] ?? []);
         $messages = is_array($data['messages'] ?? null) ? $data['messages'] : [];
-        $messagesHeight = trim((string) ($messages['content'] ?? '')) !== '' ? 10.0 : 0.0;
+        $message = trim((string) ($messages['content'] ?? ''));
+        $recipient = is_array($data['recipient'] ?? null) ? $data['recipient'] : [];
+        $qrCode = is_array($data['qr_code'] ?? null) ? $data['qr_code'] : [];
+        $height = (float) ($layout['paper']['margin_top_mm'] ?? 4)
+            + (float) ($layout['paper']['margin_bottom_mm'] ?? 4)
+            + 8.0;
 
-        return max(120.0, $baseHeight + $itemsHeight + $sectionsHeight + $logoHeight + $messagesHeight);
+        foreach ($enabledSections as $section) {
+            $height += (float) ($section['spacing_before_mm'] ?? 0.0)
+                + (float) ($section['spacing_after_mm'] ?? 0.0);
+
+            $height += match ((string) ($section['type'] ?? '')) {
+                'logo' => is_string($data['logo_url'] ?? null) ? 20.0 : 0.0,
+                'header' => 48.0,
+                'recipient' => $recipient !== [] ? 32.0 : 0.0,
+                'items' => 14.0 + max(1, count((array) ($data['items'] ?? []))) * 18.0,
+                'totals' => 28.0,
+                'payments' => 18.0 + max(1, count($payments)) * 7.0,
+                'ibpt' => $this->hasMoneyValue($data['ibpt']['value'] ?? null) ? 18.0 : 0.0,
+                'messages' => $message !== '' ? 18.0 + max(1, (int) ceil(mb_strlen($message) / 32)) * 4.0 : 0.0,
+                'consultation' => 36.0,
+                'qr_code' => (float) ($qrCode['size_mm'] ?? 28.0) + 16.0,
+                'protocol_footer' => 32.0,
+                default => 0.0,
+            };
+        }
+
+        return max(150.0, $height - 40.0);
     }
 
     private function buildQrCodeDataUri(string $value): ?string
@@ -771,12 +791,12 @@ HTML,
             return '-';
         }
 
-        $digits = preg_replace('/\D+/', '', $value) ?? '';
-        if (strlen($digits) !== 14) {
+        $normalized = strtoupper(preg_replace('/[^A-Z0-9]+/i', '', $value) ?? '');
+        if (strlen($normalized) !== 14) {
             return trim($value) !== '' ? trim($value) : '-';
         }
 
-        return vsprintf('%s%s.%s%s%s.%s%s%s/%s%s%s%s-%s%s', str_split($digits));
+        return vsprintf('%s%s.%s%s%s.%s%s%s/%s%s%s%s-%s%s', str_split($normalized));
     }
 
     private function formatCpfCnpj(mixed $value): string
@@ -786,12 +806,12 @@ HTML,
         }
 
         $raw = trim((string) $value);
-        $digits = preg_replace('/\D+/', '', $raw) ?? '';
-        if (strlen($digits) === 11) {
-            return vsprintf('%s%s%s.%s%s%s.%s%s%s-%s%s', str_split($digits));
+        $normalized = strtoupper(preg_replace('/[^A-Z0-9]+/i', '', $raw) ?? '');
+        if (preg_match('/^\d{11}$/', $normalized) === 1) {
+            return vsprintf('%s%s%s.%s%s%s.%s%s%s-%s%s', str_split($normalized));
         }
-        if (strlen($digits) === 14) {
-            return $this->formatCnpj($digits);
+        if (strlen($normalized) === 14) {
+            return $this->formatCnpj($normalized);
         }
 
         return $raw !== '' ? $raw : '-';

@@ -15,12 +15,12 @@ final class NacionalDistribuicaoService implements NfseNacionalDistribuicaoInter
     public function distribuirDfe(string $nsu, ?string $cnpjConsulta = null, bool $lote = true): NacionalApiResult
     {
         $nsu = preg_replace('/\D+/', '', $nsu) ?? '';
-        $cnpj = preg_replace('/\D+/', '', (string) $cnpjConsulta) ?? '';
+        $cnpj = strtoupper(preg_replace('/[^A-Z0-9]+/i', '', (string) $cnpjConsulta) ?? '');
         if ($nsu === '') {
             throw new \InvalidArgumentException('NSU é obrigatório para distribuição.');
         }
         if ($cnpj !== '' && strlen($cnpj) !== 14) {
-            throw new \InvalidArgumentException('CNPJ de consulta deve conter 14 dígitos.');
+            throw new \InvalidArgumentException('CNPJ de consulta deve conter 14 posições.');
         }
 
         return $this->fetch('/DFe/'.rawurlencode($nsu), [

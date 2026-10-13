@@ -3,16 +3,22 @@
 namespace sabbajohn\FiscalCore\Adapters\NF\Nodes;
 
 use sabbajohn\FiscalCore\Adapters\NF\Core\NotaNodeInterface;
+use sabbajohn\FiscalCore\Support\NFeCompatibility;
 use NFePHP\NFe\Make;
 
 class IbsCbsNode implements NotaNodeInterface
 {
+    public const MONOPHASE_CONTRACT_LEGACY = NFeCompatibility::MONOPHASE_CONTRACT_LEGACY;
+
+    public const MONOPHASE_CONTRACT_SPLIT = NFeCompatibility::MONOPHASE_CONTRACT_SPLIT;
+
     /**
      * @param  array<string,mixed>  $data
      */
     public function __construct(
         private int $item,
         private array $data,
+        private ?string $monophaseProviderContract = null,
     ) {}
 
     public function addToMake(Make $make): void
@@ -62,7 +68,7 @@ class IbsCbsNode implements NotaNodeInterface
             $make->taggEstornoCred((object) $estornoCredito);
         }
 
-        $mono = $hasRegularBase ? null : $this->monoPayload();
+        $mono = $hasRegularBase ? null : $this->monoPayload($make);
         if ($mono !== null) {
             $make->tagIBSCBSMono((object) $mono);
         }
@@ -239,11 +245,51 @@ class IbsCbsNode implements NotaNodeInterface
     /**
      * @return array<string,mixed>|null
      */
-    private function monoPayload(): ?array
+    private function monoPayload(Make $make): ?array
     {
         $mono = $this->arrayValue(['gIBSCBSMono', 'mono']);
-        if ($mono === [] || ! $this->hasAnyPositiveNumericValue($mono)) {
+        if ($mono === []) {
             return null;
+        }
+
+        $hasLegacyShape = $this->hasAnyKey($mono, ['padrao', 'gMonoPadrao', 'reten', 'gMonoReten', 'retido', 'gMonoRet', 'dif', 'gMonoDif']);
+        $version = $this->stringValueFrom($mono, ['versao']);
+        $hasSplitShape = $this->hasAnyKey($this->arrayValueFrom($mono, ['ibs']), ['ad_rem', 'ad_valorem'])
+            || $this->hasAnyKey($this->arrayValueFrom($mono, ['cbs']), ['ad_rem', 'ad_valorem']);
+
+        if ($hasLegacyShape && ($hasSplitShape || $version === '2')) {
+            throw new \InvalidArgumentException(
+                'NFE_MONOFASIA_CONTRATO_AMBIGUO: nao misture os grupos legados com mono.ibs/mono.cbs.',
+            );
+        }
+
+        if ($hasSplitShape) {
+            if ($version !== '2') {
+                throw new \InvalidArgumentException(
+                    'NFE_MONOFASIA_VERSAO_OBRIGATORIA: informe mono.versao=2 para os grupos Ad Rem/Ad Valorem.',
+                );
+            }
+            if ($this->resolveMonophaseProviderContract($make) !== self::MONOPHASE_CONTRACT_SPLIT) {
+                throw new \InvalidArgumentException(
+                    'NFE_MONOFASIA_NFEPHP_INCOMPATIVEL: o NFePHP instalado nao suporta os grupos Ad Rem/Ad Valorem separados.',
+                );
+            }
+
+            return $this->splitMonoPayload($mono);
+        }
+
+        if ($version === '2') {
+            throw new \InvalidArgumentException(
+                'NFE_MONOFASIA_CONTRATO_INVALIDO: mono.versao=2 exige mono.ibs ou mono.cbs.',
+            );
+        }
+        if (! $this->hasAnyPositiveNumericValue($mono)) {
+            return null;
+        }
+        if ($this->resolveMonophaseProviderContract($make) !== self::MONOPHASE_CONTRACT_LEGACY) {
+            throw new \InvalidArgumentException(
+                'NFE_MONOFASIA_LEGADO_INCOMPATIVEL: o payload legado nao pode ser convertido silenciosamente para o NFePHP novo.',
+            );
         }
 
         $padrao = $this->arrayValueFrom($mono, ['padrao', 'gMonoPadrao']);
@@ -275,6 +321,83 @@ class IbsCbsNode implements NotaNodeInterface
             'vTotIBSMonoItem' => $this->numberValueFrom($mono, ['vTotIBSMonoItem', 'ibs.total', 'total.ibs']),
             'vTotCBSMonoItem' => $this->numberValueFrom($mono, ['vTotCBSMonoItem', 'cbs.total', 'total.cbs']),
         ]);
+    }
+
+    /**
+     * @param  array<string,mixed>  $mono
+     * @return array<string,mixed>
+     */
+    private function splitMonoPayload(array $mono): array
+    {
+        $ibs = $this->arrayValueFrom($mono, ['ibs']);
+        $cbs = $this->arrayValueFrom($mono, ['cbs']);
+        $ibsAdRem = $this->arrayValueFrom($ibs, ['ad_rem']);
+        $ibsAdValorem = $this->arrayValueFrom($ibs, ['ad_valorem']);
+        $cbsAdRem = $this->arrayValueFrom($cbs, ['ad_rem']);
+        $cbsAdValorem = $this->arrayValueFrom($cbs, ['ad_valorem']);
+
+        return $this->withoutNulls([
+            'item' => $this->item,
+
+            'gIBSMonoAdRem_qBCMono' => $this->numberValueFrom($ibsAdRem, ['padrao.base_calculo_quantidade']),
+            'gIBSMonoAdRem_adRemIBS' => $this->numberValueFrom($ibsAdRem, ['padrao.aliquota']),
+            'gIBSMonoAdRem_vIBSMono' => $this->numberValueFrom($ibsAdRem, ['padrao.valor']),
+            'gIBSMonoAdRem_qBCMonoReten' => $this->numberValueFrom($ibsAdRem, ['retencao.base_calculo_quantidade']),
+            'gIBSMonoAdRem_adRemIBSReten' => $this->numberValueFrom($ibsAdRem, ['retencao.aliquota']),
+            'gIBSMonoAdRem_vIBSMonoReten' => $this->numberValueFrom($ibsAdRem, ['retencao.valor']),
+            'gIBSMonoAdRem_vIBSMonoRet' => $this->numberValueFrom($ibsAdRem, ['retido.valor']),
+            'gIBSMonoAdRem_qBCBioComb' => $this->numberValueFrom($ibsAdRem, ['biocombustivel.base_calculo_quantidade']),
+            'gIBSMonoAdRem_vIBSDiferenca' => $this->numberValueFrom($ibsAdRem, ['biocombustivel.valor_diferenca']),
+
+            'gIBSMonoAdValorem_vBCMono' => $this->numberValueFrom($ibsAdValorem, ['padrao.base_calculo']),
+            'gIBSMonoAdValorem_pAliqMonoUF' => $this->numberValueFrom($ibsAdValorem, ['padrao.aliquota_uf']),
+            'gIBSMonoAdValorem_vIBSMonoUF' => $this->numberValueFrom($ibsAdValorem, ['padrao.valor_uf']),
+            'gIBSMonoAdValorem_pAliqMonoMun' => $this->numberValueFrom($ibsAdValorem, ['padrao.aliquota_municipio']),
+            'gIBSMonoAdValorem_vIBSMonoMun' => $this->numberValueFrom($ibsAdValorem, ['padrao.valor_municipio']),
+            'gIBSMonoAdValorem_vIBSMono' => $this->numberValueFrom($ibsAdValorem, ['padrao.valor']),
+            'gIBSMonoAdValorem_vBCMonoReten' => $this->numberValueFrom($ibsAdValorem, ['retencao.base_calculo']),
+            'gIBSMonoAdValorem_pAliqMonoReten' => $this->numberValueFrom($ibsAdValorem, ['retencao.aliquota']),
+            'gIBSMonoAdValorem_vIBSMonoReten' => $this->numberValueFrom($ibsAdValorem, ['retencao.valor']),
+            'gIBSMonoAdValorem_vIBSMonoRet' => $this->numberValueFrom($ibsAdValorem, ['retido.valor']),
+            'gIBSMonoAdValorem_qBCBioComb' => $this->numberValueFrom($ibsAdValorem, ['biocombustivel.base_calculo_quantidade']),
+            'gIBSMonoAdValorem_vIBSDiferenca' => $this->numberValueFrom($ibsAdValorem, ['biocombustivel.valor_diferenca']),
+
+            'gCBSMonoAdRem_qBCMono' => $this->numberValueFrom($cbsAdRem, ['padrao.base_calculo_quantidade']),
+            'gCBSMonoAdRem_adRemCBS' => $this->numberValueFrom($cbsAdRem, ['padrao.aliquota']),
+            'gCBSMonoAdRem_vCBSMono' => $this->numberValueFrom($cbsAdRem, ['padrao.valor']),
+            'gCBSMonoAdRem_qBCMonoReten' => $this->numberValueFrom($cbsAdRem, ['retencao.base_calculo_quantidade']),
+            'gCBSMonoAdRem_adRemCBSReten' => $this->numberValueFrom($cbsAdRem, ['retencao.aliquota']),
+            'gCBSMonoAdRem_vCBSMonoReten' => $this->numberValueFrom($cbsAdRem, ['retencao.valor']),
+            'gCBSMonoAdRem_vCBSMonoRet' => $this->numberValueFrom($cbsAdRem, ['retido.valor']),
+            'gCBSMonoAdRem_qBCBioComb' => $this->numberValueFrom($cbsAdRem, ['biocombustivel.base_calculo_quantidade']),
+            'gCBSMonoAdRem_vCBSDiferenca' => $this->numberValueFrom($cbsAdRem, ['biocombustivel.valor_diferenca']),
+
+            'gCBSMonoAdValorem_vBCMono' => $this->numberValueFrom($cbsAdValorem, ['padrao.base_calculo']),
+            'gCBSMonoAdValorem_pAliqMonoCBS' => $this->numberValueFrom($cbsAdValorem, ['padrao.aliquota']),
+            'gCBSMonoAdValorem_vCBSMono' => $this->numberValueFrom($cbsAdValorem, ['padrao.valor']),
+            'gCBSMonoAdValorem_vBCMonoReten' => $this->numberValueFrom($cbsAdValorem, ['retencao.base_calculo']),
+            'gCBSMonoAdValorem_pAliqMonoReten' => $this->numberValueFrom($cbsAdValorem, ['retencao.aliquota']),
+            'gCBSMonoAdValorem_vCBSMonoReten' => $this->numberValueFrom($cbsAdValorem, ['retencao.valor']),
+            'gCBSMonoAdValorem_vCBSMonoRet' => $this->numberValueFrom($cbsAdValorem, ['retido.valor']),
+            'gCBSMonoAdValorem_qBCBioComb' => $this->numberValueFrom($cbsAdValorem, ['biocombustivel.base_calculo_quantidade']),
+            'gCBSMonoAdValorem_vCBSDiferenca' => $this->numberValueFrom($cbsAdValorem, ['biocombustivel.valor_diferenca']),
+
+            'vTotIBSMonoItem' => $this->numberValueFrom($mono, ['total.ibs']),
+            'vTotCBSMonoItem' => $this->numberValueFrom($mono, ['total.cbs']),
+        ]);
+    }
+
+    private function resolveMonophaseProviderContract(Make $make): string
+    {
+        if ($this->monophaseProviderContract !== null) {
+            if (! in_array($this->monophaseProviderContract, [self::MONOPHASE_CONTRACT_LEGACY, self::MONOPHASE_CONTRACT_SPLIT], true)) {
+                throw new \InvalidArgumentException('Contrato monofasico do NFePHP desconhecido.');
+            }
+
+            return $this->monophaseProviderContract;
+        }
+
+        return NFeCompatibility::monophaseContract($make);
     }
 
     /**
@@ -488,6 +611,21 @@ class IbsCbsNode implements NotaNodeInterface
             }
 
             if (is_numeric($value) && (float) $value > 0.0) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * @param  array<string,mixed>  $payload
+     * @param  list<string>  $keys
+     */
+    private function hasAnyKey(array $payload, array $keys): bool
+    {
+        foreach ($keys as $key) {
+            if (array_key_exists($key, $payload)) {
                 return true;
             }
         }

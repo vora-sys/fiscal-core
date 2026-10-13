@@ -8,6 +8,12 @@ use NFePHP\NFe\Tools;
 
 final class NFeCompatibility
 {
+    public const MONOPHASE_CONTRACT_LEGACY = 'legacy';
+
+    public const MONOPHASE_CONTRACT_SPLIT = 'split';
+
+    public const MONOPHASE_CONTRACT_UNSUPPORTED = 'unsupported';
+
     public const DEFAULT_XML_VERSION = '4.00';
 
     public const DEFAULT_SCHEMA = 'PL_009_V4';
@@ -116,6 +122,7 @@ final class NFeCompatibility
     public static function runtimeCapabilities(): array
     {
         $schemas = self::installedSchemas();
+        $monophaseContract = self::monophaseContract();
 
         return [
             'nfephp_sped_nfe_version' => self::packageVersion('nfephp-org/sped-nfe'),
@@ -127,6 +134,8 @@ final class NFeCompatibility
             'latest_pl_010_schema' => self::latestInstalledSchema('PL_010'),
             'supports_ibscbs_tags' => method_exists(Make::class, 'tagIBSCBS')
                 && method_exists(Make::class, 'tagIBSCBSTot'),
+            'monophase_contract' => $monophaseContract,
+            'supports_split_monophase' => $monophaseContract === self::MONOPHASE_CONTRACT_SPLIT,
             'supports_is_tags' => method_exists(Make::class, 'tagIS')
                 && method_exists(Make::class, 'tagISTot'),
             'supports_advanced_ibscbs_tags' => method_exists(Make::class, 'taggTransfCred')
@@ -135,7 +144,38 @@ final class NFeCompatibility
                 && method_exists(Make::class, 'taggEstornoCred')
                 && method_exists(Make::class, 'tagDFeReferenciado'),
             'supports_nfce_qrcode_v300' => method_exists(Tools::class, 'forceQRCodeVersion'),
+            'supports_danfe_simplificado_tipo_2' => class_exists(
+                'NFePHP\\DA\\NFe\\DanfeSimplificadoTipo2'
+            ),
+            'danfe_simplificado_tipo_2_renderer' => class_exists(
+                'NFePHP\\DA\\NFe\\DanfeSimplificadoTipo2'
+            ) ? 'NFePHP\\DA\\NFe\\DanfeSimplificadoTipo2' : null,
         ];
+    }
+
+    public static function monophaseContract(?Make $make = null): string
+    {
+        $target = $make ?? Make::class;
+        if (! method_exists($target, 'tagIBSCBSMono')) {
+            return self::MONOPHASE_CONTRACT_UNSUPPORTED;
+        }
+
+        $method = new \ReflectionMethod($target, 'tagIBSCBSMono');
+        $file = $method->getFileName();
+        if (! is_string($file) || ! is_file($file)) {
+            throw new \RuntimeException('Nao foi possivel identificar o contrato monofasico do NFePHP instalado.');
+        }
+
+        $lines = file($file);
+        if ($lines === false) {
+            throw new \RuntimeException('Nao foi possivel ler o contrato monofasico do NFePHP instalado.');
+        }
+
+        $source = implode('', array_slice($lines, $method->getStartLine() - 1, $method->getEndLine() - $method->getStartLine() + 1));
+
+        return str_contains($source, 'gIBSMonoAdRem_qBCMono')
+            ? self::MONOPHASE_CONTRACT_SPLIT
+            : self::MONOPHASE_CONTRACT_LEGACY;
     }
 
     private static function resolveAlias(string $schema): string

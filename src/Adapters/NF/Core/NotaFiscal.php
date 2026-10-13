@@ -5,6 +5,7 @@ namespace sabbajohn\FiscalCore\Adapters\NF\Core;
 use sabbajohn\FiscalCore\Adapters\NF\Nodes\IdentificacaoNode;
 use sabbajohn\FiscalCore\Support\ConfigManager;
 use sabbajohn\FiscalCore\Support\NFeCompatibility;
+use NFePHP\Common\Keys;
 use NFePHP\NFe\Make;
 
 /**
@@ -183,7 +184,7 @@ class NotaFiscal
     {
         // Se já tem chave, usar ela
         if (! empty($idDTO->chNFe)) {
-            return preg_replace('/[^0-9]/', '', $idDTO->chNFe);
+            return strtoupper(preg_replace('/[^A-Z0-9]/i', '', $idDTO->chNFe) ?? '');
         }
 
         // A chave reserva 14 posições para a identificação do emitente. Para CPF,
@@ -196,19 +197,19 @@ class NotaFiscal
             $dtoProp = $reflection->getProperty('dto');
             $dtoProp->setAccessible(true);
             $emitenteDTO = $dtoProp->getValue($emitenteNode);
-            $issuerDocument = preg_replace('/[^0-9]/', '', $emitenteDTO->cnpj) ?: $issuerDocument;
+            $issuerDocument = strtoupper(preg_replace('/[^A-Z0-9]/i', '', $emitenteDTO->cnpj) ?? '') ?: $issuerDocument;
         }
         $issuerDocument = str_pad(substr($issuerDocument, 0, 14), 14, '0', STR_PAD_LEFT);
 
         // Extrair AAMM da data de emissão
         $dhEmi = $idDTO->dhEmi;
-        $aamm = date('ym', strtotime($dhEmi));
+        $year = date('y', strtotime($dhEmi));
+        $month = date('m', strtotime($dhEmi));
 
-        // Montar chave (43 primeiros dígitos)
-        $chave43 = sprintf(
-            '%02d%04s%014s%02d%03d%09d%01d%08d',
+        return Keys::build(
             $idDTO->cUF,
-            $aamm,
+            $year,
+            $month,
             $issuerDocument,
             $idDTO->mod,
             $idDTO->serie,
@@ -216,28 +217,6 @@ class NotaFiscal
             $idDTO->tpEmis ?? 1,
             $idDTO->cNF ?? rand(1, 99999999)
         );
-
-        // Calcular dígito verificador
-        $dv = $this->calcularDV($chave43);
-
-        return $chave43.$dv;
-    }
-
-    /**
-     * Calcula dígito verificador da chave usando módulo 11
-     */
-    private function calcularDV(string $chave): int
-    {
-        $multiplicadores = [4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2];
-        $soma = 0;
-
-        for ($i = 0; $i < 43; $i++) {
-            $soma += ((int) $chave[$i]) * $multiplicadores[$i];
-        }
-
-        $resto = $soma % 11;
-
-        return ($resto == 0 || $resto == 1) ? 0 : (11 - $resto);
     }
 
     /**

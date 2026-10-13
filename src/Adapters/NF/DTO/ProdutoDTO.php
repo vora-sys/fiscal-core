@@ -26,6 +26,8 @@ class ProdutoDTO
         public int $indTot = 1,             // 1=Compõe total, 0=Não compõe
         public ?string $cest = null,        // CEST (opcional)
         public ?string $exTipi = null,      // EX TIPI (opcional)
+        public float $valorDesconto = 0.00, // Desconto do item
+        public float $valorOutrasDespesas = 0.00, // Acréscimos e outras despesas do item
     ) {}
 
     /**
@@ -80,6 +82,8 @@ class ProdutoDTO
         $obj->quantidadeTributavel = $this->quantidadeTributavel;
         $obj->valorUnitarioTributavel = $this->valorUnitarioTributavel;
         $obj->indTot = $this->indTot;
+        $obj->valorDesconto = $this->valorDesconto;
+        $obj->valorOutrasDespesas = $this->valorOutrasDespesas;
         if ($this->cest !== null) {
             $obj->cest = $this->cest;
         }

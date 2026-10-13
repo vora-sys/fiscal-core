@@ -3,6 +3,7 @@
 namespace sabbajohn\FiscalCore\Adapters;
 
 use sabbajohn\FiscalCore\Contracts\DocumentoInterface;
+use sabbajohn\FiscalCore\Support\CnpjIdentity;
 use Brazanation\Documents\Cnpj;
 use Brazanation\Documents\Cpf;
 
@@ -33,18 +34,16 @@ class DocumentoAdapter implements DocumentoInterface
 
     public function validarCNPJ(string $cnpj): bool
     {
-        try {
-            $doc = Cnpj::createFromString($cnpj);
-
-            // Validate by checking if the calculated digits match the expected format
-            return $this->isCnpjValid($cnpj);
-        } catch (\Throwable $e) {
-            return false;
-        }
+        return CnpjIdentity::hasValidCheckDigits($cnpj);
     }
 
     public function formatarCNPJ(string $cnpj): string
     {
+        $normalized = CnpjIdentity::tryNormalize($cnpj);
+        if ($normalized !== null) {
+            return preg_replace('/(.{2})(.{3})(.{3})(.{4})(.{2})/', '$1.$2.$3/$4-$5', $normalized) ?? $normalized;
+        }
+
         try {
             $doc = Cnpj::createFromString($cnpj);
 
@@ -88,37 +87,5 @@ class DocumentoAdapter implements DocumentoInterface
         }
 
         return $digit1 === (int) $cpf[9] && $digit2 === (int) $cpf[10];
-    }
-
-    private function isCnpjValid(string $cnpj): bool
-    {
-        $cnpj = preg_replace('/\D/', '', $cnpj);
-
-        if (strlen($cnpj) !== 14) {
-            return false;
-        }
-
-        // Check for same digits
-        if (preg_match('/^(\d)\1{13}$/', $cnpj)) {
-            return false;
-        }
-
-        // Calculate first digit
-        $weights = [5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2];
-        $sum = 0;
-        for ($i = 0; $i < 12; $i++) {
-            $sum += (int) $cnpj[$i] * $weights[$i];
-        }
-        $digit1 = $sum % 11 < 2 ? 0 : 11 - ($sum % 11);
-
-        // Calculate second digit
-        $weights = [6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2];
-        $sum = 0;
-        for ($i = 0; $i < 13; $i++) {
-            $sum += (int) $cnpj[$i] * $weights[$i];
-        }
-        $digit2 = $sum % 11 < 2 ? 0 : 11 - ($sum % 11);
-
-        return $digit1 === (int) $cnpj[12] && $digit2 === (int) $cnpj[13];
     }
 }

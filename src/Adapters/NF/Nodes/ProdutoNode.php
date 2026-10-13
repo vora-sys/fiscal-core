@@ -26,6 +26,12 @@ class ProdutoNode implements NotaNodeInterface
             'qCom' => number_format($this->dto->quantidadeComercial, 4, '.', ''),
             'vUnCom' => number_format($this->dto->valorUnitario, 10, '.', ''),
             'vProd' => number_format($this->dto->valorTotal, 2, '.', ''),
+            'vDesc' => $this->dto->valorDesconto > 0
+                ? number_format($this->dto->valorDesconto, 2, '.', '')
+                : null,
+            'vOutro' => $this->dto->valorOutrasDespesas > 0
+                ? number_format($this->dto->valorOutrasDespesas, 2, '.', '')
+                : null,
             'cEANTrib' => $this->dto->ceanTributavel,
             'uTrib' => $this->dto->unidadeTributavel,
             'qTrib' => number_format($this->dto->quantidadeTributavel, 4, '.', ''),

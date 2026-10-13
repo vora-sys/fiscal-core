@@ -81,6 +81,15 @@ if ($resultado->sucesso) {
 
 ### 📋 **Consultas Públicas**
 
+As consultas CEP v2 e FIPE estão em [FIPE-CEP-V2](docs/consultas-publicas/FIPE-CEP-V2.md).
+A cadeia opcional BrasilAPI → Parallelum → FIPE direta está em
+[FIPE-FALLBACKS](docs/consultas-publicas/FIPE-FALLBACKS.md). A fonte direta requer
+PHP 8.4+ e o SDK opcional; workers devem usar armazenamento compartilhado para quotas e cache.
+
+O runtime é conciliado com o módulo da API usando o baseline e o comando `sync`,
+executado na raiz de `fiscal-platform-api`. Consulte o
+[registro da sincronização](docs/fiscal-core-sincronizacao.md).
+
 | Função | API | Status |
 | -------- | ----- | -------- |
 | **CEP** | ViaCEP + BrasilAPI | ✅ |

@@ -3,6 +3,10 @@
 namespace sabbajohn\FiscalCore\Facade;
 
 use sabbajohn\FiscalCore\Adapters\BrasilAPIAdapter;
+use sabbajohn\FiscalCore\Fipe\CadeiaConsultaFipe;
+use sabbajohn\FiscalCore\Fipe\ConsultaFipe;
+use sabbajohn\FiscalCore\Fipe\OrcamentoFipe;
+use sabbajohn\FiscalCore\Support\CnpjIdentity;
 use sabbajohn\FiscalCore\Support\FiscalResponse;
 use sabbajohn\FiscalCore\Support\ResponseHandler;
 
@@ -24,7 +28,7 @@ class UtilsFacade
 
     private ResponseHandler $responseHandler;
 
-    public function __construct(?BrasilAPIAdapter $brasilApi = null)
+    public function __construct(?BrasilAPIAdapter $brasilApi = null, private ?CadeiaConsultaFipe $cadeiaFipe = null)
     {
         $this->brasilApi = $brasilApi ?? new BrasilAPIAdapter;
         $this->responseHandler = new ResponseHandler;
@@ -136,6 +140,16 @@ class UtilsFacade
         });
     }
 
+    /** Consulta pontual; a API legada acima mantém contrato e comportamento. */
+    public function consultarPrecoFipeComFallback(ConsultaFipe $consulta, ?OrcamentoFipe $orcamento = null): FiscalResponse
+    {
+        if ($this->cadeiaFipe === null) {
+            return FiscalResponse::error('Configure a cadeia FIPE e seu armazenamento compartilhado.', 'CONSULTA_INDISPONIVEL', 'consultar_preco_fipe');
+        }
+
+        return $this->cadeiaFipe->consultar($consulta, $orcamento);
+    }
+
     private function validarListaComplementar(array $linhas, array $campos): array
     {
         if (! array_is_list($linhas) || $linhas === []) {
@@ -176,11 +190,11 @@ class UtilsFacade
     {
         return $this->responseHandler->execute(function () use ($cnpj) {
             // Remove formatação
-            $cnpj = preg_replace('/\D/', '', $cnpj);
+            $cnpj = CnpjIdentity::tryNormalize($cnpj) ?? '';
 
             // Valida formato básico
             if (strlen($cnpj) !== 14) {
-                throw new \InvalidArgumentException('CNPJ deve ter 14 dígitos');
+                throw new \InvalidArgumentException('CNPJ deve ter 14 posições');
             }
 
             $resultado = $this->brasilApi->consultarCNPJ($cnpj);
@@ -228,19 +242,8 @@ class UtilsFacade
     public function validarCNPJ(string $cnpj): FiscalResponse
     {
         return $this->responseHandler->execute(function () use ($cnpj) {
-            $cnpj = preg_replace('/\D/', '', $cnpj);
-
-            if (strlen($cnpj) !== 14) {
-                throw new \InvalidArgumentException('CNPJ deve ter 14 dígitos');
-            }
-
-            // Validação básica (todos iguais)
-            if (preg_match('/(\d)\1{13}/', $cnpj)) {
-                throw new \InvalidArgumentException('CNPJ inválido');
-            }
-
-            // Cálculo dos dígitos verificadores
-            if (! $this->validarDigitosCNPJ($cnpj)) {
+            $cnpj = CnpjIdentity::tryNormalize($cnpj) ?? '';
+            if (! CnpjIdentity::hasValidCheckDigits($cnpj)) {
                 throw new \InvalidArgumentException('CNPJ inválido');
             }
 
@@ -412,7 +415,7 @@ class UtilsFacade
 
     private function formatarCNPJ(string $cnpj): string
     {
-        return preg_replace('/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/', '$1.$2.$3/$4-$5', $cnpj);
+        return preg_replace('/(.{2})(.{3})(.{3})(.{4})(.{2})/', '$1.$2.$3/$4-$5', $cnpj) ?? $cnpj;
     }
 
     private function mapearConsultaCNPJ(string $cnpj, array $resultado): array
@@ -514,26 +517,5 @@ class UtilsFacade
         $digito2 = $soma % 11 < 2 ? 0 : 11 - ($soma % 11);
 
         return $cpf[9] == $digito1 && $cpf[10] == $digito2;
-    }
-
-    private function validarDigitosCNPJ(string $cnpj): bool
-    {
-        // Primeiro dígito
-        $pesos = [5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2];
-        $soma = 0;
-        for ($i = 0; $i < 12; $i++) {
-            $soma += $cnpj[$i] * $pesos[$i];
-        }
-        $digito1 = $soma % 11 < 2 ? 0 : 11 - ($soma % 11);
-
-        // Segundo dígito
-        $pesos = [6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2];
-        $soma = 0;
-        for ($i = 0; $i < 13; $i++) {
-            $soma += $cnpj[$i] * $pesos[$i];
-        }
-        $digito2 = $soma % 11 < 2 ? 0 : 11 - ($soma % 11);
-
-        return $cnpj[12] == $digito1 && $cnpj[13] == $digito2;
     }
 }

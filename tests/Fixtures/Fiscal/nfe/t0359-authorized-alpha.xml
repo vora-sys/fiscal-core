@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<nfeProc versao="4.00" xmlns="http://www.portalfiscal.inf.br/nfe">
+  <NFe>
+    <infNFe Id="NFe352609ABC12D34000107550010000003571123456780" versao="4.00">
+      <ide>
+        <cUF>35</cUF>
+        <cNF>12345678</cNF>
+        <natOp>VENDA DE MERCADORIA SINTETICA</natOp>
+        <mod>55</mod>
+        <serie>1</serie>
+        <nNF>357</nNF>
+        <dhEmi>2026-09-26T09:30:00-03:00</dhEmi>
+        <tpNF>1</tpNF>
+        <idDest>1</idDest>
+        <cMunFG>3550308</cMunFG>
+        <tpImp>1</tpImp>
+        <tpEmis>1</tpEmis>
+        <cDV>0</cDV>
+        <tpAmb>2</tpAmb>
+        <finNFe>1</finNFe>
+        <indFinal>1</indFinal>
+        <indPres>1</indPres>
+        <procEmi>0</procEmi>
+        <verProc>NOTAAGIL-T0359</verProc>
+      </ide>
+      <emit>
+        <CNPJ>ABC12D34000107</CNPJ>
+        <xNome>EMITENTE SINTETICO T0359 LTDA</xNome>
+        <xFant>NOTAAGIL LAB</xFant>
+        <enderEmit>
+          <xLgr>RUA DOS TESTES</xLgr>
+          <nro>359</nro>
+          <xBairro>AMBIENTE SINTETICO</xBairro>
+          <cMun>3550308</cMun>
+          <xMun>SAO PAULO</xMun>
+          <UF>SP</UF>
+          <CEP>01001000</CEP>
+          <cPais>1058</cPais>
+          <xPais>BRASIL</xPais>
+          <fone>1100000000</fone>
+        </enderEmit>
+        <IE>123456789</IE>
+        <CRT>3</CRT>
+      </emit>
+      <dest>
+        <CNPJ>98Z65Y32000147</CNPJ>
+        <xNome>NF-E EMITIDA EM AMBIENTE DE HOMOLOGACAO - SEM VALOR FISCAL</xNome>
+        <enderDest>
+          <xLgr>AVENIDA SINTETICA</xLgr>
+          <nro>100</nro>
+          <xBairro>CENTRO</xBairro>
+          <cMun>3550308</cMun>
+          <xMun>SAO PAULO</xMun>
+          <UF>SP</UF>
+          <CEP>01002000</CEP>
+          <cPais>1058</cPais>
+          <xPais>BRASIL</xPais>
+        </enderDest>
+        <indIEDest>9</indIEDest>
+        <email>destinatario.t0359@example.invalid</email>
+      </dest>
+      <det nItem="1">
+        <prod>
+          <cProd>T0359-1</cProd>
+          <cEAN>SEM GTIN</cEAN>
+          <xProd>PRODUTO EXCLUSIVAMENTE SINTETICO PARA REVISAO DE IMPRESSAO</xProd>
+          <NCM>49019900</NCM>
+          <CFOP>5102</CFOP>
+          <uCom>UN</uCom>
+          <qCom>2.0000</qCom>
+          <vUnCom>30.0000000000</vUnCom>
+          <vProd>60.00</vProd>
+          <cEANTrib>SEM GTIN</cEANTrib>
+          <uTrib>UN</uTrib>
+          <qTrib>2.0000</qTrib>
+          <vUnTrib>30.0000000000</vUnTrib>
+          <indTot>1</indTot>
+        </prod>
+        <imposto>
+          <vTotTrib>8.40</vTotTrib>
+          <ICMS>
+            <ICMS00>
+              <orig>0</orig>
+              <CST>00</CST>
+              <modBC>3</modBC>
+              <vBC>60.00</vBC>
+              <pICMS>18.0000</pICMS>
+              <vICMS>10.80</vICMS>
+            </ICMS00>
+          </ICMS>
+          <PIS><PISAliq><CST>01</CST><vBC>60.00</vBC><pPIS>1.6500</pPIS><vPIS>0.99</vPIS></PISAliq></PIS>
+          <COFINS><COFINSAliq><CST>01</CST><vBC>60.00</vBC><pCOFINS>7.6000</pCOFINS><vCOFINS>4.56</vCOFINS></COFINSAliq></COFINS>
+        </imposto>
+        <infAdProd>COMPLEMENTO SINTETICO DO ITEM T0359</infAdProd>
+      </det>
+      <total>
+        <ICMSTot>
+          <vBC>60.00</vBC><vICMS>10.80</vICMS><vICMSDeson>0.00</vICMSDeson><vFCP>0.00</vFCP>
+          <vBCST>0.00</vBCST><vST>0.00</vST><vFCPST>0.00</vFCPST><vFCPSTRet>0.00</vFCPSTRet>
+          <vProd>60.00</vProd><vFrete>0.00</vFrete><vSeg>0.00</vSeg><vDesc>0.00</vDesc>
+          <vII>0.00</vII><vIPI>0.00</vIPI><vIPIDevol>0.00</vIPIDevol><vPIS>0.99</vPIS>
+          <vCOFINS>4.56</vCOFINS><vOutro>0.00</vOutro><vNF>60.00</vNF><vTotTrib>8.40</vTotTrib>
+        </ICMSTot>
+      </total>
+      <transp><modFrete>9</modFrete></transp>
+      <cobr>
+        <fat><nFat>T0359</nFat><vOrig>60.00</vOrig><vDesc>0.00</vDesc><vLiq>60.00</vLiq></fat>
+        <dup><nDup>001</nDup><dVenc>2026-10-10</dVenc><vDup>30.00</vDup></dup>
+        <dup><nDup>002</nDup><dVenc>2026-11-10</dVenc><vDup>30.00</vDup></dup>
+      </cobr>
+      <pag><detPag><tPag>15</tPag><vPag>60.00</vPag></detPag></pag>
+      <infAdic>
+        <infAdFisco>INFORMACAO FISCAL SINTETICA T0359</infAdFisco>
+        <infCpl>COMPLEMENTO SINTETICO T0359 - SEM EFEITO FISCAL</infCpl>
+      </infAdic>
+    </infNFe>
+  </NFe>
+  <protNFe versao="4.00">
+    <infProt Id="ID135260000000359">
+      <tpAmb>2</tpAmb>
+      <verAplic>NOTAAGIL-T0359</verAplic>
+      <chNFe>352609ABC12D34000107550010000003571123456780</chNFe>
+      <dhRecbto>2026-09-26T09:30:05-03:00</dhRecbto>
+      <nProt>135260000000359</nProt>
+      <digVal>AAAAAAAAAAAAAAAAAAAAAAAAAAA=</digVal>
+      <cStat>100</cStat>
+      <xMotivo>Autorizado o uso da NF-e</xMotivo>
+    </infProt>
+  </protNFe>
+</nfeProc>

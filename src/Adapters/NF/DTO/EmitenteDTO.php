@@ -2,6 +2,8 @@
 
 namespace sabbajohn\FiscalCore\Adapters\NF\DTO;
 
+use sabbajohn\FiscalCore\Support\FederalTaxIdentity;
+
 /**
  * DTO para dados do Emitente
  * Corresponde à tag <emit> do XML
@@ -35,7 +37,7 @@ class EmitenteDTO
     public function toStdClass(): \stdClass
     {
         $obj = new \stdClass;
-        $document = preg_replace('/\D+/', '', $this->cnpj) ?? '';
+        $document = FederalTaxIdentity::normalize($this->cnpj);
         if (strlen($document) === 11) {
             $obj->CPF = $document;
         } else {
