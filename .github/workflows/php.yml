@@ -43,6 +43,9 @@ jobs:
     - name: Install dependencies
       run: composer install --prefer-dist --no-progress
 
+    - name: Run offline CCG/GTIN tests
+      run: php vendor/bin/phpunit --no-progress tests/Unit/ConsultaGtinCcgTest.php
+
     - name: Run CI test suite
       env:
         ENABLE_EXTERNAL_TESTS: "false"
